@@ -1000,6 +1000,7 @@ normalize_machine(const string& machine)
   else if (machine.substr(0,3) == "arm") return "arm";
   else if (machine == "sa110") return "arm";
   else if (machine == "s390x") return "s390";
+  else if (machine == "aarch64") return "arm64";
   else if (machine.substr(0,3) == "ppc") return "powerpc";
   else if (machine.substr(0,4) == "mips") return "mips";
   else if (machine.substr(0,3) == "sh2") return "sh";
@@ -1019,7 +1020,8 @@ elf_class_from_normalized_machine (const string &machine)
   else if (machine == "s390"       // powerpc and s390 always assume 64-bit,
            || machine == "powerpc" // see normalize_machine ().
            || machine == "x86_64"
-           || machine == "ia64")
+           || machine == "ia64"
+           || machine == "arm64")
     return ELFCLASS64;
 
   cerr << _F("Unknown kernel machine architecture '%s', don't know elf class",
