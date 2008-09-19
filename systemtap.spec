@@ -7,7 +7,7 @@
 
 Name: systemtap
 # for version, see also configure.ac
-Version: 0.7.1
+Version: 0.7.2
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System

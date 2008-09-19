@@ -1,4 +1,4 @@
-* What's new
+* What's new in version 0.7.2
 
 - The stap "-F" flag activates "flight recorder" mode, which consists of
   translating the given script as usual, but implicitly launching it into
