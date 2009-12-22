@@ -1,4 +1,4 @@
-* What's new in version 1.1
+* What's new
 
 - New tracepoint based tapset for memory subsystem.
 
@@ -34,9 +34,8 @@
   you want to start a compile server and you are not running systemtap from a
   private installation. In this case you still need to use stap-start-server.
 
-- Any diagnostic output line that starts with "ERROR", as in
-  error("foo"), will promote a "Pass 5: run failed", and the return
-  code is 1.
+- Any output line that starts with "ERROR", as in error("foo"), will
+  promote a "Pass 5: run failed", and the return code is 1.
 
 - Systemtap now warns about global variables being referenced from other
   script files.  This aims to protect against unintended local-vs-global 
