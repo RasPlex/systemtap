@@ -1045,7 +1045,7 @@ utrace_derived_probe_group::emit_module_decls (systemtap_session& s)
 
   s.op->newline() << "if (p->sdt_sem_address && (vm_flags & VM_WRITE)) {";
   s.op->newline(1) << "unsigned short sdt_semaphore = 0;"; // NB: fixed size
-  s.op->newline() << "if (get_user (sdt_semaphre, (unsigned short __user *) p->sdt_sem_address) == 0) {";
+  s.op->newline() << "if (get_user (sdt_semaphore, (unsigned short __user *) p->sdt_sem_address) == 0) {";
   s.op->newline(1) << "sdt_semaphore ++;";
   s.op->newline() << "#ifdef DEBUG_UTRACE";
   s.op->newline() << "_stp_dbug (__FUNCTION__,__LINE__, \"+semaphore %#x @ %#lx\\n\", sdt_semaphore, p->sdt_sem_address);";
