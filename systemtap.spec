@@ -9,7 +9,7 @@
 %{!?with_boost: %define with_boost 0}
 
 Name: systemtap
-Version: 1.0
+Version: 1.0.9
 Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
@@ -475,6 +475,9 @@ exit 0
 
 
 %changelog
+* Tue Dec 22 2009 Frank Ch. Eigler <fche@redhat.com> - 1.0.9-1
+- Upstream pre-release.
+
 * Tue Sep 22 2009 Josh Stone <jistone@redhat.com> - 1.0-1
 - Upstream release.
 
