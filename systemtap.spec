@@ -1,12 +1,12 @@
 %{!?with_sqlite: %define with_sqlite 1}
 %{!?with_docs: %define with_docs 1}
-%{!?with_crash: %define with_crash 0}
+%{!?with_crash: %define with_crash 1}
 %{!?with_rpm: %define with_rpm 1}
-%{!?with_bundled_elfutils: %define with_bundled_elfutils 0}
-%{!?elfutils_version: %define elfutils_version 0.127}
+%{!?with_bundled_elfutils: %define with_bundled_elfutils 1}
+%{!?elfutils_version: %define elfutils_version 0.141}
 %{!?pie_supported: %define pie_supported 1}
 %{!?with_grapher: %define with_grapher 1}
-%{!?with_boost: %define with_boost 0}
+%{!?with_boost: %define with_boost 1}
 
 Name: systemtap
 Version: 1.0.9
