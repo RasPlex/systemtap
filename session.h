@@ -57,6 +57,7 @@ struct tracepoint_derived_probe_group;
 struct hrtimer_derived_probe_group;
 struct procfs_derived_probe_group;
 struct dynprobe_derived_probe_group;
+struct java_derived_probe_group;
 struct embeddedcode;
 struct stapdfa;
 class translator_output;
@@ -324,6 +325,7 @@ public:
   hrtimer_derived_probe_group* hrtimer_derived_probes;
   procfs_derived_probe_group* procfs_derived_probes;
   dynprobe_derived_probe_group* dynprobe_derived_probes;
+  java_derived_probe_group* java_derived_probes;
 
   // NB: It is very important for all of the above (and below) fields
   // to be cleared in the systemtap_session ctor (session.cxx).

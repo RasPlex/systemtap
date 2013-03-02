@@ -167,6 +167,7 @@ loc2c_test_LINK = $(CCLD) $(loc2c_test_CFLAGS) $(CFLAGS) \
 @BUILD_TRANSLATOR_TRUE@	stap-privilege.$(OBJEXT) \
 @BUILD_TRANSLATOR_TRUE@	stap-cmdline.$(OBJEXT) \
 @BUILD_TRANSLATOR_TRUE@	stap-tapset-dynprobe.$(OBJEXT) \
+@BUILD_TRANSLATOR_TRUE@	stap-tapset-method.$(OBJEXT) \
 @BUILD_TRANSLATOR_TRUE@	stap-stapregex.$(OBJEXT) \
 @BUILD_TRANSLATOR_TRUE@	stap-re2c-regex.$(OBJEXT) \
 @BUILD_TRANSLATOR_TRUE@	stap-re2c-emit.$(OBJEXT) \
@@ -490,7 +491,7 @@ oldinclude_HEADERS = includes/sys/sdt.h includes/sys/sdt-config.h
 @BUILD_TRANSLATOR_TRUE@	tapset-utrace.cxx task_finder.cxx \
 @BUILD_TRANSLATOR_TRUE@	dwflpp.cxx rpm_finder.cxx setupdwfl.cxx \
 @BUILD_TRANSLATOR_TRUE@	remote.cxx privilege.cxx cmdline.cxx \
-@BUILD_TRANSLATOR_TRUE@	tapset-dynprobe.cxx \
+@BUILD_TRANSLATOR_TRUE@	tapset-dynprobe.cxx tapset-method.cxx \
 @BUILD_TRANSLATOR_TRUE@	re2c-migrate/stapregex.cxx \
 @BUILD_TRANSLATOR_TRUE@	re2c-migrate/re2c-regex.cxx \
 @BUILD_TRANSLATOR_TRUE@	re2c-migrate/re2c-emit.cxx \
@@ -857,6 +858,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap-tapset-dynprobe.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap-tapset-itrace.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap-tapset-mark.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap-tapset-method.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap-tapset-netfilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap-tapset-perfmon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap-tapset-procfs.Po@am__quote@
@@ -1371,6 +1373,20 @@ stap-tapset-dynprobe.obj: tapset-dynprobe.cxx
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tapset-dynprobe.cxx' object='stap-tapset-dynprobe.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stap_CPPFLAGS) $(CPPFLAGS) $(stap_CXXFLAGS) $(CXXFLAGS) -c -o stap-tapset-dynprobe.obj `if test -f 'tapset-dynprobe.cxx'; then $(CYGPATH_W) 'tapset-dynprobe.cxx'; else $(CYGPATH_W) '$(srcdir)/tapset-dynprobe.cxx'; fi`
+
+stap-tapset-method.o: tapset-method.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stap_CPPFLAGS) $(CPPFLAGS) $(stap_CXXFLAGS) $(CXXFLAGS) -MT stap-tapset-method.o -MD -MP -MF $(DEPDIR)/stap-tapset-method.Tpo -c -o stap-tapset-method.o `test -f 'tapset-method.cxx' || echo '$(srcdir)/'`tapset-method.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/stap-tapset-method.Tpo $(DEPDIR)/stap-tapset-method.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tapset-method.cxx' object='stap-tapset-method.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stap_CPPFLAGS) $(CPPFLAGS) $(stap_CXXFLAGS) $(CXXFLAGS) -c -o stap-tapset-method.o `test -f 'tapset-method.cxx' || echo '$(srcdir)/'`tapset-method.cxx
+
+stap-tapset-method.obj: tapset-method.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stap_CPPFLAGS) $(CPPFLAGS) $(stap_CXXFLAGS) $(CXXFLAGS) -MT stap-tapset-method.obj -MD -MP -MF $(DEPDIR)/stap-tapset-method.Tpo -c -o stap-tapset-method.obj `if test -f 'tapset-method.cxx'; then $(CYGPATH_W) 'tapset-method.cxx'; else $(CYGPATH_W) '$(srcdir)/tapset-method.cxx'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/stap-tapset-method.Tpo $(DEPDIR)/stap-tapset-method.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tapset-method.cxx' object='stap-tapset-method.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stap_CPPFLAGS) $(CPPFLAGS) $(stap_CXXFLAGS) $(CXXFLAGS) -c -o stap-tapset-method.obj `if test -f 'tapset-method.cxx'; then $(CYGPATH_W) 'tapset-method.cxx'; else $(CYGPATH_W) '$(srcdir)/tapset-method.cxx'; fi`
 
 stap-stapregex.o: re2c-migrate/stapregex.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stap_CPPFLAGS) $(CPPFLAGS) $(stap_CXXFLAGS) $(CXXFLAGS) -MT stap-stapregex.o -MD -MP -MF $(DEPDIR)/stap-stapregex.Tpo -c -o stap-stapregex.o `test -f 're2c-migrate/stapregex.cxx' || echo '$(srcdir)/'`re2c-migrate/stapregex.cxx

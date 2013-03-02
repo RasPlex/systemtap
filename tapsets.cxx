@@ -390,6 +390,8 @@ static const string TOK_TRACE("trace");
 static const string TOK_LABEL("label");
 static const string TOK_LIBRARY("library");
 static const string TOK_PLT("plt");
+static const string TOK_METHOD("method");
+static const string TOK_CLASS("class");;
 
 static int query_cu (Dwarf_Die * cudie, void * arg);
 static void query_addr(Dwarf_Addr addr, dwarf_query *q);
@@ -10008,6 +10010,7 @@ tracepoint_builder::build(systemtap_session& s,
 void
 register_standard_tapsets(systemtap_session & s)
 {
+  register_tapset_java(s);
   register_tapset_been(s);
   register_tapset_itrace(s);
   register_tapset_mark(s);
@@ -10028,6 +10031,18 @@ register_standard_tapsets(systemtap_session & s)
     ->bind_num(TOK_STATEMENT)->bind(TOK_ABSOLUTE)->bind(TOK_RETURN)
     ->bind_privilege(pr_all)
     ->bind(new uprobe_builder ());
+
+  // java per-method probes
+  /*  s.pattern_root->bind_num(TOK_PROCESS)
+    ->bind_str(TOK_CLASS)->bind_str(TOK_METHOD)
+    ->bind(new java_builder ());*/
+
+  /* second java case where we have 
+     process("PID").method("class.method")
+  */
+  /*  s.pattern_root->bind_num(TOK_PROCESS)
+    ->bind_str(TOK_CLASSMETHOD)
+    ->bind(new java_builder ());*/
 
   // kernel tracepoint probes
   s.pattern_root->bind(TOK_KERNEL)->bind_str(TOK_TRACE)
@@ -10073,6 +10088,7 @@ register_standard_tapsets(systemtap_session & s)
 
   //perf event based probe
   register_tapset_perf(s);
+
 }
 
 
@@ -10111,6 +10127,7 @@ all_session_groups(systemtap_session& s)
   DOONE(utrace);
   DOONE(itrace);
   DOONE(dynprobe);
+  DOONE(java);
   DOONE(task_finder);
 #undef DOONE
   return g;

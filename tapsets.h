@@ -32,6 +32,7 @@ void register_tapset_timers(systemtap_session& sess);
 void register_tapset_netfilter(systemtap_session& sess);
 void register_tapset_perf(systemtap_session& sess);
 void register_tapset_utrace(systemtap_session& sess);
+void register_tapset_java(systemtap_session& sess);
 
 std::string path_remove_sysroot(const systemtap_session& sess,
 				const std::string& path);
