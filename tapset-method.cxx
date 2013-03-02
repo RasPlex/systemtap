@@ -107,6 +107,11 @@ java_builder::build(systemtap_session & sess,
   if(one_arg && method_params_count == 0)
     method_params_count++; // in this case we know there was at least a var, but no ','
 
+  if(method_params_count > 10)
+    {
+      cerr << _("Error: Maximum of 10 method parameters may be specified") << endl;
+      return;
+    }
   assert (has_method_str);
   (void) has_method_str;
   assert (has_class_str);
