@@ -86,16 +86,27 @@ java_builder::build(systemtap_session & sess,
   // XXX new var that is only the method name, go to the '('
   int short_method_pos = method_str_val.find('(');
   //only if it exists, run check
+  bool one_arg = false;
+  if(short_method_pos)
+    {
+      int second_method_pos = 0;
+      second_method_pos = method_str_val.find(')');
+      if((second_method_pos - short_method_pos) >=1)
+	one_arg = true;
+    }
   string short_method_str = method_str_val.substr(0, short_method_pos);
   string class_str_val; // fully qualified class string
   bool has_class_str = get_param (parameters, TOK_CLASS, class_str_val);
   int java_pid;
   bool has_pid_int = get_number_param (parameters, TOK_PROCESS, java_pid);
   //need to count the number of parameters, exit if more than 10
-  int method_params_counter = 1;
   // need to account for just one var (which won't have any ',')
   // XXX calculate distance between (), if greater than 0, assume one var
+  int method_params_counter = 1;
   int method_params_count = count(method_str_val.begin(), method_str_val.end(), ',');
+  if(one_arg && method_params_count == 0)
+    method_params_count++; // in this case we know there was at least a var, but no ','
+
   assert (has_method_str);
   (void) has_method_str;
   assert (has_class_str);
