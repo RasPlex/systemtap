@@ -44,12 +44,12 @@ private:
   bool cache_initialized;
   typedef multimap<string, string> java_cache_t;
   typedef multimap<string, string>::const_iterator java_cache_const_iterator_t;
-  typedef pair<java_cache_const_iterator_t, java_cache_const_iterator_t> java_cache_const_iterator_pair_t;
+  typedef pair<java_cache_const_iterator_t, java_cache_const_iterator_t>
+    java_cache_const_iterator_pair_t;
   java_cache_t java_cache;
 
 public:
   java_builder(): cache_initialized(false) {}
-  //  void build_no_more (systemtap_session& s) {}
 
   void build(systemtap_session & sess,
 	     probe * base,
@@ -83,13 +83,18 @@ java_builder::build(systemtap_session & sess,
   // XXX eventually this is where we'll check the type of format
   string method_str_val;
   bool has_method_str = get_param (parameters, TOK_METHOD, method_str_val);
+  // XXX new var that is only the method name, go to the '('
+  int short_method_pos = method_str_val.find('(');
+  //only if it exists, run check
+  string short_method_str = method_str_val.substr(0, short_method_pos);
   string class_str_val; // fully qualified class string
   bool has_class_str = get_param (parameters, TOK_CLASS, class_str_val);
   int java_pid;
   bool has_pid_int = get_number_param (parameters, TOK_PROCESS, java_pid);
   //need to count the number of parameters, exit if more than 10
   int method_params_counter = 1;
-  //need to account for just one var (which won't have any ',')
+  // need to account for just one var (which won't have any ',')
+  // XXX calculate distance between (), if greater than 0, assume one var
   int method_params_count = count(method_str_val.begin(), method_str_val.end(), ',');
   assert (has_method_str);
   (void) has_method_str;
@@ -117,6 +122,7 @@ java_builder::build(systemtap_session & sess,
       // none of this should be translated, byteman syntax is specific
       byteman_script << "RULE Stap " << sess.base_hash << endl;
       // we'll need detection here for second type of syntax
+      // XXX change the method name being passed
       byteman_script << "CLASS " << class_str_val << endl
 		     << "METHOD " << method_str_val << endl
 		     << "HELPER HelperSDTv2" << endl
@@ -124,9 +130,10 @@ java_builder::build(systemtap_session & sess,
 		     << "IF TRUE" << endl
 		     << "DO METHOD_STAP_PROBE" << method_params_count
 		     << "(\"stap-" << sess.base_hash << "\", \""
-		     << method_str_val << "\", ";
+		     << short_method_str << "\", ";
       // we need increment the var number, while decrementing the count
-      for(method_params_counter = 1; method_params_counter <= method_params_count;
+      for(method_params_counter = 1;
+	  method_params_counter <= method_params_count;
 	  method_params_counter++)
 	{
 	  byteman_script << "$" << method_params_counter;
@@ -145,20 +152,19 @@ java_builder::build(systemtap_session & sess,
    * exec bmsubmit.sh -l script.btm
    * continue regular compilation and action with redefined probe
    */
-  /*
-    XXX REDEFINE to mark probe here!
-  */
+
   if(!(has_pid_int))
     exit(1); //XXX proper exit with warning message
 
   //this could be done using itoa
   string arg = static_cast<ostringstream*>( &(ostringstream()
 					      << java_pid) )->str();
+
   const char* a1 = arg.c_str();
   const char* b1 = (find_executable("bminstall.sh")).c_str();
+  // XXX check both scripts here, exit if not available
   const char* space = " "; //XXX test if required
 
-  //int bminstall = execl(b1, space, a1, (char*)NULL);
   int bminstall; //bminstall command status
   int bmsubmit; //bmsubmit command status
   pid_t install_pid = fork();
@@ -172,12 +178,11 @@ java_builder::build(systemtap_session & sess,
   else
     if (waitpid (install_pid, &bminstall, 0) != install_pid)
       bminstall = -1;
-
+  //XXX better var names needed
   const char* a2 = " -l";
   const char* a3 = byteman_script_path.c_str();
-  //  cout << "b1: " << b1 << endl;
+  //XXX once again check if needed
   const char* b2 = (find_executable("bmsubmit.sh")).c_str();
-  //  cout << "b2: " << b2 << endl;
   pid_t submit_pid = fork();
   if(submit_pid == 0)
     {
@@ -198,6 +203,8 @@ java_builder::build(systemtap_session & sess,
    */
   probe_point* new_loc = new probe_point(*loc);
   
+  //XXX this needs to be checked if it exists, and made a configure var
+  //XXX rename the variables here
   string helper_loc = "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/amd64/libHelperSDTv2.so";
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component(TOK_PROCESS, new literal_string(helper_loc)));
@@ -206,9 +213,6 @@ java_builder::build(systemtap_session & sess,
   derived_loc->components = java_marker;
   probe *new_base = base->create_alias(derived_loc, new_loc);
   derive_probes(sess, new_base, finished_results);
-
-  //  loc->components = java_marker;
-
 }
 
 void
