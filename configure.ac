@@ -609,6 +609,18 @@ AS_IF([test "x$with_selinux" != "xno"], [
 
 AM_CONDITIONAL([HAVE_SELINUX], [test "${have_selinux}" = "yes"])
 
+AC_ARG_WITH([java],
+  AS_HELP_STRING([--with-java],
+    [Specify the directory containing libHelperSDT.so]))
+AS_IF([test "x$with_java" != "xno"], [
+  PKG_CHECK_MODULES([java], [byteman],
+    [have_java=yes
+      AC_DEFINE([HAVE_JAVA], [$with_java], [Define as the java libHelperSDT.so location.])
+    ], [have_java-no])
+], [have_java=no])
+
+AM_CONDITIONAL([HAVE_JAVA], [test "${have_java]" = "yes"])
+
 AC_SUBST(ENABLE_NLS, "$USE_NLS")
 AC_SUBST(localedir, "$localedir")
 AC_SUBST(LOCALEDIR, "$localedir")
