@@ -610,16 +610,16 @@ AS_IF([test "x$with_selinux" != "xno"], [
 AM_CONDITIONAL([HAVE_SELINUX], [test "${have_selinux}" = "yes"])
 
 AC_ARG_WITH([java],
-  AS_HELP_STRING([--with-java],
+  AS_HELP_STRING([--with-helper],
     [Specify the directory containing libHelperSDT.so]))
-AS_IF([test "x$with_java" != "xno"], [
-  PKG_CHECK_MODULES([java], [byteman],
-    [have_java=yes
-      AC_DEFINE([HAVE_JAVA], [$with_java], [Define as the java libHelperSDT.so location.])
-    ], [have_java-no])
-], [have_java=no])
+AS_IF([test "x$with_helper" != "xno"], [
+	    have_helper="$with_helper"
+	    AC_MSG_NOTICE([Adding helper location $have_helper])], [
+	    have_helper=""])
 
-AM_CONDITIONAL([HAVE_JAVA], [test "${have_java]" = "yes"])
+if test -n "$with_helper" -a "$have_helper" != "no"; then
+AC_DEFINE_UNQUOTED(HAVE_HELPER, "$have_helper", [Define as the java libHelperSDT.so location.])	
+fi
 
 AC_SUBST(ENABLE_NLS, "$USE_NLS")
 AC_SUBST(localedir, "$localedir")

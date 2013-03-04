@@ -22,6 +22,14 @@
 /* Define to 1 if you have the <BPatch_object.h> header file. */
 #undef HAVE_BPATCH_OBJECT_H
 
+/* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYCURRENT
+
+/* Define to 1 if you have the MacOS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+#undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
 /* Define to 1 if you have the <crash/defs.h> header file. */
 #undef HAVE_CRASH_DEFS_H
 
@@ -38,14 +46,14 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
+/* Define as the java libHelperSDT.so location. */
+#undef HAVE_HELPER
+
 /* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define as the java libHelperSDT.so location. */
-#undef HAVE_JAVA
 
 /* Define to 1 if you have the `dw' library (-ldw). */
 #undef HAVE_LIBDW

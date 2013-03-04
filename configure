@@ -696,6 +696,7 @@ LIBINTL
 INTLLIBS
 LTLIBICONV
 LIBICONV
+INTL_MACOSX_LIBS
 host_os
 host_vendor
 host_cpu
@@ -840,6 +841,7 @@ with_rpm
 with_elfutils
 with_dyninst
 with_selinux
+with_java
 with_extra_version
 '
       ac_precious_vars='build_alias
@@ -1534,6 +1536,7 @@ Optional Packages:
   --with-dyninst=DIRECTORY
                           find dyninst headers/libraries in DIRECTORY
   --without-selinux       Do not use libselinux even if present
+  --with-helper           Specify the directory containing libHelperSDT.so
   --with-extra-version=STRING
                           Add STRING to stap -V version
 
@@ -7960,6 +7963,81 @@ fi
 
 
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFPreferencesCopyAppValue" >&5
+$as_echo_n "checking for CFPreferencesCopyAppValue... " >&6; }
+if ${gt_cv_func_CFPreferencesCopyAppValue+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  gt_save_LIBS="$LIBS"
+     LIBS="$LIBS -Wl,-framework -Wl,CoreFoundation"
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <CoreFoundation/CFPreferences.h>
+int
+main ()
+{
+CFPreferencesCopyAppValue(NULL, NULL)
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  gt_cv_func_CFPreferencesCopyAppValue=yes
+else
+  gt_cv_func_CFPreferencesCopyAppValue=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+     LIBS="$gt_save_LIBS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gt_cv_func_CFPreferencesCopyAppValue" >&5
+$as_echo "$gt_cv_func_CFPreferencesCopyAppValue" >&6; }
+  if test $gt_cv_func_CFPreferencesCopyAppValue = yes; then
+
+$as_echo "#define HAVE_CFPREFERENCESCOPYAPPVALUE 1" >>confdefs.h
+
+  fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLocaleCopyCurrent" >&5
+$as_echo_n "checking for CFLocaleCopyCurrent... " >&6; }
+if ${gt_cv_func_CFLocaleCopyCurrent+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  gt_save_LIBS="$LIBS"
+     LIBS="$LIBS -Wl,-framework -Wl,CoreFoundation"
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <CoreFoundation/CFLocale.h>
+int
+main ()
+{
+CFLocaleCopyCurrent();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  gt_cv_func_CFLocaleCopyCurrent=yes
+else
+  gt_cv_func_CFLocaleCopyCurrent=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+     LIBS="$gt_save_LIBS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gt_cv_func_CFLocaleCopyCurrent" >&5
+$as_echo "$gt_cv_func_CFLocaleCopyCurrent" >&6; }
+  if test $gt_cv_func_CFLocaleCopyCurrent = yes; then
+
+$as_echo "#define HAVE_CFLOCALECOPYCURRENT 1" >>confdefs.h
+
+  fi
+  INTL_MACOSX_LIBS=
+  if test $gt_cv_func_CFPreferencesCopyAppValue = yes || test $gt_cv_func_CFLocaleCopyCurrent = yes; then
+    INTL_MACOSX_LIBS="-Wl,-framework -Wl,CoreFoundation"
+  fi
+
+
+
 
 
 
@@ -10810,6 +10888,30 @@ else
   HAVE_SELINUX_FALSE=
 fi
 
+
+
+# Check whether --with-java was given.
+if test "${with_java+set}" = set; then :
+  withval=$with_java;
+fi
+
+if test "x$with_helper" != "xno"; then :
+
+	    have_helper="$with_helper"
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: Adding helper location $have_helper" >&5
+$as_echo "$as_me: Adding helper location $have_helper" >&6;}
+else
+
+	    have_helper=""
+fi
+
+if test -n "$with_helper" -a "$have_helper" != "no"; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_HELPER "$have_helper"
+_ACEOF
+
+fi
 
 ENABLE_NLS="$USE_NLS"
 
