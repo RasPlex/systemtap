@@ -1,0 +1,15 @@
+To compile libHelperSDT.so, run
+
+gcc -g -o libHelperSDT.so -fPIC -lc -shared -I/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/include/linux -I/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/include HelperSDT.c
+
+You may need to -I/path/to/sys/sdt.h in the gcc command
+
+javac HelperSDT.java -> produces HelperSDT.class
+
+jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+
+cp libHelperSDT.so /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/amd64/
+cp HelperSDT.jar /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/ext
+
+
+

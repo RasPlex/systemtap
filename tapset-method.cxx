@@ -139,7 +139,7 @@ java_builder::build (systemtap_session & sess,
       // XXX change the method name being passed
       byteman_script << "CLASS " << class_str_val << endl
 		     << "METHOD " << method_str_val << endl
-		     << "HELPER HelperSDTv2" << endl
+		     << "HELPER HelperSDT" << endl
 		     << "AT ENTRY" << endl
 		     << "IF TRUE" << endl
 		     << "DO METHOD_STAP_PROBE" << method_params_count

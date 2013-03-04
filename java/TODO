@@ -1,3 +1,6 @@
 Modify Makefile's to automatically generate and place libHelperSDT
 Gracefully detach from java process
 Change 'process(JAVAPID)' to 'java(PID)'
+Add Documentation
+Create check for strings somehow in HelperSDT.c
+Add NEWS (if deemed fit to commit to master)
