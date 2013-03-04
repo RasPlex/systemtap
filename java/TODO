@@ -1,0 +1,3 @@
+Modify Makefile's to automatically generate and place libHelperSDT
+Gracefully detach from java process
+Change 'process(JAVAPID)' to 'java(PID)'
