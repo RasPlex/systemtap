@@ -10,6 +10,7 @@
 #include "tapsets.h"
 #include "translate.h"
 #include "util.h"
+#include "config.h"
 
 #include "unistd.h"
 #include "sys/wait.h"
@@ -160,7 +161,7 @@ java_builder::build (systemtap_session & sess,
 	clog << "Finished writting byteman script" << endl;
       
     }
-
+#ifdef HAVE_HELPER
   /* we've written the byteman script, have its location 
    * re-write probe point to be process("libHelperSDTv2.so").mark("*")
    * use handler of first probe as body of second
@@ -224,10 +225,7 @@ java_builder::build (systemtap_session & sess,
    * redefine functor values with new literal_string("foo")
    */
   probe_point* new_loc = new probe_point (*loc);
-  
-  //XXX this needs to be checked if it exists, and made a configure var
-  //XXX rename the variables here
-  string helper_loc = "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/amd64/libHelperSDTv2.so";
+  string helper_loc = HAVE_HELPER;
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 
 			 (TOK_PROCESS, new literal_string (helper_loc)));
@@ -237,6 +235,10 @@ java_builder::build (systemtap_session & sess,
   derived_loc->components = java_marker;
   probe *new_mark_probe = base->create_alias (derived_loc, new_loc);
   derive_probes (sess, new_mark_probe, finished_results);
+
+#else
+  cerr << _("Cannot probe java method, configure --with-helper=") << endl;
+#endif
 }
 
 void
