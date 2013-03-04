@@ -616,9 +616,12 @@ AS_IF([test "x$with_helper" != "xno"], [
 	    have_helper="$with_helper"
 	    AC_MSG_NOTICE([Adding helper location $have_helper])], [
 	    have_helper=""])
-
+AC_CHECK_PROG(have_byteman_install, bminstall.sh, yes, no)
+AC_CHECK_PROG(have_byteman_submit, bmsubmit.sh, yes, no)
+if test -n "$have_byteman_install" -a "$have_byteman_submit" != "no"; then
 if test -n "$with_helper" -a "$have_helper" != "no"; then
 AC_DEFINE_UNQUOTED(HAVE_HELPER, "$have_helper", [Define as the java libHelperSDT.so location.])	
+fi
 fi
 
 AC_SUBST(ENABLE_NLS, "$USE_NLS")
