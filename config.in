@@ -46,7 +46,7 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
-/* Define as the java libHelperSDT.so location. */
+/* Define as the directory contatining libHelperSDT.so */
 #undef HAVE_HELPER
 
 /* Define if you have the iconv() function and it works. */
