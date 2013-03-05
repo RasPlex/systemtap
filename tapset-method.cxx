@@ -199,18 +199,19 @@ java_builder::build (systemtap_session & sess,
   else
     if (waitpid (install_pid, &bminstall, 0) != install_pid)
       bminstall = -1;
-  //XXX better var names needed
+
   const char* bmsubmit_option = " -l";
   const char* bmsubmit_script = byteman_script_path.c_str ();
-  //XXX once again check if needed
   const char* bmsubmit_path = (find_executable ("bmsubmit.sh")).c_str ();
+  string _redirect = " -o " + sess.tmpdir + "/byteman.log";
+  const char* redirect = _redirect.c_str();
   if (sess.verbose > 3)
     clog << "Reported bmsubmit.sh path: " << bminstall_path << endl;
 
   pid_t submit_pid = fork ();
   if (submit_pid == 0)
     {
-      execl (bmsubmit_path, bmsubmit_option, bmsubmit_script, NULL);
+      execl (bmsubmit_path, bmsubmit_option, redirect, bmsubmit_script, (char*)NULL);
       _exit (EXIT_FAILURE);
     }
   else if (submit_pid < 0) //failure
