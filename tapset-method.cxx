@@ -33,6 +33,7 @@ static const string TOK_CLASS ("class");
 static const string TOK_METHOD ("method");
 static const string TOK_PROCESS ("process");
 static const string TOK_MARK ("mark");
+static const string TOK_JAVA("java");
 
 struct java_builder: public derived_probe_builder
 {
@@ -92,7 +93,7 @@ java_builder::build (systemtap_session & sess,
   string class_str_val; // fully qualified class string
   bool has_class_str = get_param (parameters, TOK_CLASS, class_str_val);
   int java_pid;
-  bool has_pid_int = get_number_param (parameters, TOK_PROCESS, java_pid);
+  bool has_pid_int = get_number_param (parameters, TOK_JAVA, java_pid);
   //need to count the number of parameters, exit if more than 10
   int method_params_counter = 1;
   int method_params_count = count (method_str_val.begin (), method_str_val.end (), ',');
@@ -247,7 +248,7 @@ register_tapset_java (systemtap_session& s)
   match_node* root = s.pattern_root;
   derived_probe_builder *builder = new java_builder ();
   
-  root = root->bind_num (TOK_PROCESS)
+  root = root->bind_num (TOK_JAVA)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD);
   root->bind (builder);
 
