@@ -19,7 +19,7 @@ install-data-local:
 	done
 
 if BUILD_TRANSLATOR
-man_MANS += stap.1
+man_MANS += stap.1 stap-prep.1
 endif
 
 if HAVE_NSS
