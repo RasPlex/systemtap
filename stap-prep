@@ -2,6 +2,7 @@
 LANG=C; export LANG
 check_error() { if test $1 != 0; then echo $2; exit $1; fi }
 
+prep_rpm_based() {
 # uname -r can produce different kinds of output:
 # 2.6.32-30.el6.x86_64 (no variant, but including ".arch")
 # 2.6.18-194.3.1.el5debug ("variant", without dot, no arch)
@@ -43,3 +44,14 @@ if [ "$NEEDED" != "" ]; then
         rm -r $DIR #cleanup
     fi
 fi
+}
+
+DISTRO="$(lsb_release --id --short 2> /dev/null)"
+if [ $? -ne 0 ]; then
+    DISTRO="unknown"
+fi
+case "$DISTRO" in
+*)
+	prep_rpm_based "$@"
+	;;
+esac
