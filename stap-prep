@@ -77,7 +77,6 @@ esac
     echo "make >= 0"
     echo "linux-image-$ABINAME = $VERSION"
     echo "linux-headers-$ABINAME = $VERSION"
-    echo "linux-kbuild-$BASEVERSION >= 0"
     case "$DISTRO" in
 	Debian)
 	    echo "linux-image-$ABINAME-dbg = $VERSION"
