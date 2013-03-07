@@ -609,20 +609,26 @@ AS_IF([test "x$with_selinux" != "xno"], [
 
 AM_CONDITIONAL([HAVE_SELINUX], [test "${have_selinux}" = "yes"])
 
+AC_CHECK_PROG(have_java, java, yes, no)
+AC_CHECK_PROG(have_byteman_submit, bmsubmit.sh, yes, no)
+AC_CHECK_PROG(have_byteman_install, bminstall.sh, yes, no)
+if test -n "$have_java" -a "$have_byteman_submit" -a "$have_byteman_install" != no; then
 AC_ARG_WITH([java],
   AS_HELP_STRING([--with-helper],
-    [Specify the directory containing libHelperSDT.so]))
+     [Specify the directory containing libHelperSDT.so]))
 AS_IF([test "x$with_helper" != "xno"], [
-	    have_helper="$with_helper"
-	    AC_MSG_NOTICE([Adding helper location $have_helper])], [
-	    have_helper=""])
-AC_CHECK_PROG(have_byteman_install, bminstall.sh, yes, no)
-AC_CHECK_PROG(have_byteman_submit, bmsubmit.sh, yes, no)
-if test -n "$have_byteman_install" -a "$have_byteman_submit" != "no"; then
+           have_helper="$with_helper"
+           AC_MSG_NOTICE([Adding helper location $have_helper])], [
+           have_helper=""])
 if test -n "$with_helper" -a "$have_helper" != "no"; then
-AC_DEFINE_UNQUOTED(HAVE_HELPER, "$have_helper", [Define as the java libHelperSDT.so location.])	
+AC_DEFINE_UNQUOTED(HAVE_HELPER, "$have_helper", [Define as the directory contatining libHelperSDT.so])
+AM_CONDITIONAL([HAVE_HELPER], [test "$have_helper" != "no"])
 fi
+else
+AC_MSG_WARN([will not run per-method java probing, missing byteman or java requirements])       
 fi
+
+
 
 AC_SUBST(ENABLE_NLS, "$USE_NLS")
 AC_SUBST(localedir, "$localedir")
@@ -661,6 +667,7 @@ if test $enable_translator == "yes"; then
 fi
 AC_CONFIG_FILES([dtrace], [chmod +x dtrace])
 AC_CONFIG_FILES(stapdyn/Makefile)
+AC_CONFIG_FILES(java/Makefile)
 AC_CONFIG_FILES(staprun/Makefile)
 AC_CONFIG_FILES([staprun/run-staprun], [chmod +x staprun/run-staprun])
 AC_CONFIG_FILES(re2c-migrate/Makefile)

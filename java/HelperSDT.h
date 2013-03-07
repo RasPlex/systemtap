@@ -97,22 +97,6 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE10
   (JNIEnv *, jobject, jstring, jstring, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject);
 
-/*
- * Class:     HelperSDT
- * Method:    METHOD_STAP_PROBE11
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
- */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE11
-  (JNIEnv *, jobject, jstring, jstring, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject);
-
-/*
- * Class:     HelperSDT
- * Method:    METHOD_STAP_PROBE12
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
- */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE12
-  (JNIEnv *, jobject, jstring, jstring, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject);
-
 #ifdef __cplusplus
 }
 #endif

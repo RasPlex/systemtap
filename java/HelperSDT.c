@@ -2,6 +2,8 @@
 #include "jni.h"
 #include <sys/sdt.h>
 #include <stdbool.h>
+#include "stdlib.h"
+#include "string.h"
 
 typedef enum { NONE, INTEGER, BYTE, BOOL, CHAR, SHORT, LONG, DOUBLE, FLOAT, ARRAY, OTHER, STRING } Type;
 
@@ -13,6 +15,7 @@ typedef struct {
     char b; //we're actually using this as a byte, this is how its handled in jni.h
     bool bl;
     char* c;
+    int ch;
     short s;
     long long l;
     long long d;
@@ -26,8 +29,10 @@ typedef struct {
 
 char* get_java_string(JNIEnv *env, jobject _string)
 {
-  const char* string = (*env)->GetStringUTFChars(env, _string, NULL);
-  (*env)->GetStringUTFChars(env, _string, NULL);
+  const char* __string = (*env)->GetStringUTFChars(env, _string, NULL);
+  (*env)->ReleaseStringUTFChars(env, _string, NULL);
+  char* string = malloc(strlen( __string)+1);
+  strcpy(string, __string);
   return string;
 }
 
@@ -80,7 +85,7 @@ _staparg determine_java_type(JNIEnv *env, jobject _arg, _staparg staparg)
   else
     {
       staparg.type = CHAR;
-      staparg.vartype.c = (*env)->GetCharField(env, _arg, fidNumber);
+      staparg.vartype.ch = (*env)->GetCharField(env, _arg, fidNumber);
       return staparg;
     }
   fidNumber = (*env)->GetFieldID(env, class_arg, "value", "S");
@@ -143,8 +148,8 @@ _staparg determine_java_type(JNIEnv *env, jobject _arg, _staparg staparg)
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE0
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   STAP_PROBE2(hotspot, method__no__arguments, provider, name);
 
 }
@@ -157,8 +162,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE0
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE1
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   arg1 = determine_java_type(env, _arg1, arg1);
   if(arg1.type == OTHER || arg1.type == NONE)
@@ -174,8 +179,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE1
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE2
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   arg1 = determine_java_type(env, _arg1, arg1);
@@ -196,8 +201,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE2
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE3
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -221,8 +226,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE3
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE4
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -251,8 +256,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE4
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE5
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -284,8 +289,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE5
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE6
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -321,8 +326,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE6
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE7
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -362,8 +367,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE7
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE8
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -407,8 +412,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE8
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8, jobject _arg9)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -457,8 +462,8 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
 JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE10
 (JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8, jobject _arg9, jobject _arg10)
 {
-  const char* provider = get_java_string(env, _provider);
-  const char* name = get_java_string(env, _name);
+  char* provider = get_java_string(env, _provider);
+  char* name = get_java_string(env, _name);
   _staparg arg1 = {0}; //initialize to zero so we don't get garbage the first time through
   _staparg arg2 = {0};
   _staparg arg3 = {0};
@@ -500,26 +505,4 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE10
   if(arg10.type == OTHER || arg10.type == NONE)
     arg10.vartype.c = get_java_string(env, _arg10);
   STAP_PROBE12(hotspot, method__ten__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, arg8.vartype.d, arg9.vartype.d, arg10.vartype.d, provider, name);
-}
-
-/*
- * Class:     HelperSDT
- * Method:    METHOD_STAP_PROBE11
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
- */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE11
-(JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8, jobject _arg9, jobject _arg10, jobject _arg11)
-{
-
-}
-
-/*
- * Class:     HelperSDT
- * Method:    METHOD_STAP_PROBE12
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
- */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE12
-(JNIEnv *env, jobject obj, jstring _provider, jstring _name, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8, jobject _arg9, jobject _arg10, jobject _arg11, jobject _arg12)
-{
-
 }
