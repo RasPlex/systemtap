@@ -201,6 +201,13 @@ public:
   bool suppress_handler_errors;
   bool suppress_time_limits;
 
+#ifdef HAVE_HELPER
+  int java_pid;
+  const char* bminstall_path;
+  const char* bmsubmit_path;
+  void java_detach();
+#endif //HAVE_HELPER
+
   enum { kernel_runtime, dyninst_runtime } runtime_mode;
   bool runtime_usermode_p() const { return runtime_mode == dyninst_runtime; }
 

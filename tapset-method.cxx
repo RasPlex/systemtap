@@ -179,10 +179,10 @@ java_builder::build (systemtap_session & sess,
 					      << java_pid) )->str ();
 
   const char* java_pid_str = arg.c_str ();
-  const char* bminstall_path = (find_executable ("bminstall.sh")).c_str ();
+  sess.bminstall_path = (find_executable ("bminstall.sh")).c_str ();
 
   if (sess.verbose > 3)
-    clog << "Reported bminstall.sh path: " << bminstall_path << endl;
+    clog << "Reported bminstall.sh path: " << sess.bminstall_path << endl;
   // XXX check both scripts here, exit if not available
   const char* space = " ";
 
@@ -191,7 +191,7 @@ java_builder::build (systemtap_session & sess,
   pid_t install_pid = fork ();
   if (install_pid == 0)
     {
-      execl (bminstall_path, space, java_pid_str, (char*)NULL);
+      execl (sess.bminstall_path, space, java_pid_str, (char*)NULL);
       _exit (EXIT_FAILURE);
     }
   else if (install_pid < 0) //failure
@@ -202,16 +202,16 @@ java_builder::build (systemtap_session & sess,
 
   const char* bmsubmit_option = " -l";
   const char* bmsubmit_script = byteman_script_path.c_str ();
-  const char* bmsubmit_path = (find_executable ("bmsubmit.sh")).c_str ();
+  sess.bmsubmit_path = (find_executable ("bmsubmit.sh")).c_str ();
   string _redirect = " -o " + sess.tmpdir + "/byteman.log";
   const char* redirect = _redirect.c_str();
   if (sess.verbose > 3)
-    clog << "Reported bmsubmit.sh path: " << bminstall_path << endl;
+    clog << "Reported bmsubmit.sh path: " << sess.bmsubmit_path << endl;
 
   pid_t submit_pid = fork ();
   if (submit_pid == 0)
     {
-      execl (bmsubmit_path, bmsubmit_option, redirect, bmsubmit_script, (char*)NULL);
+      execl (sess.bmsubmit_path, bmsubmit_option, redirect, bmsubmit_script, (char*)NULL);
       _exit (EXIT_FAILURE);
     }
   else if (submit_pid < 0) //failure
@@ -227,17 +227,15 @@ java_builder::build (systemtap_session & sess,
    * redefine functor values with new literal_string("foo")
    */
   probe_point* new_loc = new probe_point (*loc);
-  string helper_loc = HAVE_HELPER;
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 
-			 (TOK_PROCESS, new literal_string (helper_loc)));
+			 (TOK_PROCESS, new literal_string (HAVE_HELPER)));
   java_marker.push_back( new probe_point::component 
 			 (TOK_MARK, new literal_string ("*")));
   probe_point * derived_loc = new probe_point (*new_loc);
   derived_loc->components = java_marker;
   probe *new_mark_probe = base->create_alias (derived_loc, new_loc);
   derive_probes (sess, new_mark_probe, finished_results);
-
 #else
   cerr << _("Cannot probe java method, configure --with-helper=") << endl;
 #endif

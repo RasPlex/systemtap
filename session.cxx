@@ -35,6 +35,7 @@ extern "C" {
 #include <sys/resource.h>
 #include <elfutils/libdwfl.h>
 #include <unistd.h>
+#include <sys/wait.h>
 }
 
 #if HAVE_NSS
@@ -160,6 +161,12 @@ systemtap_session::systemtap_session ():
   sysroot = "";
   update_release_sysroot = false;
   suppress_time_limits = false;
+
+#ifdef HAVE_HELPER
+  java_pid = 0;
+  bminstall_path = "";
+  bmsubmit_path = "";
+#endif //HAVE_HELPER
 
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
@@ -334,6 +341,12 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   sysenv = other.sysenv;
   suppress_time_limits = other.suppress_time_limits;
 
+#ifdef HAVE_HELPER
+  java_pid = 0;
+  bminstall_path = "";
+  bmsubmit_path = "";
+#endif //HAVE_HELPER
+
   include_path = other.include_path;
   runtime_path = other.runtime_path;
 
@@ -368,6 +381,9 @@ systemtap_session::systemtap_session (const systemtap_session& other,
 
 systemtap_session::~systemtap_session ()
 {
+#ifdef HAVE_HELPER
+  java_detach();
+#endif //HAVE_HELPER
   remove_tmp_dir();
   delete_map(subsessions);
   delete pattern_root;
@@ -1986,6 +2002,27 @@ translator_output* systemtap_session::op_create_auxiliary()
   auxiliary_outputs.push_back (n);
   return n;
 }
+
+#ifdef HAVE_HELPER
+void
+systemtap_session::java_detach()
+{
+  int bmsubmit = 0;
+  const char* option = " -u ";
+  bmsubmit_path = (find_executable("bmsubmit.sh")).c_str();
+  pid_t remove_pid = fork();
+  if (remove_pid == 0)
+    {
+      execl (bmsubmit_path, " ", option, (char*)NULL);
+      _exit (EXIT_FAILURE);
+    }
+  else if (remove_pid < 0) //failed
+    bmsubmit = -1;
+  else
+    if (waitpid (remove_pid, &bmsubmit, 0) != remove_pid)
+      bmsubmit = -1;
+}
+#endif
 
 // Wrapper for checking if there are pending interrupts
 void
