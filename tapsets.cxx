@@ -10010,7 +10010,6 @@ tracepoint_builder::build(systemtap_session& s,
 void
 register_standard_tapsets(systemtap_session & s)
 {
-  register_tapset_java(s);
   register_tapset_been(s);
   register_tapset_itrace(s);
   register_tapset_mark(s);
@@ -10031,18 +10030,6 @@ register_standard_tapsets(systemtap_session & s)
     ->bind_num(TOK_STATEMENT)->bind(TOK_ABSOLUTE)->bind(TOK_RETURN)
     ->bind_privilege(pr_all)
     ->bind(new uprobe_builder ());
-
-  // java per-method probes
-  /*  s.pattern_root->bind_num(TOK_PROCESS)
-    ->bind_str(TOK_CLASS)->bind_str(TOK_METHOD)
-    ->bind(new java_builder ());*/
-
-  /* second java case where we have 
-     process("PID").method("class.method")
-  */
-  /*  s.pattern_root->bind_num(TOK_PROCESS)
-    ->bind_str(TOK_CLASSMETHOD)
-    ->bind(new java_builder ());*/
 
   // kernel tracepoint probes
   s.pattern_root->bind(TOK_KERNEL)->bind_str(TOK_TRACE)
@@ -10088,7 +10075,7 @@ register_standard_tapsets(systemtap_session & s)
 
   //perf event based probe
   register_tapset_perf(s);
-
+  register_tapset_java(s);
 }
 
 

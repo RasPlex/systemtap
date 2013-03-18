@@ -44,6 +44,7 @@ private:
   typedef pair<java_cache_const_iterator_t, java_cache_const_iterator_t>
     java_cache_const_iterator_pair_t;
   java_cache_t java_cache;
+  //  string helper_path;
 
 public:
   java_builder (): cache_initialized (false) {}
@@ -76,7 +77,7 @@ java_builder::build (systemtap_session & sess,
 		     literal_map_t const & parameters,
 		     vector <derived_probe *> & finished_results)
 {
-
+  //  helper_path = HAVE_HELPER;
   string method_str_val;
   bool has_method_str = get_param (parameters, TOK_METHOD, method_str_val);
   int short_method_pos = method_str_val.find ('(');
@@ -92,8 +93,7 @@ java_builder::build (systemtap_session & sess,
   string short_method_str = method_str_val.substr (0, short_method_pos);
   string class_str_val; // fully qualified class string
   bool has_class_str = get_param (parameters, TOK_CLASS, class_str_val);
-  int java_pid;
-  bool has_pid_int = get_number_param (parameters, TOK_JAVA, java_pid);
+  bool has_pid_int = get_number_param (parameters, TOK_JAVA, sess.java_pid);
   //need to count the number of parameters, exit if more than 10
   int method_params_counter = 1;
   int method_params_count = count (method_str_val.begin (), method_str_val.end (), ',');
@@ -110,24 +110,23 @@ java_builder::build (systemtap_session & sess,
   assert (has_class_str);
   (void) has_class_str;
 
-  string byteman_script_path;
   if (! cache_initialized)
     {
 
       cache_initialized = true;
-      byteman_script_path = sess.tmpdir + "/stap-byteman.btm";
+      sess.byteman_script_path = sess.tmpdir + "/stap-byteman.btm";
       if (sess.verbose > 3)
 	{
-	  clog << "byteman script path: " << byteman_script_path
+	  clog << "byteman script path: " << sess.byteman_script_path
 	       << endl;
 	}
       ofstream byteman_script;
-      byteman_script.open (byteman_script_path.c_str (), ifstream::out);
+      byteman_script.open (sess.byteman_script_path.c_str(), ifstream::out);
       if (! byteman_script)
 	{
 	  if (sess.verbose > 3)
 	    //TRANSLATORS: Specific path cannot be opened
-	    clog << byteman_script_path << _(" cannot be opened: ")
+	    clog << sess.byteman_script_path << _(" cannot be opened: ")
 		 << strerror (errno) << endl;
 	  return;
 	}
@@ -176,22 +175,23 @@ java_builder::build (systemtap_session & sess,
 
   //this could be done using itoa
   string arg = static_cast <ostringstream*> ( & (ostringstream ()
-					      << java_pid) )->str ();
+					      << sess.java_pid) )->str ();
 
   const char* java_pid_str = arg.c_str ();
-  sess.bminstall_path = (find_executable ("bminstall.sh")).c_str ();
+  sess.bminstall_path = (find_executable ("bminstall.sh"));
+  const char* tmp2 = sess.bminstall_path.c_str();
 
   if (sess.verbose > 3)
     clog << "Reported bminstall.sh path: " << sess.bminstall_path << endl;
   // XXX check both scripts here, exit if not available
   const char* space = " ";
-
   int bminstall; //bminstall command status
   int bmsubmit; //bmsubmit command status
   pid_t install_pid = fork ();
   if (install_pid == 0)
     {
-      execl (sess.bminstall_path, space, java_pid_str, (char*)NULL);
+      //      execl (sess.bminstall_path.c_str(), space, java_pid_str, (char*)NULL);
+      execl (tmp2, space, java_pid_str, (char*)NULL);
       _exit (EXIT_FAILURE);
     }
   else if (install_pid < 0) //failure
@@ -201,17 +201,17 @@ java_builder::build (systemtap_session & sess,
       bminstall = -1;
 
   const char* bmsubmit_option = " -l";
-  const char* bmsubmit_script = byteman_script_path.c_str ();
-  sess.bmsubmit_path = (find_executable ("bmsubmit.sh")).c_str ();
-  string _redirect = " -o " + sess.tmpdir + "/byteman.log";
-  const char* redirect = _redirect.c_str();
+  sess.bmsubmit_path = (find_executable ("bmsubmit.sh"));
+  const char* _bmsubmit_path = sess.bmsubmit_path.c_str();
+  sess.byteman_log = " -o " + sess.tmpdir + "/byteman.log";
+  //  const char* bmlog = sess.byteman_log.c_str();
   if (sess.verbose > 3)
     clog << "Reported bmsubmit.sh path: " << sess.bmsubmit_path << endl;
 
   pid_t submit_pid = fork ();
   if (submit_pid == 0)
     {
-      execl (sess.bmsubmit_path, bmsubmit_option, redirect, bmsubmit_script, (char*)NULL);
+      execl (_bmsubmit_path, bmsubmit_option, sess.byteman_log.c_str(), sess.byteman_script_path.c_str(), (char*)NULL);
       _exit (EXIT_FAILURE);
     }
   else if (submit_pid < 0) //failure
@@ -229,7 +229,7 @@ java_builder::build (systemtap_session & sess,
   probe_point* new_loc = new probe_point (*loc);
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 
-			 (TOK_PROCESS, new literal_string (HAVE_HELPER)));
+			 (TOK_PROCESS, new literal_string ("/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/amd64/libHelperSDT.so")));
   java_marker.push_back( new probe_point::component 
 			 (TOK_MARK, new literal_string ("*")));
   probe_point * derived_loc = new probe_point (*new_loc);

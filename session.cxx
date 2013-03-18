@@ -161,11 +161,13 @@ systemtap_session::systemtap_session ():
   sysroot = "";
   update_release_sysroot = false;
   suppress_time_limits = false;
+  java_pid = 0;
 
 #ifdef HAVE_HELPER
-  java_pid = 0;
   bminstall_path = "";
   bmsubmit_path = "";
+  byteman_script_path = "";
+  byteman_log = "";
 #endif //HAVE_HELPER
 
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
@@ -340,11 +342,13 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   update_release_sysroot = other.update_release_sysroot;
   sysenv = other.sysenv;
   suppress_time_limits = other.suppress_time_limits;
+  java_pid = other.java_pid;
 
 #ifdef HAVE_HELPER
-  java_pid = 0;
-  bminstall_path = "";
-  bmsubmit_path = "";
+  bminstall_path = other.bminstall_path;
+  bmsubmit_path = other.bmsubmit_path;
+  byteman_script_path = other.byteman_script_path;
+  byteman_log = other.byteman_log;
 #endif //HAVE_HELPER
 
   include_path = other.include_path;
@@ -382,7 +386,8 @@ systemtap_session::systemtap_session (const systemtap_session& other,
 systemtap_session::~systemtap_session ()
 {
 #ifdef HAVE_HELPER
-  java_detach();
+  if(java_pid != 0)
+    java_detach();
 #endif //HAVE_HELPER
   remove_tmp_dir();
   delete_map(subsessions);
@@ -2007,20 +2012,15 @@ translator_output* systemtap_session::op_create_auxiliary()
 void
 systemtap_session::java_detach()
 {
-  int bmsubmit = 0;
-  const char* option = " -u ";
-  bmsubmit_path = (find_executable("bmsubmit.sh")).c_str();
-  pid_t remove_pid = fork();
-  if (remove_pid == 0)
-    {
-      execl (bmsubmit_path, " ", option, (char*)NULL);
-      _exit (EXIT_FAILURE);
-    }
-  else if (remove_pid < 0) //failed
-    bmsubmit = -1;
-  else
-    if (waitpid (remove_pid, &bmsubmit, 0) != remove_pid)
-      bmsubmit = -1;
+  vector<string> bmcommand;
+  bmcommand.push_back(bmsubmit_path);
+  bmcommand.push_back(byteman_log);
+  bmcommand.push_back(" -u");
+  bmcommand.push_back(byteman_script_path);
+  (void) stap_system(verbose, bmcommand);
+  if (verbose>1)
+    clog << _F("Removed byteman rule: \"%s\"", byteman_script_path.c_str()) << endl;
+
 }
 #endif
 

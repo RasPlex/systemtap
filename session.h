@@ -200,13 +200,12 @@ public:
   int download_dbinfo;
   bool suppress_handler_errors;
   bool suppress_time_limits;
-
-#ifdef HAVE_HELPER
   int java_pid;
-  const char* bminstall_path;
-  const char* bmsubmit_path;
   void java_detach();
-#endif //HAVE_HELPER
+  std::string bminstall_path;
+  std::string bmsubmit_path;
+  std::string byteman_script_path;
+  std::string byteman_log;
 
   enum { kernel_runtime, dyninst_runtime } runtime_mode;
   bool runtime_usermode_p() const { return runtime_mode == dyninst_runtime; }
