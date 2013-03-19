@@ -77,7 +77,6 @@ java_builder::build (systemtap_session & sess,
 		     literal_map_t const & parameters,
 		     vector <derived_probe *> & finished_results)
 {
-  //  helper_path = HAVE_HELPER;
   string method_str_val;
   bool has_method_str = get_param (parameters, TOK_METHOD, method_str_val);
   int short_method_pos = method_str_val.find ('(');
@@ -179,49 +178,29 @@ java_builder::build (systemtap_session & sess,
 
   const char* java_pid_str = arg.c_str ();
   sess.bminstall_path = (find_executable ("bminstall.sh"));
-  const char* tmp2 = sess.bminstall_path.c_str();
 
   if (sess.verbose > 3)
     clog << "Reported bminstall.sh path: " << sess.bminstall_path << endl;
   // XXX check both scripts here, exit if not available
-  const char* space = " ";
-  int bminstall; //bminstall command status
-  int bmsubmit; //bmsubmit command status
-  pid_t install_pid = fork ();
-  if (install_pid == 0)
-    {
-      //      execl (sess.bminstall_path.c_str(), space, java_pid_str, (char*)NULL);
-      execl (tmp2, space, java_pid_str, (char*)NULL);
-      _exit (EXIT_FAILURE);
-    }
-  else if (install_pid < 0) //failure
-    bminstall = -1;
-  else
-    if (waitpid (install_pid, &bminstall, 0) != install_pid)
-      bminstall = -1;
 
-  const char* bmsubmit_option = " -l";
+  vector<string> bminstall_cmd;
+  bminstall_cmd.push_back(sess.bminstall_path);
+  bminstall_cmd.push_back(java_pid_str);
+  (void) stap_system(sess.verbose, bminstall_cmd);
+
+  vector<string> bmsubmit_cmd;
   sess.bmsubmit_path = (find_executable ("bmsubmit.sh"));
-  const char* _bmsubmit_path = sess.bmsubmit_path.c_str();
   sess.byteman_log = " -o " + sess.tmpdir + "/byteman.log";
-  //  const char* bmlog = sess.byteman_log.c_str();
+  bmsubmit_cmd.push_back(sess.bmsubmit_path);
+  bmsubmit_cmd.push_back(sess.byteman_log);
+  bmsubmit_cmd.push_back(" -l");
+  bmsubmit_cmd.push_back(sess.byteman_script_path);
+  (void) stap_system(sess.verbose, bmsubmit_cmd);
   if (sess.verbose > 3)
     clog << "Reported bmsubmit.sh path: " << sess.bmsubmit_path << endl;
 
-  pid_t submit_pid = fork ();
-  if (submit_pid == 0)
-    {
-      execl (_bmsubmit_path, bmsubmit_option, sess.byteman_log.c_str(), sess.byteman_script_path.c_str(), (char*)NULL);
-      _exit (EXIT_FAILURE);
-    }
-  else if (submit_pid < 0) //failure
-    bmsubmit = -1;
-  else
-    if (waitpid (submit_pid, &bmsubmit, 0) != submit_pid)
-      bmsubmit = -1;
-
-  /* now we need to redefine the probe */
-  /* while looking at sdt_query::convert_location as an example
+  /* now we need to redefine the probe
+   * while looking at sdt_query::convert_location as an example
    * create a new probe_point*, with same (*base_loc)
    * using a vector, iterate though, changing as needed
    * redefine functor values with new literal_string("foo")
