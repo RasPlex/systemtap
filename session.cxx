@@ -162,7 +162,7 @@ systemtap_session::systemtap_session ():
   update_release_sysroot = false;
   suppress_time_limits = false;
   java_pid = 0;
-
+  java_proc_class = "";
 #ifdef HAVE_HELPER
   bminstall_path = "";
   bmsubmit_path = "";
@@ -342,9 +342,11 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   update_release_sysroot = other.update_release_sysroot;
   sysenv = other.sysenv;
   suppress_time_limits = other.suppress_time_limits;
-  java_pid = other.java_pid;
+
 
 #ifdef HAVE_HELPER
+  java_pid = other.java_pid;
+  java_proc_class = other.java_proc_class;
   bminstall_path = other.bminstall_path;
   bmsubmit_path = other.bmsubmit_path;
   byteman_script_path = other.byteman_script_path;
@@ -386,7 +388,8 @@ systemtap_session::systemtap_session (const systemtap_session& other,
 systemtap_session::~systemtap_session ()
 {
 #ifdef HAVE_HELPER
-  if(java_pid != 0)
+
+  if(java_pid != 0 || !java_proc_class.empty())
     java_detach();
 #endif //HAVE_HELPER
   remove_tmp_dir();

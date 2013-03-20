@@ -33,7 +33,7 @@ static const string TOK_CLASS ("class");
 static const string TOK_METHOD ("method");
 static const string TOK_PROCESS ("process");
 static const string TOK_MARK ("mark");
-static const string TOK_JAVA("java");
+static const string TOK_JAVA ("java");
 
 struct java_builder: public derived_probe_builder
 {
@@ -57,6 +57,10 @@ public:
 
   bool get_number_param (literal_map_t const & params,
 			 string const & k, int & v);
+  bool get_param (std::map<std::string, literal*> const & params,
+		  const std::string& key,
+		  std::string& value);
+
 };
 
 bool
@@ -69,6 +73,20 @@ java_builder::get_number_param (literal_map_t const & params,
   return present;
 }
 
+bool
+java_builder::get_param (std::map<std::string, literal*> const & params,
+                                  const std::string& key,
+                                  std::string& value)
+{
+  map<string, literal *>::const_iterator i = params.find (key);
+  if (i == params.end())
+    return false;
+  literal_string * ls = dynamic_cast<literal_string *>(i->second);
+  if (!ls)
+    return false;
+  value = ls->value;
+  return true;
+}
 
 void
 java_builder::build (systemtap_session & sess,
@@ -93,6 +111,8 @@ java_builder::build (systemtap_session & sess,
   string class_str_val; // fully qualified class string
   bool has_class_str = get_param (parameters, TOK_CLASS, class_str_val);
   bool has_pid_int = get_number_param (parameters, TOK_JAVA, sess.java_pid);
+  bool has_pid_str = get_param (parameters, TOK_JAVA, sess.java_proc_class);
+
   //need to count the number of parameters, exit if more than 10
   int method_params_counter = 1;
   int method_params_count = count (method_str_val.begin (), method_str_val.end (), ',');
@@ -169,14 +189,14 @@ java_builder::build (systemtap_session & sess,
    * continue regular compilation and action with redefined probe
    */
 
-  if (! (has_pid_int))
+  if (! (has_pid_int || has_pid_str) )
     exit (1); //XXX proper exit with warning message
 
-  //this could be done using itoa
   string arg = static_cast <ostringstream*> ( & (ostringstream ()
-					      << sess.java_pid) )->str ();
-
+						 << sess.java_pid) )->str ();
+  
   const char* java_pid_str = arg.c_str ();
+
   sess.bminstall_path = (find_executable ("bminstall.sh"));
 
   if (sess.verbose > 3)
@@ -185,7 +205,11 @@ java_builder::build (systemtap_session & sess,
 
   vector<string> bminstall_cmd;
   bminstall_cmd.push_back(sess.bminstall_path);
-  bminstall_cmd.push_back(java_pid_str);
+  if(!has_pid_str)
+    bminstall_cmd.push_back(java_pid_str);
+  else
+    bminstall_cmd.push_back(sess.java_proc_class);
+
   (void) stap_system(sess.verbose, bminstall_cmd);
 
   vector<string> bmsubmit_cmd;
@@ -225,10 +249,14 @@ register_tapset_java (systemtap_session& s)
 {
   match_node* root = s.pattern_root;
   derived_probe_builder *builder = new java_builder ();
-  
-  root = root->bind_num (TOK_JAVA)
-    ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD);
-  root->bind (builder);
+
+  root->bind_str (TOK_JAVA)
+    ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
+    ->bind(builder);
+
+  root->bind_num (TOK_JAVA)
+    ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
+    ->bind(builder);
 
 }
 

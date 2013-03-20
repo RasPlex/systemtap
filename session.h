@@ -200,8 +200,10 @@ public:
   int download_dbinfo;
   bool suppress_handler_errors;
   bool suppress_time_limits;
-  int java_pid;
+
   void java_detach();
+  int java_pid;
+  std::string java_proc_class;
   std::string bminstall_path;
   std::string bmsubmit_path;
   std::string byteman_script_path;
