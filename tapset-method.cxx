@@ -214,8 +214,9 @@ java_builder::build (systemtap_session & sess,
 
   vector<string> bmsubmit_cmd;
   sess.bmsubmit_path = (find_executable ("bmsubmit.sh"));
-  sess.byteman_log = " -o " + sess.tmpdir + "/byteman.log";
+  sess.byteman_log = sess.tmpdir + "/byteman.log";
   bmsubmit_cmd.push_back(sess.bmsubmit_path);
+  bmsubmit_cmd.push_back(" -o");
   bmsubmit_cmd.push_back(sess.byteman_log);
   bmsubmit_cmd.push_back(" -l");
   bmsubmit_cmd.push_back(sess.byteman_script_path);

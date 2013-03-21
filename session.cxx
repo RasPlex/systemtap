@@ -2017,6 +2017,7 @@ systemtap_session::java_detach()
 {
   vector<string> bmcommand;
   bmcommand.push_back(bmsubmit_path);
+  bmcommand.push_back(" -o");
   bmcommand.push_back(byteman_log);
   bmcommand.push_back(" -u");
   bmcommand.push_back(byteman_script_path);
