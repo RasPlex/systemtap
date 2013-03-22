@@ -91,8 +91,15 @@ main(int argc, char * const argv[])
     }
 
   // The first non-option is our stap module, required.
-  if (optind == argc - 1)
-    module = argv[optind];
+  if (optind < argc)
+    module = argv[optind++];
+
+  // Remaining non-options, if any, specify global variables.
+  vector<string> modoptions;
+  while (optind < argc)
+    {
+      modoptions.push_back(string(argv[optind++]));
+    }
 
   if (!module || (command && pid))
     usage (1);
@@ -103,7 +110,7 @@ main(int argc, char * const argv[])
   if (!check_dyninst_sebools())
     return 1;
 
-  auto_ptr<mutator> session(new mutator(module));
+  auto_ptr<mutator> session(new mutator(module, modoptions));
   if (!session.get() || !session->load())
     {
       staperror() << "failed to create the mutator!" << endl;

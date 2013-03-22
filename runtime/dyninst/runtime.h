@@ -133,6 +133,24 @@ static int stp_pthread_mutex_init_shared(pthread_mutex_t *mutex);
 #include "stat.c"
 #include "unwind.c"
 
+/* Support function for int64_t module parameters. */
+static int set_int64_t(const char *val, int64_t *mp)
+{
+  char *endp;
+  long long ll;
+
+  if (!val)
+    return -EINVAL;
+
+  ll = strtoull(val, &endp, 0);
+
+  if ((endp == val) || ((int64_t)ll != ll) || (*endp != '\0'))
+    return -EINVAL;
+
+  *mp = (int64_t)ll;
+  return 0;
+}
+
 static int systemtap_module_init(void);
 static void systemtap_module_exit(void);
 

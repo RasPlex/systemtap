@@ -90,7 +90,9 @@ struct c_unparser: public unparser, public visitor
   void emit_common_header ();
   void emit_global (vardecl* v);
   void emit_global_init (vardecl* v);
+  void emit_global_init_type (vardecl *v);
   void emit_global_param (vardecl* v);
+  void emit_global_init_setters ();
   void emit_functionsig (functiondecl* v);
   void emit_module_init ();
   void emit_module_refresh ();
@@ -1480,9 +1482,8 @@ c_unparser::emit_global_param (vardecl *v)
 {
   string vn = c_globalname (v->name);
 
-  // XXX: No module parameters with dyninst.
-  if (session->runtime_usermode_p())
-    return;
+  // For dyninst, use the emit_global_init_* functionality instead.
+  assert (!session->runtime_usermode_p());
 
   // NB: systemtap globals can collide with linux macros,
   // e.g. VM_FAULT_MAJOR.  We want the parameter name anyway.  This
@@ -1503,6 +1504,41 @@ c_unparser::emit_global_param (vardecl *v)
       o->newline() << "module_param_string (" << v->name << ", "
                    << "global(" << vn << "), MAXSTRINGLEN, 0);";
     }
+}
+
+
+void
+c_unparser::emit_global_init_setters ()
+{
+  // Hack for dyninst module params: setter function forms a little
+  // linear lookup table ditty to find a global variable by name.
+  o->newline() << "int stp_global_setter (const char *name, const char *value) {";
+  o->newline(1);
+  for (unsigned i=0; i<session->globals.size(); i++)
+    {
+      vardecl* v = session->globals[i];
+      if (v->arity > 0) continue;
+      if (v->type != pe_string && v->type != pe_long) continue;
+
+      // Do not mangle v->name for the comparison!
+      o->line() << "if (0 == strcmp(name,\"" << v->name << "\"))" << " {";
+
+      o->indent(1);
+      if (v->type == pe_string)
+        {
+          c_assign("stp_global_init." + c_globalname(v->name), "value", pe_string, "BUG: global module param", v->tok);
+          o->newline() << "return 0;";
+        }
+      else
+        {
+          o->newline() << "return set_int64_t(value, &stp_global_init." << c_globalname(v->name) << ");";
+        }
+
+      o->newline(-1) << "} else ";
+    }
+  o->line() << "return -EINVAL;";
+  o->newline(-1) << "}";
+  o->newline();
 }
 
 
@@ -1555,7 +1591,27 @@ c_unparser::emit_global_init (vardecl *v)
       v->init->visit(this);
       o->line() << ",";
     }
+  else if (v->arity == 0 && session->runtime_usermode_p())
+    {
+      // For dyninst: always try to put a default value into the initial
+      // static structure, so we don't have to guess if it was customized.
+      if (v->type == pe_long)
+        o->newline() << "." << c_globalname (v->name) << " = 0,";
+      else if (v->type == pe_string)
+        o->newline() << "." << c_globalname (v->name) << " = { '\\0' },"; // XXX: ""
+    }
   // The lock and lock_skip_count are handled in emit_module_init.
+}
+
+
+void
+c_unparser::emit_global_init_type (vardecl *v)
+{
+  // We can only statically initialize some scalars.
+  if (v->arity == 0) // ... although we still allow !v->init here.
+    {
+      o->newline() << c_typename(v->type) << " " << c_globalname(v->name) << ";";
+    }
 }
 
 
@@ -1705,8 +1761,9 @@ c_unparser::emit_module_init ()
       vardecl* v = session->globals[i];
       if (v->index_types.size() > 0)
 	o->newline() << getmap (v).init();
-      else if (v->init && session->runtime_usermode_p())
-	c_assign(getvar (v).value(), v->init, "global initialization");
+      else if (session->runtime_usermode_p() && v->arity == 0
+               && (v->type == pe_long || v->type == pe_string))
+	c_assign(getvar (v).value(), "stp_global_init." + c_globalname(v->name), v->type, "BUG: global initialization", v->tok);
       else
 	o->newline() << getvar (v).init();
       // NB: in case of failure of allocation, "rc" will be set to non-zero.
@@ -6690,19 +6747,29 @@ translate_pass (systemtap_session& s)
 
 	  // We only need to statically initialize globals in kernel modules,
 	  // where module parameters may want to override the script's value.  In
-	  // stapdyn, the globals are actually part of the dynamic shared memory.
-	  if (!s.runtime_usermode_p())
+	  // stapdyn, the globals are actually part of the dynamic shared memory,
+	  // and the static structure is merely used as a source of default values.
+	  s.op->newline();
+	  if (!s.runtime_usermode_p ())
+	    s.op->newline() << "static struct stp_globals stp_global = {";
+	  else
+	   {
+	     s.op->newline() << "static struct {";
+	     s.op->indent(1);
+	     for (unsigned i=0; i<s.globals.size(); i++)
+	       {
+		 assert_no_interrupts();
+                 s.up->emit_global_init_type (s.globals[i]);
+	       }
+	     s.op->newline(-1) << "} stp_global_init = {";
+	   }
+	  s.op->newline(1);
+	  for (unsigned i=0; i<s.globals.size(); i++)
 	    {
-	      s.op->newline();
-	      s.op->newline() << "static struct stp_globals stp_global = {";
-	      s.op->newline(1);
-	      for (unsigned i=0; i<s.globals.size(); i++)
-		{
-		  assert_no_interrupts();
-		  s.up->emit_global_init (s.globals[i]);
-		}
-	      s.op->newline(-1) << "};";
+	      assert_no_interrupts();
+              s.up->emit_global_init (s.globals[i]);
 	    }
+	  s.op->newline(-1) << "};";
 
 	  s.op->assert_0_indent();
 	}
@@ -6883,12 +6950,15 @@ translate_pass (systemtap_session& s)
 
       s.op->assert_0_indent();
 
-      // PR10298: attempt to avoid collisions with symbols
-      for (unsigned i=0; i<s.globals.size(); i++)
-        {
-          s.op->newline();
-          s.up->emit_global_param (s.globals[i]);
-        }
+      if (s.runtime_usermode_p())
+        s.up->emit_global_init_setters();
+      else
+        // PR10298: attempt to avoid collisions with symbols
+        for (unsigned i=0; i<s.globals.size(); i++)
+          {
+            s.op->newline();
+            s.up->emit_global_param (s.globals[i]);
+          }
       s.op->assert_0_indent();
     }
   catch (const semantic_error& e)

@@ -76,8 +76,19 @@ struct unparser
   virtual void emit_global_init (vardecl* v) = 0;
   // };
 
-  virtual void emit_global_param (vardecl* v) = 0;
+  // struct {
+  virtual void emit_global_init_type (vardecl* v) = 0;
+  // TYPE s_NAME;
+  // } global_init = {
+  //   ...
+  // };  // variation of the above for dyninst static-initialization
+
+  virtual void emit_global_param (vardecl* v) = 0; // for kernel
   // module_param_... -- at end of file
+
+  virtual void emit_global_init_setters () = 0; // for dyninst
+  // int stp_global_setter (const char *name, const char *value);
+  // -- at end of file; returns -EINVAL on error
 
   virtual void emit_functionsig (functiondecl* v) = 0;
   // static void function_NAME (context* c);

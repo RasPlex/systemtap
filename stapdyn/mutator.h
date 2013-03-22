@@ -34,6 +34,7 @@ class mutator {
 
     void* module; // the locally dlopened probe module
     std::string module_name; // the filename of the probe module
+    std::vector<std::string> modoptions; // custom globals from -G option
     std::string module_shmem; // the global name of this module's shared memory
     std::vector<dynprobe_target> targets; // the probe targets in the module
 
@@ -46,6 +47,9 @@ class mutator {
     // disable implicit constructors by not implementing these
     mutator (const mutator& other);
     mutator& operator= (const mutator& other);
+
+    // Initialize the module global variables
+    bool init_modoptions();
 
     // Initialize the module session
     bool run_module_init();
@@ -66,7 +70,8 @@ class mutator {
     typeof(&enter_dyninst_utrace_probe) utrace_enter_fn;
   public:
 
-    mutator (const std::string& module_name);
+    mutator (const std::string& module_name,
+             std::vector<std::string>& module_options);
     ~mutator ();
 
     // Load the stap module and initialize all probe info.
