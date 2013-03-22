@@ -2327,9 +2327,9 @@ var_expanding_visitor::rewrite_lvalue(const token* tok, const std::string& eop,
 	  ops.resize(ops.size() - 1);	// chop off the last ','
 
 	  // Throw the error.
-	  throw semantic_error (_F(ngettext("Only the following assign operator is implemented on target variables: %s",
+	  throw semantic_error (_NF("Only the following assign operator is implemented on target variables: %s",
                                             "Only the following assign operators are implemented on target variables: %s",
-                                           valid_ops_size), ops.c_str()), tok);
+                                           valid_ops_size, ops.c_str()), tok);
 
 	}
 
@@ -6872,14 +6872,14 @@ dwarf_builder::build(systemtap_session & sess,
                 }
             }
 
-          sess.print_warning (_F(ngettext("cannot probe .return of %u inlined function %s",
+          sess.print_warning (_NF("cannot probe .return of %u inlined function %s",
                                           "cannot probe .return of %u inlined functions %s",
-                                           quicklist.size()), i_n_r, quicklist.c_str()));
+                                           quicklist.size(), i_n_r, quicklist.c_str()));
           // There will be also a "no matches" semantic error generated.
         }
       if (sess.verbose > 1)
-        clog << _F(ngettext("skipped .return probe of %u inlined function",
-                            "skipped .return probe of %u inlined functions", i_n_r), i_n_r) << endl;
+        clog << _NF("skipped .return probe of %u inlined function",
+                            "skipped .return probe of %u inlined functions", i_n_r, i_n_r) << endl;
       if ((sess.verbose > 3) || (sess.verbose > 2 && results_pre == results_post)) // issue details with high verbosity
         {
           for (set<string>::iterator it = q.inlined_non_returnable.begin();

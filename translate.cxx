@@ -5045,8 +5045,8 @@ c_unparser::visit_print_format (print_format* e)
       // PR10750: Enforce a reasonable limit on # of varargs
       // 32 varargs leads to max 256 bytes on the stack
       if (e->args.size() > 32)
-        throw semantic_error(_F(ngettext("additional argument to print", "too many arguments to print (%zu)",
-                                e->args.size()), e->args.size()), e->tok);
+        throw semantic_error(_NF("additional argument to print", "too many arguments to print (%zu)",
+                                e->args.size(), e->args.size()), e->tok);
 
       // Compute actual arguments
       vector<tmpvar> tmp;

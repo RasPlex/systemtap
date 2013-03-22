@@ -592,12 +592,12 @@ parser::scan_pp1 ()
           if (! (t && t->type == tok_operator && t->content == "("))
             {
               delete new_act;
-              throw parse_error (_F(ngettext
+              throw parse_error (_NF
                                     ("expected '(' in invocation of macro '@%s'"
                                      " taking %d parameter",
                                      "expected '(' in invocation of macro '@%s'"
                                      " taking %d parameters",
-                                     num_params), name.c_str(), num_params), t);
+                                     num_params, name.c_str(), num_params), t);
             }
 
           // XXX perhaps parse/count the full number of params,
@@ -1838,7 +1838,7 @@ parser::parse ()
     }
   else if (num_errors > 0)
     {
-      cerr << _F(ngettext("%d parse error.", "%d parse errors.", num_errors), num_errors) << endl;
+      cerr << _NF("%d parse error.", "%d parse errors.", num_errors, num_errors) << endl;
       delete f;
       f = 0;
     }

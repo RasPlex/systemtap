@@ -143,7 +143,7 @@ probe_point*
 derived_probe::sole_location () const
 {
   if (locations.size() == 0 || locations.size() > 1)
-    throw semantic_error (ngettext("derived_probe with no locations",
+    throw semantic_error (_N("derived_probe with no locations",
                                    "derived_probe with no locations",
                                    locations.size()), this->tok);
   else
@@ -160,7 +160,7 @@ derived_probe::script_location () const
   if (a) return a;
   const vector<probe_point*>& locs = p->locations;
   if (locs.size() == 0 || locs.size() > 1)
-    throw semantic_error (ngettext("derived_probe with no locations",
+    throw semantic_error (_N("derived_probe with no locations",
                                    "derived_probe with too many locations",
                                    locs.size()), this->tok);
   else

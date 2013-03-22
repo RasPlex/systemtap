@@ -14,9 +14,11 @@ extern "C" {
 #endif
 
 #include <pk11func.h>
+#include "config.h"
+#if ENABLE_NLS
 #include <libintl.h>
 #include <locale.h>
-#include "config.h"
+#endif
 
 #if ENABLE_NLS
 #define _(string) gettext(string)

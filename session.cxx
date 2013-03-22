@@ -1542,8 +1542,9 @@ systemtap_session::parse_kernel_config ()
     }
   if (verbose > 2)
     clog << _F("Parsed kernel \"%s\", ", kernel_config_file.c_str())
-         << _F(ngettext("containing %zu tuple", "containing %zu tuples",
-                kernel_config.size()), kernel_config.size()) << endl;
+         << _NF("containing %zu tuple", "containing %zu tuples",
+                kernel_config.size(), kernel_config.size()) << endl;
+
 
   kcf.close();
   return 0;
@@ -1579,9 +1580,9 @@ systemtap_session::parse_kernel_exports ()
         kernel_exports.insert (tokens[1]);
     }
   if (verbose > 2)
-    clog << _F(ngettext("Parsed kernel %s, which contained one vmlinux export",
+    clog << _NF("Parsed kernel %s, which contained one vmlinux export",
                         "Parsed kernel %s, which contained %zu vmlinux exports",
-                         kernel_exports.size()), kernel_exports_file.c_str(),
+                         kernel_exports.size(), kernel_exports_file.c_str(),
                          kernel_exports.size()) << endl;
 
   kef.close();

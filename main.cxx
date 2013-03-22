@@ -26,8 +26,10 @@
 #include "tapsets.h"
 #include "setupdwfl.h"
 
+#if ENABLE_NLS
 #include <libintl.h>
 #include <locale.h>
+#endif
 
 #include "stap-probe.h"
 
@@ -988,10 +990,11 @@ main (int argc, char * const argv [])
   // Initialize defaults.
   try {
     systemtap_session s;
-
+#if ENABLE_NLS
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
+#endif
 
     // Set up our handler to catch routine signals, to allow clean
     // and reasonably timely exit.

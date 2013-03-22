@@ -15,8 +15,10 @@
 #include <iomanip>
 #include <map>
 extern "C" {
+#if ENABLE_NLS
 #include <libintl.h>
 #include <locale.h>
+#endif
 #include <signal.h>
 #include <stdint.h>
 #include <spawn.h>

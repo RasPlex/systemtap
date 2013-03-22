@@ -10,8 +10,10 @@
 #define SESSION_H
 
 #include "config.h"
+#if ENABLE_NLS
 #include <libintl.h>
 #include <locale.h>
+#endif
 
 #include <list>
 #include <string>
