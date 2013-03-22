@@ -1,0 +1,8 @@
+probe process("uprobe_uaddr_mark").mark("uprobe_uaddr_mark") {
+    // Check that uaddr() is the same address as the pp() statement.
+    statement = sprintf(".statement(%#x)", uaddr())
+    if (isinstr(pp(), statement))
+        println("success")
+    else
+        printf("failure: %#x doesn't match %s\n", uaddr(), pp())
+}

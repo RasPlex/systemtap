@@ -1,0 +1,26 @@
+# Tests that uaddr matches the statement address of an SDT mark,
+# to show whether we're getting REG_IP munging right.
+
+set test "uprobe_uaddr_mark"
+set ::result_string {success}
+
+# Only run on make installcheck and uprobes present.
+if {! [installtest_p]} { untested "$test"; return }
+if {! [uprobes_p]} { untested "$test"; return }
+
+set testpath  "$srcdir/$subdir"
+set testsrc   "$testpath/$test.c"
+set testexe   "[pwd]/$test"
+set testflags [sdt_includes]
+set teststp   "$testpath/$test.stp"
+
+set res [target_compile $testsrc $testexe executable $testflags]
+if { $res != "" } {
+    verbose "target_compile failed: $res" 2
+    fail "unable to compile $testsrc"
+    return
+}
+
+stap_run3 $test $teststp -c $testexe
+
+catch {exec rm -f $test.exe}

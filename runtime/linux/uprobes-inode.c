@@ -55,10 +55,16 @@ typedef typeof(&uprobe_unregister) uprobe_unregister_fn;
 #endif
 
 
+// uprobes started setting REG_IP itself starting in kernel commit 74e59dfc.
+// There's no direct indicator of this, but commit da1816b1 in the same patch
+// series defines UPROBE_HANDLER_MASK, so that's a decent trigger for us.
+#ifndef UPROBE_HANDLER_MASK
+#define STAPIU_NEEDS_REG_IP 1
 #if !defined(STAPCONF_UPROBE_GET_SWBP_ADDR_EXPORTED)
 // First typedef from the original decl, then #define it as a typecasted call.
 typedef typeof(&uprobe_get_swbp_addr) uprobe_get_swbp_addr_fn;
 #define uprobe_get_swbp_addr (* (uprobe_get_swbp_addr_fn)kallsyms_uprobe_get_swbp_addr)
+#endif
 #endif
 
 /* A target is a specific file/inode that we want to probe.  */
@@ -119,70 +125,48 @@ static int
 stapiu_probe_handler (struct stapiu_consumer *sup, struct pt_regs *regs);
 
 static int
-stapiu_probe_prehandler (struct uprobe_consumer *inst, unsigned long ip, struct pt_regs *regs)
+stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 {
-	unsigned long saved_ip;
+	int ret;
 	struct stapiu_consumer *sup =
 		container_of(inst, struct stapiu_consumer, consumer);
-	int ret;
 
-	/* NB: The current test kernels of new uretprobes are only passing a
-	 * valid address for uretprobes, and passing 0 for regular uprobes.  In
-	 * the near future, the latter should get a fixed-up address too, and
-	 * this call to uprobe_get_swbp_addr() can go away.  */
-	if (ip == 0)
-		ip = uprobe_get_swbp_addr(regs);
-
+#ifdef STAPIU_NEEDS_REG_IP
 	/* Make it look like the IP is set as it would in the actual user task
-	 * when calling real probe handler. Reset IP regs on return, so we
-	 * don't confuse uprobes.  */
-	saved_ip = REG_IP(regs);
-	SET_REG_IP(regs, ip);
+	 * before calling the real probe handler.  */
+	unsigned long saved_ip = REG_IP(regs);
+	SET_REG_IP(regs, uprobe_get_swbp_addr(regs));
+#endif
+
 	ret = stapiu_probe_handler(sup, regs);
+
+#ifdef STAPIU_NEEDS_REG_IP
+	/* Reset IP regs on return, so we don't confuse uprobes.  */
 	SET_REG_IP(regs, saved_ip);
+#endif
+
 	return ret;
 }
-
-#ifdef STAPCONF_INODE_UPROBES_NOADDR
-/* This is the old form of uprobes handler, without the separate ip address.
- * We'll always have to kludge it in with uprobe_get_swbp_addr().
- */
-static int
-stapiu_probe_prehandler_noaddr (struct uprobe_consumer *inst, struct pt_regs *regs)
-{
-	unsigned long ip = uprobe_get_swbp_addr(regs);
-	return stapiu_probe_prehandler(inst, ip, regs);
-}
-#define STAPIU_HANDLER stapiu_probe_prehandler_noaddr
-#else
-#define STAPIU_HANDLER stapiu_probe_prehandler
-#endif
 
 static int
 stapiu_register (struct inode* inode, struct stapiu_consumer* c)
 {
 	if (!c->return_p) {
-		c->consumer.handler = STAPIU_HANDLER;
-		return uprobe_register (inode, c->offset, &c->consumer);
+		c->consumer.handler = stapiu_probe_prehandler;
 	} else {
 #if defined(STAPCONF_INODE_URETPROBES)
-		c->consumer.rp_handler = STAPIU_HANDLER;
-		return uprobe_register (inode, c->offset, &c->consumer);
+		c->consumer.rp_handler = stapiu_probe_prehandler;
 #else
 		return EINVAL;
 #endif
-        }
+	}
+	return uprobe_register (inode, c->offset, &c->consumer);
 }
 
 static void
 stapiu_unregister (struct inode* inode, struct stapiu_consumer* c)
 {
-	if (!c->return_p)
-		uprobe_unregister (inode, c->offset, &c->consumer);
-#if defined(STAPCONF_INODE_URETPROBES)
-	else
-		uprobe_unregister (inode, c->offset, &c->consumer);
-#endif
+	uprobe_unregister (inode, c->offset, &c->consumer);
 }
 
 
