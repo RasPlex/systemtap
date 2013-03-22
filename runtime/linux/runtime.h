@@ -151,12 +151,6 @@ static void *kallsyms_uprobe_register;
 #if !defined(STAPCONF_UPROBE_UNREGISTER_EXPORTED)
 static void *kallsyms_uprobe_unregister;
 #endif
-#if !defined(STAPCONF_URETPROBE_REGISTER_EXPORTED)
-static void *kallsyms_uretprobe_register;
-#endif
-#if !defined(STAPCONF_URETPROBE_UNREGISTER_EXPORTED)
-static void *kallsyms_uretprobe_unregister;
-#endif
 #if !defined(STAPCONF_UPROBE_GET_SWBP_ADDR_EXPORTED)
 static void *kallsyms_uprobe_get_swbp_addr;
 #endif

@@ -4175,8 +4175,8 @@ kernel_supports_inode_uprobes(systemtap_session& s)
 static bool
 kernel_supports_inode_uretprobes(systemtap_session& s)
 {
-  // We need inode-uprobes first, then look for uretprobe_register either as a
-  // real export or in the list possibly accessible by kallsyms.
+  // We need inode-uprobes first, then look for a sign of uretprobes.  The only
+  // non-static function at present is arch_uretprobe_hijack_return_addr.
   return kernel_supports_inode_uprobes(s) &&
     (s.kernel_functions.count("arch_uretprobe_hijack_return_addr") > 0);
 }

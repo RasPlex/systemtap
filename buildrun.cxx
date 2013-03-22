@@ -366,8 +366,6 @@ compile_pass (systemtap_session& s)
 			   "STAPCONF_UPROBE_REGISTER_EXPORTED");
   output_either_exportconf(s, o, "uprobe_unregister", "unregister_uprobe",
 			   "STAPCONF_UPROBE_UNREGISTER_EXPORTED");
-  output_exportconf(s, o, "uretprobe_register", "STAPCONF_URETPROBE_REGISTER_EXPORTED");
-  output_exportconf(s, o, "uretprobe_unregister", "STAPCONF_URETPROBE_UNREGISTER_EXPORTED");
   output_autoconf(s, o, "autoconf-old-inode-uprobes.c", "STAPCONF_OLD_INODE_UPROBES", NULL);
   output_autoconf(s, o, "autoconf-inode-uprobes-noaddr.c", "STAPCONF_INODE_UPROBES_NOADDR", NULL);
   output_autoconf(s, o, "autoconf-inode-uretprobes.c", "STAPCONF_INODE_URETPROBES", NULL);
