@@ -12,7 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <error.h>
+#if ENABLE_NLS
 #include <locale.h>
+#endif
 #include <argp.h>
 #include <elfutils/libdwfl.h>
 #include <elfutils/version.h>
@@ -527,8 +529,10 @@ main (int argc, char **argv)
   /* We use no threads here which can interfere with handling a stream.  */
   (void) __fsetlocking (stdout, FSETLOCKING_BYCALLER);
 
+#if ENABLE_NLS
   /* Set locale.  */
   (void) setlocale (LC_ALL, "");
+#endif
 
   const struct argp_child argp_children[] =
     {

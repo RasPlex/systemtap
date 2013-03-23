@@ -43,9 +43,11 @@ nsscommon_error (const char *msg, int logit __attribute ((unused)))
 int
 main (int argc, char **argv)
 {
+#if ENABLE_NLS
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+#endif
 
   if (argc < 2) {
     nsscommon_error (_("Module name was not specified."));
