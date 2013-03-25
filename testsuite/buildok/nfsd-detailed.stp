@@ -23,6 +23,7 @@ probe nfsd.proc2.lookup, nfsd.proc3.lookup, nfsd.proc4.lookup ?
 	printf("%s(%s)\n", name, argstr)
 	printf("%s %d %d %d\n", client_ip, proto, version, fh)
 	printf("%d %s\n", filelen, filename)
+	printf("%d %d\n", uid, gid)
 }
 probe nfsd.proc2.lookup.return, nfsd.proc3.lookup.return,
       nfsd.proc4.lookup.return ?
@@ -49,6 +50,7 @@ probe nfsd.proc2.read, nfsd.proc3.read, nfsd.proc4.read ?
 	printf("%s %d %d %d\n", client_ip, proto, version, fh)
 	printf("%d %d\n", vec, vlen)
 	printf("%d %s\n", size, units)
+	printf("%d %d\n", uid, gid)
 }
 probe nfsd.proc2.read.return, nfsd.proc3.read.return,
       nfsd.proc4.read.return ?
@@ -75,6 +77,7 @@ probe nfsd.proc2.write, nfsd.proc3.write, nfsd.proc4.write ?
 	printf("%s %d %d %d\n", client_ip, proto, version, fh)
 	printf("%d %d %d\n", vec, vlen, stable)
 	printf("%d %s\n", size, units)
+	printf("%d %d\n", uid, gid)
 }
 probe nfsd.proc2.write.return, nfsd.proc3.write.return,
       nfsd.proc4.write.return ?
@@ -101,6 +104,7 @@ probe nfsd.proc3.commit, nfsd.proc4.commit ?
 	printf("%s(%s)\n", name, argstr)
 	printf("%s %d %d %d\n", client_ip, proto, version, fh)
 	printf("%d %s\n", size, units)
+	printf("%d %d\n", uid, gid)
 }
 probe nfsd.proc3.commit.return, nfsd.proc4.commit.return ?
 {
@@ -125,6 +129,7 @@ probe nfsd.proc2.create, nfsd.proc3.create, nfsd.proc4.create ?
 	printf("%s(%s)\n", name, argstr)
 	printf("%s %d %d %d\n", client_ip, proto, version, fh)
 	printf("%d\n", createmode)
+	printf("%d %d\n", uid, gid)
 }
 probe nfsd.proc3.create.return, nfsd.proc3.create.return,
       nfsd.proc4.create.return ?
@@ -149,6 +154,7 @@ probe nfsd.proc2.remove, nfsd.proc3.remove, nfsd.proc4.remove ?
 {
 	printf("%s(%s)\n", name, argstr)
 	printf("%s %d %d %d\n", client_ip, proto, version, fh)
+	printf("%d %d\n", uid, gid)
 }
 probe nfsd.proc3.remove.return, nfsd.proc3.remove.return,
       nfsd.proc4.remove.return ?
@@ -175,6 +181,7 @@ probe nfsd.proc2.rename, nfsd.proc3.rename, nfsd.proc4.rename ?
 	printf("%s %d %d %d %d\n", client_ip, proto, version, fh, tfh)
 	printf("%d %s\n", filelen, filename)
 	printf("%d %s\n", tlen, tname)
+	printf("%d %d\n", uid, gid)
 }
 probe nfsd.proc3.rename.return, nfsd.proc3.rename.return,
       nfsd.proc4.rename.return ?

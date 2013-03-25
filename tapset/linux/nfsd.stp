@@ -204,6 +204,8 @@ probe nfsd.proc.return = nfsd.proc.lookup.return,
  * @fh: file handle of parent dir (the first part is the length of the file handle)
  * @filename: file name 
  * @filelen: the length of file name
+ * @uid: requester's user id
+ * @gid: requester's group id
  */
 probe nfsd.proc.lookup = 
       nfsd.proc4.lookup ?,
@@ -227,6 +229,9 @@ probe nfsd.proc2.lookup = kernel.function("nfsd_proc_lookup") !,
 
 	filelen = $argp->len
 	filename = kernel_string_n($argp->name, $argp->len)
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc2.lookup"
 	argstr = sprintf("%s", kernel_string_n($argp->name, $argp->len))
@@ -253,6 +258,9 @@ probe nfsd.proc3.lookup = kernel.function("nfsd3_proc_lookup") !,
 
 	filelen = $argp->len
 	filename  = kernel_string_n($argp->name, $argp->len)
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc3.lookup"
 	argstr = sprintf("%s", kernel_string_n($argp->name, $argp->len))
@@ -298,6 +306,9 @@ probe nfsd.proc4.lookup = kernel.function("nfsd4_lookup").call !,
 	filelen = $lookup->lo_len
 	filename  = kernel_string_n($lookup->lo_name, $lookup->lo_len)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc4.lookup"
 	argstr = sprintf("%s", kernel_string_n($lookup->lo_name, $lookup->lo_len))
 } 
@@ -325,6 +336,8 @@ probe nfsd.proc4.lookup.return =
  * @offset: the offset of file 
  * @vec: struct kvec, includes buf address in kernel address and length of each buffer
  * @vlen: read blocks 
+ * @uid: requester's user id
+ * @gid: requester's group id
  */
 probe nfsd.proc.read = 
       nfsd.proc4.read ?,
@@ -350,6 +363,9 @@ probe nfsd.proc2.read = kernel.function("nfsd_proc_read") !,
 	offset = $argp->offset 
 	vec = @choose_defined($rqstp->rq_vec, $argp->vec)
 	vlen = $argp->vlen
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc2.read"
 	argstr = sprintf("%d,%d",count,offset)
@@ -382,6 +398,9 @@ probe nfsd.proc3.read = kernel.function("nfsd3_proc_read") !,
 	vec = @choose_defined($rqstp->rq_vec, $argp->vec)
 	vlen = $argp->vlen
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc3.read"
 	argstr = sprintf("%d,%d",count,offset)
 
@@ -413,6 +432,9 @@ probe nfsd.proc4.read = kernel.function("nfsd4_read").call !,
 	vec = $rqstp->rq_vec
 	vlen = $read->rd_vlen
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc4.read"
 	argstr = sprintf("%d,%d",count,offset)
 
@@ -443,6 +465,8 @@ probe nfsd.proc4.read.return = kernel.function("nfsd4_read").return !,
  * @vec: struct kvec, includes buf address in kernel address and length of each buffer
  * @vlen: read blocks 
  * @stable: argp->stable
+ * @uid: requester's user id
+ * @gid: requester's group id
  */
 probe nfsd.proc.write = 
       nfsd.proc4.write ?,
@@ -469,6 +493,9 @@ probe nfsd.proc2.write = kernel.function("nfsd_proc_write") !,
 	vec = @choose_defined($rqstp->rq_vec, $argp->vec)
 	vlen = $argp->vlen
 	stable = 1			# hardcoded in nfsd_proc_write()
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc2.write"
 	argstr = sprintf("%d,%d",count,offset)
@@ -504,6 +531,9 @@ probe nfsd.proc3.write = kernel.function("nfsd3_proc_write") !,
 	vlen = $argp->vlen
 	stable = $argp->stable
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc3.write"
 	argstr = sprintf("%d,%d",count,offset)
 
@@ -537,6 +567,9 @@ probe nfsd.proc4.write = kernel.function("nfsd4_write").call !,
 	vlen = @choose_defined($write->wr_vlen, 0)
 	stable = $write->wr_stable_how
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc4.write"
 	argstr = sprintf("%d,%d",count,offset)
 
@@ -568,6 +601,8 @@ probe nfsd.proc4.write.return =
  * @size: read bytes
  * @count: read bytes
  * @offset: the offset of file 
+ * @uid: requester's user id
+ * @gid: requester's group id
  */
 probe nfsd.proc.commit =  
       nfsd.proc4.commit ?,
@@ -589,6 +624,9 @@ probe nfsd.proc3.commit = kernel.function("nfsd3_proc_commit") !,
 
 	count = $argp->count 
 	offset = $argp->offset 
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc3.commit"
 	argstr = sprintf("%d,%d",count,offset)
@@ -618,6 +656,9 @@ probe nfsd.proc4.commit = kernel.function("nfsd4_commit").call !,
 	count = $commit->co_count 
 	offset = $commit->co_offset 
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc4.commit"
 	argstr = sprintf("%d,%d",count,offset)
 
@@ -645,6 +686,8 @@ probe nfsd.proc4.commit.return =
  * @fh: file handle (the first part is the length of the file handle)
  * @filename: file name
  * @filelen: length of file name
+ * @uid: requester's user id
+ * @gid: requester's group id
  */
 probe nfsd.proc.create = 
       nfsd.proc4.create ?,
@@ -668,6 +711,9 @@ probe nfsd.proc2.create = kernel.function("nfsd_proc_create") !,
 	filelen = $argp->len
 	filename  = kernel_string_n($argp->name, $argp->len)
 	createmode = 0			# gets computed by nfsd_proc_create
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc2.create"
 	argstr = sprintf("%s", kernel_string_n($argp->name, $argp->len))
@@ -696,9 +742,13 @@ probe nfsd.proc3.create = kernel.function("nfsd3_proc_create") !,
 	filename  = kernel_string_n($argp->name, $argp->len)
 	createmode = $argp->createmode
 	
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc3.create"
-	argstr = sprintf("%s (mode=%s)", kernel_string_n($argp->name, $argp->len), 
-		nfs3_cmode(createmode))
+	argstr = sprintf("%s (mode=%s)",
+			 kernel_string_n($argp->name, $argp->len), 
+			 nfs3_cmode(createmode))
 }
 
 probe nfsd.proc3.create.return =
@@ -724,6 +774,9 @@ probe nfsd.proc4.create = kernel.function("nfsd4_create").call !,
 	filelen = $create->cr_namelen
 	filename  = kernel_string_n($create->cr_name, $create->cr_namelen)
 	createmode = $create->cr_type
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc4.create"
 	argstr = sprintf("%s (type=%s)", 
@@ -752,6 +805,8 @@ probe nfsd.proc4.create.return =
  * @fh: file handle (the first part is the length of the file handle)
  * @filename: file name
  * @filelen: length of file name
+ * @uid: requester's user id
+ * @gid: requester's group id
  */
 probe nfsd.proc.remove = 
       nfsd.proc4.remove ?,
@@ -774,6 +829,9 @@ probe nfsd.proc2.remove = kernel.function("nfsd_proc_remove") !,
 
 	filelen = $argp->len
 	filename  = kernel_string_n($argp->name, $argp->len)
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc2.remove"
 	argstr = sprintf("%s", kernel_string_n($argp->name, $argp->len))
@@ -801,6 +859,9 @@ probe nfsd.proc3.remove = kernel.function("nfsd3_proc_remove") !,
 	filelen = $argp->len
 	filename  = kernel_string_n($argp->name, $argp->len)
 	
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc3.remove"
 	argstr = sprintf("%s", kernel_string_n($argp->name, $argp->len))
 }
@@ -825,6 +886,9 @@ probe nfsd.proc4.remove = kernel.function("nfsd4_remove").call !,
 	fh = & @cast($cstate, "nfsd4_compound_state", "kernel:nfsd")->current_fh
 	filelen = $remove->rm_namelen
 	filename  = kernel_string_n($remove->rm_name, $remove->rm_namelen)
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc4.remove"
 	argstr = sprintf("%s", 
@@ -853,6 +917,8 @@ probe nfsd.proc4.remove.return =
  * @tname: new file name
  * @flen: length of old file name 
  * @tlen: length of new file name
+ * @uid: requester's user id
+ * @gid: requester's group id
  */
 probe nfsd.proc.rename = 
       nfsd.proc4.rename ?,
@@ -879,6 +945,9 @@ probe nfsd.proc2.rename = kernel.function("nfsd_proc_rename") !,
 	filename  = kernel_string_n($argp->fname, $argp->flen)	
 	tlen = $argp->tlen
 	tname = kernel_string_n($argp->tname, $argp->tlen)
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc2.rename"
 	argstr = sprintf("%s to %s", 
@@ -911,6 +980,9 @@ probe nfsd.proc3.rename = kernel.function("nfsd3_proc_rename") !,
 	tlen = $argp->tlen
 	tname = kernel_string_n($argp->tname, $argp->tlen)
 
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
+
 	name = "nfsd.proc3.rename"
 	argstr = sprintf("%s to %s", 
 		kernel_string_n($argp->fname, $argp->flen), 
@@ -941,6 +1013,9 @@ probe nfsd.proc4.rename = kernel.function("nfsd4_rename").call !,
 	filename  = kernel_string_n($rename->rn_sname, $rename->rn_snamelen)	
 	tlen = $rename->rn_tnamelen
 	tname = kernel_string_n($rename->rn_tname, $rename->rn_tnamelen)
+
+	uid = $rqstp->rq_cred->cr_uid
+	gid = $rqstp->rq_cred->cr_gid
 
 	name = "nfsd.proc4.rename"
 	argstr = sprintf("%s to %s", 
