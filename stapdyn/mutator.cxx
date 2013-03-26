@@ -477,8 +477,10 @@ mutator::run ()
       // letting signals break us out of the loop.
       while (update_mutatees())
         {
-          pollfd pfd = { .fd=patch.getNotificationFD(),
-                         .events=POLLIN, .revents=0 };
+          pollfd pfd;
+          pfd.fd = patch.getNotificationFD();
+          pfd.events = POLLIN;
+          pfd.revents = 0;
 
           int rc = ppoll (&pfd, 1, NULL, &masked.old);
           if (rc < 0 && errno != EINTR)
