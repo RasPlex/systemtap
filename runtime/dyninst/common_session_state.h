@@ -48,6 +48,8 @@ static inline struct stp_runtime_session* _stp_session(void)
 
 #define GET_SESSION_ATOMIC(name)			\
 	static inline atomic_t *name(void) {		\
+		if (unlikely(_stp_session() == NULL))	\
+			return NULL;			\
 		return &_stp_session()->_##name;	\
 	}
 
@@ -65,7 +67,7 @@ GET_SESSION_ATOMIC(skipped_count_uprobe_unreg);
 
 static inline unsigned long _stap_hash_seed()
 {
-	if (_stp_session())
+	if (likely(_stp_session()))
 		return _stp_session()->_hash_seed;
 	return 0;
 }
@@ -77,7 +79,9 @@ static inline atomic_t *probe_alibi(size_t index)
 	// Do some simple bounds-checking.  Translator-generated code
 	// should never get this wrong, but better to be safe.
 	index = clamp_t(size_t, index, 0, STP_PROBE_COUNT - 1);
-	return &_stp_session()->_probe_alibi[index];
+	if (likely(_stp_session()))
+		return &_stp_session()->_probe_alibi[index];
+	return NULL;
 }
 #endif
 
@@ -87,7 +91,9 @@ static inline Stat probe_timing(size_t index)
 	// Do some simple bounds-checking.  Translator-generated code
 	// should never get this wrong, but better to be safe.
 	index = clamp_t(size_t, index, 0, STP_PROBE_COUNT - 1);
-	return offptr_get(&_stp_session()->_probe_timing[index]);
+	if (likely(_stp_session()))
+		return offptr_get(&_stp_session()->_probe_timing[index]);
+	return NULL;
 }
 #endif
 
@@ -97,7 +103,9 @@ static inline struct context* stp_session_context(size_t index)
 	// Do some simple bounds-checking.  Translator-generated code
 	// should never get this wrong, but better to be safe.
 	index = clamp_t(size_t, index, 0, _stp_runtime_num_contexts - 1);
-	return &_stp_session()->_context[index];
+	if (likely(_stp_session()))
+		return &_stp_session()->_context[index];
+	return NULL;
 }
 
 

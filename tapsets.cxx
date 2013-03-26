@@ -85,7 +85,14 @@ common_probe_entryfn_prologue (systemtap_session& s,
 			       string probe_type, bool overload_processing)
 {
   if (s.runtime_usermode_p())
-    s.op->newline() << "int _stp_saved_errno = errno;";
+    {
+      // If session_state() is NULL, then we haven't even initialized shm yet,
+      // and there's *nothing* for the probe to do.  (even alibi is in shm)
+      // So failure skips this whole block through the end of the epilogue.
+      s.op->newline() << "if (likely(session_state())) {";
+      s.op->newline(1) << "int _stp_saved_errno = errno;";
+    }
+
   s.op->newline() << "#ifdef STP_ALIBI";
   s.op->newline() << "atomic_inc(probe_alibi(" << probe << "->index));";
   s.op->newline() << "#else";
@@ -344,8 +351,12 @@ common_probe_entryfn_epilogue (systemtap_session& s,
   s.op->newline() << "#endif";
 
   s.op->newline() << "#endif // STP_ALIBI";
+
   if (s.runtime_usermode_p())
-    s.op->newline() << "errno = _stp_saved_errno;";
+    {
+      s.op->newline() << "errno = _stp_saved_errno;";
+      s.op->newline(-1) << "}";
+    }
 }
 
 
