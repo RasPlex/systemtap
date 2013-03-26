@@ -602,6 +602,7 @@ exit 0
 %{_datadir}/systemtap/runtime
 %{_datadir}/systemtap/tapset
 %{_mandir}/man1/stap.1*
+%{_mandir}/man1/stap-prep.1*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
@@ -654,6 +655,7 @@ exit 0
 %{_bindir}/stap-prep
 %{_bindir}/stap-report
 %{_mandir}/man1/stap.1*
+%{_mandir}/man1/stap-prep.1*
 %{_mandir}/man1/stap-merge.1*
 %{_mandir}/man3/*
 %{_mandir}/man7/error*
