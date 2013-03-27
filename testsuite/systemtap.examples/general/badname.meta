@@ -1,7 +1,7 @@
 title: Bad Filename Filter
 name: badname.stp
 version: 1.0
-keywords: filesystem
+keywords: filesystem guru
 author: Josh Stone
 subsystem: filesystem
 status: experimental

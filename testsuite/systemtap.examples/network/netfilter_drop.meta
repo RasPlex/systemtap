@@ -1,6 +1,6 @@
 title: System-Wide Network Packet Dropping Tool
 name: netfilter_drop.stp
-keywords: network drop packets
+keywords: network packets guru
 subsystem: network
 status: experimental
 exit: user-controlled

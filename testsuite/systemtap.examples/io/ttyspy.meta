@@ -2,7 +2,7 @@ title: Monitor TTY Typing
 name: ttyspy.stp
 version: 1.0
 author: anonymous
-keywords: io tty monitoring
+keywords: io tty monitoring guru
 subsystem: io
 status: proposed
 exit: user-controlled

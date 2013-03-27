@@ -208,20 +208,6 @@ keywords: nfs disk
   # stap nfsd_unlink.stp -c "sleep 0.2"
 
 
-= DROP =
-
-network/netfilter_drop.stp - System-Wide Network Packet Dropping Tool
-keywords: network drop packets
-
-  The script drops the specified number of packets of the specified
-  protocol. Valid protocols are TCP, UDP, or ALL. If ALL is specified,
-  all incoming packets are dropped. The number of packets to drop can
-  be specified with a positive integer. A value of 0 indicates that
-  packets should be dropped until the user manually exits.
-
-  # stap -g netfilter_drop.stp TCP 1 -c "sleep 2"
-
-
 = FILE =
 
 io/iotime.stp - Trace Time Spent in Read and Write for Files 
@@ -255,7 +241,7 @@ keywords: process file
 = FILESYSTEM =
 
 general/badname.stp - Bad Filename Filter
-keywords: filesystem
+keywords: filesystem guru
 
   The badname.stp script shows how one could prevent the creation of
   files with undesirable names using guru mode.
@@ -350,6 +336,82 @@ keywords: syscall locking futex
   # stap futexes.stp -c "sleep 0.2"
 
 
+= GURU =
+
+general/badname.stp - Bad Filename Filter
+keywords: filesystem guru
+
+  The badname.stp script shows how one could prevent the creation of
+  files with undesirable names using guru mode.
+
+  # stap -g badname.stp -c "touch /tmp/myXXXbadnameXXXfile.$$ 2>&1 | grep \
+  denied"
+
+
+io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+keywords: io guru simple
+
+  Suppresses fsync() syscalls from processes identified by stap -c/-x
+  by turning them into presumed-faster fsync() on file descriptor 1
+  (stdout).
+
+  # stap -g eatmydata.stp -c 'strace ls || true'
+
+
+io/ttyspy.stp - Monitor TTY Typing
+keywords: io tty monitoring guru
+
+  The ttyspy.stp script uses tty_audit hooks to monitor recent typing
+  activity on the system, printing a scrolling record of recent
+  keystrokes, on a per-tty basis.
+
+  # stap --skip-badvars -g ttyspy.stp -c "sleep 1"
+
+
+network/netfilter_drop.stp - System-Wide Network Packet Dropping Tool
+keywords: network packets guru
+
+  The script drops the specified number of packets of the specified
+  protocol. Valid protocols are TCP, UDP, or ALL. If ALL is specified,
+  all incoming packets are dropped. The number of packets to drop can
+  be specified with a positive integer. A value of 0 indicates that
+  packets should be dropped until the user manually exits.
+
+  # stap -g netfilter_drop.stp TCP 1 -c "sleep 2"
+
+
+network/tcp_init_cwnd.stp - Increase Initial TCP Congestion Window to 10
+keywords: network tcp socket guru
+
+  Run the tcp_init_cwnd.stp script in the background to override a
+  kernel's default tcp cwnd value to 10, which has been found to
+  improve latency for web server type workloads.  The script prints a
+  count of cwnd value changes when it is stopped.
+
+  # stap -g tcp_init_cwnd.stp -c "sleep 0.2"
+
+
+process/noptrace.stp - Disable ptrace from Hierarchies of Processes
+keywords: process security guru
+
+  Blocks ptrace(2) attempts from processes identified by stap -c/-x, as
+  also specifiable from /proc/systemtap/stap_XXX/ control files. 
+  Processes may be added or removed from the blocked list.
+
+  # stap -g noptrace.stp -c 'strace ls || true'
+
+
+process/threadstacks.stp - Override default new-pthread stack sizes
+keywords: thread guru
+
+  Overrides default NPTL pthread_create stack size for all new threads
+  created by target processes.	Reports one line per process when the
+  related glibc variable __default_stacksize is updated.  Moot for
+  glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.
+
+  # stap -g threadstacks.stp -Gsize=65536 -c "sleep 1" -d stap
+
+
 = INTERRUPT =
 
 interrupt/interrupts-by-dev.stp - Record Interrupts on a Per-Device Basis
@@ -402,6 +464,16 @@ keywords: io statistics
   the distributions of times.
 
   # stap alias_suffixes.stp -c "sleep 0.2"
+
+
+io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+keywords: io guru simple
+
+  Suppresses fsync() syscalls from processes identified by stap -c/-x
+  by turning them into presumed-faster fsync() on file descriptor 1
+  (stdout).
+
+  # stap -g eatmydata.stp -c 'strace ls || true'
 
 
 io/inodewatch.stp - Monitoring Reads and Writes to a File
@@ -554,7 +626,7 @@ keywords: io
 
 
 io/ttyspy.stp - Monitor TTY Typing
-keywords: io tty monitoring
+keywords: io tty monitoring guru
 
   The ttyspy.stp script uses tty_audit hooks to monitor recent typing
   activity on the system, printing a scrolling record of recent
@@ -867,7 +939,7 @@ keywords: io monitoring disk
 
 
 io/ttyspy.stp - Monitor TTY Typing
-keywords: io tty monitoring
+keywords: io tty monitoring guru
 
   The ttyspy.stp script uses tty_audit hooks to monitor recent typing
   activity on the system, printing a scrolling record of recent
@@ -930,7 +1002,7 @@ keywords: network device traffic
 
 
 network/netfilter_drop.stp - System-Wide Network Packet Dropping Tool
-keywords: network drop packets
+keywords: network packets guru
 
   The script drops the specified number of packets of the specified
   protocol. Valid protocols are TCP, UDP, or ALL. If ALL is specified,
@@ -1013,7 +1085,7 @@ keywords: network tcp socket
 
 
 network/tcp_init_cwnd.stp - Increase Initial TCP Congestion Window to 10
-keywords: network tcp socket
+keywords: network tcp socket guru
 
   Run the tcp_init_cwnd.stp script in the background to override a
   kernel's default tcp cwnd value to 10, which has been found to
@@ -1101,7 +1173,7 @@ keywords: memory numa
 = PACKETS =
 
 network/netfilter_drop.stp - System-Wide Network Packet Dropping Tool
-keywords: network drop packets
+keywords: network packets guru
 
   The script drops the specified number of packets of the specified
   protocol. Valid protocols are TCP, UDP, or ALL. If ALL is specified,
@@ -1184,7 +1256,7 @@ keywords: process
 
 
 process/noptrace.stp - Disable ptrace from Hierarchies of Processes
-keywords: process security
+keywords: process security guru
 
   Blocks ptrace(2) attempts from processes identified by stap -c/-x, as
   also specifiable from /proc/systemtap/stap_XXX/ control files. 
@@ -1213,7 +1285,7 @@ keywords: process
 
 
 process/psig.stp - Print Process File Descriptors
-keywords: process signal
+keywords: process signals
 
   Run psig.stp to produce a human-readable summary of the signal
   handling configuration of a given process.  Specify the process-id as
@@ -1620,7 +1692,7 @@ keywords: monitoring security audit backtrace
 
 
 process/noptrace.stp - Disable ptrace from Hierarchies of Processes
-keywords: process security
+keywords: process security guru
 
   Blocks ptrace(2) attempts from processes identified by stap -c/-x, as
   also specifiable from /proc/systemtap/stap_XXX/ control files. 
@@ -1629,10 +1701,10 @@ keywords: process security
   # stap -g noptrace.stp -c 'strace ls || true'
 
 
-= SIGNAL =
+= SIGNALS =
 
 process/psig.stp - Print Process File Descriptors
-keywords: process signal
+keywords: process signals
 
   Run psig.stp to produce a human-readable summary of the signal
   handling configuration of a given process.  Specify the process-id as
@@ -1640,8 +1712,6 @@ keywords: process signal
 
   # stap -DMAXACTION=10000 -g psig.stp -x $$
 
-
-= SIGNALS =
 
 process/sig_by_pid.stp -  Signal Counts by Process ID
 keywords: signals
@@ -1691,6 +1761,16 @@ keywords: simple
   prints out "hello world" message and then immediately exits.
 
   # stap helloworld.stp
+
+
+io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+keywords: io guru simple
+
+  Suppresses fsync() syscalls from processes identified by stap -c/-x
+  by turning them into presumed-faster fsync() on file descriptor 1
+  (stdout).
+
+  # stap -g eatmydata.stp -c 'strace ls || true'
 
 
 = SLAB =
@@ -1755,7 +1835,7 @@ keywords: network tcp socket
 
 
 network/tcp_init_cwnd.stp - Increase Initial TCP Congestion Window to 10
-keywords: network tcp socket
+keywords: network tcp socket guru
 
   Run the tcp_init_cwnd.stp script in the background to override a
   kernel's default tcp cwnd value to 10, which has been found to
@@ -2003,7 +2083,7 @@ keywords: network tcp socket
 
 
 network/tcp_init_cwnd.stp - Increase Initial TCP Congestion Window to 10
-keywords: network tcp socket
+keywords: network tcp socket guru
 
   Run the tcp_init_cwnd.stp script in the background to override a
   kernel's default tcp cwnd value to 10, which has been found to
@@ -2027,7 +2107,7 @@ keywords: statistics thread process
 
 
 process/threadstacks.stp - Override default new-pthread stack sizes
-keywords: thread
+keywords: thread guru
 
   Overrides default NPTL pthread_create stack size for all new threads
   created by target processes.	Reports one line per process when the
@@ -2208,7 +2288,7 @@ keywords: network traffic
 = TTY =
 
 io/ttyspy.stp - Monitor TTY Typing
-keywords: io tty monitoring
+keywords: io tty monitoring guru
 
   The ttyspy.stp script uses tty_audit hooks to monitor recent typing
   activity on the system, printing a scrolling record of recent

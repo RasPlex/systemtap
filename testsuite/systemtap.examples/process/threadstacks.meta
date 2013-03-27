@@ -1,6 +1,6 @@
 title: Override default new-pthread stack sizes
 name: threadstacks.stp
-keywords: thread
+keywords: thread guru
 subsystem: process
 exit: user-controlled
 description: Overrides default NPTL pthread_create stack size for all new threads created by target processes.  Reports one line per process when the related glibc variable __default_stacksize is updated.  Moot for glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.

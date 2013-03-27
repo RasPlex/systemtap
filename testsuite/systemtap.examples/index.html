@@ -50,7 +50,7 @@ keywords: <a href="keyword-index.html#FORMAT">FORMAT</a> <br>
 keywords: <a href="keyword-index.html#FORMAT">FORMAT</a> <br>
 <p>The script prints a table showing the available attributes (bold, underline, and inverse) with color combinations for the ans_set_color3() function in the ansi.stp tapset.<p><font size="-2"><pre># stap ansi_colors2.stp</pre></font></p>
 </li><li><a name="general/badname.stp"></a><a href="#general/badname.stp">&para;</a> <a href="general/badname.stp">general/badname.stp</a> - Bad Filename Filter<br>
-keywords: <a href="keyword-index.html#FILESYSTEM">FILESYSTEM</a> <br>
+keywords: <a href="keyword-index.html#FILESYSTEM">FILESYSTEM</a> <a href="keyword-index.html#GURU">GURU</a> <br>
 <p>The badname.stp script shows how one could prevent the creation of files with undesirable names using guru mode.<p><font size="-2"><pre># stap -g badname.stp -c &quot;touch /tmp/myXXXbadnameXXXfile.$$ 2&gt;&amp;1 | grep \
 denied&quot;</pre></font></p>
 </li><li><a name="general/eventcount.stp"></a><a href="#general/eventcount.stp">&para;</a> <a href="general/eventcount.stp">general/eventcount.stp</a> - Count Specified Events<br>
@@ -102,6 +102,9 @@ keywords: <a href="keyword-index.html#DISK">DISK</a> <br>
 </li><li><a name="io/disktop.stp"></a><a href="#io/disktop.stp">&para;</a> <a href="io/disktop.stp">io/disktop.stp</a> - Summarize Disk Read/Write Traffic<br>
 keywords: <a href="keyword-index.html#DISK">DISK</a> <br>
 <p>Get the status of reading/writing disk every 5 seconds, output top ten entries during that period.<p><font size="-2"><pre># stap disktop.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a name="io/eatmydata.stp"></a><a href="#io/eatmydata.stp">&para;</a> <a href="io/eatmydata.stp">io/eatmydata.stp</a> - Disable ptrace from Hierarchies of Processes<br>
+keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#GURU">GURU</a> <a href="keyword-index.html#SIMPLE">SIMPLE</a> <br>
+<p>Suppresses fsync() syscalls from processes identified by stap -c/-x by turning them into presumed-faster fsync() on file descriptor 1 (stdout).<p><font size="-2"><pre># stap -g eatmydata.stp -c &#39;strace ls || true&#39;</pre></font></p>
 </li><li><a name="io/enospc.stp"></a><a href="#io/enospc.stp">&para;</a> <a href="io/enospc.stp">io/enospc.stp</a> - Report an disk out-of-space condition.<br>
 keywords: <a href="keyword-index.html#DISK">DISK</a> <a href="keyword-index.html#FILESYSTEM">FILESYSTEM</a> <br>
 <p>This script monitors a filesystem implementations for early internal indications of ENOSPC, and reports these to the system logger and the systemtap console.<p><font size="-2"><pre># stap enospc.stp -c &quot;sleep 0.2&quot;</pre></font></p>
@@ -146,7 +149,7 @@ keywords: <a href="keyword-index.html#IO">IO</a> <br>
 keywords: <a href="keyword-index.html#IO">IO</a> <br>
 <p>Print out the executable name and process number as reads and writes to the specified device occur.<p><font size="-2"><pre># stap traceio2.stp 0x0801 -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a name="io/ttyspy.stp"></a><a href="#io/ttyspy.stp">&para;</a> <a href="io/ttyspy.stp">io/ttyspy.stp</a> - Monitor TTY Typing<br>
-keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#TTY">TTY</a> <a href="keyword-index.html#MONITORING">MONITORING</a> <br>
+keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#TTY">TTY</a> <a href="keyword-index.html#MONITORING">MONITORING</a> <a href="keyword-index.html#GURU">GURU</a> <br>
 <p>The ttyspy.stp script uses tty_audit hooks to monitor recent typing activity on the system, printing a scrolling record of recent keystrokes, on a per-tty basis.<p><font size="-2"><pre># stap --skip-badvars -g ttyspy.stp -c &quot;sleep 1&quot;</pre></font></p>
 </li><li><a name="locks/bkl.stp"></a><a href="#locks/bkl.stp">&para;</a> <a href="locks/bkl.stp">locks/bkl.stp</a> - Tracing Contention on Big Kernel Lock<br>
 keywords: <a href="keyword-index.html#LOCKING">LOCKING</a> <br>
@@ -198,7 +201,7 @@ keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-inde
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#DEVICE">DEVICE</a> <a href="keyword-index.html#TRAFFIC">TRAFFIC</a> <br>
 <p>The netdev.stp script traces configuration and transmit/receive activity on network devices.<p><font size="-2"><pre># stap netdev.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a name="network/netfilter_drop.stp"></a><a href="#network/netfilter_drop.stp">&para;</a> <a href="network/netfilter_drop.stp">network/netfilter_drop.stp</a> - System-Wide Network Packet Dropping Tool<br>
-keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#DROP">DROP</a> <a href="keyword-index.html#PACKETS">PACKETS</a> <br>
+keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#PACKETS">PACKETS</a> <a href="keyword-index.html#GURU">GURU</a> <br>
 <p>The script drops the specified number of packets of the specified protocol. Valid protocols are TCP, UDP, or ALL. If ALL is specified, all incoming packets are dropped. The number of packets to drop can be specified with a positive integer. A value of 0 indicates that packets should be dropped until the user manually exits.<p><font size="-2"><pre># stap -g netfilter_drop.stp TCP 1 -c &quot;sleep 2&quot;</pre></font></p>
 </li><li><a name="network/netfilter_summary.stp"></a><a href="#network/netfilter_summary.stp">&para;</a> <a href="network/netfilter_summary.stp">network/netfilter_summary.stp</a> - System-Wide Count of Network Packets by IPs<br>
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TRAFFIC">TRAFFIC</a> <br>
@@ -225,7 +228,7 @@ keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-inde
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TCP">TCP</a> <a href="keyword-index.html#SOCKET">SOCKET</a> <br>
 <p>The tcp_connections.stp script prints information for each new incoming TCP connection accepted by the computer. The information includes the UID, the command accepting the connection, the PID of the command, the port the connection is on, and the IP address of the originator of the request.<p><font size="-2"><pre># stap tcp_connections.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a name="network/tcp_init_cwnd.stp"></a><a href="#network/tcp_init_cwnd.stp">&para;</a> <a href="network/tcp_init_cwnd.stp">network/tcp_init_cwnd.stp</a> - Increase Initial TCP Congestion Window to 10<br>
-keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TCP">TCP</a> <a href="keyword-index.html#SOCKET">SOCKET</a> <br>
+keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TCP">TCP</a> <a href="keyword-index.html#SOCKET">SOCKET</a> <a href="keyword-index.html#GURU">GURU</a> <br>
 <p>Run the tcp_init_cwnd.stp script in the background to override a kernel&#39;s default tcp cwnd value to 10, which has been found to improve latency for web server type workloads.  The script prints a count of cwnd value changes when it is stopped.<p><font size="-2"><pre># stap -g tcp_init_cwnd.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a name="network/tcp_trace.stp"></a><a href="#network/tcp_trace.stp">&para;</a> <a href="network/tcp_trace.stp">network/tcp_trace.stp</a> - TCP Connection Tracing Utility<br>
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TRACE">TRACE</a> <br>
@@ -264,7 +267,7 @@ keywords: <a href="keyword-index.html#SCHEDULER">SCHEDULER</a> <br>
 keywords: <a href="keyword-index.html#LOCKING">LOCKING</a> <br>
 <p>Tracks pthread-mutex initialization/use and underlying futex operations, to identify (with backtraces/symbol-names) the mutexes suffering most contention.  Invoke with &quot;NNN -d SHLIB --ldd&quot;<p><font size="-2"><pre># stap mutex-contention.stp 100 -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a name="process/noptrace.stp"></a><a href="#process/noptrace.stp">&para;</a> <a href="process/noptrace.stp">process/noptrace.stp</a> - Disable ptrace from Hierarchies of Processes<br>
-keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SECURITY">SECURITY</a> <br>
+keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SECURITY">SECURITY</a> <a href="keyword-index.html#GURU">GURU</a> <br>
 <p>Blocks ptrace(2) attempts from processes identified by stap -c/-x, as also specifiable from /proc/systemtap/stap_XXX/ control files.  Processes may be added or removed from the blocked list.<p><font size="-2"><pre># stap -g noptrace.stp -c &#39;strace ls || true&#39;</pre></font></p>
 </li><li><a name="process/pfiles.stp"></a><a href="#process/pfiles.stp">&para;</a> <a href="process/pfiles.stp">process/pfiles.stp</a> - Print Process File Descriptors<br>
 keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#FILE">FILE</a> <br>
@@ -273,7 +276,7 @@ keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-inde
 keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <br>
 <p>The script prints a variety of resource limits for a given pid, like /proc/$$/limits on recent kernels.<p><font size="-2"><pre># stap -g plimit.stp $$</pre></font></p>
 </li><li><a name="process/psig.stp"></a><a href="#process/psig.stp">&para;</a> <a href="process/psig.stp">process/psig.stp</a> - Print Process File Descriptors<br>
-keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SIGNAL">SIGNAL</a> <br>
+keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SIGNALS">SIGNALS</a> <br>
 <p>Run psig.stp to produce a human-readable summary of the signal handling configuration of a given process.  Specify the process-id as -x PID for fastest performance.<p><font size="-2"><pre># stap -DMAXACTION=10000 -g psig.stp -x $$</pre></font></p>
 </li><li><a name="process/pstrace_exec.stp"></a><a href="#process/pstrace_exec.stp">&para;</a> <a href="process/pstrace_exec.stp">process/pstrace_exec.stp</a> - Print trace of process ancestors for matching exec commands<br>
 keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#BACKTRACE">BACKTRACE</a> <br>
@@ -309,7 +312,7 @@ keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <br>
 <p>Combination shell/systemtap script to measure system call counts and times.  Can be filtered by process IDs, process names and users.<p><font size="-2"><pre># ./syscalltimes -c &#39;sleep 0.2&#39;</pre></font></p>
 </li><li><a name="process/threadstacks.stp"></a><a href="#process/threadstacks.stp">&para;</a> <a href="process/threadstacks.stp">process/threadstacks.stp</a> - Override default new-pthread stack sizes<br>
-keywords: <a href="keyword-index.html#THREAD">THREAD</a> <br>
+keywords: <a href="keyword-index.html#THREAD">THREAD</a> <a href="keyword-index.html#GURU">GURU</a> <br>
 <p>Overrides default NPTL pthread_create stack size for all new threads created by target processes.  Reports one line per process when the related glibc variable __default_stacksize is updated.  Moot for glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.<p><font size="-2"><pre># stap -g threadstacks.stp -Gsize=65536 -c &quot;sleep 1&quot; -d stap</pre></font></p>
 </li><li><a name="process/wait4time.stp"></a><a href="#process/wait4time.stp">&para;</a> <a href="process/wait4time.stp">process/wait4time.stp</a> - Trace Time Spent in wait4 Syscalls<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <br>

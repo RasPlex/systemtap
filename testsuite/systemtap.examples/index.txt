@@ -36,7 +36,7 @@ keywords: format
 
 
 general/badname.stp - Bad Filename Filter
-keywords: filesystem
+keywords: filesystem guru
 
   The badname.stp script shows how one could prevent the creation of
   files with undesirable names using guru mode.
@@ -218,6 +218,16 @@ keywords: disk
   # stap disktop.stp -c "sleep 0.2"
 
 
+io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+keywords: io guru simple
+
+  Suppresses fsync() syscalls from processes identified by stap -c/-x
+  by turning them into presumed-faster fsync() on file descriptor 1
+  (stdout).
+
+  # stap -g eatmydata.stp -c 'strace ls || true'
+
+
 io/enospc.stp - Report an disk out-of-space condition.
 keywords: disk filesystem
 
@@ -378,7 +388,7 @@ keywords: io
 
 
 io/ttyspy.stp - Monitor TTY Typing
-keywords: io tty monitoring
+keywords: io tty monitoring guru
 
   The ttyspy.stp script uses tty_audit hooks to monitor recent typing
   activity on the system, printing a scrolling record of recent
@@ -582,7 +592,7 @@ keywords: network device traffic
 
 
 network/netfilter_drop.stp - System-Wide Network Packet Dropping Tool
-keywords: network drop packets
+keywords: network packets guru
 
   The script drops the specified number of packets of the specified
   protocol. Valid protocols are TCP, UDP, or ALL. If ALL is specified,
@@ -683,7 +693,7 @@ keywords: network tcp socket
 
 
 network/tcp_init_cwnd.stp - Increase Initial TCP Congestion Window to 10
-keywords: network tcp socket
+keywords: network tcp socket guru
 
   Run the tcp_init_cwnd.stp script in the background to override a
   kernel's default tcp cwnd value to 10, which has been found to
@@ -830,7 +840,7 @@ keywords: locking
 
 
 process/noptrace.stp - Disable ptrace from Hierarchies of Processes
-keywords: process security
+keywords: process security guru
 
   Blocks ptrace(2) attempts from processes identified by stap -c/-x, as
   also specifiable from /proc/systemtap/stap_XXX/ control files. 
@@ -859,7 +869,7 @@ keywords: process
 
 
 process/psig.stp - Print Process File Descriptors
-keywords: process signal
+keywords: process signals
 
   Run psig.stp to produce a human-readable summary of the signal
   handling configuration of a given process.  Specify the process-id as
@@ -983,7 +993,7 @@ keywords: syscall
 
 
 process/threadstacks.stp - Override default new-pthread stack sizes
-keywords: thread
+keywords: thread guru
 
   Overrides default NPTL pthread_create stack size for all new threads
   created by target processes.	Reports one line per process when the
