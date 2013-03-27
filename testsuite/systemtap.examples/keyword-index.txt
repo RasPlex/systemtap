@@ -348,7 +348,7 @@ keywords: filesystem guru
   denied"
 
 
-io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+io/eatmydata.stp - disable fsync
 keywords: io guru simple
 
   Suppresses fsync() syscalls from processes identified by stap -c/-x
@@ -466,7 +466,7 @@ keywords: io statistics
   # stap alias_suffixes.stp -c "sleep 0.2"
 
 
-io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+io/eatmydata.stp - disable fsync
 keywords: io guru simple
 
   Suppresses fsync() syscalls from processes identified by stap -c/-x
@@ -1763,7 +1763,7 @@ keywords: simple
   # stap helloworld.stp
 
 
-io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+io/eatmydata.stp - disable fsync
 keywords: io guru simple
 
   Suppresses fsync() syscalls from processes identified by stap -c/-x

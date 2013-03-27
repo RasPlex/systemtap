@@ -218,7 +218,7 @@ keywords: disk
   # stap disktop.stp -c "sleep 0.2"
 
 
-io/eatmydata.stp - Disable ptrace from Hierarchies of Processes
+io/eatmydata.stp - disable fsync
 keywords: io guru simple
 
   Suppresses fsync() syscalls from processes identified by stap -c/-x

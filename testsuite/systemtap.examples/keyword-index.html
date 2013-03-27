@@ -171,7 +171,7 @@ keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-inde
 keywords: <a href="keyword-index.html#FILESYSTEM">FILESYSTEM</a> <a href="keyword-index.html#GURU">GURU</a> <br>
 <p>The badname.stp script shows how one could prevent the creation of files with undesirable names using guru mode.<p><font size="-2"><pre># stap -g badname.stp -c &quot;touch /tmp/myXXXbadnameXXXfile.$$ 2&gt;&amp;1 | grep \
 denied&quot;</pre></font></p>
-</li><li><a href="io/eatmydata.stp">io/eatmydata.stp</a> - Disable ptrace from Hierarchies of Processes<br>
+</li><li><a href="io/eatmydata.stp">io/eatmydata.stp</a> - disable fsync<br>
 keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#GURU">GURU</a> <a href="keyword-index.html#SIMPLE">SIMPLE</a> <br>
 <p>Suppresses fsync() syscalls from processes identified by stap -c/-x by turning them into presumed-faster fsync() on file descriptor 1 (stdout).<p><font size="-2"><pre># stap -g eatmydata.stp -c &#39;strace ls || true&#39;</pre></font></p>
 </li><li><a href="io/ttyspy.stp">io/ttyspy.stp</a> - Monitor TTY Typing<br>
@@ -207,7 +207,7 @@ keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-inde
 <li><a href="general/alias_suffixes.stp">general/alias_suffixes.stp</a> - Count I/O Syscalls using Alias Suffixes<br>
 keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#STATISTICS">STATISTICS</a> <br>
 <p>alias_suffixes.stp is a demonstration of how alias suffixes in the systemtap language might be used. The script tracks the wall clock time for each invocation of the system calls open, close, read, and write. When the script exists it prints out the minimum, average, and maximum times in microseconds for each system call, followed by a count of times that each syscall was invoked and a histogram showing the distributions of times.<p><font size="-2"><pre># stap alias_suffixes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
-</li><li><a href="io/eatmydata.stp">io/eatmydata.stp</a> - Disable ptrace from Hierarchies of Processes<br>
+</li><li><a href="io/eatmydata.stp">io/eatmydata.stp</a> - disable fsync<br>
 keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#GURU">GURU</a> <a href="keyword-index.html#SIMPLE">SIMPLE</a> <br>
 <p>Suppresses fsync() syscalls from processes identified by stap -c/-x by turning them into presumed-faster fsync() on file descriptor 1 (stdout).<p><font size="-2"><pre># stap -g eatmydata.stp -c &#39;strace ls || true&#39;</pre></font></p>
 </li><li><a href="io/inodewatch.stp">io/inodewatch.stp</a> - Monitoring Reads and Writes to a File<br>
@@ -599,7 +599,7 @@ keywords: <a href="keyword-index.html#SIGNALS">SIGNALS</a> <br>
 <li><a href="general/helloworld.stp">general/helloworld.stp</a> - SystemTap "Hello World" Program<br>
 keywords: <a href="keyword-index.html#SIMPLE">SIMPLE</a> <br>
 <p>A basic &quot;Hello World&quot; program implemented in SystemTap script. It prints out &quot;hello world&quot; message and then immediately exits.<p><font size="-2"><pre># stap helloworld.stp</pre></font></p>
-</li><li><a href="io/eatmydata.stp">io/eatmydata.stp</a> - Disable ptrace from Hierarchies of Processes<br>
+</li><li><a href="io/eatmydata.stp">io/eatmydata.stp</a> - disable fsync<br>
 keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#GURU">GURU</a> <a href="keyword-index.html#SIMPLE">SIMPLE</a> <br>
 <p>Suppresses fsync() syscalls from processes identified by stap -c/-x by turning them into presumed-faster fsync() on file descriptor 1 (stdout).<p><font size="-2"><pre># stap -g eatmydata.stp -c &#39;strace ls || true&#39;</pre></font></p>
 </li></ul>
