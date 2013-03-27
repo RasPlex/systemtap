@@ -14,9 +14,10 @@
 #include <linux/fs.h>
 #include <linux/list.h>
 #include <linux/namei.h>
-#include <linux/rwlock.h>
-#include <linux/uprobes.h>
 #include <linux/mutex.h>
+#include <linux/rwlock.h>
+#include <linux/spinlock.h>
+#include <linux/uprobes.h>
 
 /* STAPIU: SystemTap Inode Uprobes */
 
@@ -76,11 +77,13 @@ struct stapiu_target {
 	 * This may not be system-wide, e.g. only the -c process.
 	 * We use task_finder to manage this list.  */
 	struct list_head processes; /* stapiu_process */
+	rwlock_t process_lock;
+
 	struct stap_task_finder_target finder;
 
 	const char * const filename;
 	struct inode *inode;
-	struct mutex lock;
+	struct mutex inode_lock;
 };
 
 
@@ -97,11 +100,11 @@ struct stapiu_consumer {
 	loff_t offset; /* the probe offset within the inode */
 	loff_t sdt_sem_offset; /* the semaphore offset from process->base */
 
-  	// List of perf counters used by each probe
-  	// This list is an index into struct stap_perf_probe,
-        long perf_counters_dim;
-        long *perf_counters;
-        const struct stap_probe * const probe;
+	// List of perf counters used by each probe
+	// This list is an index into struct stap_perf_probe,
+	long perf_counters_dim;
+	long *perf_counters;
+	const struct stap_probe * const probe;
 };
 
 
@@ -115,9 +118,9 @@ static struct stapiu_process {
 } stapiu_process_slots[MAXUPROBES];
 
 
-/* This lock guards modification to stapiu_process_slots and target->processes.
- * XXX: consider fine-grained locking for target-processes.  */
-static DEFINE_RWLOCK(stapiu_process_lock);
+/* This lock guards modification to stapiu_process_slots.
+ * Note: target->process_lock nests inside this.  */
+static DEFINE_SPINLOCK(stapiu_process_slots_lock);
 
 
 /* The stap-generated probe handler for all inode-uprobes. */
@@ -130,10 +133,26 @@ stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 	int ret;
 	struct stapiu_consumer *sup =
 		container_of(inst, struct stapiu_consumer, consumer);
+	struct stapiu_target *target = sup->target;
+
+	struct stapiu_process *p, *process = NULL;
+
+	/* First find the related process, set by stapiu_change_plus.  */
+	read_lock(&target->process_lock);
+	list_for_each_entry(p, &target->processes, target_process) {
+		if (p->tgid == current->tgid) {
+			process = p;
+			break;
+		}
+	}
+	read_unlock(&target->process_lock);
+	if (!process)
+		return 0;
 
 #ifdef STAPIU_NEEDS_REG_IP
 	/* Make it look like the IP is set as it would in the actual user task
 	 * before calling the real probe handler.  */
+	{
 	unsigned long saved_ip = REG_IP(regs);
 	SET_REG_IP(regs, uprobe_get_swbp_addr(regs));
 #endif
@@ -143,6 +162,7 @@ stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 #ifdef STAPIU_NEEDS_REG_IP
 	/* Reset IP regs on return, so we don't confuse uprobes.  */
 	SET_REG_IP(regs, saved_ip);
+	}
 #endif
 
 	return ret;
@@ -173,13 +193,13 @@ stapiu_unregister (struct inode* inode, struct stapiu_consumer* c)
 static inline void
 stapiu_target_lock(struct stapiu_target *target)
 {
-	mutex_lock(&target->lock);
+	mutex_lock(&target->inode_lock);
 }
 
 static inline void
 stapiu_target_unlock(struct stapiu_target *target)
 {
-	mutex_unlock(&target->lock);
+	mutex_unlock(&target->inode_lock);
 }
 
 /* Read-modify-write a semaphore, usually +/- 1.  */
@@ -268,7 +288,7 @@ static void
 stapiu_decrement_semaphores(struct stapiu_target *targets, size_t ntargets)
 {
 	size_t i;
-	/* NB: no stapiu_process_lock needed, as the task_finder engine is
+	/* NB: no stapiu_process_slots_lock needed, as the task_finder engine is
 	 * already stopped by now, so no one else will mess with us.  We need
 	 * to be sleepable for access_process_vm.  */
 	might_sleep();
@@ -369,7 +389,8 @@ stapiu_init_targets(struct stapiu_target *targets, size_t ntargets)
 		struct stapiu_target *ut = &targets[i];
 		INIT_LIST_HEAD(&ut->consumers);
 		INIT_LIST_HEAD(&ut->processes);
-		mutex_init(&ut->lock);
+		rwlock_init(&ut->process_lock);
+		mutex_init(&ut->inode_lock);
 		ret = stap_register_task_finder_target(&ut->finder);
 		if (ret != 0) {
 			_stp_error("Couldn't register task finder target for file '%s': %d\n",
@@ -468,7 +489,8 @@ stapiu_change_plus(struct stapiu_target* target, struct task_struct *task,
 	stapiu_target_unlock(target);
 
 	/* Associate this target with this process. */
-	write_lock(&stapiu_process_lock);
+	spin_lock(&stapiu_process_slots_lock);
+	write_lock(&target->process_lock);
 	for (i = 0; i < MAXUPROBES; ++i) {
 		p = &stapiu_process_slots[i];
 		if (!p->tgid) {
@@ -486,7 +508,8 @@ stapiu_change_plus(struct stapiu_target* target, struct task_struct *task,
 			break;
 		}
 	}
-	write_unlock(&stapiu_process_lock);
+	write_unlock(&target->process_lock);
+	spin_unlock(&stapiu_process_slots_lock);
 
 	return 0; /* XXX: or an error? maxskipped? */
 }
@@ -503,14 +526,14 @@ stapiu_change_semaphore_plus(struct stapiu_target* target, struct task_struct *t
 	struct stapiu_consumer *c;
 
 	/* First find the related process, set by stapiu_change_plus.  */
-	read_lock(&stapiu_process_lock);
+	read_lock(&target->process_lock);
 	list_for_each_entry(p, &target->processes, target_process) {
 		if (p->tgid == task->tgid) {
 			process = p;
 			break;
 		}
 	}
-	read_unlock(&stapiu_process_lock);
+	read_unlock(&target->process_lock);
 	if (!process)
 		return 0;
 
@@ -547,7 +570,8 @@ stapiu_change_minus(struct stapiu_target* target, struct task_struct *task,
 	 * inode here.  The registration is system-wide, based on
 	 * inode, not process based.  */
 
-	write_lock(&stapiu_process_lock);
+	spin_lock(&stapiu_process_slots_lock);
+	write_lock(&target->process_lock);
 	list_for_each_entry_safe(p, tmp, &target->processes, target_process) {
 		if (p->tgid == task->tgid && (relocation <= p->relocation &&
 					      p->relocation < relocation+length)) {
@@ -555,7 +579,8 @@ stapiu_change_minus(struct stapiu_target* target, struct task_struct *task,
 			memset(p, 0, sizeof(*p));
 		}
 	}
-	write_unlock(&stapiu_process_lock);
+	write_unlock(&target->process_lock);
+	spin_unlock(&stapiu_process_slots_lock);
 	return 0;
 }
 
