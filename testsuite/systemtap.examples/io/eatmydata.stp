@@ -6,7 +6,7 @@
 # see also http://www.flamingspork.com/projects/libeatmydata/
 
 global dummy_fd = 1 # stdout assumed harmless; override with stap -G dummy_fd=XXX
-global guilt, agony
+global guilt, agony, piety
 
 probe syscall.fsync, syscall.fdatasync { 
   # We can't actually disable the syscall from here, but can try to
@@ -18,10 +18,13 @@ probe syscall.fsync, syscall.fdatasync {
      } catch {
          agony ++
      }
+  else
+     piety ++
 }
 probe syscall.fsync.return, syscall.fdatasync.return {
   # override result code, just in case kernel sent back -EINVAL or somesuch
-  $return = 0
+  if (pid() == target())
+      try { $return = 0 } catch { }
 }
 
 
@@ -32,4 +35,5 @@ probe begin {
 probe error,end {
     printf("Redirected f*sync by pid %d to fd %d, success %d times, failed %d times.\n",
         target(), dummy_fd, guilt, agony)
+    printf("Preserved f*sync by other processes %d times.\n", piety)
 }
