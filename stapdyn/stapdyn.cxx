@@ -43,7 +43,7 @@ static void __attribute__ ((noreturn))
 usage (int rc)
 {
   clog << "Usage: " << program_invocation_short_name
-       << " MODULE [-c CMD | -x PID]" << endl;
+       << " MODULE [-c CMD | -x PID] [globalname=value ...]" << endl;
   exit (rc);
 }
 

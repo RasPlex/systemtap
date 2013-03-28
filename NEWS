@@ -1,5 +1,10 @@
 * What's new in version 2.2
 
+- The dyninst backend has improved in several aspects:
+  - Setting custom values for global variables is now supported, both
+    with -G when compiling a script, and from the stapdyn command line
+    when loading a precompiled module.
+
 - The folowing tapset variables are deprecated in release 2.2 and will
   be removed in release 2.3:
   - The 'origin' variables in the 'generic.fop.llseek',
