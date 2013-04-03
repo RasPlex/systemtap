@@ -161,12 +161,10 @@ systemtap_session::systemtap_session ():
   sysroot = "";
   update_release_sysroot = false;
   suppress_time_limits = false;
-  java_pid = 0;
-  java_proc_class = "";
 #ifdef HAVE_HELPER
   bminstall_path = "";
   bmsubmit_path = "";
-  byteman_script_path = "";
+  run_once = false;
   byteman_log = "";
 #endif //HAVE_HELPER
 
@@ -345,6 +343,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
 
 
 #ifdef HAVE_HELPER
+  run_once = other.run_once;
   java_pid = other.java_pid;
   java_proc_class = other.java_proc_class;
   bminstall_path = other.bminstall_path;
@@ -389,7 +388,7 @@ systemtap_session::~systemtap_session ()
 {
 #ifdef HAVE_HELPER
 
-  if(java_pid != 0 || !java_proc_class.empty())
+  //  if(!java_pid.empty() || !java_proc_class.empty())
     java_detach();
 #endif //HAVE_HELPER
   remove_tmp_dir();
@@ -2015,16 +2014,19 @@ translator_output* systemtap_session::op_create_auxiliary()
 void
 systemtap_session::java_detach()
 {
-  vector<string> bmcommand;
-  bmcommand.push_back(bmsubmit_path);
-  bmcommand.push_back(" -o");
-  bmcommand.push_back(byteman_log);
-  bmcommand.push_back(" -u");
-  bmcommand.push_back(byteman_script_path);
-  (void) stap_system(verbose, bmcommand);
-  if (verbose>1)
-    clog << _F("Removed byteman rule: \"%s\"", byteman_script_path.c_str()) << endl;
 
+  for(vector<string>::const_iterator it = byteman_script_path.begin(); it != byteman_script_path.end(); ++it)
+    {
+      vector<string> bmcommand;
+      bmcommand.push_back(bmsubmit_path);
+      bmcommand.push_back(" -o");
+      bmcommand.push_back(byteman_log);
+      bmcommand.push_back(" -u");
+      bmcommand.push_back(*it);
+      (void) stap_system(verbose, bmcommand);
+  if (verbose>1)
+    clog << _F("Removed byteman rule: \"%s\"", (*it).c_str()) << endl;
+    }
 }
 #endif
 
