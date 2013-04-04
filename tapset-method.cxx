@@ -164,7 +164,6 @@ java_builder::build (systemtap_session & sess,
   if (! cache_initialized)
     {
 
-      //      cache_initialized = true;
       if(has_pid_int)
 	{
 	  _tmp = static_cast <ostringstream*> ( & (ostringstream ()
@@ -177,7 +176,8 @@ java_builder::build (systemtap_session & sess,
 
       if (sess.verbose > 3)
 	{
-	  clog << "byteman script path: " << sess.byteman_script_path.at(*it)
+	  //TRANSLATORS: the path to the byteman script
+	  clog << _("byteman script path: ") << sess.byteman_script_path.at(*it)
 	       << endl;
 	}
       ofstream byteman_script;
@@ -192,7 +192,7 @@ java_builder::build (systemtap_session & sess,
 	}
 
       if (sess.verbose > 2)
-	clog << "Writting byteman script" << endl;
+	clog << _("Writting byteman script") << endl;
       // none of this should be translated, byteman syntax is specific
       byteman_script << "RULE Stap " << sess.base_hash << method_str_val << endl;
       // we'll need detection here for second type of syntax
@@ -219,7 +219,7 @@ java_builder::build (systemtap_session & sess,
       byteman_script << "ENDRULE" << endl;
       byteman_script.close();
       if (sess.verbose > 2)
-	clog << "Finished writting byteman script" << endl;
+	clog << _("Finished writting byteman script") << endl;
       
     }
 #ifdef HAVE_HELPER
@@ -257,9 +257,9 @@ java_builder::build (systemtap_session & sess,
   if (sess.verbose > 2)
     {
       if (ret)
-	clog << "WARNING: stap_system for bminstall.sh returned error: " << ret << endl;
+	clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
       else
-	clog << "stap_system for bminstall.sh returned: " << ret << endl;
+	clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
     }
   vector<string> bmsubmit_cmd;
   sess.bmsubmit_path = (find_executable ("bmsubmit.sh"));
@@ -275,7 +275,7 @@ java_builder::build (systemtap_session & sess,
     bmsubmit_cmd.push_back(sess.byteman_script_path.back());
   (void) stap_system(sess.verbose, bmsubmit_cmd);
   if (sess.verbose > 3)
-    clog << "Reported bmsubmit.sh path: " << sess.bmsubmit_path << endl;
+    clog << _("Reported bmsubmit.sh path: ") << sess.bmsubmit_path << endl;
 
   /* now we need to redefine the probe
    * while looking at sdt_query::convert_location as an example
