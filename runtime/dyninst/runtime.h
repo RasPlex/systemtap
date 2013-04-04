@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 #include "loc2c-runtime.h"
 #include "stapdyn.h"
@@ -105,6 +106,29 @@ static int stp_pthread_mutex_init_shared(pthread_mutex_t *mutex);
 
 #define preempt_disable() 0
 #define preempt_enable_no_resched() 0
+
+
+static int _stp_sched_getcpu(void)
+{
+    /* We prefer sched_getcpu directly, of course.  It wasn't added until glibc
+     * 2.6 though, and has no direct feature indication, but CPU_ZERO_S was
+     * added shortly after too.  */
+#ifdef CPU_ZERO_S
+    return sched_getcpu();
+
+#elif defined(SYS_getcpu)
+    /* A manual getcpu is fine too, though not necessarily as fast since it
+     * can't be optimized as a vdso/vsyscall.  */
+    unsigned cpu;
+    int ret = syscall(SYS_getcpu, &cpu, NULL, NULL);
+    return (ret < 0) ? ret : (int)cpu;
+
+#else
+    /* XXX Any other way to find our cpu?  Manual vgetcpu? */
+    return -2;
+#endif
+}
+
 
 /*
  * By definition, we can only debug our own processes with dyninst, so

@@ -79,7 +79,7 @@ function euid:long ()
 
 function cpu:long ()
 %{ /* pure */ /* unprivileged */
-	STAP_RETVALUE = sched_getcpu();
+	STAP_RETVALUE = _stp_sched_getcpu();
 %}
 
 

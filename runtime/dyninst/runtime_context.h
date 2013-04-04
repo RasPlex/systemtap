@@ -82,6 +82,25 @@ static int _stp_runtime_get_data_index(void)
     return 0;
 }
 
+
+/* Figure out with cpu we're on, which is our default data_index.
+ * Make sure the returned data index number is within the range of
+ * [0.._stp_runtime_num_contexts]. Be sure to handle a sched_getcpu()
+ * failure (it will return -1). */
+static int _stp_context_index(void)
+{
+    /* The current cpu is the preferred index, because it will usually be
+     * different for every concurrent thread.  (It is possible to be the same
+     * though, if kernel scheduling is unkind to us.)  */
+    int index = _stp_sched_getcpu();
+
+    /* Failing cpu#, use the tid as a somewhat-random index.  */
+    if (index < 0)
+        index = syscall(SYS_gettid);
+
+    return index % _stp_runtime_num_contexts;
+}
+
 static struct context * _stp_runtime_entryfn_get_context(void)
 {
     struct context *c;
@@ -92,15 +111,7 @@ static struct context * _stp_runtime_entryfn_get_context(void)
     if (contexts != NULL)
 	return NULL;
 
-    /* Figure out with cpu we're on, which is our default
-     * data_index. Make sure the returned data index number is within
-     * the range of [0.._stp_runtime_num_contexts]. Be sure to handle
-     * a sched_getcpu() failure (it will return -1). */
-#ifdef __NR_getcpu /* added in glibc 2.6, kernel 2.6.19 */
-    data_index = syscall(__NR_getcpu) % _stp_runtime_num_contexts;
-#else
-    data_index = syscall(__NR_gettid) % _stp_runtime_num_contexts;
-#endif
+    data_index = _stp_context_index();
     if (unlikely(data_index < 0))
 	data_index = 0;
 
