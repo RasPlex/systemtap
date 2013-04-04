@@ -205,6 +205,15 @@ compile_dyninst (systemtap_session& s)
   cmd.push_back("-Werror");
   cmd.push_back("-Wno-unused");
   cmd.push_back("-Wno-strict-aliasing");
+
+  // BZ855981/948279.  Since dyninst/runtime.h includes __sync_* calls,
+  // the compiler may generate different code for it depending on -march.
+  // For example, if the default is i386, we may get references to auxiliary
+  // functions like __sync_add_and_fetch_4, which appear to be defined
+  // nowhere.  We hack around this problem thusly:
+  if (s.architecture == "i386")
+    cmd.push_back("-march=i686");
+
   cmd.push_back("-O2");
   cmd.push_back("-I" + s.runtime_path);
   cmd.push_back("-D__DYNINST__");
