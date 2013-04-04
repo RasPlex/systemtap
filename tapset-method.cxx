@@ -116,35 +116,6 @@ java_builder::build (systemtap_session & sess,
   bool has_pid_int = get_number_param (parameters, TOK_JAVA, _java_pid);
   bool has_pid_str = get_param (parameters, TOK_JAVA, _java_proc_class);
 
-  if (has_pid_int)
-    {
-      for (it = sess.java_pid.begin(); it != sess.java_pid.end(); ++it)
-	{
-	  if(*it == _java_pid) //if we work our way though it all and still doesn't 
-	    {
-	      break;                    // match then we push back on the vector
-	    }
-	  else if ((*it != _java_pid) && ++it == sess.java_pid.end())
-	    {
-	      sess.java_pid.push_back(_java_pid);
-	    }
-	}
-
-    }
-  else
-    {
-      for (is = sess.java_proc_class.begin(); is != sess.java_proc_class.end(); ++is)
-	{
-	  if(*is == _java_proc_class)
-	    {
-	      break;
-	    }
-	  else if ((*is != _java_proc_class) && (++is == sess.java_proc_class.end()))
-	    {
-	      sess.java_proc_class.push_back(_java_proc_class);
-	    }
-	}
-    }
   //need to count the number of parameters, exit if more than 10
   int method_params_counter = 1;
   int method_params_count = count (method_str_val.begin (), method_str_val.end (), ',');
@@ -246,20 +217,82 @@ java_builder::build (systemtap_session & sess,
     clog << "Reported bminstall.sh path: " << sess.bminstall_path << endl;
   // XXX check both scripts here, exit if not available
 
-  vector<string> bminstall_cmd;
-  bminstall_cmd.push_back(sess.bminstall_path);
-  if(!has_pid_str)
-    bminstall_cmd.push_back(java_pid_str);
-  else
-    bminstall_cmd.push_back(_java_proc_class);
-  //need to properly check this
-  int ret = stap_system(sess.verbose, bminstall_cmd);
-  if (sess.verbose > 2)
+  if (has_pid_int)
     {
-      if (ret)
-	clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
-      else
-	clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
+      for (it = sess.java_pid.begin(); it != sess.java_pid.end(); ++it)
+	{
+	  if(*it == _java_pid) //if we work our way though it all and still doesn't 
+	      break;           //match then we push back on the vector
+	  else if ((*it != _java_pid) && ++it == sess.java_pid.end())
+	    {
+	      cout << "this was hit java_pid" << endl;
+	      sess.java_pid.push_back(_java_pid);
+	      vector<string> bminstall_cmd;
+	      bminstall_cmd.push_back(sess.bminstall_path);
+	      bminstall_cmd.push_back(java_pid_str);
+	      int ret = stap_system(sess.verbose, bminstall_cmd);
+	      if (sess.verbose > 2)
+		{
+		  if (ret)
+		    clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
+		  else
+		    clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
+		}
+	    }
+	}
+      if (sess.java_pid.size() == 0)
+	{
+	  sess.java_pid.push_back(_java_pid);
+	  vector<string> bminstall_cmd;
+	  bminstall_cmd.push_back(sess.bminstall_path);
+	  bminstall_cmd.push_back(java_pid_str);
+	  int ret = stap_system(sess.verbose, bminstall_cmd);
+	  if (sess.verbose > 2)
+	    {
+	      if (ret)
+		clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
+	      else
+		clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
+	    }
+	}
+    }
+  else
+    {
+      for (is = sess.java_proc_class.begin(); is != sess.java_proc_class.end(); ++is)
+	{
+	  if(*is == _java_proc_class)
+	      break;
+	  else if ((*is != _java_proc_class) && (++is == sess.java_proc_class.end()))
+	    {
+	      sess.java_proc_class.push_back(_java_proc_class);
+	      vector<string> bminstall_cmd;
+	      bminstall_cmd.push_back(sess.bminstall_path);
+	      bminstall_cmd.push_back(_java_proc_class);
+	      int ret = stap_system(sess.verbose, bminstall_cmd);
+	      if (sess.verbose > 2)
+		{
+		  if (ret)
+		    clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
+		  else
+		    clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
+		}
+	    }
+	}
+      if (sess.java_proc_class.size() == 0)
+	{
+	  sess.java_proc_class.push_back(_java_proc_class);
+	  vector<string> bminstall_cmd;
+	  bminstall_cmd.push_back(sess.bminstall_path);
+	  bminstall_cmd.push_back(_java_proc_class);
+	  int ret = stap_system(sess.verbose, bminstall_cmd);
+	  if (sess.verbose > 2)
+	    {
+	      if (ret)
+		clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
+	      else
+		clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
+	    }
+	}
     }
   vector<string> bmsubmit_cmd;
   sess.bmsubmit_path = (find_executable ("bmsubmit.sh"));
@@ -270,8 +303,6 @@ java_builder::build (systemtap_session & sess,
   bmsubmit_cmd.push_back(" -l");
 
   if(has_pid_int)
-    bmsubmit_cmd.push_back(sess.byteman_script_path.back());
-  else
     bmsubmit_cmd.push_back(sess.byteman_script_path.back());
   (void) stap_system(sess.verbose, bmsubmit_cmd);
   if (sess.verbose > 3)
@@ -310,7 +341,6 @@ java_builder::build (systemtap_session & sess,
       target_symbol *mc = new target_symbol;
       mc->tok = b->tok;
       mc->name = "$name";
-
 
       functioncall *mcus = new functioncall;
       mcus->function = "user_string";

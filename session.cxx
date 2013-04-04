@@ -388,7 +388,7 @@ systemtap_session::~systemtap_session ()
 {
 #ifdef HAVE_HELPER
 
-  //  if(!java_pid.empty() || !java_proc_class.empty())
+  if(java_pid.size() != 0 || java_proc_class.size() != 0)
     java_detach();
 #endif //HAVE_HELPER
   remove_tmp_dir();
