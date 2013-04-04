@@ -53,6 +53,10 @@
 #define __must_be_array(arr) 0
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]) + __must_be_array(arr))
 
+#ifndef CLOCK_MONOTONIC_RAW
+#define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC
+#endif
+
 #define  noinline			__attribute__((noinline))
 
 #define ATOMIC_INIT(i)  { (i) }

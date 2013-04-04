@@ -27,7 +27,6 @@
 #include <stddef.h>
 #include <unistd.h>
 
-
 #include "loc2c-runtime.h"
 #include "stapdyn.h"
 
@@ -35,7 +34,7 @@
 #define CONFIG_64BIT 1
 #endif
 
-#define BITS_PER_LONG __BITS_PER_LONG
+#define BITS_PER_LONG __WORDSIZE
 
 typedef uint8_t u8;
 typedef uint16_t u16;
