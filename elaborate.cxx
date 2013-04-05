@@ -3385,7 +3385,7 @@ struct const_folder: public update_visitor
   void visit_unary_expression (unary_expression* e);
   void visit_logical_or_expr (logical_or_expr* e);
   void visit_logical_and_expr (logical_and_expr* e);
-  // TODOXXX visit_regex_query could be done if we could run dfa at compiletime
+  // void visit_regex_query (regex_query* e); // XXX: would require executing dfa at compile-time
   void visit_comparison (comparison* e);
   void visit_concatenation (concatenation* e);
   void visit_ternary_expression (ternary_expression* e);
