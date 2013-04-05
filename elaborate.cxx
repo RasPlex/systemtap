@@ -1523,17 +1523,26 @@ public:
 };
 
 // Go through the regex match invocations and generate corresponding DFAs.
-void gen_dfa_table (systemtap_session& s)
+int gen_dfa_table (systemtap_session& s)
 {
-  regex_collecting_visitor rcv(s); // TODOXXX
+  regex_collecting_visitor rcv(s);
 
   for (unsigned i=0; i<s.probes.size(); i++)
     {
-      s.probes[i]->body->visit (& rcv);
-
-      if (s.probes[i]->sole_location()->condition)
-        s.probes[i]->sole_location()->condition->visit (& rcv);
+      try
+        {
+          s.probes[i]->body->visit (& rcv);
+          
+          if (s.probes[i]->sole_location()->condition)
+            s.probes[i]->sole_location()->condition->visit (& rcv);
+        }
+      catch (const semantic_error& e)
+        {
+          s.print_error (e);
+        }
     }
+
+  return s.num_errors();
 }
 
 // ------------------------------------------------------------------------
@@ -1973,7 +1982,7 @@ semantic_pass (systemtap_session& s)
       if (rc == 0) rc = semantic_pass_conditions (s);
       if (rc == 0) rc = semantic_pass_optimize1 (s);
       if (rc == 0) rc = semantic_pass_types (s);
-      if (rc == 0) gen_dfa_table(s); // TODOXXX set rc?
+      if (rc == 0) rc = gen_dfa_table(s);
       if (rc == 0) add_global_var_display (s);
       if (rc == 0) rc = semantic_pass_optimize2 (s);
       if (rc == 0) rc = semantic_pass_vars (s);
