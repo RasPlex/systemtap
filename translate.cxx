@@ -4064,9 +4064,6 @@ c_unparser::visit_array_in (array_in* e)
 void
 c_tmpcounter::visit_regex_query (regex_query* e)
 {
-  // TODOXXX if e->right is always a literal, do we still need to do
-  // the 'save at least one in a tmpvar' trick as seen in
-  // visit_comparison?
   e->left->visit(this);
   e->right->visit(this);
 }
@@ -5904,7 +5901,7 @@ dump_symbol_tables (Dwfl_Module *m,
 		  || (GELF_ST_TYPE (sym.st_info) == STT_NOTYPE
 		      && (ehdr->e_type == ET_REL // PR10206 ppc fn-desc in .opd
 			  || is_kernel)) // kernel entry functions are NOTYPE
-		  || GELF_ST_TYPE (sym.st_info) == STT_OBJECT) // PR10000: .data
+		  || GELF_ST_TYPE (sym.st_info) == STT_OBJECT // PR10000: .data
                && !(sym.st_shndx == SHN_UNDEF	// Value undefined,
 		    || shndxp == (GElf_Word) -1	// in a non-allocated section,
 		    || sym_addr >= end	// beyond current module,
@@ -6884,7 +6881,7 @@ translate_pass (systemtap_session& s)
             }
           catch (const semantic_error &e)
             {
-              s.print_error(e); // TODOXXX want to report the token
+              s.print_error(e); // TODOXXX need to report the token
             }
         }
       s.op->assert_0_indent();

@@ -27,6 +27,7 @@ namespace re2c {
 
 struct stapdfa {
   std::string orig_input;
+  // TODOXXX need to store token
   stapdfa (const std::string& func_name, const std::string& re, bool escape = true);
   ~stapdfa ();
   void emit_declaration (translator_output *o);
@@ -40,7 +41,7 @@ private:
   re2c::DFA *content;
   static re2c::RegExp *failRE; // hacky thing to attach {return 0;} to
   static re2c::RegExp *padRE; // hacky thing to pad the output on the left
-  // TODOXXX I hope RegExp instances are really reusable!
+  // XXX: I hope RegExp instances are really reusable!
 };
 
 std::ostream& operator << (std::ostream &o, const stapdfa& d);

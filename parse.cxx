@@ -3086,8 +3086,7 @@ parser::parse_comparison_or_regex_query ()
 {
   expression* op1 = parse_shift ();
 
-  // TODOXXX for now, =~ is nonassociative
-  // TODOXXX maybe instead a =~ b == c =~ d --> (a =~ b) == (c =~ d) ??
+  // XXX precedence -- perhaps a =~ b == c =~ d --> (a =~ b) == (c =~ d) ?
   const token *t = peek();
   if (t && t->type == tok_operator
       && (t->content == "=~" ||

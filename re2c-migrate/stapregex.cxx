@@ -315,14 +315,14 @@ stapdfa::emit_declaration (translator_output *o)
 void
 stapdfa::emit_matchop_start (translator_output *o)
 {
-  // TODOXXX eventually imitate visit_functioncall in translate.cxx??
+  // XXX: eventually imitate visit_functioncall in translate.cxx?
   o->line() << "(" << func_name << " (";
 }
 
 void
 stapdfa::emit_matchop_end (translator_output *o)
 {
-  // TODOXXX eventually imitate visit_functioncall in translate.cxx??
+  // XXX: eventually imitate visit_functioncall in translate.cxx?
   o->line() << ")" << ")";
 }
 
