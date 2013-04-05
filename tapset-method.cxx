@@ -140,9 +140,30 @@ java_builder::build (systemtap_session & sess,
 	  _tmp = static_cast <ostringstream*> ( & (ostringstream ()
 							 << (_java_pid)))->str ();
 
-	  sess.byteman_script_path.push_back(sess.tmpdir + "/stap-byteman-" + _tmp + ".btm");
+	  for (vector<string>::iterator iter = sess.byteman_script_path.begin();
+	       iter != sess.byteman_script_path.end(); ++iter)
+	    {
+	      if (*iter == sess.tmpdir + "/stap-byteman-" + _tmp + ".btm")
+		break;
+	      else if ((*iter != sess.tmpdir + "/stap-byteman-" + _tmp + ".btm")
+		       && ++iter == sess.byteman_script_path.end())
+		sess.byteman_script_path.push_back(sess.tmpdir + "/stap-byteman-" + _tmp + ".btm");
+	    }
 	}
       else
+	{
+	  for (vector<string>::iterator iter = sess.byteman_script_path.begin();
+	       iter != sess.byteman_script_path.end(); ++iter)
+	    {
+	      if (*iter == sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm")
+		break;
+	      else if ((*iter != sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm")
+		       && ++iter == sess.byteman_script_path.end())
+		sess.byteman_script_path.push_back(sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm");
+	    }
+	}
+
+      if (sess.byteman_script_path.size() == 0)
 	sess.byteman_script_path.push_back(sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm");
 
       if (sess.verbose > 3)
@@ -152,7 +173,7 @@ java_builder::build (systemtap_session & sess,
 	       << endl;
 	}
       ofstream byteman_script;
-      byteman_script.open ((sess.byteman_script_path.back()).c_str(), ifstream::app); //| ifstream::out);
+      byteman_script.open ((sess.byteman_script_path.back()).c_str(), ifstream::app);
       if (! byteman_script)
 	{
 	  if (sess.verbose > 3)
@@ -175,7 +196,6 @@ java_builder::build (systemtap_session & sess,
 		     << "IF TRUE" << endl
 		     << "DO METHOD_STAP_PROBE" << method_params_count
 		     << "(\"" << class_str_val <<  "\", \""
-	//		     << short_method_str << "\", ";
 		     << method_str_val << "\", ";
       // we need increment the var number, while decrementing the count
       for (method_params_counter = 1;
@@ -225,7 +245,6 @@ java_builder::build (systemtap_session & sess,
 	      break;           //match then we push back on the vector
 	  else if ((*it != _java_pid) && ++it == sess.java_pid.end())
 	    {
-	      cout << "this was hit java_pid" << endl;
 	      sess.java_pid.push_back(_java_pid);
 	      vector<string> bminstall_cmd;
 	      bminstall_cmd.push_back(sess.bminstall_path);
@@ -301,9 +320,8 @@ java_builder::build (systemtap_session & sess,
   bmsubmit_cmd.push_back(" -o");
   bmsubmit_cmd.push_back(sess.byteman_log);
   bmsubmit_cmd.push_back(" -l");
+  bmsubmit_cmd.push_back(sess.byteman_script_path.back());
 
-  if(has_pid_int)
-    bmsubmit_cmd.push_back(sess.byteman_script_path.back());
   (void) stap_system(sess.verbose, bmsubmit_cmd);
   if (sess.verbose > 3)
     clog << _("Reported bmsubmit.sh path: ") << sess.bmsubmit_path << endl;
