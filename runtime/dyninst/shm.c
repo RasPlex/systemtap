@@ -46,7 +46,7 @@ static void _stp_shm_destroy(void);
 // Create and initialize the shared memory for this module.
 static const char *_stp_shm_init(void)
 {
-	char *name, name_buf[] = "/dev/shm/stapdyn.XXXXXX";
+	char name[NAME_MAX];
 	long page_size;
 	int fd;
 	void *base;
@@ -61,11 +61,9 @@ static const char *_stp_shm_init(void)
 	if (page_size < 1)
 		return NULL;
 
-	// Create a unique name for our shared memory, assuming that it will
-	// exist in /dev/shm as Linux normally does.  The actual name to use is
-	// then just the last '/' and on.
-	if (!mktemp(name_buf) || !(name = strrchr(name_buf, '/')))
-		return NULL;
+	// Create a unique name for our shared memory.  It need not be anything
+        // secret because shm_open's flags will ensure security.
+        (void) snprintf(name, NAME_MAX, "/stapdyn.%d", getpid());
 
 	// Create the actual share memory.  The O_EXCL saves us from the
 	// possible mktemp race.  Only USR file mode bits are added, because
