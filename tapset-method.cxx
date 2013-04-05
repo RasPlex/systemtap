@@ -59,6 +59,8 @@ public:
   bool get_param (std::map<std::string, literal*> const & params,
 		  const std::string& key,
 		  std::string& value);
+  void bminstall (systemtap_session & sess,
+		 std::string java_proc);
 
 };
 
@@ -85,6 +87,22 @@ java_builder::get_param (std::map<std::string, literal*> const & params,
     return false;
   value = ls->value;
   return true;
+}
+
+void
+java_builder::bminstall (systemtap_session & sess, std::string java_proc)
+{
+  std::vector<std::string> bminstall_cmd;
+  bminstall_cmd.push_back(sess.bminstall_path);
+  bminstall_cmd.push_back(java_proc);
+  int ret = stap_system(sess.verbose, bminstall_cmd);
+  if (sess.verbose > 2)
+    {
+      if (ret)
+	clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
+      else
+	clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
+    }
 }
 
 void
@@ -246,33 +264,13 @@ java_builder::build (systemtap_session & sess,
 	  else if ((*it != _java_pid) && ++it == sess.java_pid.end())
 	    {
 	      sess.java_pid.push_back(_java_pid);
-	      vector<string> bminstall_cmd;
-	      bminstall_cmd.push_back(sess.bminstall_path);
-	      bminstall_cmd.push_back(java_pid_str);
-	      int ret = stap_system(sess.verbose, bminstall_cmd);
-	      if (sess.verbose > 2)
-		{
-		  if (ret)
-		    clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
-		  else
-		    clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
-		}
+	      bminstall(sess, java_pid_str);
 	    }
 	}
       if (sess.java_pid.size() == 0)
 	{
 	  sess.java_pid.push_back(_java_pid);
-	  vector<string> bminstall_cmd;
-	  bminstall_cmd.push_back(sess.bminstall_path);
-	  bminstall_cmd.push_back(java_pid_str);
-	  int ret = stap_system(sess.verbose, bminstall_cmd);
-	  if (sess.verbose > 2)
-	    {
-	      if (ret)
-		clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
-	      else
-		clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
-	    }
+	  bminstall(sess, java_pid_str);
 	}
     }
   else
@@ -284,33 +282,13 @@ java_builder::build (systemtap_session & sess,
 	  else if ((*is != _java_proc_class) && (++is == sess.java_proc_class.end()))
 	    {
 	      sess.java_proc_class.push_back(_java_proc_class);
-	      vector<string> bminstall_cmd;
-	      bminstall_cmd.push_back(sess.bminstall_path);
-	      bminstall_cmd.push_back(_java_proc_class);
-	      int ret = stap_system(sess.verbose, bminstall_cmd);
-	      if (sess.verbose > 2)
-		{
-		  if (ret)
-		    clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
-		  else
-		    clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
-		}
+	      bminstall(sess, _java_proc_class);
 	    }
 	}
       if (sess.java_proc_class.size() == 0)
 	{
 	  sess.java_proc_class.push_back(_java_proc_class);
-	  vector<string> bminstall_cmd;
-	  bminstall_cmd.push_back(sess.bminstall_path);
-	  bminstall_cmd.push_back(_java_proc_class);
-	  int ret = stap_system(sess.verbose, bminstall_cmd);
-	  if (sess.verbose > 2)
-	    {
-	      if (ret)
-		clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
-	      else
-		clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
-	    }
+	  bminstall(sess, _java_proc_class);
 	}
     }
   vector<string> bmsubmit_cmd;
