@@ -2958,7 +2958,7 @@ struct void_statement_reducer: public update_visitor
   // all of these can (usually) be reduced into simpler statements
   void visit_binary_expression (binary_expression* e);
   void visit_unary_expression (unary_expression* e);
-  void visit_regex_query (regex_query* e); // TODOXXX may or may not be reducible
+  void visit_regex_query (regex_query* e); // XXX depends on subexpr extraction
   void visit_comparison (comparison* e);
   void visit_concatenation (concatenation* e);
   void visit_functioncall (functioncall* e);
@@ -3150,16 +3150,16 @@ void_statement_reducer::visit_unary_expression (unary_expression* e)
 void
 void_statement_reducer::visit_regex_query (regex_query* e)
 {
-  // Whether we need to run a regex query depends on whether
-  // subexpression extraction is enabled, as in:
+  // TODOXXX After subexpression extraction is implemented,
+  // regular expression matches *may* have side-effects in
+  // terms of producing matched subexpressions, e.g.:
   //
-  // str =~ "pat";
-  // println(matched(0)); // NOTE: not totally nice -- are we SURE it matched?
-  // TODOXXX it's debatable whether we should allow this, though
+  //   str =~ "pat"; println(matched(0));
+  //
+  // It's debatable if we want to actually allow this, though.
 
-  // TODOXXX since subexpression extraction is not yet implemented,
-  // just treat it as a unary expression wrt the left operand -- since
-  // the right hand side must be a literal (verified by the parses),
+  // Treat e as a unary expression on the left operand -- since the
+  // right hand side must be a literal (as verified by the parser),
   // evaluating it never has side effects.
 
   if (session.verbose>2)
