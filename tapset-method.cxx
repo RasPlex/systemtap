@@ -61,6 +61,7 @@ public:
 		  std::string& value);
   void bminstall (systemtap_session & sess,
 		 std::string java_proc);
+  std::string mark_param(int i);
 
 };
 
@@ -102,6 +103,38 @@ java_builder::bminstall (systemtap_session & sess, std::string java_proc)
 	clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
       else
 	clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
+    }
+}
+
+std::string
+java_builder::mark_param(int i)
+{
+  switch (i)
+    {
+    case 0:
+      return "method__0";
+    case 1:
+      return "method__1";
+    case 2:
+      return "method__2";
+    case 3:
+      return "method__3";
+    case 4:
+      return "method__4";
+    case 5:
+      return "method__5";
+    case 6:
+      return "method__6";
+    case 7:
+      return "method__7";
+    case 8:
+      return "method__8";
+    case 9:
+      return "method__9";
+    case 10:
+      return "method__10";
+    default:
+      return "*";
     }
 }
 
@@ -311,78 +344,80 @@ java_builder::build (systemtap_session & sess,
    * redefine functor values with new literal_string("foo")
    */
       //XXX can this be moved into its own function, or after root->bind'ing takes place
-      probe_point* new_loc = new probe_point (*loc);
-      vector<probe_point::component*> java_marker;
-      java_marker.push_back( new probe_point::component 
-	(TOK_PROCESS, new literal_string (HAVE_HELPER)));
-      java_marker.push_back( new probe_point::component 
-	(TOK_MARK, new literal_string ("*")));
-      probe_point * derived_loc = new probe_point (*new_loc);
 
-      block *b = new block;
-      b->tok = base->body->tok;
+  probe_point* new_loc = new probe_point (*loc);
+  vector<probe_point::component*> java_marker;
+  java_marker.push_back( new probe_point::component 
+			 (TOK_PROCESS, new literal_string (HAVE_HELPER)));
+  java_marker.push_back( new probe_point::component 
+			 //	(TOK_MARK, new literal_string ("*")));
+			 (TOK_MARK, new literal_string (mark_param(method_params_count))));
+  probe_point * derived_loc = new probe_point (*new_loc);
 
-      // first half of argument
-      target_symbol *cc = new target_symbol;
-      cc->tok = b->tok;
-      cc->name = "$provider";
+  block *b = new block;
+  b->tok = base->body->tok;
+  
+  // first half of argument
+  target_symbol *cc = new target_symbol;
+  cc->tok = b->tok;
+  cc->name = "$provider";
 
-      functioncall *ccus = new functioncall;
-      ccus->function = "user_string";
-      ccus->type = pe_string;
-      ccus->tok = b->tok;
-      ccus->args.push_back(cc);
+  functioncall *ccus = new functioncall;
+  ccus->function = "user_string";
+  ccus->type = pe_string;
+  ccus->tok = b->tok;
+  ccus->args.push_back(cc);
       
-      // second half of argument
-      target_symbol *mc = new target_symbol;
-      mc->tok = b->tok;
-      mc->name = "$name";
+  // second half of argument
+  target_symbol *mc = new target_symbol;
+  mc->tok = b->tok;
+  mc->name = "$name";
 
-      functioncall *mcus = new functioncall;
-      mcus->function = "user_string";
-      mcus->type = pe_string;
-      mcus->tok = b->tok;
-      mcus->args.push_back(mc);
+  functioncall *mcus = new functioncall;
+  mcus->function = "user_string";
+  mcus->type = pe_string;
+  mcus->tok = b->tok;
+  mcus->args.push_back(mc);
       
-      //build if statement
-      if_statement *ifs = new if_statement;
-      ifs->thenblock = new next_statement;
-      ifs->elseblock = NULL;
-      ifs->tok = b->tok;
-      ifs->thenblock->tok = b->tok;
+  //build if statement
+  if_statement *ifs = new if_statement;
+  ifs->thenblock = new next_statement;
+  ifs->elseblock = NULL;
+  ifs->tok = b->tok;
+  ifs->thenblock->tok = b->tok;
 
-      //class comparison
-      comparison *ce = new comparison;
-      ce->op = "!=";
-      ce->tok = b->tok;
-      ce->left = ccus;
-      ce->right = new literal_string(class_str_val);
-      ce->right->tok = b->tok;
-      ifs->condition = ce;
-      b->statements.push_back(ifs);
+  //class comparison
+  comparison *ce = new comparison;
+  ce->op = "!=";
+  ce->tok = b->tok;
+  ce->left = ccus;
+  ce->right = new literal_string(class_str_val);
+  ce->right->tok = b->tok;
+  ifs->condition = ce;
+  b->statements.push_back(ifs);
 
-      //method comparision
-      comparison *me = new comparison;
-      me->op = "!=";
-      me->tok = b->tok;
-      me->left = mcus;
-      me->right = new literal_string(method_str_val);
-      me->right->tok = b->tok;
+  //method comparision
+  comparison *me = new comparison;
+  me->op = "!=";
+  me->tok = b->tok;
+  me->left = mcus;
+  me->right = new literal_string(method_str_val);
+  me->right->tok = b->tok;
 
-      logical_or_expr *le = new logical_or_expr;
-      le->op = "||";
-      le->tok = b->tok;
-      le->left = ce;
-      le->right = me;
-      ifs->condition = le;
-      b->statements.push_back(ifs);
+  logical_or_expr *le = new logical_or_expr;
+  le->op = "||";
+  le->tok = b->tok;
+  le->left = ce;
+  le->right = me;
+  ifs->condition = le;
+  b->statements.push_back(ifs);
 
-      b->statements.push_back(base->body);
-      base->body = b;
+  b->statements.push_back(base->body);
+  base->body = b;
 
-      derived_loc->components = java_marker;
-      probe *new_mark_probe = base->create_alias (derived_loc, new_loc);
-      derive_probes (sess, new_mark_probe, finished_results);
+  derived_loc->components = java_marker;
+  probe *new_mark_probe = base->create_alias (derived_loc, new_loc);
+  derive_probes (sess, new_mark_probe, finished_results);
    
 #else
   cerr << _("Cannot probe java method, configure --with-helper=") << endl;

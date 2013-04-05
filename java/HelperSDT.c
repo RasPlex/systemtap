@@ -150,7 +150,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE0
 {
   char* provider = get_java_string(env, _provider);
   char* name = get_java_string(env, _name);
-  STAP_PROBE2(hotspot, method__no__arguments, provider, name);
+  STAP_PROBE2(hotspot, method__0, provider, name);
 
 }
 
@@ -168,7 +168,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE1
   arg1 = determine_java_type(env, _arg1, arg1);
   if(arg1.type == OTHER || arg1.type == NONE)
     arg1.vartype.c = get_java_string(env, _arg1); // we need to create some type of check for strings
-  STAP_PROBE3(hotspot, method__one__argument, arg1.vartype.d, provider, name);
+  STAP_PROBE3(hotspot, method__1, arg1.vartype.d, provider, name);
 }
 
 /*
@@ -189,7 +189,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE2
     arg1.vartype.c = get_java_string(env, _arg1); // we need to create some type of check for strings
   if(arg2.type == OTHER || arg2.type == NONE)
     arg2.vartype.c = get_java_string(env, _arg2);
-  STAP_PROBE4(hotspot, method__two__arguments, arg1.vartype.d, arg2.vartype.d, provider, name);
+  STAP_PROBE4(hotspot, method__2, arg1.vartype.d, arg2.vartype.d, provider, name);
 
 }
 
@@ -215,7 +215,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE3
     arg2.vartype.c = get_java_string(env, _arg2);
   if(arg3.type == OTHER || arg3.type == NONE)
     arg3.vartype.c = get_java_string(env, _arg3);
-  STAP_PROBE5(hotspot, method__three__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, provider, name);
+  STAP_PROBE5(hotspot, method__3, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, provider, name);
 }
 
 /*
@@ -244,7 +244,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE4
     arg3.vartype.c = get_java_string(env, _arg3);
   if(arg4.type == OTHER || arg4.type == NONE)
     arg4.vartype.c = get_java_string(env, _arg4);
-  STAP_PROBE6(hotspot, method__four__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, provider, name);
+  STAP_PROBE6(hotspot, method__4, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, provider, name);
 
 }
 
@@ -278,7 +278,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE5
     arg4.vartype.c = get_java_string(env, _arg4);
   if(arg5.type == OTHER || arg5.type == NONE)
     arg5.vartype.c = get_java_string(env, _arg5);
-  STAP_PROBE7(hotspot, method__five__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, provider, name);
+  STAP_PROBE7(hotspot, method__5, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, provider, name);
 
 }
 /*
@@ -315,7 +315,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE6
     arg5.vartype.c = get_java_string(env, _arg5);
   if(arg6.type == OTHER || arg6.type == NONE)
     arg6.vartype.c = get_java_string(env, _arg6);
-  STAP_PROBE8(hotspot, method__six__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, provider, name);
+  STAP_PROBE8(hotspot, method__6, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, provider, name);
 }
 
 /*
@@ -356,7 +356,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE7
     arg6.vartype.c = get_java_string(env, _arg6);
   if(arg7.type == OTHER || arg7.type == NONE)
     arg7.vartype.c = get_java_string(env, _arg7);
-  STAP_PROBE9(hotspot, method__seven__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, provider, name);
+  STAP_PROBE9(hotspot, method__7, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, provider, name);
 }
 
 /*
@@ -401,7 +401,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE8
     arg7.vartype.c = get_java_string(env, _arg7);
   if(arg8.type == OTHER || arg8.type == NONE)
     arg8.vartype.c = get_java_string(env, _arg8);
-  STAP_PROBE10(hotspot, method__eight__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, arg8.vartype.d, provider, name);
+  STAP_PROBE10(hotspot, method__8, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, arg8.vartype.d, provider, name);
 
 }
 /*
@@ -450,7 +450,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
     arg8.vartype.c = get_java_string(env, _arg8);
   if(arg9.type == OTHER || arg9.type == NONE)
     arg9.vartype.c = get_java_string(env, _arg9);
-  STAP_PROBE11(hotspot, method__nine__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, arg8.vartype.d, arg9.vartype.d, provider, name);
+  STAP_PROBE11(hotspot, method__9, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, arg8.vartype.d, arg9.vartype.d, provider, name);
 
 }
 
@@ -504,5 +504,5 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE10
     arg9.vartype.c = get_java_string(env, _arg9);
   if(arg10.type == OTHER || arg10.type == NONE)
     arg10.vartype.c = get_java_string(env, _arg10);
-  STAP_PROBE12(hotspot, method__ten__arguments, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, arg8.vartype.d, arg9.vartype.d, arg10.vartype.d, provider, name);
+  STAP_PROBE12(hotspot, method__10, arg1.vartype.d, arg2.vartype.d, arg3.vartype.d, arg4.vartype.d, arg5.vartype.d, arg6.vartype.d, arg7.vartype.d, arg8.vartype.d, arg9.vartype.d, arg10.vartype.d, provider, name);
 }
