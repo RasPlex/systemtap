@@ -3098,7 +3098,7 @@ parser::parse_comparison_or_regex_query ()
       r->op = t->content;
       r->tok = t;
       next ();
-      r->right = r->re = parse_literal_string();
+      r->right = parse_literal_string();
       op1 = r;
       t = peek ();
     }

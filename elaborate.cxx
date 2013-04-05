@@ -1504,16 +1504,20 @@ public:
   regex_collecting_visitor (systemtap_session& s): session(s) { }
 
   void visit_regex_query (regex_query *q) {
-    functioncall_traversing_visitor::visit_regex_query (q); // TODOXXX test necessity
+    functioncall_traversing_visitor::visit_regex_query (q);
 
-    string re = q->re->value;
     try
       {
+        string re = dynamic_cast<literal_string*>(q->right)->value;
         regex_to_stapdfa (&session, re, session.dfa_counter);
       }
     catch (const semantic_error &e)
       {
         throw semantic_error(e.what(), q->right->tok);
+      }
+    catch (exception &e) // dynamic_cast<...> failed
+      {
+        throw semantic_error(_F("BUG %s", e.what()), q->right->tok);
       }
   }
 };

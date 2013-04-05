@@ -4078,7 +4078,7 @@ c_unparser::visit_regex_query (regex_query* e)
   o->indent(1);
   o->newline();
   if (e->op == "!~") o->line() << "!";
-  stapdfa *dfa = session->dfas[e->re->value];
+  stapdfa *dfa = session->dfas[dynamic_cast<literal_string*>(e->right)->value]; // TODOXXX error checking???
   dfa->emit_matchop_start (o);
   e->left->visit(this);
   dfa->emit_matchop_end (o);

@@ -1780,7 +1780,7 @@ void
 traversing_visitor::visit_regex_query (regex_query* e)
 {
   e->left->visit (this);
-  e->right->visit (this); // TODOXXX do we need to traverse the literal in RHS?
+  e->right->visit (this);
 }
 
 void
