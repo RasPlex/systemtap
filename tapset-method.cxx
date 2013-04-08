@@ -34,6 +34,7 @@ static const string TOK_METHOD ("method");
 static const string TOK_PROCESS ("process");
 static const string TOK_MARK ("mark");
 static const string TOK_JAVA ("java");
+static const string TOK_RETURN ("return");
 
 struct java_builder: public derived_probe_builder
 {
@@ -54,6 +55,9 @@ public:
 	      literal_map_t const & parameters,
 	      vector <derived_probe *> & finished_results);
 
+  bool has_null_param (literal_map_t const & params,
+		       string const & k);
+
   bool get_number_param (literal_map_t const & params,
 			 string const & k, int & v);
   bool get_param (std::map<std::string, literal*> const & params,
@@ -64,6 +68,13 @@ public:
   std::string mark_param(int i);
 
 };
+
+bool
+java_builder::has_null_param(literal_map_t const & params,
+			   string const & k)
+{
+  return derived_probe_builder::has_null_param(params, k);
+}
 
 bool
 java_builder::get_number_param (literal_map_t const & params,
@@ -95,6 +106,7 @@ java_builder::bminstall (systemtap_session & sess, std::string java_proc)
 {
   std::vector<std::string> bminstall_cmd;
   bminstall_cmd.push_back(sess.bminstall_path);
+  bminstall_cmd.push_back("-Dorg.jboss.byteman.compile.to.bytecode");
   bminstall_cmd.push_back(java_proc);
   int ret = stap_system(sess.verbose, bminstall_cmd);
   if (sess.verbose > 2)
@@ -166,6 +178,7 @@ java_builder::build (systemtap_session & sess,
   bool has_class_str = get_param (parameters, TOK_CLASS, class_str_val);
   bool has_pid_int = get_number_param (parameters, TOK_JAVA, _java_pid);
   bool has_pid_str = get_param (parameters, TOK_JAVA, _java_proc_class);
+  bool has_return = has_null_param (parameters, TOK_RETURN);
 
   //need to count the number of parameters, exit if more than 10
   int method_params_counter = 1;
@@ -242,9 +255,12 @@ java_builder::build (systemtap_session & sess,
       // XXX change the method name being passed
       byteman_script << "CLASS " << class_str_val << endl
 		     << "METHOD " << method_str_val << endl
-		     << "HELPER HelperSDT" << endl
-		     << "AT ENTRY" << endl
-		     << "IF TRUE" << endl
+		     << "HELPER HelperSDT" << endl;
+      if(!has_return)
+	  byteman_script << "AT ENTRY" << endl;
+      else
+	byteman_script << "AT EXIT" << endl;
+      byteman_script << "IF TRUE" << endl
 		     << "DO METHOD_STAP_PROBE" << method_params_count
 		     << "(\"" << class_str_val <<  "\", \""
 		     << method_str_val << "\", ";
@@ -343,7 +359,7 @@ java_builder::build (systemtap_session & sess,
    * using a vector, iterate though, changing as needed
    * redefine functor values with new literal_string("foo")
    */
-      //XXX can this be moved into its own function, or after root->bind'ing takes place
+  //XXX can this be moved into its own function, or after root->bind'ing takes place
 
   probe_point* new_loc = new probe_point (*loc);
   vector<probe_point::component*> java_marker;
@@ -434,9 +450,18 @@ register_tapset_java (systemtap_session& s)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
     ->bind(builder);
 
+
+  root->bind_str (TOK_JAVA)
+    ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
+    ->bind (TOK_RETURN)->bind(builder);
+
   root->bind_num (TOK_JAVA)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
-    ->bind(builder);
+    ->bind (builder);
+
+  root->bind_num (TOK_JAVA)
+    ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
+    ->bind (TOK_RETURN)->bind (builder);
 
 }
 
