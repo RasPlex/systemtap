@@ -169,13 +169,21 @@ stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 }
 
 static int
+stapiu_retprobe_prehandler (struct uprobe_consumer *inst,
+			    unsigned long func __attribute__((unused)),
+			    struct pt_regs *regs)
+{
+	return stapiu_probe_prehandler(inst, regs);
+}
+
+static int
 stapiu_register (struct inode* inode, struct stapiu_consumer* c)
 {
 	if (!c->return_p) {
 		c->consumer.handler = stapiu_probe_prehandler;
 	} else {
 #if defined(STAPCONF_INODE_URETPROBES)
-		c->consumer.rp_handler = stapiu_probe_prehandler;
+		c->consumer.ret_handler = stapiu_retprobe_prehandler;
 #else
 		return EINVAL;
 #endif

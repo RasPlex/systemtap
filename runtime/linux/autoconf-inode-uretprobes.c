@@ -2,7 +2,7 @@
 #include <linux/wait.h>
 #include <linux/uprobes.h>
 /* Check whether we have uretprobes. */
-struct uprobe_consumer uc = { .rp_handler = NULL };
+struct uprobe_consumer uc = { .ret_handler = NULL };
 #else
 #error "not an inode-uprobes kernel"
 #endif
