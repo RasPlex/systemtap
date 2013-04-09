@@ -709,7 +709,15 @@ regex_parser::parse_number ()
 
   if (digits == "") parse_error("expected number", next_pos);
 
-  // TODOXXX check for overly large numbers
+  char *endptr = NULL;
+  int val = strtol (digits.c_str (), &endptr, 10);
+
+  if (*endptr != '\0' || errno == ERANGE) // paranoid error checking
+    parse_error(_F("could not parse number %s", digits.c_str()), next_pos);
+#define MAX_DFA_REPETITIONS 12345
+  if (val >= MAX_DFA_REPETITIONS) // TODOXXX: what is the sensible max size?
+    parse_error(_F("%s is too large", digits.c_str()), next_pos);
+
   return atoi (digits.c_str ());
 }
 

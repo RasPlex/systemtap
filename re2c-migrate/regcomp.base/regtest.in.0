@@ -33,3 +33,11 @@
 # 2:$.*:
 # 1:$a^:a
 # 0:$.*:a
+
+# attempts to pinpoint chr class errors
+0:[^ab]:c
+0:[^ab]*:
+0:[ab]*:ababab
+
+# be sure overflow behaves nicely
+2:a{129490281098409821098209381020972091420947092174092717092}:aaa
