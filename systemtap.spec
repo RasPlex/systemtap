@@ -718,7 +718,7 @@ exit 0
 * Mon Jul 25 2011 Stan Cox <scox@redhat.com> - 1.6-1
 - Upstream release.
 
-* Tue May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
+* Mon May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
 - Upstream release.
 
 * Mon Jan 17 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-1
@@ -777,7 +777,7 @@ exit 0
 * Wed Jul 11 2007 Will Cohen <wcohen@redhat.com> - 0.5.14-2
 - Fix Requires and BuildRequires for sqlite.
 
-* Tue Jul  2 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.14-1
+* Mon Jul  2 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.14-1
 - Many robustness improvements: 1117, 1134, 1305, 1307, 1570, 1806,
   2033, 2116, 2224, 2339, 2341, 2406, 2426, 2438, 2583, 3037,
   3261, 3282, 3331, 3428 3519, 3545, 3625, 3648, 3880, 3888, 3911,
@@ -840,7 +840,7 @@ exit 0
 * Wed Sep  7 2005 Frank Ch. Eigler <fche@redhat.com>
 - Bump version.
 
-* Wed Aug 16 2005 Frank Ch. Eigler <fche@redhat.com>
+* Tue Aug 16 2005 Frank Ch. Eigler <fche@redhat.com>
 - Bump version.
 
 * Wed Aug  3 2005 Martin Hunt <hunt@redhat.com> - 0.2.2-1
@@ -861,5 +861,5 @@ exit 0
 - Fix up some of the path names.
 - Add Requires and BuildRequires.
 
-* Wed Jul 19 2005 Will Cohen <wcohen@redhat.com>
+* Tue Jul 19 2005 Will Cohen <wcohen@redhat.com>
 - Initial creation of RPM.
