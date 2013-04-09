@@ -184,7 +184,6 @@ private:
   char next_c;
   char last_c;
 
-  // TODOXXX throughout: re2c errors should become parse errors
   void parse_error (const string& msg, unsigned pos);
   void parse_error (const string& msg); // report error at last_pos
 
@@ -355,8 +354,9 @@ stapdfa::print (std::ostream& o) const
 {
   // TODOXXX escape special chars in orig_input
   o << "dfa(" << func_name << ",\"" << orig_input << "\")" << endl;
+  o << "===" << endl;
   o << content << endl;
-  // TODOXXX properly indent and delineate content
+  o << "===" << endl << endl; // TODOXXX silly alternative to indentation
 }
 
 std::ostream&
@@ -476,7 +476,7 @@ regex_parser::parse_expr ()
     {
       next ();
       RegExp *alt = parse_term ();
-      result = mkAlt (result, alt); // TODOXXX right-association o.k.?
+      result = mkAlt (result, alt);
       c = peek ();
     }
 
@@ -492,7 +492,7 @@ regex_parser::parse_term ()
   while (c && c != '|' && c != ')')
     {
       RegExp *next = parse_factor ();
-      result = new CatOp(result, next); // TODOXXX right-association o.k.?
+      result = new CatOp(result, next);
       c = peek ();
     }
 
@@ -632,7 +632,8 @@ regex_parser::parse_factor ()
           /* optimize {0,0}, {0,} and {1,} */
           if (minsize == 0 && maxsize == 0)
             {
-              // TODOXXX will not be correct in the case of subgroups
+              // XXX: this optimization will need to be removed
+              // after subexpression-extraction is implemented
               delete result;
               result = new NullOp();
             }

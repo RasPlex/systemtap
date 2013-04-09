@@ -1926,7 +1926,9 @@ void DFA::prepare()
 	head->action = NULL;
 }
 
-/* TODOXXX: this stuff is needed for DFA::emit */
+// ----------------------------------------------------------------------
+
+/* this stuff is needed for DFA::emit */
 
 template<class _E, class _Tr = std::char_traits<_E> >
 class basic_null_streambuf

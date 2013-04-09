@@ -37,7 +37,6 @@ const unsigned FORK = 2;
 const unsigned TERM = 3;
 const unsigned CTXT = 4;
 const unsigned INIT = 5; // for ^ operator
-// TODOXXX const unsigned ENDI = 6; // for $ operator??
 
 union Ins {
 
