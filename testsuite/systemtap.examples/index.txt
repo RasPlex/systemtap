@@ -834,9 +834,11 @@ keywords: locking
 
   Tracks pthread-mutex initialization/use and underlying futex
   operations, to identify (with backtraces/symbol-names) the mutexes
-  suffering most contention.  Invoke with "NNN -d SHLIB --ldd"
+  suffering most contention.  Invoke with "-d SHLIB --ldd", perhaps
+  with -DMAXMAPENTRIES=NNNN for some large NNNN, if the arrays overflow
+  due to heavy activity.
 
-  # stap mutex-contention.stp 100 -c "sleep 0.2"
+  # stap mutex-contention.stp -c "sleep 0.2"
 
 
 process/noptrace.stp - Disable ptrace from Hierarchies of Processes
