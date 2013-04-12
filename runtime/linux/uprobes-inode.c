@@ -355,8 +355,8 @@ stapiu_target_reg(struct stapiu_target *target, struct task_struct* task)
 			ret = stapiu_register(target->inode, c);
 			if (ret) {
 				c->registered = 0;
-				_stp_warn("probe %s registration error (rc %d)",
-					   c->probe->pp, ret);
+				_stp_warn("probe %s inode-offset %p registration error (rc %d)",
+                                          c->probe->pp, (void*) c->offset, ret);
                                 ret = 0; /* Don't abort entire stap script just for this. */
 			}
 			c->registered = 1;
