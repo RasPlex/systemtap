@@ -1,6 +1,6 @@
 /* -*- linux-c -*-
  * Common functions for using inode-based uprobes
- * Copyright (C) 2011, 2012 Red Hat Inc.
+ * Copyright (C) 2011-2013 Red Hat Inc.
  *
  * This file is part of systemtap, and is free software.  You can
  * redistribute it and/or modify it under the terms of the GNU General
@@ -355,9 +355,9 @@ stapiu_target_reg(struct stapiu_target *target, struct task_struct* task)
 			ret = stapiu_register(target->inode, c);
 			if (ret) {
 				c->registered = 0;
-				_stp_error("probe %s registration error (rc %d)",
+				_stp_warn("probe %s registration error (rc %d)",
 					   c->probe->pp, ret);
-				break;
+                                ret = 0; /* Don't abort entire stap script just for this. */
 			}
 			c->registered = 1;
 		}
