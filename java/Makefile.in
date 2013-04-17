@@ -57,8 +57,14 @@ bin_PROGRAMS =
 noinst_PROGRAMS = $(am__EXEEXT_1)
 @HAVE_SELINUX_TRUE@am__append_1 = $(selinux_CFLAGS)
 
-#build libHelperSDT.so
-@HAVE_HELPER_TRUE@am__append_2 = libHelperSDT.so
+# build libHelperSDT.so
+
+# build HelperSDT.class
+
+# jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+@HAVE_JAVA_HELPER_TRUE@am__append_2 = libHelperSDT.so HelperSDT.class \
+@HAVE_JAVA_HELPER_TRUE@	HelperSDT.jar
+@HAVE_JAVA_HELPER_TRUE@am__append_3 = HelperSDT.class HelperSDT.jar
 subdir = java
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -74,9 +80,18 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
-@HAVE_HELPER_TRUE@am__EXEEXT_1 = libHelperSDT.so$(EXEEXT)
+@HAVE_JAVA_HELPER_TRUE@am__EXEEXT_1 = libHelperSDT.so$(EXEEXT) \
+@HAVE_JAVA_HELPER_TRUE@	HelperSDT.class$(EXEEXT) \
+@HAVE_JAVA_HELPER_TRUE@	HelperSDT.jar$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
-@HAVE_HELPER_TRUE@am_libHelperSDT_so_OBJECTS = HelperSDT.$(OBJEXT)
+HelperSDT_class_SOURCES = HelperSDT.c
+HelperSDT_class_OBJECTS = HelperSDT.$(OBJEXT)
+HelperSDT_class_LDADD = $(LDADD)
+HelperSDT_jar_SOURCES = HelperSDT.c
+HelperSDT_jar_OBJECTS = HelperSDT.$(OBJEXT)
+HelperSDT_jar_LDADD = $(LDADD)
+@HAVE_JAVA_HELPER_TRUE@am_libHelperSDT_so_OBJECTS =  \
+@HAVE_JAVA_HELPER_TRUE@	HelperSDT.$(OBJEXT)
 libHelperSDT_so_OBJECTS = $(am_libHelperSDT_so_OBJECTS)
 libHelperSDT_so_LDADD = $(LDADD)
 libHelperSDT_so_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -101,7 +116,7 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(libHelperSDT_so_SOURCES)
+SOURCES = HelperSDT.c HelperSDT.c $(libHelperSDT_so_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -147,6 +162,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INTLLIBS = @INTLLIBS@
+
+# TODOXXX autoconfigure these as far as possible
+JAVADIR = @JAVADIR@
 LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
@@ -265,30 +283,27 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-#AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
-AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
-	-I$(srcdir)/java \
-	-I/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/include/linux \
-	-I/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/include \
-	-DBINDIR='"$(bindir)"' -DSYSCONFDIR='"$(sysconfdir)"' \
-	-DPKGDATADIR='"${pkgdatadir}"' \
-	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"' \
-	-fPIC -shared $(am__append_1)
-@HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
-@HAVE_HELPER_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
-@HAVE_HELPER_TRUE@libHelperSDT_so_LDFLAGS = -lc
-
-#build HelperSDT.class
-
-#jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
-
-#place/install libHelper.so into HAVE_HELPER dir
-
-#place/install HelperSDT.jar into HAVE_HELPER/../ext diro
+# JAVADIR = /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.17.x86_64
+# JAVADIR = /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64
+javahelperdir = $(JAVADIR)/jre/lib/amd64
+javaextdir = $(JAVADIR)/jre/lib/ext
+JAVAC = javac
+JAR = jar
 
 # Arrange for the top-level git_version.h to be regenerated at every "make".
 BUILT_SOURCES = git_version.stamp
+CLEANFILES = $(am__append_3)
+
+#AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
+AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
+	-I$(srcdir)/java -I$(JAVADIR)/include/linux \
+	-I$(JAVADIR)/include -DBINDIR='"$(bindir)"' \
+	-DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' \
+	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"' \
+	-fPIC -shared $(am__append_1)
+@HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
+@HAVE_JAVA_HELPER_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
+@HAVE_JAVA_HELPER_TRUE@libHelperSDT_so_LDFLAGS = -lc
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -367,6 +382,12 @@ clean-binPROGRAMS:
 
 clean-noinstPROGRAMS:
 	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
+@HAVE_JAVA_HELPER_FALSE@HelperSDT.class$(EXEEXT): $(HelperSDT_class_OBJECTS) $(HelperSDT_class_DEPENDENCIES) $(EXTRA_HelperSDT_class_DEPENDENCIES) 
+@HAVE_JAVA_HELPER_FALSE@	@rm -f HelperSDT.class$(EXEEXT)
+@HAVE_JAVA_HELPER_FALSE@	$(AM_V_CCLD)$(LINK) $(HelperSDT_class_OBJECTS) $(HelperSDT_class_LDADD) $(LIBS)
+@HAVE_JAVA_HELPER_FALSE@HelperSDT.jar$(EXEEXT): $(HelperSDT_jar_OBJECTS) $(HelperSDT_jar_DEPENDENCIES) $(EXTRA_HelperSDT_jar_DEPENDENCIES) 
+@HAVE_JAVA_HELPER_FALSE@	@rm -f HelperSDT.jar$(EXEEXT)
+@HAVE_JAVA_HELPER_FALSE@	$(AM_V_CCLD)$(LINK) $(HelperSDT_jar_OBJECTS) $(HelperSDT_jar_LDADD) $(LIBS)
 libHelperSDT.so$(EXEEXT): $(libHelperSDT_so_OBJECTS) $(libHelperSDT_so_DEPENDENCIES) $(EXTRA_libHelperSDT_so_DEPENDENCIES) 
 	@rm -f libHelperSDT.so$(EXEEXT)
 	$(AM_V_CCLD)$(libHelperSDT_so_LINK) $(libHelperSDT_so_OBJECTS) $(libHelperSDT_so_LDADD) $(LIBS)
@@ -475,6 +496,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -484,6 +506,9 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
+@HAVE_JAVA_HELPER_FALSE@uninstall-local:
+@HAVE_JAVA_HELPER_FALSE@install-data-local:
+@HAVE_JAVA_HELPER_FALSE@install-exec-local:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-noinstPROGRAMS \
@@ -507,13 +532,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-data-local
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am: install-binPROGRAMS install-exec-local
 
 install-html: install-html-am
 
@@ -552,7 +577,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-binPROGRAMS uninstall-local
 
 .MAKE: all check install install-am install-strip
 
@@ -560,15 +585,32 @@ uninstall-am: uninstall-binPROGRAMS
 	clean-generic clean-noinstPROGRAMS ctags distclean \
 	distclean-compile distclean-generic distclean-tags dvi dvi-am \
 	html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
+	install-binPROGRAMS install-data install-data-am \
+	install-data-local install-dvi install-dvi-am install-exec \
+	install-exec-am install-exec-local install-html \
 	install-html-am install-info install-info-am install-man \
 	install-pdf install-pdf-am install-ps install-ps-am \
 	install-strip installcheck installcheck-am installdirs \
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS
+	tags uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-local
 
+@HAVE_JAVA_HELPER_TRUE@HelperSDT.class:
+@HAVE_JAVA_HELPER_TRUE@	$(JAVAC) -d . $(srcdir)/HelperSDT.java
+@HAVE_JAVA_HELPER_TRUE@HelperSDT.jar: HelperSDT.class libHelperSDT.so
+@HAVE_JAVA_HELPER_TRUE@	$(JAR) cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+
+# place/install libHelper.so into HAVE_JAVA_HELPER dir
+# place/install HelperSDT.jar into HAVE_JAVA_HELPER/../ext diro
+@HAVE_JAVA_HELPER_TRUE@install-exec-local:
+@HAVE_JAVA_HELPER_TRUE@	$(INSTALL_DATA) -D libHelperSDT.so $(javahelperdir)/libHelperSDT.so
+@HAVE_JAVA_HELPER_TRUE@install-data-local: HelperSDT.jar
+@HAVE_JAVA_HELPER_TRUE@	$(INSTALL_DATA) -D HelperSDT.jar $(javaextdir)/HelperSDT.jar
+
+@HAVE_JAVA_HELPER_TRUE@uninstall-local:
+@HAVE_JAVA_HELPER_TRUE@	rm -rf $(javahelperdir)/libHelperSDT.so
+@HAVE_JAVA_HELPER_TRUE@	rm -rf $(javahelperdir)/HelperSDT.jar
 git_version.stamp ../git_version.h:
 	$(MAKE) -C .. $(notdir $@)
 

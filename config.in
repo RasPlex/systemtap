@@ -38,14 +38,14 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
-/* Define as the directory contatining libHelperSDT.so */
-#undef HAVE_HELPER
-
 /* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Destination directory for libHelperSDT.so */
+#undef HAVE_JAVA_HELPER
 
 /* Define to 1 if you have the `dw' library (-ldw). */
 #undef HAVE_LIBDW

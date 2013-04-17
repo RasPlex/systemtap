@@ -280,7 +280,7 @@ java_builder::build (systemtap_session & sess,
 	clog << _("Finished writting byteman script") << endl;
       
     }
-#ifdef HAVE_HELPER
+#ifdef HAVE_JAVA_HELPER
   /* we've written the byteman script, have its location 
    * re-write probe point to be process("libHelperSDTv2.so").mark("*")
    * use handler of first probe as body of second
@@ -364,7 +364,7 @@ java_builder::build (systemtap_session & sess,
   probe_point* new_loc = new probe_point (*loc);
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 
-			 (TOK_PROCESS, new literal_string (HAVE_HELPER)));
+			 (TOK_PROCESS, new literal_string (HAVE_JAVA_HELPER)));
   java_marker.push_back( new probe_point::component 
 			 //	(TOK_MARK, new literal_string ("*")));
 			 (TOK_MARK, new literal_string (mark_param(method_params_count))));
@@ -436,7 +436,8 @@ java_builder::build (systemtap_session & sess,
   derive_probes (sess, new_mark_probe, finished_results);
    
 #else
-  cerr << _("Cannot probe java method, configure --with-helper=") << endl;
+  (void) has_pid_str;
+  cerr << _("Cannot probe java method, configure --with-helper=") << endl; // TODOXXX
 #endif
 }
 
