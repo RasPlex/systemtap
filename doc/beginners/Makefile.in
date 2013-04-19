@@ -63,6 +63,11 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
 	$(top_srcdir)/m4/iconv.m4 $(top_srcdir)/m4/lib-ld.m4 \
 	$(top_srcdir)/m4/lib-link.m4 $(top_srcdir)/m4/lib-prefix.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_jar.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_java.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_java_works.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_javac.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_javac_works.m4 \
 	$(top_srcdir)/m4/nls.m4 $(top_srcdir)/m4/po.m4 \
 	$(top_srcdir)/m4/progtest.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -127,6 +132,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INTLLIBS = @INTLLIBS@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
 LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
@@ -167,6 +175,7 @@ STAP_EXTRA_VERSION = @STAP_EXTRA_VERSION@
 STAP_PREFIX = @STAP_PREFIX@
 STRIP = @STRIP@
 USE_NLS = @USE_NLS@
+UUDECODE = @UUDECODE@
 VERSION = @VERSION@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
@@ -197,8 +206,11 @@ docdir = @docdir@
 dvidir = @dvidir@
 elfutils_abs_srcdir = @elfutils_abs_srcdir@
 exec_prefix = @exec_prefix@
+have_byteman_install = @have_byteman_install@
+have_byteman_submit = @have_byteman_submit@
 have_dvips = @have_dvips@
 have_fop = @have_fop@
+have_java = @have_java@
 have_latex = @have_latex@
 have_latex2html = @have_latex2html@
 have_ps2pdf = @have_ps2pdf@

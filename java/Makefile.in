@@ -59,12 +59,24 @@ noinst_PROGRAMS = $(am__EXEEXT_1)
 
 #build libHelperSDT.so
 @HAVE_HELPER_TRUE@am__append_2 = libHelperSDT.so
+
+#build HelperSDT.class
+#javadir = 
+#dist_java_JAVA = HelperSDT.java
+
+#jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+@HAVE_HELPER_TRUE@am__append_3 = java-build jar-build
 subdir = java
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
 	$(top_srcdir)/m4/iconv.m4 $(top_srcdir)/m4/lib-ld.m4 \
 	$(top_srcdir)/m4/lib-link.m4 $(top_srcdir)/m4/lib-prefix.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_jar.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_java.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_java_works.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_javac.m4 \
+	$(top_srcdir)/m4/m4_ax_prog_javac_works.m4 \
 	$(top_srcdir)/m4/nls.m4 $(top_srcdir)/m4/po.m4 \
 	$(top_srcdir)/m4/progtest.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -147,6 +159,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INTLLIBS = @INTLLIBS@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
 LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
@@ -187,6 +202,7 @@ STAP_EXTRA_VERSION = @STAP_EXTRA_VERSION@
 STAP_PREFIX = @STAP_PREFIX@
 STRIP = @STRIP@
 USE_NLS = @USE_NLS@
+UUDECODE = @UUDECODE@
 VERSION = @VERSION@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
@@ -267,6 +283,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 #AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
+#this could be configure variables, find jni_md.h dir and jni.h dir
+#AM_CFLAGS += -I$(HAVE_JNI_H)
+#AM_CFLAGS += -I$(HAVE_JNI_MD_H)
 AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-I$(srcdir)/java \
 	-I/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/include/linux \
@@ -275,20 +294,13 @@ AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-DPKGDATADIR='"${pkgdatadir}"' \
 	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"' \
 	-fPIC -shared $(am__append_1)
-@HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
-@HAVE_HELPER_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
-@HAVE_HELPER_TRUE@libHelperSDT_so_LDFLAGS = -lc
-
-#build HelperSDT.class
-
-#jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
-
-#place/install libHelper.so into HAVE_HELPER dir
-
-#place/install HelperSDT.jar into HAVE_HELPER/../ext diro
 
 # Arrange for the top-level git_version.h to be regenerated at every "make".
 BUILT_SOURCES = git_version.stamp
+HelperSDT_SOURCES = $(am__append_3)
+@HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
+@HAVE_HELPER_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
+@HAVE_HELPER_TRUE@libHelperSDT_so_LDFLAGS = -lc
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -569,6 +581,20 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-binPROGRAMS
 
+
+@HAVE_HELPER_TRUE@java-build:
+@HAVE_HELPER_TRUE@	$(JAVAC) $(srcdir)HelperSDT.java
+
+@HAVE_HELPER_TRUE@jar-build:
+@HAVE_HELPER_TRUE@	$(JAR) cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+
+#place/install libHelper.so into HAVE_HELPER dir
+@HAVE_HELPER_TRUE@install_java_so:
+@HAVE_HELPER_TRUE@	$(install_sh) -c -m 755 libHelperSDT.so /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/amd64/
+
+#place/install HelperSDT.jar into HAVE_HELPER/../ext dir
+@HAVE_HELPER_TRUE@install_java_jar:
+@HAVE_HELPER_TRUE@	$(install_sh_DATA) HelperSDT.jar /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/ext
 git_version.stamp ../git_version.h:
 	$(MAKE) -C .. $(notdir $@)
 

@@ -609,6 +609,9 @@ AS_IF([test "x$with_selinux" != "xno"], [
 
 AM_CONDITIONAL([HAVE_SELINUX], [test "${have_selinux}" = "yes"])
 
+AC_PROG_JAVAC
+AC_PROG_JAVA
+AC_PROG_JAR
 AC_CHECK_PROG(have_java, java, yes, no)
 AC_CHECK_PROG(have_byteman_submit, bmsubmit.sh, yes, no)
 AC_CHECK_PROG(have_byteman_install, bminstall.sh, yes, no)

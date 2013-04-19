@@ -1,6 +1,23 @@
 Modify Makefile's to automatically generate and place libHelperSDT
-Gracefully detach from java process (bmsubmit.sh -u)
 Testcases
 Add Documentation
 Create check for strings somehow in HelperSDT.c
 Add NEWS (if deemed fit to commit to master)
+Currently limited to one java probe at a time, fix this
+- write one rule per pid/class
+-- must loop through and {u,i}nstall each rule
+-- fix naming scheme of rules
+
+example 
+
+stap java("class.foo").class("^java.lang.Object").method("foo")
+     java("class.foo").class("^java.lang.Object").method("bar")
+     java(66666").class("^java.lang.Object").method("baz")
+
+should result in 2 rules being written in two seperate btm files
+
+stap java("class.foo").class("^java.lang.Object").method("foo(int, int)")
+     java("class.foo").class("^java.lang.Object").method("bar(int)")
+     java(66666").class("^java.lang.Object").method("baz")
+
+should result in 3 rules being written in two seperate btm files
