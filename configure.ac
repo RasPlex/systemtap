@@ -609,29 +609,36 @@ AS_IF([test "x$with_selinux" != "xno"], [
 
 AM_CONDITIONAL([HAVE_SELINUX], [test "${have_selinux}" = "yes"])
 
-AC_PROG_JAVAC
-AC_PROG_JAVA
-AC_PROG_JAR
+dnl Handle java+byteman support
 AC_CHECK_PROG(have_java, java, yes, no)
 AC_CHECK_PROG(have_byteman_submit, bmsubmit.sh, yes, no)
 AC_CHECK_PROG(have_byteman_install, bminstall.sh, yes, no)
 if test -n "$have_java" -a "$have_byteman_submit" -a "$have_byteman_install" != no; then
-AC_ARG_WITH([java],
-  AS_HELP_STRING([--with-helper],
-     [Specify the directory containing libHelperSDT.so]))
-AS_IF([test "x$with_helper" != "xno"], [
-           have_helper="$with_helper"
-           AC_MSG_NOTICE([Adding helper location $have_helper])], [
-           have_helper=""])
-if test -n "$with_helper" -a "$have_helper" != "no"; then
-AC_DEFINE_UNQUOTED(HAVE_HELPER, "$have_helper", [Define as the directory contatining libHelperSDT.so])
-AM_CONDITIONAL([HAVE_HELPER], [test "$have_helper" != "no"])
+
+# TODOXXX support specifying existing libHelperSDT.so using --with-helper ??
+
+AC_ARG_WITH([jdk],
+  [AS_HELP_STRING([--with-jdk=DIRECTORY],
+     [Specify the directory containing the JDK install])],
+  [],
+  [with_jdk=/usr/lib/jvm/java]) # TODOXXX is this a sensible default?
+AC_CHECK_FILE([$with_jdk],[have_jdk=yes],[have_jdk=no])
+
+AC_SUBST(JAVADIR, "$with_jdk")
+
+if test -n "$with_jdk" -a "$have_jdk" != "no"; then
+# echo DEFINING JAVA_HELPER : $with_jdk $have_jdk
+AC_DEFINE_UNQUOTED(HAVE_JAVA_HELPER, "${with_jdk}/jre/lib/amd64", [Destination directory for libHelperSDT.so]) # TODOXXX customizability of postfix... coordinate with javahelperdir in java/Makefile.am....
+# else
+# echo NOTDEFINING JAVA_HELPER : $with_jdk $have_jdk
 fi
+
+AM_CONDITIONAL([HAVE_JAVA_HELPER], [test "${have_jdk}" != "no"])
+
 else
-AC_MSG_WARN([will not run per-method java probing, missing byteman or java requirements])       
+AC_MSG_WARN([will not run per-method java probing, missing byteman or java requirements])
+AM_CONDITIONAL([HAVE_JAVA_HELPER],false)
 fi
-
-
 
 AC_SUBST(ENABLE_NLS, "$USE_NLS")
 AC_SUBST(localedir, "$localedir")

@@ -161,12 +161,12 @@ systemtap_session::systemtap_session ():
   sysroot = "";
   update_release_sysroot = false;
   suppress_time_limits = false;
-#ifdef HAVE_HELPER
+#ifdef HAVE_JAVA_HELPER
   bminstall_path = "";
   bmsubmit_path = "";
   run_once = false;
   byteman_log = "";
-#endif //HAVE_HELPER
+#endif //HAVE_JAVA_HELPER
 
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
@@ -342,7 +342,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   suppress_time_limits = other.suppress_time_limits;
 
 
-#ifdef HAVE_HELPER
+#ifdef HAVE_JAVA_HELPER
   run_once = other.run_once;
   java_pid = other.java_pid;
   java_proc_class = other.java_proc_class;
@@ -350,7 +350,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   bmsubmit_path = other.bmsubmit_path;
   byteman_script_path = other.byteman_script_path;
   byteman_log = other.byteman_log;
-#endif //HAVE_HELPER
+#endif //HAVE_JAVA_HELPER
 
   include_path = other.include_path;
   runtime_path = other.runtime_path;
@@ -386,11 +386,11 @@ systemtap_session::systemtap_session (const systemtap_session& other,
 
 systemtap_session::~systemtap_session ()
 {
-#ifdef HAVE_HELPER
+#ifdef HAVE_JAVA_HELPER
 
   if(java_pid.size() != 0 || java_proc_class.size() != 0)
     java_detach();
-#endif //HAVE_HELPER
+#endif //HAVE_JAVA_HELPER
   remove_tmp_dir();
   delete_map(subsessions);
   delete pattern_root;
@@ -2010,7 +2010,7 @@ translator_output* systemtap_session::op_create_auxiliary()
   return n;
 }
 
-#ifdef HAVE_HELPER
+#ifdef HAVE_JAVA_HELPER
 void
 systemtap_session::java_detach()
 {
