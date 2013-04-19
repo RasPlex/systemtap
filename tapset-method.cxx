@@ -35,6 +35,10 @@ static const string TOK_PROCESS ("process");
 static const string TOK_MARK ("mark");
 static const string TOK_JAVA ("java");
 static const string TOK_RETURN ("return");
+static const string TOK_BEGIN ("begin");
+static const string TOK_END ("end");
+static const string TOK_ERROR ("error");
+
 
 struct java_builder: public derived_probe_builder
 {
@@ -257,7 +261,7 @@ java_builder::build (systemtap_session & sess,
 		     << "METHOD " << method_str_val << endl
 		     << "HELPER HelperSDT" << endl;
       if(!has_return)
-	  byteman_script << "AT ENTRY" << endl;
+	byteman_script << "AT ENTRY" << endl;
       else
 	byteman_script << "AT EXIT" << endl;
       byteman_script << "IF TRUE" << endl
@@ -313,13 +317,13 @@ java_builder::build (systemtap_session & sess,
 	  else if ((*it != _java_pid) && ++it == sess.java_pid.end())
 	    {
 	      sess.java_pid.push_back(_java_pid);
-	      bminstall(sess, java_pid_str);
+	      //	      bminstall(sess, java_pid_str);
 	    }
 	}
       if (sess.java_pid.size() == 0)
 	{
 	  sess.java_pid.push_back(_java_pid);
-	  bminstall(sess, java_pid_str);
+	  //	  bminstall(sess, java_pid_str);
 	}
     }
   else
@@ -331,13 +335,13 @@ java_builder::build (systemtap_session & sess,
 	  else if ((*is != _java_proc_class) && (++is == sess.java_proc_class.end()))
 	    {
 	      sess.java_proc_class.push_back(_java_proc_class);
-	      bminstall(sess, _java_proc_class);
+	      //	      bminstall(sess, _java_proc_class);
 	    }
 	}
       if (sess.java_proc_class.size() == 0)
 	{
 	  sess.java_proc_class.push_back(_java_proc_class);
-	  bminstall(sess, _java_proc_class);
+	  //	  bminstall(sess, _java_proc_class);
 	}
     }
   vector<string> bmsubmit_cmd;
@@ -349,7 +353,7 @@ java_builder::build (systemtap_session & sess,
   bmsubmit_cmd.push_back(" -l");
   bmsubmit_cmd.push_back(sess.byteman_script_path.back());
 
-  (void) stap_system(sess.verbose, bmsubmit_cmd);
+  //  (void) stap_system(sess.verbose, bmsubmit_cmd);
   if (sess.verbose > 3)
     clog << _("Reported bmsubmit.sh path: ") << sess.bmsubmit_path << endl;
 
@@ -361,14 +365,13 @@ java_builder::build (systemtap_session & sess,
    */
   //XXX can this be moved into its own function, or after root->bind'ing takes place
 
-  probe_point* new_loc = new probe_point (*loc);
+  probe_point* new_loc = new probe_point(*loc);
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 
 			 (TOK_PROCESS, new literal_string (HAVE_HELPER)));
   java_marker.push_back( new probe_point::component 
-			 //	(TOK_MARK, new literal_string ("*")));
 			 (TOK_MARK, new literal_string (mark_param(method_params_count))));
-  probe_point * derived_loc = new probe_point (*new_loc);
+  probe_point * derived_loc = new probe_point (java_marker);
 
   block *b = new block;
   b->tok = base->body->tok;
@@ -431,10 +434,127 @@ java_builder::build (systemtap_session & sess,
   b->statements.push_back(base->body);
   base->body = b;
 
+  //probe process("libjvm.so", "/usr/bin/java"). begin {system(bmstap.sh "pid, class, method")}  
+  //  probe end, error { bmstapsh.sh -uninstall }
+
   derived_loc->components = java_marker;
-  probe *new_mark_probe = base->create_alias (derived_loc, new_loc);
-  derive_probes (sess, new_mark_probe, finished_results);
-   
+
+  probe* new_mark_probe = base->create_alias (derived_loc, new_loc);
+  derive_probes (sess, new_mark_probe, finished_results); //this is redefining the probe when we could keep it the same?
+
+  //the begin portion of the probe
+  probe_point* begin_loc = new probe_point(*loc);
+
+  vector<probe_point::component*> java_begin_marker;
+  java_begin_marker.push_back( new probe_point::component 
+  			  (TOK_PROCESS, new literal_string ("/usr/bin/java")));
+  java_begin_marker.push_back( new probe_point::component (TOK_BEGIN));
+
+  probe_point *der_begin_loc = new probe_point (*begin_loc);
+
+  /* stapbm.sh contains the following arguments in a space
+     seperated list
+     $1 - PID/unique name
+     $2 - class
+     $3 - method
+     $4 - number of args
+     $5 - install/uninstall
+     $6 - entry/exit/line
+  */
+
+  char arg_count[3];
+  snprintf(arg_count, 3, "%d", method_params_count);
+  string new_method = method_str_val;
+  size_t string_pos = new_method.find(')', 0);
+  while(string_pos != string::npos){
+    new_method.insert(int(string_pos), "\\\\");
+    string_pos = new_method.find(')',string_pos+4);
+  }
+  string_pos = new_method.find('(', 0);
+  while(string_pos != string::npos){
+    new_method.insert(int(string_pos), "\\\\");
+    string_pos = new_method.find('(',string_pos+4);
+  }
+
+  //XXX need to make this non-specific
+  string stapbm_string = "/home/lberk/code/systemtap/java/stapbm.sh ";
+  stapbm_string.append("install");
+  stapbm_string.append(" ");
+  if (has_pid_int)
+    stapbm_string.append(java_pid_str);
+  else
+    stapbm_string.append(_java_proc_class);
+  stapbm_string.append(" ");
+  stapbm_string.append(class_str_val + "-" + new_method);
+  stapbm_string.append(" ");
+
+  stapbm_string.append(class_str_val);
+  stapbm_string.append(" ");
+  stapbm_string.append(new_method);
+  stapbm_string.append(" ");
+  stapbm_string.append(arg_count);
+  stapbm_string.append(" ");
+  if(!has_return)
+    stapbm_string.append("entry");
+  else
+    stapbm_string.append("exit");
+  stapbm_string.append(" ");
+  stapbm_string.append(sess.tmpdir);
+  block *bb = new block;
+  bb->tok = base->body->tok;
+  functioncall *fc = new functioncall;
+  fc->function = "system";
+  fc->tok = bb->tok;
+  literal_string* num = new literal_string(stapbm_string);
+  num->tok = bb->tok;
+  fc->args.push_back(num);
+
+  expr_statement* bs = new expr_statement;
+  bs->tok = bb->tok;
+  bs->value = fc;
+
+  bb->statements.push_back(bs);
+  bb->statements.push_back(base->body);
+  base->body = bb;
+  // XXX don't hardcode this, we need to add it to some path
+  
+  der_begin_loc->components = java_begin_marker;
+  probe* new_begin_probe = base->create_alias(der_begin_loc, begin_loc);
+  derive_probes (sess, new_begin_probe, finished_results); //this is redefining the probe when we could keep it the same?
+
+  //the end/error portion of the probe
+  probe_point* end_loc = new probe_point(*loc);
+
+  vector<probe_point::component*> java_end_marker;
+  java_end_marker.push_back( new probe_point::component 
+  			  (TOK_PROCESS, new literal_string ("/usr/bin/java")));
+  java_end_marker.push_back( new probe_point::component (TOK_END));
+
+  probe_point *der_end_loc = new probe_point (java_end_marker);
+
+  block *eb = new block;
+  eb->tok = base->body->tok;
+  functioncall *efc = new functioncall;
+  efc->function = "system";
+  efc->tok = eb->tok;
+  literal_string* es = new literal_string("/home/lberk/code/systemtap/java/stapbm.sh uninstall " + class_str_val + "-" + new_method);
+  es->tok = eb->tok;
+  efc->args.push_back(es);
+
+  expr_statement* ees = new expr_statement;
+  ees->tok = eb->tok;
+  ees->value = efc;
+
+  eb->statements.push_back(ees);
+  eb->statements.push_back(base->body);
+  base->body = eb;
+  // XXX don't hardcode this, we need to add it to some path
+
+  der_end_loc->components = java_end_marker;
+  probe* new_end_probe = base->create_alias(der_end_loc, end_loc);
+  derive_probes (sess, new_end_probe, finished_results); //this is redefining the probe when we could keep it the same?
+
+
 #else
   cerr << _("Cannot probe java method, configure --with-helper=") << endl;
 #endif
