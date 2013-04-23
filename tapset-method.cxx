@@ -214,12 +214,6 @@ java_builder::build (systemtap_session & sess,
   if (! (has_pid_int || has_pid_str) )
     exit (1); //XXX proper exit with warning message
 
-
-  if (has_pid_int)
-    java_pid_str = _tmp.c_str();
-  else
-    java_pid_str = _java_proc_class.c_str();
-
   /*
    * while looking at sdt_query::convert_location as an example
    * create a new probe_point*, with same (*base_loc)
@@ -227,10 +221,13 @@ java_builder::build (systemtap_session & sess,
    * redefine functor values with new literal_string("foo")
    */
 
+  string helper_location = HAVE_JAVA_HELPER;
+  helper_location.append("/libHelperSDT.so");
   probe_point* new_loc = new probe_point(*loc);
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 
-			 (TOK_PROCESS, new literal_string (HAVE_JAVA_HELPER)));
+			 (TOK_PROCESS, new literal_string (helper_location)));
+  cout << "helper loc: " << HAVE_JAVA_HELPER << endl;
   java_marker.push_back( new probe_point::component 
 			 (TOK_MARK, new literal_string (mark_param(method_params_count))));
   probe_point * derived_loc = new probe_point (java_marker);

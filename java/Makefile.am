@@ -23,8 +23,7 @@ AM_CFLAGS += -fPIC -shared
 
 bin_PROGRAMS = 
 noinst_PROGRAMS =
-BUILT_SOURCES =
-HelperSDT_SOURCES =
+bin_SCRIPTS = stapbm
 
 if HAVE_SELINUX
 AM_CFLAGS += $(selinux_CFLAGS)
