@@ -201,15 +201,6 @@ public:
   bool suppress_handler_errors;
   bool suppress_time_limits;
 
-  void java_detach();
-  bool run_once;
-  std::vector<int> java_pid;
-  std::vector<std::string> java_proc_class;
-  std::vector<std::string> byteman_script_path;
-  std::string bminstall_path;
-  std::string bmsubmit_path;
-  std::string byteman_log;
-
   enum { kernel_runtime, dyninst_runtime } runtime_mode;
   bool runtime_usermode_p() const { return runtime_mode == dyninst_runtime; }
 

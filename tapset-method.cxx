@@ -67,8 +67,8 @@ public:
   bool get_param (std::map<std::string, literal*> const & params,
 		  const std::string& key,
 		  std::string& value);
-  void bminstall (systemtap_session & sess,
-		 std::string java_proc);
+  /*  void bminstall (systemtap_session & sess,
+      std::string java_proc);*/
   std::string mark_param(int i);
 
 };
@@ -105,7 +105,7 @@ java_builder::get_param (std::map<std::string, literal*> const & params,
   return true;
 }
 
-void
+/*void
 java_builder::bminstall (systemtap_session & sess, std::string java_proc)
 {
   std::vector<std::string> bminstall_cmd;
@@ -120,7 +120,7 @@ java_builder::bminstall (systemtap_session & sess, std::string java_proc)
       else
 	clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
     }
-}
+    }*/
 
 std::string
 java_builder::mark_param(int i)
@@ -173,8 +173,6 @@ java_builder::build (systemtap_session & sess,
       if ((second_method_pos - short_method_pos) >= 1)
 	one_arg = true;
     }
-  vector<int>::iterator it;
-  vector<string>::iterator is;
   int _java_pid = 0;
   string _java_proc_class = "";
   string short_method_str = method_str_val.substr (0, short_method_pos);
@@ -185,7 +183,7 @@ java_builder::build (systemtap_session & sess,
   bool has_return = has_null_param (parameters, TOK_RETURN);
 
   //need to count the number of parameters, exit if more than 10
-  int method_params_counter = 1;
+
   int method_params_count = count (method_str_val.begin (), method_str_val.end (), ',');
   if (one_arg && method_params_count == 0)
     method_params_count++; // in this case we know there was at least a var, but no ','
@@ -199,171 +197,35 @@ java_builder::build (systemtap_session & sess,
   (void) has_method_str;
   assert (has_class_str);
   (void) has_class_str;
-  string _tmp = "";
-  if (! cache_initialized)
+
+  const char* java_pid_str;
+  if(has_pid_int)
     {
-
-      if(has_pid_int)
-	{
-	  _tmp = static_cast <ostringstream*> ( & (ostringstream ()
-							 << (_java_pid)))->str ();
-
-	  for (vector<string>::iterator iter = sess.byteman_script_path.begin();
-	       iter != sess.byteman_script_path.end(); ++iter)
-	    {
-	      if (*iter == sess.tmpdir + "/stap-byteman-" + _tmp + ".btm")
-		break;
-	      else if ((*iter != sess.tmpdir + "/stap-byteman-" + _tmp + ".btm")
-		       && ++iter == sess.byteman_script_path.end())
-		sess.byteman_script_path.push_back(sess.tmpdir + "/stap-byteman-" + _tmp + ".btm");
-	    }
-	}
-      else
-	{
-	  for (vector<string>::iterator iter = sess.byteman_script_path.begin();
-	       iter != sess.byteman_script_path.end(); ++iter)
-	    {
-	      if (*iter == sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm")
-		break;
-	      else if ((*iter != sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm")
-		       && ++iter == sess.byteman_script_path.end())
-		sess.byteman_script_path.push_back(sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm");
-	    }
-	}
-
-      if (sess.byteman_script_path.size() == 0)
-	sess.byteman_script_path.push_back(sess.tmpdir + "/stap-byteman-" + _java_proc_class + ".btm");
-
-      if (sess.verbose > 3)
-	{
-	  //TRANSLATORS: the path to the byteman script
-	  clog << _("byteman script path: ") << sess.byteman_script_path.at(*it)
-	       << endl;
-	}
-      ofstream byteman_script;
-      byteman_script.open ((sess.byteman_script_path.back()).c_str(), ifstream::app);
-      if (! byteman_script)
-	{
-	  if (sess.verbose > 3)
-	    //TRANSLATORS: Specific path cannot be opened
-	    clog << sess.byteman_script_path.at(*it) << _(" cannot be opened: ")
-		 << strerror (errno) << endl;
-	  return;
-	}
-
-      if (sess.verbose > 2)
-	clog << _("Writting byteman script") << endl;
-      // none of this should be translated, byteman syntax is specific
-      byteman_script << "RULE Stap " << sess.base_hash << method_str_val << endl;
-      // we'll need detection here for second type of syntax
-      // XXX change the method name being passed
-      byteman_script << "CLASS " << class_str_val << endl
-		     << "METHOD " << method_str_val << endl
-		     << "HELPER HelperSDT" << endl;
-      if(!has_return)
-	byteman_script << "AT ENTRY" << endl;
-      else
-	byteman_script << "AT EXIT" << endl;
-      byteman_script << "IF TRUE" << endl
-		     << "DO METHOD_STAP_PROBE" << method_params_count
-		     << "(\"" << class_str_val <<  "\", \""
-		     << method_str_val << "\", ";
-      // we need increment the var number, while decrementing the count
-      for (method_params_counter = 1;
-	   method_params_counter <= method_params_count;
-	   method_params_counter++)
-	{
-	  byteman_script << "$" << method_params_counter;
-	  if (! (method_params_counter + 1 >= method_params_count))
-	    byteman_script << ", ";
-	}
-      byteman_script << ")" << endl;
-      byteman_script << "ENDRULE" << endl;
-      byteman_script.close();
-      if (sess.verbose > 2)
-	clog << _("Finished writting byteman script") << endl;
-      
+      string _tmp = "";
+      _tmp = static_cast <ostringstream*> ( & (ostringstream ()
+					       << (_java_pid)))->str ();
+      java_pid_str = _tmp.c_str();
     }
-#ifdef HAVE_JAVA_HELPER
-  /* we've written the byteman script, have its location 
-   * re-write probe point to be process("libHelperSDTv2.so").mark("*")
-   * use handler of first probe as body of second
-   * exec bminstall PID
-   * exec bmsubmit.sh -l script.btm
-   * continue regular compilation and action with redefined probe
-   */
+  else 
+      java_pid_str = _java_proc_class.c_str();
 
+#ifdef HAVE_JAVA_HELPER
+  
   if (! (has_pid_int || has_pid_str) )
     exit (1); //XXX proper exit with warning message
 
-  const char* java_pid_str;
+
   if (has_pid_int)
     java_pid_str = _tmp.c_str();
   else
     java_pid_str = _java_proc_class.c_str();
-  
-  sess.bminstall_path = (find_executable ("bminstall.sh"));
 
-  if (sess.verbose > 2)
-    clog << "Reported bminstall.sh path: " << sess.bminstall_path << endl;
-  // XXX check both scripts here, exit if not available
-
-  if (has_pid_int)
-    {
-      for (it = sess.java_pid.begin(); it != sess.java_pid.end(); ++it)
-	{
-	  if(*it == _java_pid) //if we work our way though it all and still doesn't 
-	      break;           //match then we push back on the vector
-	  else if ((*it != _java_pid) && ++it == sess.java_pid.end())
-	    {
-	      sess.java_pid.push_back(_java_pid);
-	      //	      bminstall(sess, java_pid_str);
-	    }
-	}
-      if (sess.java_pid.size() == 0)
-	{
-	  sess.java_pid.push_back(_java_pid);
-	  //	  bminstall(sess, java_pid_str);
-	}
-    }
-  else
-    {
-      for (is = sess.java_proc_class.begin(); is != sess.java_proc_class.end(); ++is)
-	{
-	  if(*is == _java_proc_class)
-	      break;
-	  else if ((*is != _java_proc_class) && (++is == sess.java_proc_class.end()))
-	    {
-	      sess.java_proc_class.push_back(_java_proc_class);
-	      //	      bminstall(sess, _java_proc_class);
-	    }
-	}
-      if (sess.java_proc_class.size() == 0)
-	{
-	  sess.java_proc_class.push_back(_java_proc_class);
-	  //	  bminstall(sess, _java_proc_class);
-	}
-    }
-  vector<string> bmsubmit_cmd;
-  sess.bmsubmit_path = (find_executable ("bmsubmit.sh"));
-  sess.byteman_log = sess.tmpdir + "/byteman.log";
-  bmsubmit_cmd.push_back(sess.bmsubmit_path);
-  bmsubmit_cmd.push_back(" -o");
-  bmsubmit_cmd.push_back(sess.byteman_log);
-  bmsubmit_cmd.push_back(" -l");
-  bmsubmit_cmd.push_back(sess.byteman_script_path.back());
-
-  //  (void) stap_system(sess.verbose, bmsubmit_cmd);
-  if (sess.verbose > 3)
-    clog << _("Reported bmsubmit.sh path: ") << sess.bmsubmit_path << endl;
-
-  /* now we need to redefine the probe
+  /*
    * while looking at sdt_query::convert_location as an example
    * create a new probe_point*, with same (*base_loc)
    * using a vector, iterate though, changing as needed
    * redefine functor values with new literal_string("foo")
    */
-  //XXX can this be moved into its own function, or after root->bind'ing takes place
 
   probe_point* new_loc = new probe_point(*loc);
   vector<probe_point::component*> java_marker;
@@ -412,8 +274,6 @@ java_builder::build (systemtap_session & sess,
   ce->left = ccus;
   ce->right = new literal_string(class_str_val);
   ce->right->tok = b->tok;
-  ifs->condition = ce;
-  b->statements.push_back(ifs);
 
   //method comparision
   comparison *me = new comparison;
@@ -425,41 +285,38 @@ java_builder::build (systemtap_session & sess,
 
   logical_or_expr *le = new logical_or_expr;
   le->op = "||";
-  le->tok = b->tok;
   le->left = ce;
   le->right = me;
+  le->tok = b->tok;
   ifs->condition = le;
   b->statements.push_back(ifs);
 
   b->statements.push_back(base->body);
   base->body = b;
 
-  //probe process("libjvm.so", "/usr/bin/java"). begin {system(bmstap.sh "pid, class, method")}  
-  //  probe end, error { bmstapsh.sh -uninstall }
-
   derived_loc->components = java_marker;
-
   probe* new_mark_probe = base->create_alias (derived_loc, new_loc);
-  derive_probes (sess, new_mark_probe, finished_results); //this is redefining the probe when we could keep it the same?
+  derive_probes (sess, new_mark_probe, finished_results);
+
 
   //the begin portion of the probe
-  probe_point* begin_loc = new probe_point(*loc);
-
   vector<probe_point::component*> java_begin_marker;
   java_begin_marker.push_back( new probe_point::component 
   			  (TOK_PROCESS, new literal_string ("/usr/bin/java")));
   java_begin_marker.push_back( new probe_point::component (TOK_BEGIN));
 
-  probe_point *der_begin_loc = new probe_point (*begin_loc);
+  probe_point * der_begin_loc = new probe_point(java_begin_marker);
 
-  /* stapbm.sh contains the following arguments in a space
+  /* stapbm contains the following arguments in a space
      seperated list
-     $1 - PID/unique name
-     $2 - class
-     $3 - method
-     $4 - number of args
-     $5 - install/uninstall
-     $6 - entry/exit/line
+     $1 - install/uninstall
+     $2 - $STAPTMPDIR
+     $3 - PID/unique name
+     $4 - RULE name
+     $5 - class
+     $6 - method
+     $7 - number of args
+     $8 - entry/exit/line
   */
 
   char arg_count[3];
@@ -476,9 +333,10 @@ java_builder::build (systemtap_session & sess,
     string_pos = new_method.find('(',string_pos+4);
   }
 
-  //XXX need to make this non-specific
-  string stapbm_string = "/home/lberk/code/systemtap/java/stapbm.sh ";
+  string stapbm_string = "stapbm ";
   stapbm_string.append("install");
+  stapbm_string.append(" ");
+  stapbm_string.append(sess.tmpdir);
   stapbm_string.append(" ");
   if (has_pid_int)
     stapbm_string.append(java_pid_str);
@@ -487,7 +345,6 @@ java_builder::build (systemtap_session & sess,
   stapbm_string.append(" ");
   stapbm_string.append(class_str_val + "-" + new_method);
   stapbm_string.append(" ");
-
   stapbm_string.append(class_str_val);
   stapbm_string.append(" ");
   stapbm_string.append(new_method);
@@ -498,8 +355,6 @@ java_builder::build (systemtap_session & sess,
     stapbm_string.append("entry");
   else
     stapbm_string.append("exit");
-  stapbm_string.append(" ");
-  stapbm_string.append(sess.tmpdir);
   block *bb = new block;
   bb->tok = base->body->tok;
   functioncall *fc = new functioncall;
@@ -514,17 +369,13 @@ java_builder::build (systemtap_session & sess,
   bs->value = fc;
 
   bb->statements.push_back(bs);
-  bb->statements.push_back(base->body);
   base->body = bb;
-  // XXX don't hardcode this, we need to add it to some path
-  
   der_begin_loc->components = java_begin_marker;
-  probe* new_begin_probe = base->create_alias(der_begin_loc, begin_loc);
-  derive_probes (sess, new_begin_probe, finished_results); //this is redefining the probe when we could keep it the same?
-
+  probe * bbase = new probe(*base, der_begin_loc);
+  probe* new_begin_probe = new probe(*bbase, der_begin_loc);
+  derive_probes (sess, new_begin_probe, finished_results);
+ 
   //the end/error portion of the probe
-  probe_point* end_loc = new probe_point(*loc);
-
   vector<probe_point::component*> java_end_marker;
   java_end_marker.push_back( new probe_point::component 
   			  (TOK_PROCESS, new literal_string ("/usr/bin/java")));
@@ -537,7 +388,20 @@ java_builder::build (systemtap_session & sess,
   functioncall *efc = new functioncall;
   efc->function = "system";
   efc->tok = eb->tok;
-  literal_string* es = new literal_string("/home/lberk/code/systemtap/java/stapbm.sh uninstall " + class_str_val + "-" + new_method);
+  string stapbm_remove = "stapbm ";
+  stapbm_remove.append("uninstall ");
+  stapbm_remove.append(sess.tmpdir);
+  stapbm_remove.append(" ");
+  if (has_pid_int)
+    stapbm_remove.append(java_pid_str);
+  else
+    stapbm_remove.append(_java_proc_class);
+  stapbm_remove.append(" ");
+  stapbm_remove.append(class_str_val);
+  stapbm_remove.append("-");
+  stapbm_remove.append(new_method);
+
+  literal_string* es = new literal_string(stapbm_remove);
   es->tok = eb->tok;
   efc->args.push_back(es);
 
@@ -546,18 +410,16 @@ java_builder::build (systemtap_session & sess,
   ees->value = efc;
 
   eb->statements.push_back(ees);
-  eb->statements.push_back(base->body);
   base->body = eb;
-  // XXX don't hardcode this, we need to add it to some path
 
   der_end_loc->components = java_end_marker;
-  probe* new_end_probe = base->create_alias(der_end_loc, end_loc);
-  derive_probes (sess, new_end_probe, finished_results); //this is redefining the probe when we could keep it the same?
-
+  probe* ebase = new probe(*base, der_end_loc);
+  probe* new_end_probe = new probe(*ebase, der_end_loc);
+  derive_probes (sess, new_end_probe, finished_results);
 
 #else
   (void) has_pid_str;
-  cerr << _("Cannot probe java method, configure --with-helper=") << endl; // TODOXXX
+  cerr << _("Cannot probe java method, configure --with-jdk=") << endl;
 #endif
 }
 

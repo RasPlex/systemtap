@@ -161,12 +161,6 @@ systemtap_session::systemtap_session ():
   sysroot = "";
   update_release_sysroot = false;
   suppress_time_limits = false;
-#ifdef HAVE_JAVA_HELPER
-  bminstall_path = "";
-  bmsubmit_path = "";
-  run_once = false;
-  byteman_log = "";
-#endif //HAVE_JAVA_HELPER
 
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
@@ -341,17 +335,6 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   sysenv = other.sysenv;
   suppress_time_limits = other.suppress_time_limits;
 
-
-#ifdef HAVE_JAVA_HELPER
-  run_once = other.run_once;
-  java_pid = other.java_pid;
-  java_proc_class = other.java_proc_class;
-  bminstall_path = other.bminstall_path;
-  bmsubmit_path = other.bmsubmit_path;
-  byteman_script_path = other.byteman_script_path;
-  byteman_log = other.byteman_log;
-#endif //HAVE_JAVA_HELPER
-
   include_path = other.include_path;
   runtime_path = other.runtime_path;
 
@@ -386,11 +369,6 @@ systemtap_session::systemtap_session (const systemtap_session& other,
 
 systemtap_session::~systemtap_session ()
 {
-#ifdef HAVE_JAVA_HELPER
-
-  if(java_pid.size() != 0 || java_proc_class.size() != 0)
-    java_detach();
-#endif //HAVE_JAVA_HELPER
   remove_tmp_dir();
   delete_map(subsessions);
   delete pattern_root;
@@ -2009,26 +1987,6 @@ translator_output* systemtap_session::op_create_auxiliary()
   auxiliary_outputs.push_back (n);
   return n;
 }
-
-#ifdef HAVE_JAVA_HELPER
-void
-systemtap_session::java_detach()
-{
-
-  for(vector<string>::const_iterator it = byteman_script_path.begin(); it != byteman_script_path.end(); ++it)
-    {
-      vector<string> bmcommand;
-      bmcommand.push_back(bmsubmit_path);
-      bmcommand.push_back(" -o");
-      bmcommand.push_back(byteman_log);
-      bmcommand.push_back(" -u");
-      bmcommand.push_back(*it);
-      (void) stap_system(verbose, bmcommand);
-  if (verbose>1)
-    clog << _F("Removed byteman rule: \"%s\"", (*it).c_str()) << endl;
-    }
-}
-#endif
 
 // Wrapper for checking if there are pending interrupts
 void
