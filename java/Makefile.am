@@ -1,11 +1,16 @@
 # Makefile.am --- automake input file for systemtap per-method probing
 
-# TODOXXX autoconfigure these as far as possible
-JAVADIR=@JAVADIR@
-# JAVADIR = /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.17.x86_64
-# JAVADIR = /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64
-javahelperdir = $(JAVADIR)/jre/lib/amd64
-javaextdir = $(JAVADIR)/jre/lib/ext
+if HAVE_JAVA_HELPER
+javahelperdir = @HELPERDIR@
+javajardir = @HELPERDIR@
+else
+if HAVE_JDK
+javahelperdir = @HELPERDIR@/jre/lib/amd64
+javajardir = @HELPERDIR@/jre/lib/ext
+endif
+endif
+
+# TODOXXX autoconfigure the following!
 JAVAC = javac
 JAR = jar
 
@@ -17,7 +22,7 @@ AM_CFLAGS = -g
 AM_CFLAGS += -I$(builddir)/../includes/sys
 AM_CFLAGS += -I$(srcdir)/../includes
 AM_CFLAGS += -I$(srcdir)/java # XXX?
-AM_CFLAGS += -I$(JAVADIR)/include/linux -I$(JAVADIR)/include
+AM_CFLAGS += -I$(JAVADIR)/include/linux -I$(JAVADIR)/include # TODOXXX
 AM_CFLAGS += -DBINDIR='"$(bindir)"' -DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' -DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"'
 AM_CFLAGS += -fPIC -shared
 
@@ -30,7 +35,7 @@ AM_CFLAGS += $(selinux_CFLAGS)
 AM_LDFLAGS = $(selinux_LIBS)
 endif #HAVE_SELINUX
 
-if HAVE_JAVA_HELPER
+if HAVE_JDK
 
 # build libHelperSDT.so
 noinst_PROGRAMS += libHelperSDT.so
@@ -54,11 +59,11 @@ HelperSDT.jar: HelperSDT.class libHelperSDT.so
 install-exec-local:
 	$(INSTALL_DATA) -D libHelperSDT.so $(javahelperdir)/libHelperSDT.so
 install-data-local: HelperSDT.jar
-	$(INSTALL_DATA) -D HelperSDT.jar $(javaextdir)/HelperSDT.jar
+	$(INSTALL_DATA) -D HelperSDT.jar $(javajardir)/HelperSDT.jar
 
 uninstall-local:
 	rm -rf $(javahelperdir)/libHelperSDT.so
-	rm -rf $(javahelperdir)/HelperSDT.jar
+	rm -rf $(javajardir)/HelperSDT.jar
 
 endif #HAVE_JAVA_HELPER
 
