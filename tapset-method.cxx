@@ -67,8 +67,6 @@ public:
   bool get_param (std::map<std::string, literal*> const & params,
 		  const std::string& key,
 		  std::string& value);
-  /*  void bminstall (systemtap_session & sess,
-      std::string java_proc);*/
   std::string mark_param(int i);
 
 };
@@ -104,23 +102,6 @@ java_builder::get_param (std::map<std::string, literal*> const & params,
   value = ls->value;
   return true;
 }
-
-/*void
-java_builder::bminstall (systemtap_session & sess, std::string java_proc)
-{
-  std::vector<std::string> bminstall_cmd;
-  bminstall_cmd.push_back(sess.bminstall_path);
-  bminstall_cmd.push_back("-Dorg.jboss.byteman.compile.to.bytecode");
-  bminstall_cmd.push_back(java_proc);
-  int ret = stap_system(sess.verbose, bminstall_cmd);
-  if (sess.verbose > 2)
-    {
-      if (ret)
-	clog << _F("WARNING: stap_system for bminstall.sh returned error: %d", ret) << endl;
-      else
-	clog << _F("stap_system for bminstall.sh returned: %d", ret) << endl;
-    }
-    }*/
 
 std::string
 java_builder::mark_param(int i)
@@ -227,7 +208,6 @@ java_builder::build (systemtap_session & sess,
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 
 			 (TOK_PROCESS, new literal_string (helper_location)));
-  cout << "helper loc: " << HAVE_JAVA_HELPER << endl;
   java_marker.push_back( new probe_point::component 
 			 (TOK_MARK, new literal_string (mark_param(method_params_count))));
   probe_point * derived_loc = new probe_point (java_marker);
@@ -385,6 +365,7 @@ java_builder::build (systemtap_session & sess,
   functioncall *efc = new functioncall;
   efc->function = "system";
   efc->tok = eb->tok;
+
   string stapbm_remove = "stapbm ";
   stapbm_remove.append("uninstall ");
   stapbm_remove.append(sess.tmpdir);
