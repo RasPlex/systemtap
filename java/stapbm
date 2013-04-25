@@ -12,38 +12,67 @@
 
 #We need to both record, and check that this pid is the first
 #This is to avoid recurssion in probing java processes
+FILE=`hostname`-$$
+JAVA_FILE=`hostname`-`jps -l | grep $3 | cut -f1 -d" "`
+function install_byteman()
+{
+    if [[ ! -f "$4/java/$JAVA_FILE" && ! -f $4/java/`hostname`-install ]]
+    then
+	touch $4/java/$JAVA_FILE
+	touch $4/java/`hostname`-install
+	exec bminstall.sh $2 &
+	pid=$!
+	wait $pid
+	rm $4/java/`hostname`-install 2>&1 1>/dev/null
+    fi
+}
+
+function submit_byteman()
+{
+    if [[ -f $4/java/$JAVA_FILE && ! -f $4/java/`hostname`-submit && ! -f $4/java/`hostname`-install ]]
+    then
+	touch $4/java/`hostname`-submit
+	exec bmsubmit.sh -l $4/java/$3.btm 2>&1 1>/dev/null &
+	pida=$!
+	wait $pida
+	rm $4/java/`hostname`-submit 2>&1 1>/dev/null
+	exit
+    else
+	sleep 1
+	submit_byteman $1 $2 $3 $4
+    fi
+}
+
 function check_running()
 {
-    FILE=`hostname`-$$
-    JAVA_FILE=`hostname`-$2
-    if [ -f $1/java/$FILE ]
-    then
-	exit
-    else
-	touch $1/java/$FILE
-    fi
-    if [ -f $1/java/$JAVA_FILE ]
-    then
-	exit
-    else
-	touch $1/java/$JAVA_FILE
-    fi
 
+    if [ -f "$4/java/$FILE" ]
+    then
+	exit
+    fi
+    if [ -f "$4/java/$JAVA_FILE" ]
+    then
+	touch $4/java/$FILE
+	exit
+    fi
 }
+
 function run_byteman()
 {
+
     case $1 in
 	install)
-	    exec bminstall.sh $2 &
-	    pid=$!
-	    wait $pid
-	    exec bmsubmit.sh -l $4/java/byteman-test.btm 2>1 1>/dev/null & 
-	    pida=$!
-	    wait $pida
+	    if [[ ! -f "$4/java/$JAVA_FILE" && ! -f "$4/java/`hostname`-install" ]]
+	    then
+		install_byteman $1 $2 $3 $4
+	    fi
+	    submit_byteman $1 $2 $3 $4
 	    ;;
 	uninstall)
-	    exec bmsubmit.sh -u $4/java/byteman-test.btm
-	    exec rm -r $4/java/
+	    exec bmsubmit.sh -u $4/java/$3.btm &
+	    pidb=$!
+	    wait $pidb
+	    exit
 	    ;;
 	*)
 	    echo "this should never be hit"
@@ -57,13 +86,13 @@ function script_invocation_location()
 {
     case "$1" in
 	entry)
-	    echo "AT ENTRY" >> $2/java/byteman-test.btm
+	    echo "AT ENTRY" >> $2/java/$3-tmp.btm
 	    ;;
-	retur*)
-	    echo "AT RETURN" >> $2/java/byteman-test.btm
+	exi*)
+	    echo "AT RETURN" >> $2/java/$3-tmp.btm
 	    ;;
 	*)
-	    echo "AT LINE $1" >> $2/java/byteman-test.btm
+	    echo "AT LINE $1" >> $2/java/$3-tmp.btm
 	    ;;
     esac
 }
@@ -73,58 +102,73 @@ function print_stap_helper
 {
   case "$1" in
       0)
-	  echo "DO METHOD_STAP_PROBE0(\"$2\", \"$3\")" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE0(\"$2\", \"$3\")" >> $4/java/$5-tmp.btm
 	  ;;
       1)
-	  echo "DO METHOD_STAP_PROBE1(\"$2\", \"$3\", \$1)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE1(\"$2\", \"$3\", \$1)" >> $4/java/$5-tmp.btm
 	  ;;
       2)
-	  echo "DO METHOD_STAP_PROBE2(\"$2\", \"$3\", \$1, \$2)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE2(\"$2\", \"$3\", \$1, \$2)" >> $4/java/$5-tmp.btm
 	  ;;
       3)
-	  echo "DO METHOD_STAP_PROBE3(\"$2\", \"$3\", \$1, \$2, \$3)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE3(\"$2\", \"$3\", \$1, \$2, \$3)" >> $4/java/$5-tmp.btm
 	  ;;
       4)
-	  echo "DO METHOD_STAP_PROBE4(\"$2\", \"$3\", \$1, \$2, \$3, \$4)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE4(\"$2\", \"$3\", \$1, \$2, \$3, \$4)" >> $4/java/$5-tmp.btm
 	  ;;
       5)
-	  echo "DO METHOD_STAP_PROBE5(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE5(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5)" >> $4/java/$5-tmp.btm
 	  ;;
       6)
-	  echo "DO METHOD_STAP_PROBE6(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE6(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6)" >> $4/java/$5-tmp.btm
 	  ;;
       7)
-	  echo "DO METHOD_STAP_PROBE7(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE7(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7)" >> $4/java/$5-tmp.btm
 	  ;;
       8)
-	  echo "DO METHOD_STAP_PROBE8(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE8(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8)" >> $4/java/$5-tmp.btm
 	  ;;
       9)
-	  echo "DO METHOD_STAP_PROBE9(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE9(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9)" >> $4/java/$5-tmp.btm
 	  ;;
       10)
-	  echo "DO METHOD_STAP_PROBE10(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10)" >> $4/java/byteman-test.btm
+	  echo "DO METHOD_STAP_PROBE10(\"$2\", \"$3\", \$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10)" >> $4/java/$5-tmp.btm
 	  ;;
       *)
-	  echo "DO METHOD_STAP_PROBE0(\"$2\", \"$3\")" >> $4/java/byteman-test.btm	  
+	  echo "DO METHOD_STAP_PROBE0(\"$2\", \"$3\")" >> $4/java/$5-tmp.btm	  
 	  ;;
   esac
 }
 
 mkdir -p $2/java
 check_running $2 $3 $5 $6
-echo "RULE $4" >> $2/java/byteman-test.btm
-echo "CLASS $5" >> $2/java/byteman-test.btm
-echo "METHOD $6" >> $2/java/byteman-test.btm
-echo "HELPER HelperSDT" >> $2/java/byteman-test.btm
+echo "RULE $4" >> $2/java/$4-tmp.btm
+echo "CLASS $5" >> $2/java/$4-tmp.btm
+echo "METHOD $6" >> $2/java/$4-tmp.btm
+echo "HELPER HelperSDT" >> $2/java/$4-tmp.btm
 # at what begin, end, line?
-script_invocation_location $8 $2
+script_invocation_location $8 $2 $4
 
-echo "IF TRUE" >> $2/java/byteman-test.btm
+echo "IF TRUE" >> $2/java/$4-tmp.btm
 # stap helper method switch statement
-print_stap_helper $7 $5 $6 $2
-echo "ENDRULE" >> $2/java/byteman-test.btm
+print_stap_helper $7 $5 $6 $2 $4
+echo "ENDRULE" >> $2/java/$4-tmp.btm
 
-#first we should check to even run the rule
+if [ -f $2/java/$4.btm ]
+then
+    DIFF=$(diff $2/java/$4.btm $2/java/$4-tmp.btm)
+    if [ "$DIFF" != "" ]
+    then
+	cat $2/java/$4-tmp.btm > $2/java/$4.btm
+	exit
+    else
+	if [ -f $2/java/$JAVA_FILE ]
+	then
+	    exit
+	fi
+    fi
+else
+    cp $2/java/$4-tmp.btm $2/java/$4.btm
+fi
+
 run_byteman $1 $3 $4 $2
-

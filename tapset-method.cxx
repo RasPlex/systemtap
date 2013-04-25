@@ -375,9 +375,18 @@ java_builder::build (systemtap_session & sess,
   else
     stapbm_remove.append(_java_proc_class);
   stapbm_remove.append(" ");
+  stapbm_remove.append(class_str_val + "-" + new_method);
+  stapbm_remove.append(" ");
   stapbm_remove.append(class_str_val);
-  stapbm_remove.append("-");
+  stapbm_remove.append(" ");
   stapbm_remove.append(new_method);
+  stapbm_remove.append(" ");
+  stapbm_remove.append(arg_count);
+  stapbm_remove.append(" ");
+  if(!has_return)
+    stapbm_remove.append("entry");
+  else
+    stapbm_remove.append("exit");
 
   literal_string* es = new literal_string(stapbm_remove);
   es->tok = eb->tok;
