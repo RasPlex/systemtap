@@ -142,7 +142,8 @@ java_builder::build (systemtap_session & sess,
 		     literal_map_t const & parameters,
 		     vector <derived_probe *> & finished_results)
 {
-  string method_str_val;
+  string method_str_val = "";
+  string method_line_val = "";
   bool has_method_str = get_param (parameters, TOK_METHOD, method_str_val);
   int short_method_pos = method_str_val.find ('(');
   //only if it exists, run check
@@ -162,6 +163,32 @@ java_builder::build (systemtap_session & sess,
   bool has_pid_int = get_number_param (parameters, TOK_JAVA, _java_pid);
   bool has_pid_str = get_param (parameters, TOK_JAVA, _java_proc_class);
   bool has_return = has_null_param (parameters, TOK_RETURN);
+  bool has_line_number = false;
+
+  //find if we're probing at a specific line number
+  size_t line_position = 0;
+
+  size_t method_end_pos = method_str_val.size();
+  line_position = method_str_val.find_first_of(":"); //this will return the position ':' is found at
+  if (line_position == string::npos)
+    has_line_number = false;
+  else
+    {
+      has_line_number = true;
+      method_line_val = method_str_val.substr(line_position+1, method_end_pos);
+      method_str_val = method_str_val.substr(0, line_position);
+      line_position = method_line_val.find_first_of(":");
+      if (line_position != string::npos)
+	{
+	  cerr << _("Error: You may only specify one line number (more than one ':' found)") << endl;
+	  return;
+	}
+      if (has_line_number && has_return)
+	{
+	  cerr << _("Error: You may not declare a line number and a .return probe at the same probe point") << endl;
+	  return;
+	}
+    }
 
   //need to count the number of parameters, exit if more than 10
 
@@ -328,10 +355,12 @@ java_builder::build (systemtap_session & sess,
   stapbm_string.append(" ");
   stapbm_string.append(arg_count);
   stapbm_string.append(" ");
-  if(!has_return)
+  if(!has_return && !has_line_number)
     stapbm_string.append("entry");
-  else
+  else if(has_return && !has_line_number)
     stapbm_string.append("exit");
+  else if(!has_return && has_line_number)
+    stapbm_string.append(method_line_val);
   block *bb = new block;
   bb->tok = base->body->tok;
   functioncall *fc = new functioncall;
@@ -383,10 +412,12 @@ java_builder::build (systemtap_session & sess,
   stapbm_remove.append(" ");
   stapbm_remove.append(arg_count);
   stapbm_remove.append(" ");
-  if(!has_return)
+  if(!has_return && !has_line_number)
     stapbm_remove.append("entry");
-  else
+  else if(has_return && !has_line_number)
     stapbm_remove.append("exit");
+  else if(!has_return && has_line_number)
+    stapbm_remove.append(method_line_val);
 
   literal_string* es = new literal_string(stapbm_remove);
   es->tok = eb->tok;
