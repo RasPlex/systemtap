@@ -9,7 +9,6 @@
 # $7 - number of args
 # $8 - entry/exit/line
 
-
 #We need to both record, and check that this pid is the first
 #This is to avoid recurssion in probing java processes
 FILE=`hostname`-$$
@@ -35,11 +34,16 @@ function submit_byteman()
 	exec bmsubmit.sh -l $4/java/$3.btm 2>&1 1>/dev/null &
 	pida=$!
 	wait $pida
-	rm $4/java/`hostname`-submit 2>&1 1>/dev/null
+	rm $4/java/`hostname`-submit 2>/dev/null 1>/dev/null
 	exit
     else
-	sleep 1
-	submit_byteman $1 $2 $3 $4
+	if [[ ! -f $4/java/`hostname`-submit ]]
+	then
+	    submit_byteman $1 $2 $3 $4
+	else
+	    sleep 0.5
+	    submit_byteman $1 $2 $3 $4
+	fi
     fi
 }
 
@@ -69,9 +73,10 @@ function run_byteman()
 	    submit_byteman $1 $2 $3 $4
 	    ;;
 	uninstall)
-	    exec bmsubmit.sh -u $4/java/$3.btm &
-	    pidb=$!
-	    wait $pidb
+#	    exec bmsubmit.sh -u $4/java/$3.btm &
+#	    pidb=$!
+#	    wait $pidb
+	    rm $4/java/$3.btm
 	    exit
 	    ;;
 	*)
