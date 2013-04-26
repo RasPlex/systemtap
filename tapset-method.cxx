@@ -436,6 +436,7 @@ java_builder::build (systemtap_session & sess,
   derive_probes (sess, new_end_probe, finished_results);
 
 #else
+  (void) java_pid_str;
   (void) has_pid_str;
   cerr << _("Cannot probe java method, configure --with-jdk=") << endl;
 #endif
