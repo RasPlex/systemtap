@@ -28,6 +28,7 @@
 %endif
 %{!?with_systemd: %global with_systemd 0%{?fedora} >= 19}
 %{!?with_emacsvim: %global with_emacsvim 1}
+%{!?with_java: %global with_java 1} # TODOXXX architecture support guard?
 
 Name: systemtap
 Version: 2.2
@@ -109,6 +110,10 @@ BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %if %{with_emacsvim}
 BuildRequires: emacs
+%endif
+%if %{with_java}
+# TODOXXX BuildRequires: java-1.6.0-openjdk OR java-1.7.0-openjdk
+# TODOXXX BuildRequires: byteman
 %endif
 
 # Install requirements
@@ -339,8 +344,13 @@ cd ..
 %global publican_config --disable-publican
 %endif
 
+%if %{with_java}
+%global java_config --with-helper=$RPM_BUILD_ROOT%{_libexecdir}/systemtap
+%else
+%global java_config --without-jdk #TODOXXX verify correctness
+%endif
 
-%configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
+%configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} %{java_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
 make %{?_smp_mflags}
 
 %if %{with_emacsvim}
@@ -557,6 +567,32 @@ exit 0
 
 # ------------------------------------------------------------------------
 
+%if %{with_java}
+
+%triggerin runtime -- java-1.7.0-openjdk
+ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.7.0/jre/lib/amd64/libHelperSDT.so # TODOXXX architecture besides 'amd64'?
+ln -s %{_libexecdir}/systemtap/HelperSDT.jar %{_jvmdir}/java-1.7.0/jre/lib/ext/HelperSDT.jar
+
+%triggerun runtime -- java-1.7.0-openjdk
+rm %{_jvmdir}/java-1.7.0/jre/lib/amd64/libHelperSDT.so
+rm %{_jvmdir}/java-1.7.0/jre/lib/ext/HelperSDT.jar
+
+%triggerin runtime -- java-1.6.0-openjdk
+ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.6.0/jre/lib/amd64/libHelperSDT.so # TODOXXX architecture besides 'amd64'?
+ln -s %{_libexecdir}/systemtap/HelperSDT.jar %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
+
+%triggerun runtime -- java-1.6.0-openjdk
+rm %{_jvmdir}/java-1.6.0/jre/lib/amd64/libHelperSDT.so
+rm %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
+
+# TODOXXX loop through contents of %{_jvmdir} rather than handling specific versions??
+# TODOXXX do a %triggerpostun to reinstall for an older version?
+# TODOXXX analogous support for other JRE/JDK??
+
+%endif
+
+# ------------------------------------------------------------------------
+
 %files -f systemtap.lang
 # The master "systemtap" rpm doesn't include any files.
 
@@ -630,6 +666,11 @@ exit 0
 %dir %{_libexecdir}/systemtap
 %{_libexecdir}/systemtap/stapio
 %{_libexecdir}/systemtap/stap-authorize-cert
+%if %{with_java}
+%{_libexecdir}/systemtap/libHelperSDT.so
+%{_libexecdir}/systemtap/HelperSDT.jar
+%{_bindir}/stapbm
+%endif
 %if %{with_crash}
 %dir %{_libdir}/systemtap
 %{_libdir}/systemtap/staplog.so*
