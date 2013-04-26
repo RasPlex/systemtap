@@ -619,7 +619,7 @@ AC_ARG_WITH([helper],
   [AS_HELP_STRING([--with-helper=DIRECTORY],
      [Specify directory to install libHelperSDT.so and HelperSDT.jar into (this option overrides --with-jdk)])],
   [],
-  [])
+  [with_helper=no])
 # XXX: support specifying pre-existing libHelperSDT.so using --with-helper??
 
 AC_ARG_WITH([jdk],
