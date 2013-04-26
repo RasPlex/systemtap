@@ -631,10 +631,10 @@ AC_CHECK_FILE([$with_jdk],[],[with_jdk=no])
 
 AC_SUBST(JAVADIR, "${with_jdk}") # always needed to compile
 
-if test -n "$with_helper" != "no"; then
+if test "$with_helper" != "no"; then
 AC_DEFINE_UNQUOTED(HAVE_JAVA_HELPER, "${with_helper}", [Directory containing libHelperSDT.so])
 helperdir=$with_helper
-elif test -n "$with_jdk" != "no"; then
+elif test "$with_jdk" != "no"; then
 AC_DEFINE_UNQUOTED(HAVE_JAVA_HELPER, "${with_jdk}/jre/lib/amd64", [Directory containing libHelperSDT.so]) # TODOXXX customizability of postfix... coordinate with javahelperdir in java/Makefile.am....
 helperdir=$with_jdk
 fi
