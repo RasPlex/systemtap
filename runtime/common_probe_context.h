@@ -12,6 +12,9 @@ size_t probe_index;
 
 /* The lock for this context structure. */
 pthread_mutex_t lock;
+
+/* The transport data for this context structure. */
+struct _stp_transport_context_data transport_data;
 #endif
 
 /* Used to indicate whether a probe context is in use.

@@ -6,6 +6,7 @@
 static void *_stp_shm_base;
 static void *_stp_shm_alloc(size_t size);
 
+#include "transport.h"
 
 // Global state shared throughout the module
 struct stp_runtime_session {
@@ -29,6 +30,8 @@ struct stp_runtime_session {
 #endif
 
 	struct stp_globals _global;
+
+	struct _stp_transport_session_data _transport_data;
 
 	// NB: the context includes a number of pointers, which wouldn't be
 	// kosher for shared memory, but it's ok as long as they're only set
@@ -108,6 +111,13 @@ static inline struct context* stp_session_context(size_t index)
 	return NULL;
 }
 
+
+static inline struct _stp_transport_session_data *stp_transport_data(void)
+{
+	if (_stp_session())
+		return &_stp_session()->_transport_data;
+	return NULL;
+}
 
 #define _global_raw(name)	(_stp_session()->_global.name)
 #define _global_type(name)	typeof(_global_raw(name))
@@ -194,4 +204,9 @@ static int stp_session_init(void)
 #endif
 
 	return 0;
+}
+
+static int stp_session_init_finished(void)
+{
+	return stp_dyninst_session_init_finished();
 }

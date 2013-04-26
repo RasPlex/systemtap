@@ -1789,6 +1789,13 @@ c_unparser::emit_module_init ()
 		 << ", (num_online_cpus() * sizeof(struct context))"
 		 << ", " << session->probes.size()
 		 << ");";
+  // In dyninst mode, we need to know when all the globals have been
+  // allocated and we're ready to run probe registration.
+  else
+    {
+      o->newline() << "rc = stp_session_init_finished();";
+      o->newline() << "if (rc) goto out;";
+    }
 
   // Run all probe registrations.  This actually runs begin probes.
 
@@ -1938,8 +1945,18 @@ c_unparser::emit_module_exit ()
 	o->newline() << getvar (v).fini();
     }
 
-  // We're finished with the contexts.
-  o->newline() << "_stp_runtime_contexts_free();";
+  // We're finished with the contexts if we're not in dyninst
+  // mode. The dyninst mode needs the contexts, since print buffers
+  // are stored there.
+  if (!session->runtime_usermode_p())
+    {
+      o->newline() << "_stp_runtime_contexts_free();";
+    }
+  else
+    {
+      o->newline() << "struct context* __restrict__ c;";
+      o->newline() << "c = _stp_runtime_entryfn_get_context();";
+    }
 
   // teardown gettimeofday (if needed)
   o->newline() << "#ifdef STAP_NEED_GETTIMEOFDAY";
@@ -2016,6 +2033,13 @@ c_unparser::emit_module_exit ()
 
   // NB: PR13386 needs to restore preemption-blocking counts
   o->newline() << "preempt_enable_no_resched();";
+
+  // In dyninst mode, now we're done with the contexts.
+  if (session->runtime_usermode_p())
+    {
+      o->newline() << "_stp_runtime_entryfn_put_context();";
+      o->newline() << "_stp_runtime_contexts_free();";
+    }
 
   o->newline(-1) << "}\n";
 }

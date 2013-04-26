@@ -334,7 +334,13 @@ common_probe_entryfn_epilogue (systemtap_session& s,
   s.op->newline(-1) << "probe_epilogue:"; // context is free
   s.op->indent(1);
 
-  s.op->newline() << "_stp_runtime_entryfn_put_context();";
+  // In dyninst mode, we're not done with the context yet, since
+  // _stp_error() still needs a context structure (since the log
+  // buffers are stored there).
+  if (!s.runtime_usermode_p())
+    {
+      s.op->newline() << "_stp_runtime_entryfn_put_context();";
+    }
   if (! s.suppress_handler_errors) // PR 13306
     {
       // Check for excessive skip counts.
@@ -354,6 +360,7 @@ common_probe_entryfn_epilogue (systemtap_session& s,
 
   if (s.runtime_usermode_p())
     {
+      s.op->newline() << "_stp_runtime_entryfn_put_context();";
       s.op->newline() << "errno = _stp_saved_errno;";
       s.op->newline(-1) << "}";
     }

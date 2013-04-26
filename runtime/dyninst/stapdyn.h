@@ -28,6 +28,7 @@ extern "C" {
 /* STAP 2.0 : */
 
 extern int stp_dyninst_session_init(void);
+extern int stp_dyninst_session_init_finished(void);
 extern void stp_dyninst_session_exit(void);
 
 extern uint64_t stp_dyninst_target_count(void);

@@ -223,6 +223,9 @@ static void _stp_shm_finalize(void)
 static void _stp_shm_destroy(void)
 {
 	if (_stp_shm_base) {
+		// Tear down the contexts themselves.
+		__stp_runtime_contexts_free();
+
 		munmap(_stp_shm_base, _stp_shm_size);
 		_stp_shm_base = NULL;
 		_stp_shm_size = 0;

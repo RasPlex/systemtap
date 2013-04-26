@@ -58,6 +58,21 @@ static int _stp_runtime_contexts_alloc(void)
 
 static void _stp_runtime_contexts_free(void)
 {
+    /*
+     * On shutdown, _stp_runtime_context_free() gets called. However,
+     * there is no guarentee that even though _stp_print_flush() has
+     * been called at this point, that the data has been actually
+     * flushed. So, we still need the context structure's mutexes
+     * alive.
+     *
+     * We'll destroy the context structure's mutexes using
+     * __stp_runtime_contexts_free() (below) when we destroy the
+     * shared memory over in _stp_shm_destroy().
+     */
+}
+
+static void __stp_runtime_contexts_free(void)
+{
     int i;
 
     /* The context memory is managed elsewhere;
