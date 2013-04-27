@@ -13,6 +13,48 @@
 #This is to avoid recurssion in probing java processes
 FILE=`hostname`-$$
 JAVA_FILE=`hostname`-`jps -l | grep $3 | cut -f1 -d" "`
+
+function write_rule()
+{
+    if [[ ! -f "$2/java/$4-lock" ]]
+    then
+	touch $2/java/$4-lock
+	echo "RULE $4" >> $2/java/$4-tmp.btm
+	echo "CLASS $5" >> $2/java/$4-tmp.btm
+	echo "METHOD $6" >> $2/java/$4-tmp.btm
+	echo "HELPER HelperSDT" >> $2/java/$4-tmp.btm
+        #at what begin, end, line?
+	script_invocation_location $8 $2 $4
+	echo "IF TRUE" >> $2/java/$4-tmp.btm
+        # stap helper method switch statement
+	print_stap_helper $7 $5 $6 $2 $4
+	echo "ENDRULE" >> $2/java/$4-tmp.btm
+
+	if [ -f $2/java/$4.btm ]
+	then
+	    DIFF=$(diff $2/java/$4.btm $2/java/$4-tmp.btm)
+	    if [ "$DIFF" != "" ]
+	    then
+		cat $2/java/$4-tmp.btm > $2/java/$4.btm
+		rm $2/java/$4-lock 2>/dev/null 1>/dev/null
+		exit
+	    else
+		if [ -f $2/java/$JAVA_FILE ]
+		then
+		    rm $2/java/$4-lock 2>/dev/null 1>/dev/null
+		    exit
+		fi
+	    fi
+	else
+	    cp $2/java/$4-tmp.btm $2/java/$4.btm
+	    rm $2/java/$4-lock 2>/dev/null 1>/dev/null
+	fi
+    else
+	sleep 0.5
+	write_rule $1 $2 $3 $4 $5 $6 $7 $8
+    fi
+
+}
 function install_byteman()
 {
     if [[ ! -f "$4/java/$JAVA_FILE" && ! -f $4/java/`hostname`-install ]]
@@ -147,33 +189,5 @@ function print_stap_helper
 
 mkdir -p $2/java
 check_running $2 $3 $5 $6
-echo "RULE $4" >> $2/java/$4-tmp.btm
-echo "CLASS $5" >> $2/java/$4-tmp.btm
-echo "METHOD $6" >> $2/java/$4-tmp.btm
-echo "HELPER HelperSDT" >> $2/java/$4-tmp.btm
-# at what begin, end, line?
-script_invocation_location $8 $2 $4
-
-echo "IF TRUE" >> $2/java/$4-tmp.btm
-# stap helper method switch statement
-print_stap_helper $7 $5 $6 $2 $4
-echo "ENDRULE" >> $2/java/$4-tmp.btm
-
-if [ -f $2/java/$4.btm ]
-then
-    DIFF=$(diff $2/java/$4.btm $2/java/$4-tmp.btm)
-    if [ "$DIFF" != "" ]
-    then
-	cat $2/java/$4-tmp.btm > $2/java/$4.btm
-	exit
-    else
-	if [ -f $2/java/$JAVA_FILE ]
-	then
-	    exit
-	fi
-    fi
-else
-    cp $2/java/$4-tmp.btm $2/java/$4.btm
-fi
-
+write_rule $1 $2 $3 $4 $5 $6 $7 $8
 run_byteman $1 $3 $4 $2
