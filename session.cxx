@@ -358,7 +358,6 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   kbuildflags = other.kbuildflags;
 
 #ifdef HAVE_JAVA_HELPER
-  compile_byteman_rule = other.compile_byteman_rule;
   bminstallflags = other.bminstallflags;
 #endif /* HAVE_JAVA_HELPER */
 
@@ -545,7 +544,7 @@ systemtap_session::usage (int exitcode)
     "   -q         generate information on tapset coverage\n"
 #endif /* HAVE_LIBSQLITE3 */
 #ifdef HAVE_JAVA_HELPER
-    "   -J         request byteman pass such options to the JVM during bminstall\n"
+    "   -J         request byteman pass such options to the JVM during bminstall.\n"
 #endif /* HAVE_JAVA_HELPER */
     "   --runtime=MODE\n"
     "              set the pass-5 runtime mode, instead of kernel\n"
@@ -898,11 +897,13 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
           kbuildflags.push_back (string (optarg));
 	  break;
 
-	case 'J':
 #ifdef HAVE_JAVA_HELPER
+	case 'J':
+	  cout << "this was hit" << endl;
 	  bminstallflags.push_back(string("-D") + (string (optarg)) );
 	  break;
 #else
+	case 'J':
 	  cerr << _("You may only specify -J options when configured with --with-jdk") << endl;
 	  return 1;
 #endif /* HAVE_JAVA_HELPER */

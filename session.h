@@ -201,7 +201,6 @@ public:
   bool suppress_handler_errors;
   bool suppress_time_limits;
 #ifdef HAVE_JAVA_HELPER
-  bool compile_byteman_rule;
   std::vector<std::string> bminstallflags; // -J var=val
 #endif
 
