@@ -321,6 +321,7 @@ java_builder::build (systemtap_session & sess,
      $6 - method
      $7 - number of args
      $8 - entry/exit/line
+     $9 - options to pass to bminstall
   */
 
   char arg_count[3];
@@ -361,6 +362,13 @@ java_builder::build (systemtap_session & sess,
     stapbm_string.append("exit");
   else if(!has_return && has_line_number)
     stapbm_string.append(method_line_val);
+  if(!sess.bminstallflags.empty())
+    {
+      stapbm_string.append(" ");
+      for (vector<string>::iterator it = sess.bminstallflags.begin() ; it != sess.bminstallflags.end(); ++it)
+	stapbm_string.append(*it + " ");
+    }
+
   block *bb = new block;
   bb->tok = base->body->tok;
   functioncall *fc = new functioncall;

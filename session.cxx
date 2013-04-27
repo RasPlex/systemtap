@@ -162,6 +162,10 @@ systemtap_session::systemtap_session ():
   update_release_sysroot = false;
   suppress_time_limits = false;
 
+#ifdef HAVE_JAVA_HELPER
+  compile_byteman_rule = false;
+#endif /* HAVE_JAVA_HELPER */
+
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
   const char* s_p = getenv ("SYSTEMTAP_TAPSET");
@@ -352,6 +356,12 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   c_macros = other.c_macros;
   args = other.args;
   kbuildflags = other.kbuildflags;
+
+#ifdef HAVE_JAVA_HELPER
+  compile_byteman_rule = other.compile_byteman_rule;
+  bminstallflags = other.bminstallflags;
+#endif /* HAVE_JAVA_HELPER */
+
   globalopts = other.globalopts;
   modinfos = other.modinfos;
 
@@ -534,6 +544,9 @@ systemtap_session::usage (int exitcode)
 #ifdef HAVE_LIBSQLITE3
     "   -q         generate information on tapset coverage\n"
 #endif /* HAVE_LIBSQLITE3 */
+#ifdef HAVE_JAVA_HELPER
+    "   -J         request byteman pass such options to the JVM during bminstall\n"
+#endif /* HAVE_JAVA_HELPER */
     "   --runtime=MODE\n"
     "              set the pass-5 runtime mode, instead of kernel\n"
 #ifdef HAVE_DYNINST
@@ -884,6 +897,15 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 	  server_args.push_back (string ("-") + (char)grc + optarg);
           kbuildflags.push_back (string (optarg));
 	  break;
+
+	case 'J':
+#ifdef HAVE_JAVA_HELPER
+	  bminstallflags.push_back(string("-D") + (string (optarg)) );
+	  break;
+#else
+	  cerr << _("You may only specify -J options when configured with --with-jdk") << endl;
+	  return 1;
+#endif /* HAVE_JAVA_HELPER */
 
 	case LONG_OPT_VERSION:
 	  version ();
