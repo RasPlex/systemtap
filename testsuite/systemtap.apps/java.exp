@@ -1,0 +1,24 @@
+set test "java"
+
+# Test per method probing
+
+catch { exec javac -d ./ $srcdir/$subdir/singleparam.java } err
+if {$err == "" && [file exists ./singleparam.class]} then { pass "$test compile" } else { fail "$test compile $err" }
+
+catch { exec java singleparam }
+spawn stap $srcdir/$subdir/java.stp
+expect {
+"^printMessage(int) 42\n"
+"^printMessage(long) 254775806\n"
+"^printMessage(double) 3\n"
+"^printMessage(float) 2345987\n"
+"^printMessage(byte) 10\n"
+"^printMessage(boolean) 1\n"
+"^printMessage(char) 97\n"
+"^printMessage(short) 14\n"
+}
+
+catch {close}; catch {wait}
+catch {exec rm ./singleparam.class}
+
+pass $test
