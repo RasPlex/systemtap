@@ -152,7 +152,7 @@ java_builder::build (systemtap_session & sess,
     {
       int second_method_pos = 0;
       second_method_pos = method_str_val.find (')');
-      if ((second_method_pos - short_method_pos) >= 1)
+      if ((second_method_pos - short_method_pos) > 1)
 	one_arg = true;
     }
   int _java_pid = 0;
