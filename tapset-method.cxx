@@ -206,19 +206,19 @@ java_builder::build (systemtap_session & sess,
   assert (has_class_str);
   (void) has_class_str;
 
-  const char* java_pid_str;
+  string java_pid_str = "";
   if(has_pid_int)
     {
       string _tmp = "";
       _tmp = static_cast <ostringstream*> ( & (ostringstream ()
 					       << (_java_pid)))->str ();
-      java_pid_str = _tmp.c_str();
+      java_pid_str = _tmp;
     }
   else 
-      java_pid_str = _java_proc_class.c_str();
+      java_pid_str = _java_proc_class;
 
 #ifdef HAVE_JAVA_HELPER
-  
+
   if (! (has_pid_int || has_pid_str) )
     exit (1); //XXX proper exit with warning message
 
