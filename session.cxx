@@ -162,10 +162,6 @@ systemtap_session::systemtap_session ():
   update_release_sysroot = false;
   suppress_time_limits = false;
 
-#ifdef HAVE_JAVA_HELPER
-  compile_byteman_rule = false;
-#endif /* HAVE_JAVA_HELPER */
-
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
   const char* s_p = getenv ("SYSTEMTAP_TAPSET");
@@ -899,7 +895,6 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 
 #ifdef HAVE_JAVA_HELPER
 	case 'J':
-	  cout << "this was hit" << endl;
 	  bminstallflags.push_back(string("-D") + (string (optarg)) );
 	  break;
 #else
