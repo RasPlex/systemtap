@@ -10,6 +10,19 @@
 # $8 - entry/exit/line
 # $9 - options to pass to bminstall
 
+#byteman scripts may be named either with a '.sh' suffix or not
+if which bminstall &>/dev/null; then
+BMINSTALL=`which bminstall`
+else
+BMINSTALL=`which bminstall.sh`
+fi
+
+if which bmsubmit &>/dev/null; then
+BMSUBMIT=`which bmsubmit`
+else
+BMSUBMIT=`which bmsubmit.sh`
+fi
+
 #We need to both record, and check that this pid is the first
 #This is to avoid recurssion in probing java processes
 FILE=`hostname`-$$
@@ -62,7 +75,7 @@ function install_byteman()
     then
 	touch $4/java/$JAVA_FILE
 	touch $4/java/`hostname`-install
-	exec bminstall.sh $5 $2 &
+	exec $BMINSTALL $5 $2 &
 	pid=$!
 	wait $pid
 	rm $4/java/`hostname`-install 2>&1 1>/dev/null
@@ -74,7 +87,7 @@ function submit_byteman()
     if [[ -f $4/java/$JAVA_FILE && ! -f $4/java/`hostname`-submit && ! -f $4/java/`hostname`-install ]]
     then
 	touch $4/java/`hostname`-submit
-	exec bmsubmit.sh -l $4/java/$3.btm 2>&1 1>/dev/null &
+	exec $BMSUBMIT -l $4/java/$3.btm 2>&1 1>/dev/null &
 	pida=$!
 	wait $pida
 	rm $4/java/`hostname`-submit 2>/dev/null 1>/dev/null
