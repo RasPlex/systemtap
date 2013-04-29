@@ -349,7 +349,7 @@ testsuite/dtrace: dtrace
 
 PHONIES += update-po
 update-po:
-	(cd $(srcdir); ls -1d *.c *.cxx *.h staprun/*.c staprun/*.h dtrace.in) \
+	(cd $(srcdir); ls -1d *.c *.cxx *.h staprun/*.c staprun/*.h) \
 	| grep -v loc2c-test.c \
 	| grep -v config.h \
 	| grep -v git_version.h \

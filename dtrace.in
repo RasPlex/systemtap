@@ -20,17 +20,6 @@ import shlex
 from subprocess import call
 from tempfile import mkstemp
 
-def init_gettext():
-    if "@USE_NLS@" == "yes":
-        import gettext
-        # hack around autoconf's weird stepwise substitution
-        datarootdir = "@datarootdir@".replace("${prefix}", "@STAP_PREFIX@")
-        localedir = "@LOCALEDIR@".replace("${datarootdir}", datarootdir)
-        gettext.bindtextdomain('@PACKAGE@', localedir)
-        gettext.textdomain('@PACKAGE@')
-        return gettext.gettext
-    return str
-
 class _provider(object):
     def __init__(self):
         self.semaphores_def = "\n"
@@ -167,18 +156,18 @@ class _provider(object):
 
 
 def usage ():
-    print _("Usage ") + sys.argv[0] + " [--help] [-h | -G] [-C [-I<Path>]] -s File.d [-o <File>]"
+    print "Usage " + sys.argv[0] + " [--help] [-h | -G] [-C [-I<Path>]] -s File.d [-o <File>]"
 
 def help ():
     usage()
-    print _("Where -h builds a systemtap header file from the .d file")
-    print _("      -C when used with -h, also run cpp preprocessor")
-    print _("      -o specifies an explicit output file name,")
-    print _("         the default for -G is file.o and -h is file.h")
-    print _("      -I when running cpp pass through this -I include Path")
-    print _("      -s specifies the name of the .d input file")
-    print _("      -G builds a stub file.o from file.d,")
-    print _("         which is required by some packages that use dtrace.")
+    print "Where -h builds a systemtap header file from the .d file"
+    print "      -C when used with -h, also run cpp preprocessor"
+    print "      -o specifies an explicit output file name,"
+    print "         the default for -G is file.o and -h is file.h"
+    print "      -I when running cpp pass through this -I include Path"
+    print "      -s specifies the name of the .d input file"
+    print "      -G builds a stub file.o from file.d,"
+    print "         which is required by some packages that use dtrace."
     sys.exit(1)
 
 
@@ -294,5 +283,4 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    _ = init_gettext()
     sys.exit(main())

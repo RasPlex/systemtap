@@ -678,7 +678,7 @@ exit 0
 %doc initscript/README.systemtap
 
 
-%files sdt-devel -f systemtap.lang
+%files sdt-devel
 %defattr(-,root,root)
 %{_bindir}/dtrace
 %{_includedir}/sys/sdt.h

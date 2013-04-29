@@ -11,7 +11,6 @@ csclient.cxx
 csclient.h
 cscommon.cxx
 cscommon.h
-dtrace.in
 dwarf_wrappers.cxx
 dwarf_wrappers.h
 dwflpp.cxx
