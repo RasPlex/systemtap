@@ -899,7 +899,7 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 	  break;
 #else
 	case 'J':
-	  cerr << _("You may only specify -J options when configured with --with-jdk") << endl;
+	  cerr << _("You can only specify -J options with Java support.\nUse --with-jdk or --with-helper when configuring systemtap.") << endl;
 	  return 1;
 #endif /* HAVE_JAVA_HELPER */
 
