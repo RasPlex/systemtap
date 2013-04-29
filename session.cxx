@@ -897,9 +897,14 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 	case 'J':
 	  bminstallflags.push_back(string("-D") + (string (optarg)) );
 	  break;
+
+        case 'j':
+          bminstallflags.push_back(string("-Dorg.jboss.byteman.compile.to.bytecode"));
+          break;
 #else
 	case 'J':
-	  cerr << _("You can only specify -J options with Java support.\nUse --with-jdk or --with-helper when configuring systemtap.") << endl;
+        case 'j':
+	  cerr << _("You can only specify -J and -j options with Java support.\nUse --with-jdk or --with-helper when configuring systemtap.") << endl;
 	  return 1;
 #endif /* HAVE_JAVA_HELPER */
 

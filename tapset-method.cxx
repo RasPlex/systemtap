@@ -39,6 +39,18 @@ static const string TOK_BEGIN ("begin");
 static const string TOK_END ("end");
 static const string TOK_ERROR ("error");
 
+/* Escape all double quotes with a backslash in the string s: */
+string bmoption_escape (string s) {
+  size_t n = 0;
+  for (;;) {
+    n = s.find('"', n);
+    if (n == string::npos) break;
+    s.insert(n, 1, '\\'); n++;
+  }
+  return s;
+}
+
+// --------------------------------------------------------------------------
 
 struct java_builder: public derived_probe_builder
 {
@@ -362,11 +374,17 @@ java_builder::build (systemtap_session & sess,
     stapbm_string.append("exit");
   else if(!has_return && has_line_number)
     stapbm_string.append(method_line_val);
-  if(!sess.bminstallflags.empty())
+  if(sess.bminstallflags.size() > 1)
     {
-      stapbm_string.append(" ");
-      for (vector<string>::iterator it = sess.bminstallflags.begin() ; it != sess.bminstallflags.end(); ++it)
-	stapbm_string.append(*it + " ");
+      stapbm_string.append(" \"");
+      for (vector<string>::iterator it = sess.bminstallflags.begin();
+           it != sess.bminstallflags.end(); ++it)
+        stapbm_string.append(bmoption_escape(*it) + " ");
+      stapbm_string.append("\"");
+    }
+  else if (!sess.bminstallflags.empty())
+    {
+      stapbm_string.append(" " + sess.bminstallflags[0]);
     }
 
   block *bb = new block;
