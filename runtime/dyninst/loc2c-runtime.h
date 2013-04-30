@@ -13,10 +13,10 @@
 #include "../loc2c-runtime.h"
 
 #define __get_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
-	(err) = __get_user((x), (typeof(x)*)(addr))
+        (err) = __get_user((x), (typeof(x)*)(uintptr_t)(addr))
 
 #define __put_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
-	(err) = __put_user((x), (typeof(x)*)(addr))
+        (err) = __put_user((x), (typeof(x)*)(uintptr_t)(addr))
 
 
 #define u_fetch_register(regno) \
@@ -48,10 +48,10 @@
 #define uderef(size, addr) ({ \
     intptr_t _i = 0; \
     switch (size) { \
-	case 1: _i = uread((u8 *)(addr)); break; \
-	case 2: _i = uread((u16 *)(addr)); break; \
-	case 4: _i = uread((u32 *)(addr)); break; \
-	case 8: _i = uread((u64 *)(addr)); break; \
+        case 1: _i = uread((u8 *)(uintptr_t)(addr)); break; \
+        case 2: _i = uread((u16 *)(uintptr_t)(addr)); break;    \
+        case 4: _i = uread((u32 *)(uintptr_t)(addr)); break;        \
+        case 8: _i = uread((u64 *)(uintptr_t)(addr)); break;            \
 	default: __get_user_bad(); \
     } \
     _i; \
@@ -59,10 +59,10 @@
 
 #define store_uderef(size, addr, value) ({ \
     switch (size) { \
-	case 1: uwrite((u8 *)(addr), (value)); break; \
-	case 2: uwrite((u16 *)(addr), (value)); break; \
-	case 4: uwrite((u32 *)(addr), (value)); break; \
-	case 8: uwrite((u64 *)(addr), (value)); break; \
+        case 1: uwrite((u8 *)(uintptr_t)(addr), (value)); break;    \
+        case 2: uwrite((u16 *)(uintptr_t)(addr), (value)); break;   \
+        case 4: uwrite((u32 *)(uintptr_t)(addr), (value)); break;   \
+        case 8: uwrite((u64 *)(uintptr_t)(addr), (value)); break;   \
 	default: __put_user_bad(); \
     } \
   })
