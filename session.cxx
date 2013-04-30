@@ -540,7 +540,9 @@ systemtap_session::usage (int exitcode)
     "   -q         generate information on tapset coverage\n"
 #endif /* HAVE_LIBSQLITE3 */
 #ifdef HAVE_JAVA_HELPER
-    "   -J         request byteman pass such options to the JVM during bminstall.\n"
+    "   -J OPTION  request byteman pass -D<OPTION> to the JVM during bminstall\n"
+    "   -j         request byteman pass -Dorg.jboss.byteman.compile.to.bytecode \n"
+    "              to the JVM during bminstall\n"
 #endif /* HAVE_JAVA_HELPER */
     "   --runtime=MODE\n"
     "              set the pass-5 runtime mode, instead of kernel\n"
