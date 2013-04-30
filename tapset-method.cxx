@@ -349,6 +349,17 @@ java_builder::build (systemtap_session & sess,
     new_method.insert(int(string_pos), "\\\\");
     string_pos = new_method.find('(',string_pos+4);
   }
+  string new_no_method = new_method;
+  string_pos = new_no_method.find(' ', 0);
+  while(string_pos != string::npos){
+    new_no_method.erase(string_pos, 1);
+    string_pos = new_no_method.find(' ',string_pos+1);
+    }
+  string_pos = new_method.find(' ', 0);
+  while(string_pos != string::npos){
+    new_method.insert(int(string_pos), "\\\\");
+    string_pos = new_method.find(' ',string_pos+4);
+  }
 
   string stapbm_string = "stapbm ";
   stapbm_string.append("install");
@@ -360,7 +371,7 @@ java_builder::build (systemtap_session & sess,
   else
     stapbm_string.append(_java_proc_class);
   stapbm_string.append(" ");
-  stapbm_string.append(class_str_val + "-" + new_method);
+  stapbm_string.append(class_str_val + "-" + new_no_method);
   stapbm_string.append(" ");
   stapbm_string.append(class_str_val);
   stapbm_string.append(" ");
