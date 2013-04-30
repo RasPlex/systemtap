@@ -1,0 +1,41 @@
+
+probe java("returnstatement").class("returnstatement").method("printMessage(int)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+
+probe java("returnstatement").class("returnstatement").method("printMessage(long)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+
+probe java("returnstatement").class("returnstatement").method("printMessage(double)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+
+probe java("returnstatement").class("returnstatement").method("printMessage(float)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+
+probe java("returnstatement").class("returnstatement").method("printMessage(byte)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+
+probe java("returnstatement").class("returnstatement").method("printMessage(boolean)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+
+probe java("returnstatement").class("returnstatement").method("printMessage(char)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+
+probe java("returnstatement").class("returnstatement").method("printMessage(short)").return
+{
+  printf("%s %d ret\n", user_string($name), $arg1)
+}
+probe end,error{exit()}

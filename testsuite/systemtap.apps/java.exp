@@ -1,24 +1,89 @@
-set test "java"
+set test "singleparam"
 
 # Test per method probing
 
 catch { exec javac -d ./ $srcdir/$subdir/singleparam.java } err
 if {$err == "" && [file exists ./singleparam.class]} then { pass "$test compile" } else { fail "$test compile $err" }
 
-catch { exec java singleparam }
-spawn stap $srcdir/$subdir/java.stp
+spawn stap $srcdir/$subdir/java.stp -c "java singleparam"
+set ok 0
 expect {
-"^printMessage(int) 42\n"
-"^printMessage(long) 254775806\n"
-"^printMessage(double) 3\n"
-"^printMessage(float) 2345987\n"
-"^printMessage(byte) 10\n"
-"^printMessage(boolean) 1\n"
-"^printMessage(char) 97\n"
-"^printMessage(short) 14\n"
+    -timeout 40
+    -re {^printMessage\(int\)\ 42\r\n} { incr ok; exp_continue}
+    -re {^printMessage\(long\)\ 254775806\r\n} { incr ok; exp_continue }
+    -re {^printMessage\(double\)\ 3\r\n} { incr ok; exp_continue }
+    -re {^printMessage\(float\)\ 2345987\r\n} { incr ok; exp_continue }
+    -re {^printMessage\(byte\)\ 10\r\n} { incr ok; exp_continue }
+    -re {^printMessage\(boolean\)\ 1\r\n} { incr ok; exp_continue }
+    -re {^printMessage\(char\)\ 97\r\n} { incr ok; exp_continue }
+    -re {^printMessage\(short\)\ 14\r\n} { incr ok; exp_continue }
+    timeout { fail "$test (timeout)" }
 }
 
+    if {$ok == 8} then {
+	pass "$test ($ok)"
+    } else {
+	fail "$test ($ok)"
+    }
 catch {close}; catch {wait}
 catch {exec rm ./singleparam.class}
 
-pass $test
+set test "return"
+
+catch { exec javac -d ./ $srcdir/$subdir/returnstatement.java } err1
+if {$err1 == "" && [file exists ./returnstatement.class]} then { pass "$test compile" } else { fail "$test compile $err1" }
+
+spawn stap $srcdir/$subdir/returnstatement.stp -c "java returnstatement"
+set oka 0
+expect {
+    -timeout 40
+    -re {^printMessage\(int\)\ 42\ ret\r\n} { incr oka; exp_continue }
+    -re {^printMessage\(long\)\ 254775806\ ret\r\n} { incr oka; exp_continue }
+    -re {^printMessage\(double\)\ 3\ ret\r\n} { incr oka; exp_continue }
+    -re {^printMessage\(float\)\ 2345987\ ret\r\n} { incr oka; exp_continue }
+    -re {^printMessage\(byte\)\ 10\ ret\r\n} { incr oka; exp_continue }
+    -re {^printMessage\(boolean\)\ 1\ ret\r\n} { incr oka; exp_continue }
+    -re {^printMessage\(char\)\ 97\ ret\r\n} { incr oka; exp_continue }
+    -re {^printMessage\(short\)\ 14\ ret\r\n} { incr oka; exp_continue }
+    timeout { fail "$test unexpected timeout" }
+}
+
+    if {$oka == 8} then {
+	pass "$test ($oka)"
+    } else {
+	fail "$test ($oka)"
+    }
+
+catch {close}; catch {wait}
+catch {exec rm ./returnstatement.class}
+
+set test "multiparams"
+
+catch { exec javac -d ./ $srcdir/$subdir/multiparams.java } err2
+if {$err2 == "" && [file exists ./multiparams.class]} then { pass "$test compile" } else { fail "$test compile $err2" }
+
+spawn stap $srcdir/$subdir/multiparams.stp -c "java multiparams"
+set okb 0
+expect {
+    -timeout 40
+    -re {^printMessage1\(int\)\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage2\(long\,\ int\)\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage3\(double,\ long,\ int\)\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage4\(float,\ double,\ long,\ int\)\ 2345987\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage5\(byte,\ float,\ double,\ long,\ int\)\ 10\ 2345987\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage6\(boolean,\ byte,\ float,\ double,\ long,\ int\)\ 1\ 10\ 2345987\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage7\(char,\ boolean,\ byte,\ float,\ double,\ long,\ int\)\ 97\ 1\ 10\ 2345987\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage8\(short,\ char,\ boolean,\ byte,\ float,\ double,\ long,\ int\)\ 14\ 97\ 1\ 10\ 2345987\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage9\(short,\ short,\ char,\ boolean,\ byte,\ float,\ double,\ long,\ int\)\ 14\ 14\ 97\ 1\ 10\ 2345987\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    -re {^printMessage10\(short,\ short,\ short,\ char,\ boolean,\ byte,\ float,\ double,\ long,\ int\)\ 14\ 14\ 14\ 97\ 1\ 10\ 2345987\ 3\ 254775806\ 42\r\n} { incr okb; exp_continue }
+    timeout { fail "$test unexpected timeout" }
+}
+    if {$okb == 10} then {
+	pass "$test ($okb)"
+    } else {
+	fail "$test ($okb)"
+    }
+
+catch {close}; catch {wait}
+catch {exec rm ./multiparams.class}
+

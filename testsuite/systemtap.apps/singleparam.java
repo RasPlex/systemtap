@@ -37,7 +37,7 @@ class singleparam
     public static void main(String[] args) throws InterruptedException
     {
 	
-	Thread.sleep(20000);
+	Thread.sleep(30000);
 	final int i = 42;
 	final long j = 254775806;
 	final double k = 3.14;

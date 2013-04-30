@@ -39,4 +39,4 @@ probe java("singleparam").class("singleparam").method("printMessage(short)")
 {
   printf("%s %d\n", user_string($name), $arg1)
 }
-
+probe end,error {exit()}
