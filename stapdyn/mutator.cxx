@@ -482,7 +482,9 @@ mutator::run ()
           pfd.events = POLLIN;
           pfd.revents = 0;
 
-          int rc = ppoll (&pfd, 1, NULL, &masked.old);
+          struct timespec timeout = { 10, 0 };
+
+          int rc = ppoll (&pfd, 1, &timeout, &masked.old);
           if (rc < 0 && errno != EINTR)
             break;
 
