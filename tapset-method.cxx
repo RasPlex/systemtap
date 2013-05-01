@@ -1,4 +1,4 @@
-// tapset for per-method based probes
+// Tapset for per-method based probes
 // Copyright (C) 2013 Red Hat Inc.
 
 // This file is part of systemtap, and is free software.  You can
@@ -361,7 +361,9 @@ java_builder::build (systemtap_session & sess,
     string_pos = new_method.find(' ',string_pos+4);
   }
 
-  string stapbm_string = "stapbm ";
+  string stapbm_string = "";
+  stapbm_string.append(PKGLIBDIR);
+  stapbm_string.append("/stapbm ");
   stapbm_string.append("install");
   stapbm_string.append(" ");
   stapbm_string.append(sess.tmpdir);
@@ -432,7 +434,9 @@ java_builder::build (systemtap_session & sess,
   efc->function = "system";
   efc->tok = eb->tok;
 
-  string stapbm_remove = "stapbm ";
+  string stapbm_remove = "";
+  stapbm_remove.append(PKGLIBDIR);
+  stapbm_remove.append("/stapbm ");
   stapbm_remove.append("uninstall ");
   stapbm_remove.append(sess.tmpdir);
   stapbm_remove.append(" ");
