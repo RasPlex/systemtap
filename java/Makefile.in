@@ -80,7 +80,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)"
 @HAVE_JDK_TRUE@am__EXEEXT_1 = libHelperSDT.so$(EXEEXT) \
 @HAVE_JDK_TRUE@	HelperSDT.class$(EXEEXT) HelperSDT.jar$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
@@ -122,7 +122,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-SCRIPTS = $(bin_SCRIPTS)
+SCRIPTS = $(pkglibexec_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -336,7 +336,7 @@ AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' \
 	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"' \
 	-fPIC -shared $(am__append_1)
-bin_SCRIPTS = stapbm
+pkglibexec_SCRIPTS = stapbm
 @HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
 @HAVE_JDK_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
 @HAVE_JDK_TRUE@libHelperSDT_so_LDFLAGS = -lc
@@ -427,12 +427,12 @@ clean-noinstPROGRAMS:
 libHelperSDT.so$(EXEEXT): $(libHelperSDT_so_OBJECTS) $(libHelperSDT_so_DEPENDENCIES) $(EXTRA_libHelperSDT_so_DEPENDENCIES) 
 	@rm -f libHelperSDT.so$(EXEEXT)
 	$(AM_V_CCLD)$(libHelperSDT_so_LINK) $(libHelperSDT_so_OBJECTS) $(libHelperSDT_so_LDADD) $(LIBS)
-install-binSCRIPTS: $(bin_SCRIPTS)
+install-pkglibexecSCRIPTS: $(pkglibexec_SCRIPTS)
 	@$(NORMAL_INSTALL)
-	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
+	@list='$(pkglibexec_SCRIPTS)'; test -n "$(pkglibexecdir)" || list=; \
 	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(pkglibexecdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(pkglibexecdir)" || exit 1; \
 	fi; \
 	for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
@@ -451,17 +451,17 @@ install-binSCRIPTS: $(bin_SCRIPTS)
 	while read type dir files; do \
 	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
 	     test -z "$$files" || { \
-	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(pkglibexecdir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(pkglibexecdir)$$dir" || exit $$?; \
 	     } \
 	; done
 
-uninstall-binSCRIPTS:
+uninstall-pkglibexecSCRIPTS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || exit 0; \
+	@list='$(pkglibexec_SCRIPTS)'; test -n "$(pkglibexecdir)" || exit 0; \
 	files=`for p in $$list; do echo "$$p"; done | \
 	       sed -e 's,.*/,,;$(transform)'`; \
-	dir='$(DESTDIR)$(bindir)'; $(am__uninstall_files_from_dir)
+	dir='$(DESTDIR)$(pkglibexecdir)'; $(am__uninstall_files_from_dir)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -555,7 +555,7 @@ check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(PROGRAMS) $(SCRIPTS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -623,8 +623,8 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-binSCRIPTS \
-	install-exec-local
+install-exec-am: install-binPROGRAMS install-exec-local \
+	install-pkglibexecSCRIPTS
 
 install-html: install-html-am
 
@@ -663,8 +663,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
-	uninstall-local
+uninstall-am: uninstall-binPROGRAMS uninstall-local \
+	uninstall-pkglibexecSCRIPTS
 
 .MAKE: all check install install-am install-strip
 
@@ -672,16 +672,17 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	clean-generic clean-noinstPROGRAMS cscopelist ctags distclean \
 	distclean-compile distclean-generic distclean-tags dvi dvi-am \
 	html html-am info info-am install install-am \
-	install-binPROGRAMS install-binSCRIPTS install-data \
-	install-data-am install-data-local install-dvi install-dvi-am \
-	install-exec install-exec-am install-exec-local install-html \
+	install-binPROGRAMS install-data install-data-am \
+	install-data-local install-dvi install-dvi-am install-exec \
+	install-exec-am install-exec-local install-html \
 	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-binSCRIPTS uninstall-local
+	install-pdf install-pdf-am install-pkglibexecSCRIPTS \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-local \
+	uninstall-pkglibexecSCRIPTS
 
 @HAVE_JDK_TRUE@HelperSDT.class:
 @HAVE_JDK_TRUE@	$(JAVAC) -d . $(srcdir)/HelperSDT.java
