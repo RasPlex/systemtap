@@ -610,10 +610,10 @@ AS_IF([test "x$with_selinux" != "xno"], [
 AM_CONDITIONAL([HAVE_SELINUX], [test "${have_selinux}" = "yes"])
 
 dnl Handle java+byteman support
-AC_CHECK_PROG(have_java, java, yes, no)
-AC_CHECK_PROG(have_byteman_submit, bmsubmit.sh, yes, no)
-AC_CHECK_PROG(have_byteman_install, bminstall.sh, yes, no)
-if test -n "$have_java" -a "$have_byteman_submit" -a "$have_byteman_install" != no; then
+AC_CHECK_PROG(have_javac, javac, yes, no)
+AC_CHECK_PROG(have_jar, jar, yes, no)
+if test "$have_javac" != no -a "$have_jar" != no; then
+echo java found, will try to configure Byteman support
 
 AC_ARG_WITH([helper],
   [AS_HELP_STRING([--with-helper=DIRECTORY],

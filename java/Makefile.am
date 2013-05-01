@@ -10,7 +10,7 @@ javajardir = @HELPERDIR@/jre/lib/ext
 endif
 endif
 
-# TODOXXX autoconfigure the following!
+# XXX: perhaps autoconfigure the following?
 JAVAC = javac
 JAR = jar
 
