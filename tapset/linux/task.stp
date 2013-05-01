@@ -13,6 +13,9 @@
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,25)
 #include <linux/fdtable.h>
 #endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
+#include <linux/sched/rt.h>
+#endif
 #ifndef STAPCONF_TASK_UID
 #include <linux/cred.h>
 #endif
