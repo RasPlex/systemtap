@@ -44,7 +44,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Destination directory for libHelperSDT.so */
+/* Directory containing libHelperSDT.so */
 #undef HAVE_JAVA_HELPER
 
 /* Define to 1 if you have the `dw' library (-ldw). */
