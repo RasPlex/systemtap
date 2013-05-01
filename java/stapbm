@@ -10,17 +10,55 @@
 # $8 - entry/exit/line
 # $9 - options to pass to bminstall
 
-#byteman scripts may be named either with a '.sh' suffix or not
-if which bminstall &>/dev/null; then
-BMINSTALL=`which bminstall`
-else
-BMINSTALL=`which bminstall.sh`
-fi
 
-if which bmsubmit &>/dev/null; then
-BMSUBMIT=`which bmsubmit`
+#byteman checks
+if [ -z "$BYTEMAN_HOME" ]; then
+# use the root of the path to this file to locate the byteman jar
+    BYTEMAN_HOME=${0%*/bin/bmsubmit.sh}
+# allow for rename to plain submit
+    if [ "$BYTEMAN_HOME" == "$0" ]; then
+	BYTEMAN_HOME=${0%*/bin/bmsubmit}
+    fi
+    if [ "$BYTEMAN_HOME" == "$0" ]; then
+	echo "Unable to find byteman home"
+	exit
+    fi
+fi
+# the byteman and byteman-submit jars should be in ${BYTEMAN_HOME}/lib
+if [ -r ${BYTEMAN_HOME}/lib/byteman.jar ]; then
+    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/byteman.jar
 else
-BMSUBMIT=`which bmsubmit.sh`
+    echo "Cannot locate byteman jar"
+    exit
+fi
+if [ -r ${BYTEMAN_HOME}/lib/byteman-submit.jar ]; then
+    BYTEMAN_SUBMIT_JAR=${BYTEMAN_HOME}/lib/byteman-submit.jar
+else
+    echo "Cannot locate byteman-submit jar"
+    exit
+fi
+# the Install class is in the byteman-install jar
+if [ -r ${BYTEMAN_HOME}/lib/byteman-install.jar ]; then
+    BYTEMAN_INSTALL_JAR=${BYTEMAN_HOME}/lib/byteman-install.jar
+else
+    echo "Cannot locate byteman install jar"
+    exit
+fi
+# we also need a tools jar from JAVA_HOME
+if [ -z "$JAVA_HOME" ]; then
+     echo "please set JAVA_HOME"
+     exit
+fi
+# on Linux we need to add the tools jar to the path
+# this is not currently needed on a Mac
+OS=`uname`
+if [ ${OS} != "Darwin" ]; then
+  if [ -r ${JAVA_HOME}/lib/tools.jar ]; then
+      TOOLS_JAR=${JAVA_HOME}/lib/tools.jar
+  else
+      echo "Cannot locate tools jar"
+      exit
+  fi
 fi
 
 #We need to both record, and check that this pid is the first
@@ -78,7 +116,7 @@ function install_byteman()
 	touch "$4/java/$JAVA_FILE"
 	touch "$4/java/$JAVA_NAME_FILE"
 	touch "$4/java/`hostname`-install"
-	exec $BMINSTALL "$5" "$2" &
+	exec java $5 -classpath ${BYTEMAN_INSTALL_JAR}:${TOOLS_JAR} org.jboss.byteman.agent.install.Install $2 &
 	pid=$!
 	wait $pid
 	rm "$4/java/`hostname`-install" 2>&1 1>/dev/null
@@ -90,7 +128,7 @@ function submit_byteman()
     if [[ -f "$4/java/$JAVA_FILE" && ! -f "$4/java/`hostname`-submit" && ! -f "$4/java/`hostname`-install" ]]
     then
 	touch "$4/java/`hostname`-submit"
-	exec $BMSUBMIT -l "$4/java/$3.btm" 2>&1 1>/dev/null &
+	exec java -classpath ${BYTEMAN_JAR}:${BYTEMAN_SUBMIT_JAR} org.jboss.byteman.agent.submit.Submit -l "$4/java/$3.btm" 2>&1 1>/dev/null &
 	pida=$!
 	wait $pida
 	rm "$4/java/`hostname`-submit" 2>/dev/null 1>/dev/null
