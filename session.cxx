@@ -353,9 +353,9 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   args = other.args;
   kbuildflags = other.kbuildflags;
 
-#ifdef HAVE_JAVA_HELPER
+#ifdef HAVE_JAVA
   bminstallflags = other.bminstallflags;
-#endif /* HAVE_JAVA_HELPER */
+#endif /* HAVE_JAVA */
 
   globalopts = other.globalopts;
   modinfos = other.modinfos;
@@ -539,11 +539,11 @@ systemtap_session::usage (int exitcode)
 #ifdef HAVE_LIBSQLITE3
     "   -q         generate information on tapset coverage\n"
 #endif /* HAVE_LIBSQLITE3 */
-#ifdef HAVE_JAVA_HELPER
+#ifdef HAVE_JAVA
     "   -J OPTION  request byteman pass -D<OPTION> to the JVM during bminstall\n"
     "   -j         request byteman pass -Dorg.jboss.byteman.compile.to.bytecode \n"
     "              to the JVM during bminstall\n"
-#endif /* HAVE_JAVA_HELPER */
+#endif /* HAVE_JAVA */
     "   --runtime=MODE\n"
     "              set the pass-5 runtime mode, instead of kernel\n"
 #ifdef HAVE_DYNINST
@@ -895,7 +895,7 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
           kbuildflags.push_back (string (optarg));
 	  break;
 
-#ifdef HAVE_JAVA_HELPER
+#ifdef HAVE_JAVA
 	case 'J':
 	  bminstallflags.push_back(string("-D") + (string (optarg)) );
 	  break;
@@ -908,7 +908,7 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
         case 'j':
 	  cerr << _("You can only specify -J and -j options with Java support.\nUse --with-jdk or --with-helper when configuring systemtap.") << endl;
 	  return 1;
-#endif /* HAVE_JAVA_HELPER */
+#endif /* HAVE_JAVA */
 
 	case LONG_OPT_VERSION:
 	  version ();

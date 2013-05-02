@@ -229,7 +229,7 @@ java_builder::build (systemtap_session & sess,
   else 
       java_pid_str = _java_proc_class;
 
-#ifdef HAVE_JAVA_HELPER
+#ifdef HAVE_JAVA
 
   if (! (has_pid_int || has_pid_str) )
     exit (1); //XXX proper exit with warning message
@@ -241,7 +241,7 @@ java_builder::build (systemtap_session & sess,
    * redefine functor values with new literal_string("foo")
    */
 
-  string helper_location = HAVE_JAVA_HELPER;
+  string helper_location = PKGLIBDIR;
   helper_location.append("/libHelperSDT.so");
   probe_point* new_loc = new probe_point(*loc);
   vector<probe_point::component*> java_marker;

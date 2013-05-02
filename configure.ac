@@ -615,39 +615,23 @@ AC_CHECK_PROG(have_jar, jar, yes, no)
 if test "$have_javac" != no -a "$have_jar" != no; then
 echo java found, will try to configure Byteman support
 
-AC_ARG_WITH([helper],
-  [AS_HELP_STRING([--with-helper=DIRECTORY],
-     [Specify directory to install libHelperSDT.so and HelperSDT.jar into (this option overrides --with-jdk)])],
+AC_ARG_WITH([java],
+  [AS_HELP_STRING([--with-java=DIRECTORY],
+     [Specify JDK directory to compile libHelperSDT.so against (default is /usr/lib/jvm/java)])],
   [],
-  [with_helper=no])
-# XXX: support specifying pre-existing libHelperSDT.so using --with-helper??
+  [with_java=/usr/lib/jvm/java])
+AC_CHECK_FILE([$with_java],[],[with_java=no])
+AC_SUBST(JAVADIR, "${with_java}") # always needed to compile
 
-AC_ARG_WITH([jdk],
-  [AS_HELP_STRING([--with-jdk=DIRECTORY],
-     [Specify JDK directory to use for byteman support (default is /usr/lib/jvm/java)])],
-  [],
-  [with_jdk=/usr/lib/jvm/java])
-AC_CHECK_FILE([$with_jdk],[],[with_jdk=no])
-
-AC_SUBST(JAVADIR, "${with_jdk}") # always needed to compile
-
-if test "$with_helper" != "no"; then
-AC_DEFINE_UNQUOTED(HAVE_JAVA_HELPER, "${with_helper}", [Directory containing libHelperSDT.so])
-helperdir=$with_helper
-elif test "$with_jdk" != "no"; then
-AC_DEFINE_UNQUOTED(HAVE_JAVA_HELPER, "${with_jdk}/jre/lib/amd64", [Directory containing libHelperSDT.so]) # TODOXXX customizability of postfix... coordinate with javahelperdir in java/Makefile.am....
-helperdir=$with_jdk
+if test "$with_java" != "no"; then
+AC_DEFINE_UNQUOTED(HAVE_JAVA, "1", [Flag indicating that libHelperSDT.so is available (can be found in PKGLIBDIR)])
 fi
 
-AC_SUBST(HELPERDIR, "${helperdir}")
-
-AM_CONDITIONAL([HAVE_JAVA_HELPER], [test "$with_helper" != "no" -a "$with_jdk" != "no"])
-AM_CONDITIONAL([HAVE_JDK], [test "$with_jdk" != "no"])
+AM_CONDITIONAL([HAVE_JAVA], [test "$with_java" != "no"])
 
 else
 AC_MSG_WARN([will not run per-method java probing, missing byteman or java requirements])
-AM_CONDITIONAL([HAVE_JAVA_HELPER],false)
-AM_CONDITIONAL([HAVE_JDK],false)
+AM_CONDITIONAL([HAVE_JAVA],false)
 fi # java+byteman support
 
 AC_SUBST(ENABLE_NLS, "$USE_NLS")

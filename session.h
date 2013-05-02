@@ -200,7 +200,7 @@ public:
   int download_dbinfo;
   bool suppress_handler_errors;
   bool suppress_time_limits;
-#ifdef HAVE_JAVA_HELPER
+#ifdef HAVE_JAVA
   std::vector<std::string> bminstallflags; // -J var=val
 #endif
 

@@ -632,11 +632,8 @@ STAP_PREFIX
 STAP_EXTRA_VERSION
 LOCALEDIR
 ENABLE_NLS
-HAVE_JDK_FALSE
-HAVE_JDK_TRUE
-HAVE_JAVA_HELPER_FALSE
-HAVE_JAVA_HELPER_TRUE
-HELPERDIR
+HAVE_JAVA_FALSE
+HAVE_JAVA_TRUE
 JAVADIR
 have_jar
 have_javac
@@ -848,8 +845,7 @@ with_rpm
 with_elfutils
 with_dyninst
 with_selinux
-with_helper
-with_jdk
+with_java
 with_extra_version
 '
       ac_precious_vars='build_alias
@@ -1544,11 +1540,8 @@ Optional Packages:
   --with-dyninst=DIRECTORY
                           find dyninst headers/libraries in DIRECTORY
   --without-selinux       Do not use libselinux even if present
-  --with-helper=DIRECTORY Specify directory to install libHelperSDT.so and
-                          HelperSDT.jar into (this option overrides
-                          --with-jdk)
-  --with-jdk=DIRECTORY    Specify JDK directory to use for byteman support
-                          (default is /usr/lib/jvm/java)
+  --with-java=DIRECTORY   Specify JDK directory to compile libHelperSDT.so
+                          against (default is /usr/lib/jvm/java)
   --with-extra-version=STRING
                           Add STRING to stap -V version
 
@@ -10906,32 +10899,22 @@ if test "$have_javac" != no -a "$have_jar" != no; then
 echo java found, will try to configure Byteman support
 
 
-# Check whether --with-helper was given.
-if test "${with_helper+set}" = set; then :
-  withval=$with_helper;
+# Check whether --with-java was given.
+if test "${with_java+set}" = set; then :
+  withval=$with_java;
 else
-  with_helper=no
+  with_java=/usr/lib/jvm/java
 fi
 
-# XXX: support specifying pre-existing libHelperSDT.so using --with-helper??
-
-
-# Check whether --with-jdk was given.
-if test "${with_jdk+set}" = set; then :
-  withval=$with_jdk;
-else
-  with_jdk=/usr/lib/jvm/java
-fi
-
-as_ac_File=`$as_echo "ac_cv_file_$with_jdk" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $with_jdk" >&5
-$as_echo_n "checking for $with_jdk... " >&6; }
+as_ac_File=`$as_echo "ac_cv_file_$with_java" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $with_java" >&5
+$as_echo_n "checking for $with_java... " >&6; }
 if eval \${$as_ac_File+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   test "$cross_compiling" = yes &&
   as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r "$with_jdk"; then
+if test -r "$with_java"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -10943,46 +10926,26 @@ $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
 
 else
-  with_jdk=no
+  with_java=no
 fi
 
-
-JAVADIR="${with_jdk}"
+JAVADIR="${with_java}"
  # always needed to compile
 
-if test "$with_helper" != "no"; then
+if test "$with_java" != "no"; then
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_JAVA_HELPER "${with_helper}"
+#define HAVE_JAVA "1"
 _ACEOF
 
-helperdir=$with_helper
-elif test "$with_jdk" != "no"; then
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_JAVA_HELPER "${with_jdk}/jre/lib/amd64"
-_ACEOF
- # TODOXXX customizability of postfix... coordinate with javahelperdir in java/Makefile.am....
-helperdir=$with_jdk
 fi
 
-HELPERDIR="${helperdir}"
-
-
- if test "$with_helper" != "no" -a "$with_jdk" != "no"; then
-  HAVE_JAVA_HELPER_TRUE=
-  HAVE_JAVA_HELPER_FALSE='#'
+ if test "$with_java" != "no"; then
+  HAVE_JAVA_TRUE=
+  HAVE_JAVA_FALSE='#'
 else
-  HAVE_JAVA_HELPER_TRUE='#'
-  HAVE_JAVA_HELPER_FALSE=
-fi
-
- if test "$with_jdk" != "no"; then
-  HAVE_JDK_TRUE=
-  HAVE_JDK_FALSE='#'
-else
-  HAVE_JDK_TRUE='#'
-  HAVE_JDK_FALSE=
+  HAVE_JAVA_TRUE='#'
+  HAVE_JAVA_FALSE=
 fi
 
 
@@ -10990,19 +10953,11 @@ else
 { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: will not run per-method java probing, missing byteman or java requirements" >&5
 $as_echo "$as_me: WARNING: will not run per-method java probing, missing byteman or java requirements" >&2;}
  if false; then
-  HAVE_JAVA_HELPER_TRUE=
-  HAVE_JAVA_HELPER_FALSE='#'
+  HAVE_JAVA_TRUE=
+  HAVE_JAVA_FALSE='#'
 else
-  HAVE_JAVA_HELPER_TRUE='#'
-  HAVE_JAVA_HELPER_FALSE=
-fi
-
- if false; then
-  HAVE_JDK_TRUE=
-  HAVE_JDK_FALSE='#'
-else
-  HAVE_JDK_TRUE='#'
-  HAVE_JDK_FALSE=
+  HAVE_JAVA_TRUE='#'
+  HAVE_JAVA_FALSE=
 fi
 
 fi # java+byteman support
@@ -11287,20 +11242,12 @@ if test -z "${HAVE_SELINUX_TRUE}" && test -z "${HAVE_SELINUX_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_SELINUX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${HAVE_JAVA_HELPER_TRUE}" && test -z "${HAVE_JAVA_HELPER_FALSE}"; then
-  as_fn_error $? "conditional \"HAVE_JAVA_HELPER\" was never defined.
+if test -z "${HAVE_JAVA_TRUE}" && test -z "${HAVE_JAVA_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_JAVA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${HAVE_JDK_TRUE}" && test -z "${HAVE_JDK_FALSE}"; then
-  as_fn_error $? "conditional \"HAVE_JDK\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${HAVE_JAVA_HELPER_TRUE}" && test -z "${HAVE_JAVA_HELPER_FALSE}"; then
-  as_fn_error $? "conditional \"HAVE_JAVA_HELPER\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${HAVE_JDK_TRUE}" && test -z "${HAVE_JDK_FALSE}"; then
-  as_fn_error $? "conditional \"HAVE_JDK\" was never defined.
+if test -z "${HAVE_JAVA_TRUE}" && test -z "${HAVE_JAVA_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_JAVA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

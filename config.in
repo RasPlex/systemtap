@@ -44,8 +44,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Directory containing libHelperSDT.so */
-#undef HAVE_JAVA_HELPER
+/* Flag indicating that libHelperSDT.so is available (can be found in
+   PKGLIBDIR) */
+#undef HAVE_JAVA
 
 /* Define to 1 if you have the `dw' library (-ldw). */
 #undef HAVE_LIBDW

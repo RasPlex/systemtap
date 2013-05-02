@@ -28,7 +28,7 @@
 %endif
 %{!?with_systemd: %global with_systemd 0%{?fedora} >= 19}
 %{!?with_emacsvim: %global with_emacsvim 1}
-%{!?with_java: %global with_java 1} # TODOXXX architecture support guard?
+%{!?with_java: %global with_java 1}
 
 Name: systemtap
 Version: 2.2
@@ -345,9 +345,9 @@ cd ..
 %endif
 
 %if %{with_java}
-%global java_config --with-helper=$RPM_BUILD_ROOT%{_libexecdir}/systemtap
+%global java_config --with-java=%{_jvmdir}/java
 %else
-%global java_config --without-jdk #TODOXXX verify correctness
+%global java_config --without-java
 %endif
 
 %configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} %{java_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
@@ -570,19 +570,23 @@ exit 0
 %if %{with_java}
 
 %triggerin runtime -- java-1.7.0-openjdk
-ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.7.0/jre/lib/amd64/libHelperSDT.so # TODOXXX architecture besides 'amd64'?
+arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
+ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.7.0/jre/lib/${arch}/libHelperSDT.so
 ln -s %{_libexecdir}/systemtap/HelperSDT.jar %{_jvmdir}/java-1.7.0/jre/lib/ext/HelperSDT.jar
 
 %triggerun runtime -- java-1.7.0-openjdk
-rm %{_jvmdir}/java-1.7.0/jre/lib/amd64/libHelperSDT.so
+arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
+rm %{_jvmdir}/java-1.7.0/jre/lib/${arch}/libHelperSDT.so
 rm %{_jvmdir}/java-1.7.0/jre/lib/ext/HelperSDT.jar
 
 %triggerin runtime -- java-1.6.0-openjdk
-ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.6.0/jre/lib/amd64/libHelperSDT.so # TODOXXX architecture besides 'amd64'?
+arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
+ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.6.0/jre/lib/${arch}/libHelperSDT.so
 ln -s %{_libexecdir}/systemtap/HelperSDT.jar %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
 
 %triggerun runtime -- java-1.6.0-openjdk
-rm %{_jvmdir}/java-1.6.0/jre/lib/amd64/libHelperSDT.so
+arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
+rm %{_jvmdir}/java-1.6.0/jre/lib/${arch}/libHelperSDT.so
 rm %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
 
 # TODOXXX loop through contents of %{_jvmdir} rather than handling specific versions??
@@ -668,8 +672,9 @@ rm %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
 %{_libexecdir}/systemtap/stap-authorize-cert
 %if %{with_java}
 %{_libexecdir}/systemtap/libHelperSDT.so
+%{_libexecdir}/systemtap/libHelperSDT_getarch.class
 %{_libexecdir}/systemtap/HelperSDT.jar
-%{_bindir}/stapbm
+%{_libexecdir}/systemtap/stapbm
 %endif
 %if %{with_crash}
 %dir %{_libdir}/systemtap

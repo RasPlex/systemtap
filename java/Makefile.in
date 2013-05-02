@@ -17,6 +17,7 @@
 # Makefile.am --- automake input file for systemtap per-method probing
 
 
+
 VPATH = @srcdir@
 am__make_dryrun = \
   { \
@@ -58,13 +59,17 @@ noinst_PROGRAMS = $(am__EXEEXT_1)
 @HAVE_SELINUX_TRUE@am__append_1 = $(selinux_CFLAGS)
 
 # build libHelperSDT.so
+@HAVE_JAVA_TRUE@am__append_2 = libHelperSDT.so
 
 # build HelperSDT.class
 
+# build getarch.class
+
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
-@HAVE_JDK_TRUE@am__append_2 = libHelperSDT.so HelperSDT.class \
-@HAVE_JDK_TRUE@	HelperSDT.jar
-@HAVE_JDK_TRUE@am__append_3 = HelperSDT.class HelperSDT.jar
+@HAVE_JAVA_TRUE@am__append_3 = HelperSDT.class \
+@HAVE_JAVA_TRUE@	libHelperSDT_getarch.class HelperSDT.jar
+@HAVE_JAVA_TRUE@am__append_4 = HelperSDT.class \
+@HAVE_JAVA_TRUE@	libHelperSDT_getarch.class HelperSDT.jar
 subdir = java
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -81,16 +86,9 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)"
-@HAVE_JDK_TRUE@am__EXEEXT_1 = libHelperSDT.so$(EXEEXT) \
-@HAVE_JDK_TRUE@	HelperSDT.class$(EXEEXT) HelperSDT.jar$(EXEEXT)
+@HAVE_JAVA_TRUE@am__EXEEXT_1 = libHelperSDT.so$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
-HelperSDT_class_SOURCES = HelperSDT.c
-HelperSDT_class_OBJECTS = HelperSDT.$(OBJEXT)
-HelperSDT_class_LDADD = $(LDADD)
-HelperSDT_jar_SOURCES = HelperSDT.c
-HelperSDT_jar_OBJECTS = HelperSDT.$(OBJEXT)
-HelperSDT_jar_LDADD = $(LDADD)
-@HAVE_JDK_TRUE@am_libHelperSDT_so_OBJECTS = HelperSDT.$(OBJEXT)
+@HAVE_JAVA_TRUE@am_libHelperSDT_so_OBJECTS = HelperSDT.$(OBJEXT)
 libHelperSDT_so_OBJECTS = $(am_libHelperSDT_so_OBJECTS)
 libHelperSDT_so_LDADD = $(LDADD)
 libHelperSDT_so_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -151,12 +149,13 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = HelperSDT.c HelperSDT.c $(libHelperSDT_so_SOURCES)
+SOURCES = $(libHelperSDT_so_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+DATA = $(noinst_DATA)
 ETAGS = etags
 CTAGS = ctags
 ACLOCAL = @ACLOCAL@
@@ -191,7 +190,6 @@ GETTEXT_MACRO_VERSION = @GETTEXT_MACRO_VERSION@
 GMSGFMT = @GMSGFMT@
 GMSGFMT_015 = @GMSGFMT_015@
 GREP = @GREP@
-HELPERDIR = @HELPERDIR@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -316,10 +314,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-@HAVE_JAVA_HELPER_FALSE@@HAVE_JDK_TRUE@javahelperdir = @HELPERDIR@/jre/lib/amd64
-@HAVE_JAVA_HELPER_TRUE@javahelperdir = @HELPERDIR@
-@HAVE_JAVA_HELPER_FALSE@@HAVE_JDK_TRUE@javajardir = @HELPERDIR@/jre/lib/ext
-@HAVE_JAVA_HELPER_TRUE@javajardir = @HELPERDIR@
 
 # XXX: perhaps autoconfigure the following?
 JAVAC = javac
@@ -327,7 +321,7 @@ JAR = jar
 
 # Arrange for the top-level git_version.h to be regenerated at every "make".
 BUILT_SOURCES = git_version.stamp
-CLEANFILES = $(am__append_3)
+CLEANFILES = $(am__append_4)
 
 #AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
 AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
@@ -336,10 +330,11 @@ AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' \
 	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"' \
 	-fPIC -shared $(am__append_1)
+noinst_DATA = $(am__append_3)
 pkglibexec_SCRIPTS = stapbm
 @HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
-@HAVE_JDK_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
-@HAVE_JDK_TRUE@libHelperSDT_so_LDFLAGS = -lc
+@HAVE_JAVA_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
+@HAVE_JAVA_TRUE@libHelperSDT_so_LDFLAGS = -lc
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -418,12 +413,6 @@ clean-binPROGRAMS:
 
 clean-noinstPROGRAMS:
 	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
-@HAVE_JDK_FALSE@HelperSDT.class$(EXEEXT): $(HelperSDT_class_OBJECTS) $(HelperSDT_class_DEPENDENCIES) $(EXTRA_HelperSDT_class_DEPENDENCIES) 
-@HAVE_JDK_FALSE@	@rm -f HelperSDT.class$(EXEEXT)
-@HAVE_JDK_FALSE@	$(AM_V_CCLD)$(LINK) $(HelperSDT_class_OBJECTS) $(HelperSDT_class_LDADD) $(LIBS)
-@HAVE_JDK_FALSE@HelperSDT.jar$(EXEEXT): $(HelperSDT_jar_OBJECTS) $(HelperSDT_jar_DEPENDENCIES) $(EXTRA_HelperSDT_jar_DEPENDENCIES) 
-@HAVE_JDK_FALSE@	@rm -f HelperSDT.jar$(EXEEXT)
-@HAVE_JDK_FALSE@	$(AM_V_CCLD)$(LINK) $(HelperSDT_jar_OBJECTS) $(HelperSDT_jar_LDADD) $(LIBS)
 libHelperSDT.so$(EXEEXT): $(libHelperSDT_so_OBJECTS) $(libHelperSDT_so_DEPENDENCIES) $(EXTRA_libHelperSDT_so_DEPENDENCIES) 
 	@rm -f libHelperSDT.so$(EXEEXT)
 	$(AM_V_CCLD)$(libHelperSDT_so_LINK) $(libHelperSDT_so_OBJECTS) $(libHelperSDT_so_LDADD) $(LIBS)
@@ -553,7 +542,7 @@ distclean-tags:
 check-am: all-am
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
-all-am: Makefile $(PROGRAMS) $(SCRIPTS)
+all-am: Makefile $(PROGRAMS) $(SCRIPTS) $(DATA)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -591,9 +580,9 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
-@HAVE_JDK_FALSE@uninstall-local:
-@HAVE_JDK_FALSE@install-data-local:
-@HAVE_JDK_FALSE@install-exec-local:
+@HAVE_JAVA_FALSE@uninstall-local:
+@HAVE_JAVA_FALSE@install-data-local:
+@HAVE_JAVA_FALSE@install-exec-local:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-noinstPROGRAMS \
@@ -684,21 +673,24 @@ uninstall-am: uninstall-binPROGRAMS uninstall-local \
 	uninstall-am uninstall-binPROGRAMS uninstall-local \
 	uninstall-pkglibexecSCRIPTS
 
-@HAVE_JDK_TRUE@HelperSDT.class:
-@HAVE_JDK_TRUE@	$(JAVAC) -d . $(srcdir)/HelperSDT.java
-@HAVE_JDK_TRUE@HelperSDT.jar: HelperSDT.class libHelperSDT.so
-@HAVE_JDK_TRUE@	$(JAR) cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+@HAVE_JAVA_TRUE@HelperSDT.class:
+@HAVE_JAVA_TRUE@	$(JAVAC) -d . $(srcdir)/HelperSDT.java
+@HAVE_JAVA_TRUE@libHelperSDT_getarch.class:
+@HAVE_JAVA_TRUE@	$(JAVAC) -d . $(srcdir)/libHelperSDT_getarch.java
+@HAVE_JAVA_TRUE@HelperSDT.jar: HelperSDT.class libHelperSDT.so
+@HAVE_JAVA_TRUE@	$(JAR) cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
 
-# place/install libHelper.so into HAVE_JAVA_HELPER dir
-# place/install HelperSDT.jar into HAVE_JAVA_HELPER/../ext diro
-@HAVE_JDK_TRUE@install-exec-local:
-@HAVE_JDK_TRUE@	$(INSTALL_DATA) -D libHelperSDT.so $(javahelperdir)/libHelperSDT.so
-@HAVE_JDK_TRUE@install-data-local: HelperSDT.jar
-@HAVE_JDK_TRUE@	$(INSTALL_DATA) -D HelperSDT.jar $(javajardir)/HelperSDT.jar
+# place/install libHelperSDT.so and HelperSDT.jar
+@HAVE_JAVA_TRUE@install-exec-local:
+@HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
+@HAVE_JAVA_TRUE@install-data-local: HelperSDT.jar
+@HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D libHelperSDT_getarch.class $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
+@HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D HelperSDT.jar $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
 
-@HAVE_JDK_TRUE@uninstall-local:
-@HAVE_JDK_TRUE@	rm -rf $(javahelperdir)/libHelperSDT.so
-@HAVE_JDK_TRUE@	rm -rf $(javajardir)/HelperSDT.jar
+@HAVE_JAVA_TRUE@uninstall-local:
+@HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
+@HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
+@HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
 git_version.stamp ../git_version.h:
 	$(MAKE) -C .. $(notdir $@)
 
