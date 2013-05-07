@@ -212,6 +212,25 @@ struct derived_probe_group
 {
   virtual ~derived_probe_group () {}
 
+  virtual void emit_kernel_module_init (systemtap_session& s) {}
+  // Similar to emit_module_init(), but code emitted here gets run
+  // with root access.  The _init-generated code may assume that it is
+  // called only once.  If that code fails at run time, it must set
+  // rc=1 and roll back any partial initializations, for its _exit
+  // friend will NOT be invoked.  The generated code may use
+  // pre-declared "int i, j;".  Note that the message transport isn't
+  // available, so printk()/errk() is the only output option.
+
+  virtual void emit_kernel_module_exit (systemtap_session& s) {}
+  // Similar to emit_module_exit(), but code emitted here gets run
+  // with root access.  The _exit-generated code may assume that it is
+  // executed exactly zero times (if the _init-generated code failed)
+  // or once.  (_exit itself may be called a few times, to generate
+  // the code in a few different places in the probe module.)  The
+  // generated code may use pre-declared "int i, j;".  Note that the
+  // message transport isn't available, so printk()/errk() is the only
+  // output option.
+
   virtual void emit_module_decls (systemtap_session& s) = 0;
   // The _decls-generated code may assume that declarations such as
   // the context, embedded-C code, function and probe handler bodies

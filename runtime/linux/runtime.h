@@ -253,18 +253,28 @@ static struct kernel_param_ops param_ops_int64_t = {
 
 /************* Module Stuff ********************/
 
+
+static int systemtap_kernel_module_init (void);
+
 static unsigned long stap_hash_seed; /* Init during module startup */
 int init_module (void)
 {
+  int rc;
   /* With deliberate hash-collision-inducing data conceivably fed to
      stap, it is beneficial to add some runtime-random value to the
      map hash. */
   get_random_bytes(&stap_hash_seed, sizeof (stap_hash_seed));
-  return _stp_transport_init();
+  rc = _stp_transport_init();
+  if (rc)
+    return rc;
+  return systemtap_kernel_module_init();
 }
+
+static void systemtap_kernel_module_exit (void);
 
 void cleanup_module(void)
 {
+  systemtap_kernel_module_exit();
   _stp_transport_close();
 }
 

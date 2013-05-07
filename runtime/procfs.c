@@ -56,14 +56,17 @@ static void _stp_close_procfs(void);
 static void _stp_rmdir_proc_module(void)
 {
 	if (!_stp_lock_transport_dir()) {
-		errk("Unable to lock transport directory.\n");
+		errk("Unable to remove '/proc/systemap/%s':"
+		     " can't lock transport directory.\n",
+		     THIS_MODULE->name);
 		return;
 	}
 
         if (_stp_proc_root && _stp_proc_root->subdir == NULL) {
 		if (atomic_read(&_stp_proc_root->count) != LAST_ENTRY_COUNT)
-			_stp_warn("Removal of /proc/systemtap/%s\nis deferred until it is no longer in use.\n"
-				  "Systemtap module removal will block.\n", THIS_MODULE->name);	
+			printk("Removal of /proc/systemtap/%s is deferred until it is no longer in use.\n"
+			       "Systemtap module removal will block.\n",
+			       THIS_MODULE->name);	
 		remove_proc_entry(THIS_MODULE->name, _stp_proc_stap);
 		_stp_proc_root = NULL;
 	}
@@ -97,7 +100,8 @@ static int _stp_mkdir_proc_module(void)
 		struct nameidata nd;
 
 		if (!_stp_lock_transport_dir()) {
-			errk("Unable to lock transport directory.\n");
+			errk("Unable to create '/proc/systemap':"
+			     " can't lock transport directory.\n");
 			goto done;
 		}
 		
@@ -117,6 +121,8 @@ static int _stp_mkdir_proc_module(void)
 			/* doesn't exist, so create it */
 			_stp_proc_stap = proc_mkdir ("systemtap", NULL);
 			if (_stp_proc_stap == NULL) {
+				errk("Unable to create '/proc/systemap':"
+				     " proc_mkdir failed.\n");
 				_stp_unlock_transport_dir();
 				goto done;
 			}
@@ -136,12 +142,15 @@ static int _stp_mkdir_proc_module(void)
 		int rc;
 
 		if (!_stp_lock_transport_dir()) {
-			errk("Unable to lock transport directory.\n");
+			errk("Unable to create '/proc/systemap':"
+			     " can't lock transport directory.\n");
 			goto done;
 		}
 
 		/* See if '/proc/systemtap' exists. */
 		if (! init_pid_ns.proc_mnt) {
+			errk("Unable to create '/proc/systemap':"
+			     " '/proc' doesn't exist.\n");
 			_stp_unlock_transport_dir();
 			goto done;
 		}
@@ -156,8 +165,10 @@ static int _stp_mkdir_proc_module(void)
                         path_put (&path);
 		}
 		else if (rc == -ENOENT) {
-			_stp_proc_stap = proc_mkdir ("systemtap", NULL);
+			_stp_proc_stap = proc_mkdir("systemtap", NULL);
 			if (_stp_proc_stap == NULL) {
+				errk("Unable to create '/proc/systemap':"
+				     " proc_mkdir failed.\n");
 				_stp_unlock_transport_dir();
 				goto done;
 			}
@@ -172,11 +183,14 @@ static int _stp_mkdir_proc_module(void)
 		if (_stp_proc_root != NULL)
 			_stp_proc_root->owner = THIS_MODULE;
 #endif
+		if (_stp_proc_root == NULL)
+			errk("Unable to create '/proc/systemap/%s':"
+			     " proc_mkdir failed.\n", THIS_MODULE->name);
 
 		_stp_unlock_transport_dir();
 	}
 done:
-	return (_stp_proc_root) ? 1 : 0;
+	return (_stp_proc_root) ? 0 : 1;
 }
 
 /*
@@ -205,7 +219,6 @@ static int _stp_create_procfs(const char *path, int num,
 		return -1;
 	}
 
-	_stp_mkdir_proc_module();
 	last_dir = _stp_proc_root;
 
 	/* if no path, use default one */
@@ -274,7 +287,6 @@ static void _stp_close_procfs(void)
 		remove_proc_entry(pde->name, pde->parent);
 	}
 	_stp_num_pde = 0;
-	_stp_rmdir_proc_module();
 }
 
 #endif	/* _STP_PROCFS_C_ */

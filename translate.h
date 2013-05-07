@@ -93,6 +93,10 @@ struct unparser
   virtual void emit_functionsig (functiondecl* v) = 0;
   // static void function_NAME (context* c);
 
+  virtual void emit_kernel_module_init () = 0;
+  virtual void emit_kernel_module_exit () = 0;
+  // kernel module startup, shutdown
+
   virtual void emit_module_init () = 0;
   virtual void emit_module_refresh () = 0;
   virtual void emit_module_exit () = 0;

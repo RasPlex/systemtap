@@ -69,6 +69,8 @@ public:
     has_read_probes(false), has_write_probes(false) {} 
 
   void enroll (procfs_derived_probe* probe);
+  void emit_kernel_module_init (systemtap_session& s);
+  void emit_kernel_module_exit (systemtap_session& s);
   void emit_module_decls (systemtap_session& s);
   void emit_module_init (systemtap_session& s);
   void emit_module_exit (systemtap_session& s);
@@ -160,6 +162,24 @@ procfs_derived_probe_group::enroll (procfs_derived_probe* p)
       pset->read_probe = p;
       has_read_probes = true;
     }
+}
+
+
+void
+procfs_derived_probe_group::emit_kernel_module_init (systemtap_session& s)
+{
+  if (probes_by_path.empty())
+    return;
+  s.op->newline() << "rc = _stp_mkdir_proc_module();";
+}
+
+
+void
+procfs_derived_probe_group::emit_kernel_module_exit (systemtap_session& s)
+{
+  if (probes_by_path.empty())
+    return;
+  s.op->newline() << "_stp_rmdir_proc_module();";
 }
 
 

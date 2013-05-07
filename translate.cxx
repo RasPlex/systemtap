@@ -94,6 +94,8 @@ struct c_unparser: public unparser, public visitor
   void emit_global_param (vardecl* v);
   void emit_global_init_setters ();
   void emit_functionsig (functiondecl* v);
+  void emit_kernel_module_init ();
+  void emit_kernel_module_exit ();
   void emit_module_init ();
   void emit_module_refresh ();
   void emit_module_exit ();
@@ -1615,12 +1617,69 @@ c_unparser::emit_global_init_type (vardecl *v)
 }
 
 
-
 void
 c_unparser::emit_functionsig (functiondecl* v)
 {
   o->newline() << "static void " << c_funcname(v->name)
 	       << " (struct context * __restrict__ c);";
+}
+
+
+void
+c_unparser::emit_kernel_module_init ()
+{
+  if (session->runtime_usermode_p())
+    return;
+
+  o->newline();
+  o->newline() << "static int systemtap_kernel_module_init (void) {";
+  o->newline(1) << "int rc = 0;";
+  o->newline() << "int i=0, j=0;"; // for derived_probe_group use
+
+  vector<derived_probe_group*> g = all_session_groups (*session);
+  for (unsigned i=0; i<g.size(); i++)
+    {
+      g[i]->emit_kernel_module_init (*session);
+
+      o->newline() << "if (rc) {";
+      o->indent(1);
+      if (i>0)
+        {
+	  for (int j=i-1; j>=0; j--)
+	    g[j]->emit_kernel_module_exit (*session);
+	}
+      o->newline() << "goto out;";
+      o->newline(-1) << "}";
+    }
+  o->newline(-1) << "out:";
+  o->indent(1);
+  o->newline() << "return rc;";
+  o->newline(-1) << "}\n";
+  o->assert_0_indent(); 
+}
+
+
+void
+c_unparser::emit_kernel_module_exit ()
+{
+  if (session->runtime_usermode_p())
+    return;
+
+  o->newline();
+  o->newline() << "static void systemtap_kernel_module_exit (void) {";
+  o->newline(1) << "int i=0, j=0;"; // for derived_probe_group use
+
+  // We're processing the derived_probe_group list in reverse order.
+  // This ensures that probe groups get unregistered in reverse order
+  // of the way they were registered.
+  vector<derived_probe_group*> g = all_session_groups (*session);
+  for (vector<derived_probe_group*>::reverse_iterator i = g.rbegin();
+       i != g.rend(); i++)
+    {
+      (*i)->emit_kernel_module_exit (*session);
+    }
+  o->newline(-1) << "}\n";
+  o->assert_0_indent(); 
 }
 
 
@@ -6955,6 +7014,10 @@ translate_pass (systemtap_session& s)
       s.op->assert_0_indent();
       s.op->newline();
       s.up->emit_module_exit ();
+      s.op->assert_0_indent();
+      s.up->emit_kernel_module_init ();
+      s.op->assert_0_indent();
+      s.up->emit_kernel_module_exit ();
       s.op->assert_0_indent();
       s.op->newline();
 
