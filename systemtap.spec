@@ -569,29 +569,35 @@ exit 0
 
 %if %{with_java}
 
-%triggerin runtime -- java-1.7.0-openjdk
-arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
-ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.7.0/jre/lib/${arch}/libHelperSDT.so
-ln -s %{_libexecdir}/systemtap/HelperSDT.jar %{_jvmdir}/java-1.7.0/jre/lib/ext/HelperSDT.jar
+%triggerin runtime -- java-1.7.0-openjdk, java-1.6.0-openjdk
+for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
+    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
+        ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
+        ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+    done
+done
 
-%triggerun runtime -- java-1.7.0-openjdk
-arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
-rm %{_jvmdir}/java-1.7.0/jre/lib/${arch}/libHelperSDT.so
-rm %{_jvmdir}/java-1.7.0/jre/lib/ext/HelperSDT.jar
+%triggerun runtime -- java-1.7.0-openjdk, java-1.6.0-openjdk
+for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
+    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
+        rm -f ${archdir}/libHelperSDT_${arch}.so
+        rm -f ${archdir}/../ext/HelperSDT.jar
+    done
+done
 
-%triggerin runtime -- java-1.6.0-openjdk
-arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
-ln -s %{_libexecdir}/systemtap/libHelperSDT.so %{_jvmdir}/java-1.6.0/jre/lib/${arch}/libHelperSDT.so
-ln -s %{_libexecdir}/systemtap/HelperSDT.jar %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
+%triggerpostun runtime -- java-1.7.0-openjdk, java-1.6.0-openjdk
+# Restore links for any JDKs remaining after a package removal:
+for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
+    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
+        ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
+        ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+    done
+done
 
-%triggerun runtime -- java-1.6.0-openjdk
-arch=`cd %{_libexecdir}/systemtap && java libHelperSDT_getarch`
-rm %{_jvmdir}/java-1.6.0/jre/lib/${arch}/libHelperSDT.so
-rm %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
-
-# TODOXXX loop through contents of %{_jvmdir} rather than handling specific versions??
-# TODOXXX do a %triggerpostun to reinstall for an older version?
-# TODOXXX analogous support for other JRE/JDK??
+# XXX: analogous support for other types of JRE/JDK??
 
 %endif
 
@@ -671,8 +677,7 @@ rm %{_jvmdir}/java-1.6.0/jre/lib/ext/HelperSDT.jar
 %{_libexecdir}/systemtap/stapio
 %{_libexecdir}/systemtap/stap-authorize-cert
 %if %{with_java}
-%{_libexecdir}/systemtap/libHelperSDT.so
-%{_libexecdir}/systemtap/libHelperSDT_getarch.class
+%{_libexecdir}/systemtap/libHelperSDT_*.so
 %{_libexecdir}/systemtap/HelperSDT.jar
 %{_libexecdir}/systemtap/stapbm
 %endif
