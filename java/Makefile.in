@@ -682,7 +682,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-local \
 
 # place/install libHelperSDT.so and HelperSDT.jar
 @HAVE_JAVA_TRUE@install-exec-local:
-@HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
+@HAVE_JAVA_TRUE@	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
 @HAVE_JAVA_TRUE@install-data-local: HelperSDT.jar
 @HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D libHelperSDT_getarch.class $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
 @HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D HelperSDT.jar $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar

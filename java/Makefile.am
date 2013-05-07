@@ -53,7 +53,7 @@ HelperSDT.jar: HelperSDT.class libHelperSDT.so
 
 # place/install libHelperSDT.so and HelperSDT.jar
 install-exec-local:
-	$(INSTALL_DATA) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
+	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
 install-data-local: HelperSDT.jar
 	$(INSTALL_DATA) -D libHelperSDT_getarch.class $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
 	$(INSTALL_DATA) -D HelperSDT.jar $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
