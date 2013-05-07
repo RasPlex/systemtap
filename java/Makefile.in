@@ -54,6 +54,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 bin_PROGRAMS =
 noinst_PROGRAMS = $(am__EXEEXT_1)
 @HAVE_SELINUX_TRUE@am__append_1 = $(selinux_CFLAGS)
@@ -63,13 +64,9 @@ noinst_PROGRAMS = $(am__EXEEXT_1)
 
 # build HelperSDT.class
 
-# build getarch.class
-
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
-@HAVE_JAVA_TRUE@am__append_3 = HelperSDT.class \
-@HAVE_JAVA_TRUE@	libHelperSDT_getarch.class HelperSDT.jar
-@HAVE_JAVA_TRUE@am__append_4 = HelperSDT.class \
-@HAVE_JAVA_TRUE@	libHelperSDT_getarch.class HelperSDT.jar
+@HAVE_JAVA_TRUE@am__append_3 = HelperSDT.class HelperSDT.jar
+@HAVE_JAVA_TRUE@am__append_4 = HelperSDT.class HelperSDT.jar
 subdir = java
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -310,10 +307,15 @@ staprun_LIBS = @staprun_LIBS@
 subdirs = @subdirs@
 support_section_question = @support_section_question@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+JAVA_ARCH := $(target_cpu)
 
 # XXX: perhaps autoconfigure the following?
 JAVAC = javac
@@ -673,23 +675,26 @@ uninstall-am: uninstall-binPROGRAMS uninstall-local \
 	uninstall-am uninstall-binPROGRAMS uninstall-local \
 	uninstall-pkglibexecSCRIPTS
 
+# XXX: the following arch names are based generally off the rpmspec
+# for java-1.7.0-openjdk, there might be omissions in some weird cases
+override JAVA_ARCH:=$(JAVA_ARCH:x86_64=amd64)
+override JAVA_ARCH:=$(JAVA_ARCH:i%86=i386)
+override JAVA_ARCH:=$(JAVA_ARCH:sparcv9=sparc)
+override JAVA_ARCH:=$(JAVA_ARCH:sparc64=sparcv9)
+override JAVA_ARCH:=$(JAVA_ARCH:arm%=arm)
 @HAVE_JAVA_TRUE@HelperSDT.class:
 @HAVE_JAVA_TRUE@	$(JAVAC) -d . $(srcdir)/HelperSDT.java
-@HAVE_JAVA_TRUE@libHelperSDT_getarch.class:
-@HAVE_JAVA_TRUE@	$(JAVAC) -d . $(srcdir)/libHelperSDT_getarch.java
 @HAVE_JAVA_TRUE@HelperSDT.jar: HelperSDT.class libHelperSDT.so
 @HAVE_JAVA_TRUE@	$(JAR) cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
 
 # place/install libHelperSDT.so and HelperSDT.jar
 @HAVE_JAVA_TRUE@install-exec-local:
-@HAVE_JAVA_TRUE@	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
+@HAVE_JAVA_TRUE@	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 @HAVE_JAVA_TRUE@install-data-local: HelperSDT.jar
-@HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D libHelperSDT_getarch.class $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
 @HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D HelperSDT.jar $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
 
 @HAVE_JAVA_TRUE@uninstall-local:
-@HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
-@HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
+@HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 @HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
 git_version.stamp ../git_version.h:
 	$(MAKE) -C .. $(notdir $@)

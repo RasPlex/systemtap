@@ -5,6 +5,9 @@ AC_INIT([systemtap], 2.2, systemtap@sourceware.org, systemtap)
 dnl                  ^^^ see also NEWS, systemtap.spec, testsuite/configure.ac
 dnl                      doc/SystemTap_Beginners_Guide/en-US/Book_Info.xml
 
+dnl Get the target arch for libHelperSDT.so
+AC_CANONICAL_TARGET
+
 AC_PREREQ(2.63)
 dnl We don't maintain a ChangeLog, which makes us non-GNU -> foreign.
 AM_INIT_AUTOMAKE([no-dist foreign])

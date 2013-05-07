@@ -1,5 +1,14 @@
 # Makefile.am --- automake input file for systemtap per-method probing
 
+JAVA_ARCH:=$(target_cpu)
+# XXX: the following arch names are based generally off the rpmspec
+# for java-1.7.0-openjdk, there might be omissions in some weird cases
+override JAVA_ARCH:=$(JAVA_ARCH:x86_64=amd64)
+override JAVA_ARCH:=$(JAVA_ARCH:i%86=i386)
+override JAVA_ARCH:=$(JAVA_ARCH:sparcv9=sparc)
+override JAVA_ARCH:=$(JAVA_ARCH:sparc64=sparcv9)
+override JAVA_ARCH:=$(JAVA_ARCH:arm%=arm)
+
 # XXX: perhaps autoconfigure the following?
 JAVAC = javac
 JAR = jar
@@ -39,12 +48,6 @@ CLEANFILES += HelperSDT.class
 HelperSDT.class:
 	$(JAVAC) -d . $(srcdir)/HelperSDT.java
 
-# build getarch.class
-noinst_DATA += libHelperSDT_getarch.class
-CLEANFILES += libHelperSDT_getarch.class
-libHelperSDT_getarch.class:
-	$(JAVAC) -d . $(srcdir)/libHelperSDT_getarch.java
-
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
 noinst_DATA += HelperSDT.jar
 CLEANFILES += HelperSDT.jar
@@ -53,14 +56,12 @@ HelperSDT.jar: HelperSDT.class libHelperSDT.so
 
 # place/install libHelperSDT.so and HelperSDT.jar
 install-exec-local:
-	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
+	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 install-data-local: HelperSDT.jar
-	$(INSTALL_DATA) -D libHelperSDT_getarch.class $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
 	$(INSTALL_DATA) -D HelperSDT.jar $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
 
 uninstall-local:
-	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT.so
-	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_getarch.class
+	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 	rm -rf $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
 
 endif #HAVE_JAVA

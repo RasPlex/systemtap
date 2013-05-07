@@ -242,7 +242,7 @@ java_builder::build (systemtap_session & sess,
    */
 
   string helper_location = PKGLIBDIR;
-  helper_location.append("/libHelperSDT.so");
+  helper_location.append("/libHelperSDT_*.so");
   probe_point* new_loc = new probe_point(*loc);
   vector<probe_point::component*> java_marker;
   java_marker.push_back( new probe_point::component 

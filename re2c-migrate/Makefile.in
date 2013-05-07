@@ -51,6 +51,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 check_PROGRAMS = regtest$(EXEEXT)
 subdir = re2c-migrate
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -271,7 +272,11 @@ staprun_LIBS = @staprun_LIBS@
 subdirs = @subdirs@
 support_section_question = @support_section_question@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
@@ -527,6 +532,8 @@ site.exp: Makefile $(EXTRA_DEJAGNU_SITE_CONFIG)
 	@echo 'set build_triplet $(build_triplet)' >>site.tmp
 	@echo 'set host_alias "$(host_alias)"' >>site.tmp
 	@echo 'set host_triplet $(host_triplet)' >>site.tmp
+	@echo 'set target_alias "$(target_alias)"' >>site.tmp
+	@echo 'set target_triplet $(target_triplet)' >>site.tmp
 	@list='$(EXTRA_DEJAGNU_SITE_CONFIG)'; for f in $$list; do \
 	  echo "## Begin content included from file $$f.  Do not modify. ##" \
 	   && cat `test -f "$$f" || echo '$(srcdir)/'`$$f \
