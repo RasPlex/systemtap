@@ -37,7 +37,7 @@ static long _stp_perf_init (struct stap_perf_probe *stp, struct task_struct* tas
 	      return 0;
 	    stp->e.t.per_thread_event = perf_event_create_kernel_counter(&stp->attr,
 								     -1, 
-#if defined(STAPCONF_PERF_STRUCTPID)
+#if defined(STAPCONF_PERF_STRUCTPID) || defined (STAPCONF_PERF_COUNTER_CONTEXT)
 								     task,
 #else
 								     task->pid,
