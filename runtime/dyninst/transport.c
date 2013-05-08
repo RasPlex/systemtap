@@ -244,7 +244,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 				fprintf(_stp_err,
 					"write only wrote %ld bytes (%ld),"
 					" errno %d\n",
-					size, item->bytes, errno);
+					(long)size, (long)item->bytes, errno);
 			data->log_start = _STP_D_T_LOG_INC(data->log_start);
 
 			// Signal there is a log buffer available to
@@ -275,7 +275,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 					fprintf(_stp_err,
 						"Error: write() only wrote"
 						" %ld bytes (%ld), errno %d\n",
-						size, item->bytes, errno);
+						(long)size, (long)item->bytes, errno);
 
 				pthread_mutex_lock(&(data->print_mutex));
 
