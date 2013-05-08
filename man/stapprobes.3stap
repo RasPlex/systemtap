@@ -819,7 +819,7 @@ a time; other Java processes beyond the first one to be observed are
 ignored. Moreover, Java probing currently does not work across users;
 the stap script must run (with appropriate permissions) under the same
 user that the Java process being probed. (Thus a stap script under
-root currently cannot probe Java methods in a user-space process.)
+root currently cannot probe Java methods in a non-root-user Java process.)
 
 .PP
 The first probe type refers to Java processes by the name of the Java process:
