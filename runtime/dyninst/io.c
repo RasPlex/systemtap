@@ -99,7 +99,8 @@ static void _stp_vlog (enum code type, const char *func, int line,
 		fprintf(_stp_err, "%s", buf);
 	}
 	else if (type != DBUG) {
-		_stp_dyninst_transport_write_oob_data(buf, num + start + 1);
+                /* NB: don't explicitly send the \0 terminator. */
+		_stp_dyninst_transport_write_oob_data(buf, num + start);
 	}
 	else {
 		_stp_print(buf);
