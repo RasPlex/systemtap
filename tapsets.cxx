@@ -8742,10 +8742,16 @@ hwbkpt_derived_probe_group::emit_module_decls (systemtap_session& s)
   s.op->newline();
 
   // Forward declare the master entry functions
+  s.op->newline() << "#ifdef STAPCONF_PERF_HANDLER_NMI";
   s.op->newline() << "static int enter_hwbkpt_probe (struct perf_event *bp,";
   s.op->line() << " int nmi,";
   s.op->line() << " struct perf_sample_data *data,";
   s.op->line() << " struct pt_regs *regs);";
+  s.op->newline() << "#else";
+  s.op->newline() << "static int enter_hwbkpt_probe (struct perf_event *bp,";
+  s.op->line() << " struct perf_sample_data *data,";
+  s.op->line() << " struct pt_regs *regs);";
+  s.op->newline() << "#endif";
 
   // Emit the actual probe list.
 
@@ -8798,10 +8804,16 @@ hwbkpt_derived_probe_group::emit_module_decls (systemtap_session& s)
 
   // Emit the hwbkpt callback function
   s.op->newline() ;
+  s.op->newline() << "#ifdef STAPCONF_PERF_HANDLER_NMI";
   s.op->newline() << "static int enter_hwbkpt_probe (struct perf_event *bp,";
   s.op->line() << " int nmi,";
   s.op->line() << " struct perf_sample_data *data,";
   s.op->line() << " struct pt_regs *regs) {";
+  s.op->newline() << "#else";
+  s.op->newline() << "static int enter_hwbkpt_probe (struct perf_event *bp,";
+  s.op->line() << " struct perf_sample_data *data,";
+  s.op->line() << " struct pt_regs *regs) {";
+  s.op->newline() << "#endif";
   s.op->newline(1) << "unsigned int i;";
   s.op->newline() << "if (bp->attr.type != PERF_TYPE_BREAKPOINT) return -1;";
   s.op->newline() << "for (i=0; i<" << hwbkpt_probes.size() << "; i++) {";

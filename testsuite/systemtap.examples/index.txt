@@ -435,8 +435,8 @@ keywords: memory watchpoint
   a traceback each time the address is accessed. This script needs to
   be run as root to allow access to the breakpoint hardware.
 
-  # stap --all-modules hw_watch_addr.stp 0x`grep "pid_max$" /proc/kallsyms` \
-  -c "sleep 1"
+  # stap --all-modules hw_watch_addr.stp 0x`grep "vm_dirty_ratio" \
+  /proc/kallsyms` -c "sleep 5"
 
 
 memory/hw_watch_sym.stp - Watch a Kernel Symbol Using Breakpoint Hardware
@@ -447,7 +447,7 @@ keywords: memory watchpoint
   accessed. This script needs to be run as root to allow access to the
   breakpoint hardware.
 
-  # stap --all-modules hw_watch_sym.stp pid_max -c "sleep 1"
+  # stap --all-modules hw_watch_sym.stp vm_dirty_ratio -c "sleep 5"
 
 
 memory/kmalloc-top - Show Paths to Kernel Malloc Invocations

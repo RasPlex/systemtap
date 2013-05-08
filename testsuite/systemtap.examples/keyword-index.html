@@ -300,11 +300,11 @@ keywords: <a href="keyword-index.html#STATISTICS">STATISTICS</a> <a href="keywor
 <p>This script prints the size of a type, based on dwarf debuginfo for any kernel or userspace module, or trial-compilation of a given header file name.<p><font size="-2"><pre># stap sizeof.stp FILE &#39;&lt;/usr/include/stdio.h&gt;&#39;</pre></font></p>
 </li><li><a href="memory/hw_watch_addr.stp">memory/hw_watch_addr.stp</a> - Watch a Kernel Address Using Breakpoint Hardware<br>
 keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.html#WATCHPOINT">WATCHPOINT</a> <br>
-<p>The script will watch accesses to a single kernel address and prints a traceback each time the address is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_addr.stp 0x`grep &quot;pid_max$&quot; /proc/kallsyms` \
--c &quot;sleep 1&quot;</pre></font></p>
+<p>The script will watch accesses to a single kernel address and prints a traceback each time the address is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_addr.stp 0x`grep &quot;vm_dirty_ratio&quot; \
+/proc/kallsyms` -c &quot;sleep 5&quot;</pre></font></p>
 </li><li><a href="memory/hw_watch_sym.stp">memory/hw_watch_sym.stp</a> - Watch a Kernel Symbol Using Breakpoint Hardware<br>
 keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.html#WATCHPOINT">WATCHPOINT</a> <br>
-<p>The script will watch accesses to the starting address of a single kernel symbol and prints a traceback each time the symbol is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_sym.stp pid_max -c &quot;sleep 1&quot;</pre></font></p>
+<p>The script will watch accesses to the starting address of a single kernel symbol and prints a traceback each time the symbol is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_sym.stp vm_dirty_ratio -c &quot;sleep 5&quot;</pre></font></p>
 </li><li><a href="memory/kmalloc-top">memory/kmalloc-top</a> - Show Paths to Kernel Malloc Invocations<br>
 keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <br>
 <p>The kmalloc-top perl program runs a small systemtap script to collect stack traces for each call to the kmalloc function and counts the time that each stack trace is observed. When kmalloc-top exits it prints out sorted list. The output can be filtered to print only the first N stack traces (-t), stack traces with a minimum counts (-m), or exclude certain stack traces (-e).<p><font size="-2"><pre># ./kmalloc-top -c &quot;sleep 0.2&quot;</pre></font></p>
@@ -802,11 +802,11 @@ keywords: <a href="keyword-index.html#WATCHDOG">WATCHDOG</a> <a href="keyword-in
 <ul>
 <li><a href="memory/hw_watch_addr.stp">memory/hw_watch_addr.stp</a> - Watch a Kernel Address Using Breakpoint Hardware<br>
 keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.html#WATCHPOINT">WATCHPOINT</a> <br>
-<p>The script will watch accesses to a single kernel address and prints a traceback each time the address is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_addr.stp 0x`grep &quot;pid_max$&quot; /proc/kallsyms` \
--c &quot;sleep 1&quot;</pre></font></p>
+<p>The script will watch accesses to a single kernel address and prints a traceback each time the address is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_addr.stp 0x`grep &quot;vm_dirty_ratio&quot; \
+/proc/kallsyms` -c &quot;sleep 5&quot;</pre></font></p>
 </li><li><a href="memory/hw_watch_sym.stp">memory/hw_watch_sym.stp</a> - Watch a Kernel Symbol Using Breakpoint Hardware<br>
 keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.html#WATCHPOINT">WATCHPOINT</a> <br>
-<p>The script will watch accesses to the starting address of a single kernel symbol and prints a traceback each time the symbol is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_sym.stp pid_max -c &quot;sleep 1&quot;</pre></font></p>
+<p>The script will watch accesses to the starting address of a single kernel symbol and prints a traceback each time the symbol is accessed. This script needs to be run as root to allow access to the breakpoint hardware.<p><font size="-2"><pre># stap --all-modules hw_watch_sym.stp vm_dirty_ratio -c &quot;sleep 5&quot;</pre></font></p>
 </li></ul>
        	</td>
        </tr>
