@@ -382,7 +382,7 @@ int stp_dyninst_session_init_finished(void)
      * caused the base address of the shared memory to move around,
      * which would cause the addresses of the mutexes to move
      * around. */
-    return _stp_dyninst_transport_session_init();
+    return _stp_dyninst_transport_session_start();
 }
 
 void stp_dyninst_session_exit(void)

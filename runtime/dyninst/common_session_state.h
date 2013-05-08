@@ -203,7 +203,7 @@ static int stp_session_init(void)
 	}
 #endif
 
-	return 0;
+	return _stp_dyninst_transport_session_init();
 }
 
 static int stp_session_init_finished(void)

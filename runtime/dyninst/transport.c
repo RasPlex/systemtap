@@ -389,6 +389,13 @@ static int _stp_dyninst_transport_session_init(void)
 		}
 	}
 
+	return 0;
+}
+
+static int _stp_dyninst_transport_session_start(void)
+{
+	int rc;
+
 	// Start the thread.
 	rc = pthread_create(&_stp_transport_thread, NULL,
 			    &_stp_dyninst_transport_thread_func, NULL);
