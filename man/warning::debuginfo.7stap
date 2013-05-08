@@ -26,7 +26,7 @@ boot-loader's compressed/stripped
 file, and much larger.  If you have a hand-built kernel, make sure
 it was built with the
 .IR CONFIG_DEBUG_INFO=y
-option.  
+option.
 
 .TP
 process debuginfo
@@ -34,6 +34,25 @@ For scripts that target user-space, systemtap may search for debuginfo.
 If you have hand-built binaries, use 
 .IR "CFLAGS=-g -O2"
 to compile them.
+
+.TP
+unnecessary debuginfo
+In some cases, a script may be altered to avoid requiring debuginfo.
+For example, as script that uses
+.IR "probe syscall.*"
+probes could try instead
+.IR "probe nd_syscall.*"
+(for non-DWARF syscall): these work similarly, and use more intricate
+(fragile) tapset functions to extract system call arguments.  Another
+option is use of compiled-in instrumentation such as kernel tracepoints
+or user-space 
+.IR <sys/sdt.h>
+markers in libraries or executables, which do not require debuginfo.
+If debuginfo was required for resolving a complicated
+.IR $var->foo->bar
+expression, it may be possible to use 
+.IR @cast(var,"foo","foo.h")->foo->bar
+to synthesize debuginfo for that type from a header file.
 
 .SH AUTOMATION
 
