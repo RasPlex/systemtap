@@ -237,7 +237,13 @@ once from the underlying $context variables, so that later changes to
 $context variables are not automatically reflected.  Not all probe
 aliases obey all of these general guidelines.  Please report any
 bothersome ones you encounter as a bug.
-
+.PP
+If debuginfo availability is a problem, you may try using the
+non-DWARF syscall probe aliases instead.  Use the
+.IR nd_syscall.
+prefix instead of
+.IR syscall.
+The same context variables are available, as far as possible.
 
 .SS TIMERS
 
