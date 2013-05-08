@@ -1,15 +1,35 @@
-To compile libHelperSDT.so, run
+How to set up Byteman support in Systemtap
+==========================================
 
-gcc -g -o libHelperSDT.so -fPIC -lc -shared -I/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/include/linux -I/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/include HelperSDT.c
+Systemtap now contains support for probing Java methods using the
+Byteman tool from JBoss as a backend. In order to make use of it, two
+things are required.
 
-You may need to -I/path/to/sys/sdt.h in the gcc command
+(1) Environment variable BYTEMAN_HOME must point to a valid Byteman installation.
 
-javac HelperSDT.java -> produces HelperSDT.class
+Byteman can be obtained at http://www.jboss.org/byteman; alternately,
+it can be installed through your distribution's package manager.
+Either way, double-check that this enviroment variable is configured
+correctly.
 
-jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+(2) libHelperSDT_*.so and HelperSDT.jar must be installed into the
+local JDK that you are planning to probe.
 
-cp libHelperSDT.so /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/amd64/
-cp HelperSDT.jar /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.9.x86_64/jre/lib/ext
+Unless you are installing systemtap from the RPM package on a system
+with OpenJDK 1.6.0+ (in which case the following step is done for
+you), the current systemtap makefile makes no effort to install
+libHelperSDT_*.so and HelperSDT.jar where the JDK install can detect
+them, instead putting them in PREFIX/libexec/systemtap. You must
+copy/link these files to the JDK install's extension directories
+yourself.
 
+For example, if you have systemtap installed under /usr and an OpenJDK
+install under /usr/lib/jvm/java on a x86_64 machine, you can create
+symlinks as follows:
 
+  # ln -s /usr/libexec/systemtap/libHelperSDT_amd64.so /usr/lib/jvm/java/jre/lib/amd64/libHelperSDT_amd64.so
+  # ln -s /usr/libexec/systemtap/HelperSDT.jar /usr/lib/jvm/java/jre/lib/ext/HelperSDT.jar
 
+Other JDK versions may have a different placement for their extension
+directories; consult the corresponding JDK's documentation as
+appropriate.
