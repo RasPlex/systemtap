@@ -21,6 +21,7 @@
 #include <linux/kprobes.h>
 #include <linux/proc_fs.h>
 #include <linux/vmalloc.h>
+#include <linux/slab.h>
 #include <linux/time.h>
 #include <linux/random.h>
 #include <linux/spinlock.h>
