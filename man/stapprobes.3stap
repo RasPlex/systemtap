@@ -813,9 +813,13 @@ for more details) can be passed to bminstall by invoking "stap \-J
 OPTION". The systemtap option "\-j" is also provided as a shorthand for
 "\-J org.jboss.byteman.compile.to.bytecode".
 .PP
-This Java instrumentation support currently has a major limitation: java
-probes attach only to one Java process at a time; other Java processes
-beyond the first one to be observed are ignored.
+This Java instrumentation support is currently a prototype feature
+with major limitations: java probes attach only to one Java process at
+a time; other Java processes beyond the first one to be observed are
+ignored. Moreover, Java probing currently does not work across users;
+the stap script must run (with appropriate permissions) under the same
+user that the Java process being probed. (Thus a stap script under
+root currently cannot probe Java methods in a user-space process.)
 
 .PP
 The first probe type refers to Java processes by the name of the Java process:
