@@ -338,6 +338,15 @@ void binary_expression::print (ostream& o) const
     << " (" << *right << ")";
 }
 
+void regex_query::print (ostream& o) const
+{
+  // NB: we need a custom printer, because the parser does not accept
+  // a parenthesized RHS.
+  o << "(" << *left << ") "
+    << op
+    << " " << *re;
+}
+
 
 void unary_expression::print (ostream& o) const
 {
