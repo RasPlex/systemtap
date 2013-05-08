@@ -597,6 +597,16 @@ below for more information.
 .BI \-\-dyninst
 Shorthand for \fI\-\-runtime=dyninst\fR.
 
+.TP
+.BI \-J "OPTION"
+For Java method probes, pass \-DOPTION to bminstall when invoking
+Byteman.
+
+.TP
+.BI \-j
+For Java method probes, pass \-Dorg.jboss.byteman.compile.to.bytecode
+to bminstall when invoking Byteman.
+
 .SH ARGUMENTS
 
 Any additional arguments on the command line are passed to the script
