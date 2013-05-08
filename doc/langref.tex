@@ -1379,6 +1379,69 @@ dtrace compatible markers through \texttt{DTRACE\_PROBE} and an
 associated python \texttt{dtrace} script.  You can use these in builds
 based on dtrace that need dtrace -h or -G functionality.
 
+\subsection{Java probes}
+\index{Java probes}
+Support for probing Java methods is available using Byteman as a
+backend. Byteman is an instrumentation tool from the JBoss project
+which systemtap can use to monitor invocations for a specific method
+or line in a Java program.
+
+Systemtap does so by generating a Byteman script listing the probes to
+instrument and then invoking the Byteman \texttt{bminstall} utility. A
+custom option \texttt{-D OPTION} (see the Byteman documentation for
+more details) can be passed to bminstall by invoking systemtap with
+option \texttt{-J OPTION}. The systemtap option \texttt{-j} is also
+provided as a shorthand for \texttt{-J
+  org.jboss.byteman.compile.to.bytecode}.
+
+This Java instrumentation support is currently a prototype feature
+with major limitations: Java probes attach only to one Java process at
+a time; other Java processes beyond the first one to be observed are
+ignored. Moreover, Java probing currently does not work across users;
+the stap script must run (with appropriate permissions) under the same
+user as the Java process being probed. (Thus a stap script under
+root currently cannot probe Java methods in a non-root-user Java process.)
+
+There are four probe point variants supported by the translator:
+\begin{vindent}
+\begin{verbatim}
+java("PNAME").class("CLASSNAME").method("PATTERN")
+java("PNAME").class("CLASSNAME").method("PATTERN").return
+java(PID).class("CLASSNAME").method("PATTERN")
+java(PID).class("CLASSNAME").method("PATTERN").return
+\end{verbatim}
+\end{vindent}
+
+The first two probe points refer to Java processes by the name of the
+Java process. The PATTERN parameter specifies the signature of the
+Java method to probe. The signature must consist of the exact name of
+the method, followed by a bracketed list of the types of the
+arguments, for instance \texttt{myMethod(int,double,Foo)}. Wildcards
+are not supported.
+
+The probe can be set to trigger at a specific line within the method
+by appending a line number with colon, just as in other types of
+probes: \texttt{myMethod(int,double,Foo):245}.
+
+The CLASSNAME parameter identifies the Java class the method belongs
+to, either with or without the package qualification. By default, the
+probe only triggers on descendants of the class that do not override
+the method definition of the original class. However, CLASSNAME can
+take an optional caret prefix, as in
+\verb+class("^org.my.MyClass")+, which specifies that the probe
+should also trigger on all descendants of MyClass that override the
+original method. For instance, every method with signature foo(int) in
+program org.my.MyApp can be probed at once using
+\begin{vindent}
+\begin{verbatim}
+java("org.my.MyApp").class("^java.lang.Object").method("foo(int)")
+\end{verbatim}
+\end{vindent}
+
+The last two probe points work analogously, but refer to Java
+processes by PID. (PIDs for already running processes can be obtained
+using the \texttt{jps} utility.)
+
 \subsection{PROCFS probes}
 \index{PROCFS probes}
 These probe points allow procfs pseudo-files in
