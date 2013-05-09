@@ -22,9 +22,22 @@
 #include <linux/sched.h>		/* includes asm/cputime.h */
 #include <linux/time.h>
 
-/* RHEL4 (2.6.9) kernels don't have cputime_to_msecs */
-#ifndef cputime_to_msecs
+/* Kernels since 2.6.37 generally have cputime_to_usecs, but not msecs.
+ * (ref: kernel commit d57af9b2142f31a39dcfdeb30776baadfc802827)
+ * Yet note some kernels (RHEL6) may already have both...  */
+#if defined(cputime_to_usecs)
+#if !defined(cputime_to_msecs)
+#define cputime_to_msecs(__ct)		_stp_div64(NULL, cputime_to_usecs(__ct), 1000ULL)
+#endif
+
+/* Kernels before 2.6.37 have cputime_to_msecs, but not usecs. */
+#elif defined(cputime_to_msecs)
+#define cputime_to_usecs(__ct)		(cputime_to_msecs(__ct) * 1000ULL)
+
+/* RHEL4 (2.6.9) kernels have neither, but it's just jiffies anyway. */
+#else
 #define cputime_to_msecs(__ct)		jiffies_to_msecs(__ct)
+#define cputime_to_usecs(__ct)		jiffies_to_usecs(__ct)
 #endif
 %}
 
@@ -100,6 +113,15 @@ function cputime_to_msecs:long (cputime:long)
 %}
 
 /**
+ * sfunction cputime_to_usecs - Translates the given cputime into microseconds
+ * @cputime: Time to convert to microseconds.
+ */
+function cputime_to_usecs:long (cputime:long)
+%{ /* pure */ /* unprivileged */
+  STAP_RETVALUE = cputime_to_usecs (STAP_ARG_cputime);
+%}
+
+/**
  * sfunction msecs_to_string - Human readable string for given milliseconds
  *
  * @msecs: Number of milliseconds to translate.
@@ -116,6 +138,25 @@ function msecs_to_string:string (msecs:long)
   mins = secs / 60;
   secs = secs % 60;
   return sprintf("%dm%d.%.3ds", mins, secs, ms);
+}
+
+/**
+ * sfunction usecs_to_string - Human readable string for given microseconds
+ *
+ * @usecs: Number of microseconds to translate.
+ *
+ * Description: Returns a string representing the number of
+ * milliseconds as a human readable string consisting of "XmY.ZZZZZZs",
+ * where X is the number of minutes, Y is the number of seconds and
+ * ZZZZZZ is the number of microseconds.
+ */
+function usecs_to_string:string (usecs:long)
+{
+  us = usecs % 1000000;
+  secs = usecs / 1000000;
+  mins = secs / 60;
+  secs = secs % 60;
+  return sprintf("%dm%d.%.6ds", mins, secs, us);
 }
 
 /**
