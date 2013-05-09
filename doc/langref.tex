@@ -1442,6 +1442,13 @@ The last two probe points work analogously, but refer to Java
 processes by PID. (PIDs for already running processes can be obtained
 using the \texttt{jps} utility.)
 
+Context variables defined within java probes include \verb+$provider+
+(which identifies the class providing the definition of the triggered
+method) and \verb+$name+ (which gives the signature of the method).
+Arguments to the method can be accessed using context variables
+\verb+$arg1$+ through \verb+$arg10+, for up to the first 10 arguments
+of a method.
+
 \subsection{PROCFS probes}
 \index{PROCFS probes}
 These probe points allow procfs pseudo-files in

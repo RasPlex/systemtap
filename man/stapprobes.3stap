@@ -857,6 +857,18 @@ java(PID).class("CLASSNAME").method("PATTERN").return
 (PIDs for an already running process can be obtained using the
 .IR jps (1)
 utility.)
+.PP
+Context variables defined within java probes include
+.IR $provider
+(which identifies the class providing the definition of the triggered
+method) and
+.IR $name
+(which gives the signature of the method). Arguments to the method can be
+accessed using context variables
+.IR $arg1
+through
+.IR $arg10
+(for up to the first 10 arguments of a method).
 
 .SS PROCFS
 
