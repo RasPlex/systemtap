@@ -1,5 +1,14 @@
 * What's new in version 2.2
 
+- Support has been added for probing Java methods using Byteman as a
+  backend. Java method probes can target method entries, returns, or
+  specific statements in the method as specified by line number.
+
+  probe java("org.my.MyApp").class("^java.lang.Object").method("foo(int)") { ...}
+
+  See java/README for information on how to set up Java/Byteman
+  functionality.
+
 - The dyninst backend has improved in several aspects:
   - Setting custom values for global variables is now supported, both
     with -G when compiling a script, and from the stapdyn command line
