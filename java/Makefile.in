@@ -59,14 +59,17 @@ bin_PROGRAMS =
 noinst_PROGRAMS = $(am__EXEEXT_1)
 @HAVE_SELINUX_TRUE@am__append_1 = $(selinux_CFLAGS)
 
+# only install if we need Byteman support!
+@HAVE_JAVA_TRUE@am__append_2 = stapbm
+
 # build libHelperSDT.so
-@HAVE_JAVA_TRUE@am__append_2 = libHelperSDT.so
+@HAVE_JAVA_TRUE@am__append_3 = libHelperSDT.so
 
 # build HelperSDT.class
 
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
-@HAVE_JAVA_TRUE@am__append_3 = HelperSDT.class HelperSDT.jar
 @HAVE_JAVA_TRUE@am__append_4 = HelperSDT.class HelperSDT.jar
+@HAVE_JAVA_TRUE@am__append_5 = HelperSDT.class HelperSDT.jar
 subdir = java
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -323,7 +326,7 @@ JAR = jar
 
 # Arrange for the top-level git_version.h to be regenerated at every "make".
 BUILT_SOURCES = git_version.stamp
-CLEANFILES = $(am__append_4)
+CLEANFILES = $(am__append_5)
 
 #AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
 AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
@@ -332,8 +335,8 @@ AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' \
 	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"' \
 	-fPIC -shared $(am__append_1)
-noinst_DATA = $(am__append_3)
-pkglibexec_SCRIPTS = stapbm
+noinst_DATA = $(am__append_4)
+pkglibexec_SCRIPTS = $(am__append_2)
 @HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
 @HAVE_JAVA_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
 @HAVE_JAVA_TRUE@libHelperSDT_so_LDFLAGS = -lc

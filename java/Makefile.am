@@ -28,7 +28,7 @@ AM_CFLAGS += -fPIC -shared
 bin_PROGRAMS = 
 noinst_DATA =
 noinst_PROGRAMS =
-pkglibexec_SCRIPTS = stapbm
+pkglibexec_SCRIPTS = 
 
 if HAVE_SELINUX
 AM_CFLAGS += $(selinux_CFLAGS)
@@ -36,6 +36,9 @@ AM_LDFLAGS = $(selinux_LIBS)
 endif #HAVE_SELINUX
 
 if HAVE_JAVA
+
+# only install if we need Byteman support!
+pkglibexec_SCRIPTS += stapbm
 
 # build libHelperSDT.so
 noinst_PROGRAMS += libHelperSDT.so
