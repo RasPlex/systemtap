@@ -41,7 +41,7 @@ function task_utime:long ()
 %}
 
 /**
- * sfunction task_utime - User time of the given task
+ * sfunction task_utime_tid - User time of the given task
  *
  * @tid: Thread id of the given task
  *
