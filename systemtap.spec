@@ -46,6 +46,7 @@ Release: 1%{?dist}
 # systemtap-initscript   /etc/init.d/systemtap, req:systemtap
 # systemtap-sdt-devel    /usr/include/sys/sdt.h /usr/bin/dtrace
 # systemtap-testsuite    /usr/share/systemtap/testsuite*, req:systemtap, req:sdt-devel
+# systemtap-runtime-java libHelperSDT.so, HelperSDT.jar, stapbm, req:-runtime
 #
 # Typical scenarios:
 #
@@ -112,8 +113,7 @@ BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 BuildRequires: emacs
 %endif
 %if %{with_java}
-# TODOXXX BuildRequires: java-1.6.0-openjdk OR java-1.7.0-openjdk
-# TODOXXX BuildRequires: byteman
+BuildRequires: jpackage-utils java-devel
 %endif
 
 # Install requirements
@@ -263,6 +263,22 @@ Requires: /usr/lib/libc.so
 This package includes the dejagnu-based systemtap stress self-testing
 suite.  This may be used by system administrators to thoroughly check
 systemtap on the current system.
+
+
+%if %{with_java}
+%package runtime-java
+Summary: Systemtap Java Runtime Support
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: systemtap-runtime = %{version}-%{release}
+Requires: byteman
+
+%description runtime-java
+This package includes support files needed to run systemtap scripts
+that probe Java processes running on the OpenJDK 1.6 and OpenJDK 1.7
+runtimes using Byteman.
+%endif
 
 
 # ------------------------------------------------------------------------
@@ -569,7 +585,7 @@ exit 0
 
 %if %{with_java}
 
-%triggerin runtime -- java-1.7.0-openjdk, java-1.6.0-openjdk
+%triggerin runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
     arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
@@ -578,7 +594,7 @@ for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
     done
 done
 
-%triggerun runtime -- java-1.7.0-openjdk, java-1.6.0-openjdk
+%triggerun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
     arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
@@ -587,7 +603,7 @@ for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
     done
 done
 
-%triggerpostun runtime -- java-1.7.0-openjdk, java-1.6.0-openjdk
+%triggerpostun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 # Restore links for any JDKs remaining after a package removal:
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
     arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
@@ -653,6 +669,10 @@ done
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
 %doc README README.unprivileged AUTHORS NEWS COPYING
+%if %{with_java}
+%dir %{_libexecdir}/systemtap
+%{_libexecdir}/systemtap/libHelperSDT_*.so
+%endif
 %if %{with_bundled_elfutils}
 %dir %{_libdir}/systemtap
 %{_libdir}/systemtap/lib*.so*
@@ -676,11 +696,6 @@ done
 %dir %{_libexecdir}/systemtap
 %{_libexecdir}/systemtap/stapio
 %{_libexecdir}/systemtap/stap-authorize-cert
-%if %{with_java}
-%{_libexecdir}/systemtap/libHelperSDT_*.so
-%{_libexecdir}/systemtap/HelperSDT.jar
-%{_libexecdir}/systemtap/stapbm
-%endif
 %if %{with_crash}
 %dir %{_libdir}/systemtap
 %{_libdir}/systemtap/staplog.so*
@@ -742,6 +757,15 @@ done
 %defattr(-,root,root)
 %dir %{_datadir}/systemtap
 %{_datadir}/systemtap/testsuite
+
+
+%if %{with_java}
+%files runtime-java
+%dir %{_libexecdir}/systemtap
+%{_libexecdir}/systemtap/libHelperSDT_*.so
+%{_libexecdir}/systemtap/HelperSDT.jar
+%{_libexecdir}/systemtap/stapbm
+%endif
 
 
 # ------------------------------------------------------------------------
