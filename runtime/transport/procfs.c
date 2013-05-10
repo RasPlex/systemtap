@@ -104,7 +104,7 @@ static int _stp_register_ctl_channel_fs(void)
 #endif
 	struct proc_dir_entry *de;
 
-	if (!_stp_mkdir_proc_module())
+	if (_stp_mkdir_proc_module())
 		goto err0;
 
 #ifdef STP_BULKMODE
