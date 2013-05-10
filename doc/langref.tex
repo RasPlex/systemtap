@@ -1656,7 +1656,7 @@ It is recommended to use the tapset probe \verb+timer.profile+ rather
 than \verb+timer.profile.tick+. This probe point behaves identically
 to \verb+timer.profile.tick+ when the underlying functionality is
 available, and falls back to using \verb+perf.sw.cpu_clock+ on some
-recent kernels which lack the profile timer facility entirely.
+recent kernels which lack the corresponding profile timer facility.
 
 The following is an example of timer usage.
 
