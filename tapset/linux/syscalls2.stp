@@ -1166,9 +1166,9 @@ probe syscall.rt_sigaction32.return = kernel.function("sys32_rt_sigaction").retu
 probe syscall.rt_sigpending = kernel.function("sys_rt_sigpending").call ?
 {
 	name = "rt_sigpending"
-	set_uaddr = $set
+	set_uaddr = @choose_defined($uset, $set)
 	sigsetsize = $sigsetsize
-	argstr = sprintf("%p, %d", $set, $sigsetsize)
+	argstr = sprintf("%p, %d", set_uaddr, $sigsetsize)
 }
 probe syscall.rt_sigpending.return = kernel.function("sys_rt_sigpending").return ?
 {
