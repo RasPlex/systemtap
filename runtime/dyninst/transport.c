@@ -323,7 +323,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 	return NULL;
 }
 
-void _stp_dyninst_transport_signal_exit(void)
+static void _stp_dyninst_transport_signal_exit(void)
 {
 	__stp_dyninst_transport_queue_add(STP_DYN_EXIT, 0, 0, 0);
 }

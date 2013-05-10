@@ -372,7 +372,7 @@ int stp_dyninst_session_init(void)
     return systemtap_module_init();
 }
 
-int stp_dyninst_session_init_finished(void)
+static int stp_dyninst_session_init_finished(void)
 {
     stp_dyninst_master = getpid();
     _stp_shm_finalize();
