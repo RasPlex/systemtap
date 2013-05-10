@@ -81,11 +81,9 @@ static struct file_operations stm_fops_cmd = {
 
 int init_module(void)
 {
-
-	stm_ctl = create_proc_entry ("stap_test_cmd", 0666, NULL);
+	stm_ctl = proc_create ("stap_test_cmd", 0666, NULL, &stm_fops_cmd);
 	if (stm_ctl == NULL) 
-		return -1;;
-	stm_ctl->proc_fops = &stm_fops_cmd;
+		return -1;
 	return 0;
 }
 
