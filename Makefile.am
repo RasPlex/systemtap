@@ -52,7 +52,7 @@ stap_SOURCES += re2c-migrate/stapregex.cxx \
 	re2c-migrate/re2c-regex.cxx re2c-migrate/re2c-emit.cxx \
 	re2c-migrate/re2c-dfa.cxx re2c-migrate/re2c-globals.cxx
 noinst_HEADERS = sdt_types.h
-stap_LDADD = @stap_LIBS@ @sqlite3_LIBS@ @LIBINTL@
+stap_LDADD = @stap_LIBS@ @sqlite3_LIBS@ @LIBINTL@ -lpthread
 stap_DEPENDENCIES =
 endif
 

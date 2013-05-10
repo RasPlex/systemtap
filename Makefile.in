@@ -508,7 +508,7 @@ oldinclude_HEADERS = includes/sys/sdt.h includes/sys/sdt-config.h
 @BUILD_TRANSLATOR_TRUE@	$(am__append_10)
 @BUILD_TRANSLATOR_TRUE@noinst_HEADERS = sdt_types.h
 @BUILD_TRANSLATOR_TRUE@stap_LDADD = @stap_LIBS@ @sqlite3_LIBS@ \
-@BUILD_TRANSLATOR_TRUE@	@LIBINTL@ $(am__append_9) \
+@BUILD_TRANSLATOR_TRUE@	@LIBINTL@ -lpthread $(am__append_9) \
 @BUILD_TRANSLATOR_TRUE@	$(am__append_14)
 @BUILD_TRANSLATOR_TRUE@stap_DEPENDENCIES = $(am__append_20)
 
