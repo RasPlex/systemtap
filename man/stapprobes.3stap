@@ -293,11 +293,18 @@ disabled facility, resulting in error \-16 (EBUSY) during probe
 registration.
 
 .SAMPLE
-timer.profile
+timer.profile.tick
 .ESAMPLE
 
 Full context information of the interrupted process is available, making
 this probe suitable for a time-based sampling profiler.
+.PP
+It is recommended to use the tapset probe
+.IR timer.profile
+rather than timer.profile.tick. This probe point behaves identically
+to timer.profile.tick when the underlying functionality is available,
+and falls back to using perf.sw.cpu_clock on some recent kernels which
+lack the corresponding profile timer facility.
 
 .SS DWARF
 

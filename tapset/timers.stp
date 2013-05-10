@@ -11,4 +11,11 @@
 // however, timer.profile needs to fall back to perf in certain
 // circumstances.
 
+/**
+ * probe timer.profile - timer.profile.tick with a perf fallback on recent kernels
+ *
+ * This probe behaves identically to timer.profile.tick, except on
+ * some recent kernels which lack the underlying profile timer
+ * functionality. In those cases, timer.profile falls back to using
+ * perf.sw.cpu_clock. */
 probe timer.profile = timer.profile.tick ! , perf.sw.cpu_clock.sample(1000000) {}

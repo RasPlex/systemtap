@@ -1646,11 +1646,17 @@ at each system tick. This probe takes no parameters, as follows.
 
 \begin{vindent}
 \begin{verbatim}
-timer.profile
+timer.profile.tick
 \end{verbatim}
 \end{vindent}
 Full context information of the interrupted process is available, making
 this probe suitable for implementing a time-based sampling profiler.
+
+It is recommended to use the tapset probe \verb+timer.profile+ rather
+than \verb+timer.profile.tick+. This probe point behaves identically
+to \verb+timer.profile.tick+ when the underlying functionality is
+available, and falls back to using \verb+perf.sw.cpu_clock+ on some
+recent kernels which lack the profile timer facility entirely.
 
 The following is an example of timer usage.
 
