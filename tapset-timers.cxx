@@ -517,6 +517,15 @@ timer_builder::build(systemtap_session & sess,
       if (sess.runtime_usermode_p())
 	throw semantic_error (_("profile timer probes not available with the dyninst runtime"));
 
+      /* As the latest mechanism for timer hook support has been
+         removed, we need to bail explicitly if the corresponding
+         symbols are missing: */
+      if ((sess.kernel_exports.find("register_timer_hook") == sess.kernel_exports.end()
+           || sess.kernel_exports.find("unregister_timer_hook") == sess.kernel_exports.end())
+          && (sess.kernel_exports.find("register_profile_notifier") == sess.kernel_exports.end()
+              || sess.kernel_exports.find("unregister_profile_notifier") == sess.kernel_exports.end()))
+        throw semantic_error (_("profiling timer support (register_timer_hook) not found in kernel!"));
+
       sess.unwindsym_modules.insert ("kernel");
       finished_results.push_back
         (new profile_derived_probe(sess, base, location));
@@ -668,10 +677,12 @@ register_tapset_timers(systemtap_session& s)
   // it so that profile probes are allowed for all.
   if (!s.runtime_usermode_p()) {
     root->bind("profile")
+      ->bind("tick")
       ->bind(builder);
   }
   else {
     root->bind("profile")
+      ->bind("tick")
       ->bind_privilege(pr_all)
       ->bind(builder);
   }
