@@ -1,6 +1,6 @@
 // syscalls tapset part 1 [A-M]
 // Copyright (C) 2005 IBM Corp.
-// Copyright (C) 2005, 2006, 2007, 2010 Red Hat Inc.
+// Copyright (C) 2005, 2006, 2007, 2010, 2013 Red Hat Inc.
 // Copyright (C) 2007 Quentin Barnes.
 //
 // This file is part of systemtap, and is free software.  You can
@@ -3073,16 +3073,18 @@ probe syscall.msgrcv.return = kernel.function("sys_msgrcv").return ?
 #
 # long compat_sys_msgrcv(int first, int second, int msgtyp, int third,
 #			int version, void __user *uptr)
+# COMPAT_SYSCALL_DEFINE5(msgrcv, int, msqid, compat_uptr_t, msgp,
+#		       compat_ssize_t, msgsz, long, msgtyp, int, msgflg)
 #
 probe syscall.compat_sys_msgrcv = kernel.function("compat_sys_msgrcv").call ?
 {
 	name = "compat_sys_msgrcv"
-	msqid = $first
-	msgp_uaddr = $uptr
-	msgsz = $second
+	msqid = @choose_defined($msqid, $first)
+	msgp_uaddr = @choose_defined($msgp, $uptr)
+	msgsz = @choose_defined($msgsz, $second)
 	msgtyp = $msgtyp
-	msgflg = $third
-	argstr = sprintf("%d, %p, %d, %d", $first, $uptr, $second, $third)
+	msgflg = @choose_defined($msgflg, $third)
+	argstr = sprintf("%d, %p, %d, %d", msqid, msgp_uaddr, msgsz, msgflg)
 }
 probe syscall.compat_sys_msgrcv.return = kernel.function("compat_sys_msgrcv").return ?
 {
@@ -3113,15 +3115,17 @@ probe syscall.msgsnd.return = kernel.function("sys_msgsnd").return ?
 # compat_sys_msgsnd ________________________________________
 #
 # long compat_sys_msgsnd(int first, int second, int third, void __user *uptr)
+# COMPAT_SYSCALL_DEFINE4(msgsnd, int, msqid, compat_uptr_t, msgp,
+#		       compat_ssize_t, msgsz, int, msgflg)
 #
 probe syscall.compat_sys_msgsnd = kernel.function("compat_sys_msgsnd").call ?
 {
 	name = "compat_sys_msgsnd"
-	msqid = $first
-	msgp_uaddr = $uptr
-	msgsz = $second
-	msgflg = $third
-	argstr = sprintf("%d, %p, %d, %d", $first, $uptr, $second, $third)
+	msqid = @choose_defined($msqid, $first)
+	msgp_uaddr = @choose_defined($msgp, $uptr)
+	msgsz = @choose_defined($msgsz, $second)
+	msgflg = @choose_defined($msgflg, $third)
+	argstr = sprintf("%d, %p, %d, %d", msqid, msgp_uaddr, msgsz, msgflg)
 }
 probe syscall.compat_sys_msgsnd.return = kernel.function("compat_sys_msgsnd").return ?
 {

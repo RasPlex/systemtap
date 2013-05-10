@@ -27,6 +27,9 @@
   - The 'regs' variable in the 'syscall.sigaltstack',
     'nd_syscall.sigaltstack', 'syscall.fork', and 'nd_syscall.fork'
     probe aliases.
+  - The 'first', 'second', 'third', and 'uptr_uaddr' variables in the
+    'syscall.compat_sys_shmat' and 'nd_syscall.compat_sys_shmat' probe
+    aliases.
 
 - The folowing tapset functions are deprecated in release 2.2 and will
   be removed in release 2.3:

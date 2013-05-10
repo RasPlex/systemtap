@@ -1,6 +1,6 @@
 // syscalls tapset part 2 [N-Z]
 // Copyright (C) 2005 IBM Corp.
-// Copyright (C) 2005, 2006, 2007, 2010 Red Hat Inc.
+// Copyright (C) 2005, 2006, 2007, 2010, 2013 Red Hat Inc.
 // Copyright (C) 2007 Quentin Barnes.
 //
 // This file is part of systemtap, and is free software.  You can
@@ -1794,15 +1794,15 @@ probe nd_syscall.semctl.return = kprobe.function("sys_semctl").return ?
 probe nd_syscall.compat_sys_semctl = kprobe.function("compat_sys_semctl") ?
 {
 	name = "compat_sys_semctl"
-	// semid = $first
-	// semnum = $second
-	// cmd = $third
-	// argstr = sprintf("%d, %d, %d, %p", $first, $second, $third, $uptr)
+	// semid = @choose_defined($semid, $first)
+	// semnum = @choose_defined($semnum, $second)
+	// cmd = @choose_defined($cmd, $third)
+	// argstr = sprintf("%d, %d, %s", semid, semnum, _semctl_cmd(cmd))
 	// NB: no asmlinkage()
 	semid = int_arg(1)
 	semnum = int_arg(2)
 	cmd =  int_arg(3)
-	argstr = sprintf("%d, %d, %d, %p", int_arg(1), int_arg(2), int_arg(3), pointer_arg(4))
+	argstr = sprintf("%d, %d, %s", semid, semnum, _semctl_cmd(cmd))
 }
 probe nd_syscall.compat_sys_semctl.return = kprobe.function("compat_sys_semctl").return ?
 {
@@ -2774,21 +2774,41 @@ probe nd_syscall.shmat.return = kprobe.function("sys_shmat").return ?
 #
 # long compat_sys_shmat(int first, int second, compat_uptr_t third,
 #			int version, void __user *uptr)
+# COMPAT_SYSCALL_DEFINE3(shmat, int, shmid, compat_uptr_t, shmaddr,
+#			 int, shmflg)
 #
 probe nd_syscall.compat_sys_shmat = kprobe.function("compat_sys_shmat") ?
 {
 	name = "compat_sys_shmat"
-	// first = $first
-	// second = $second
-	// third = $third
-	// uptr_uaddr = $uptr
-	// argstr = sprintf("%d, %d, %d, %d, %p", $first, $second, $third, $version, $uptr)
+	// %( systemtap_v <= "2.3" %?
+	// first = @choose_defined($shmid, $first)
+	// second = @choose_defined($shmflg, $second)
+	// third = @choose_defined($third, 0)
+	// uptr_uaddr = @choose_defined($shmaddr, $uptr)
+	// %)
+	// shmid = @choose_defined($shmid, $first)
+	// shmaddr_uaddr = @choose_defined($shmaddr, $uptr)
+	// shmflg = @choose_defined($shmflg, $second)
+	// argstr = sprintf("%d, %p, %s", shmid, shmaddr_uaddr,
+	// 		 _shmat_flags_str(shmflg))
 	// no asmlinkage
+
+%( systemtap_v <= "2.2" %?
 	first = int_arg(1)
 	second = int_arg(2)
 	third = u32_arg(3)
 	uptr_uaddr = pointer_arg(5)
-	argstr = sprintf("%d, %d, %d, %d, %p", first, second, third, int_arg(4), uptr_uaddr)
+%)
+	shmid = int_arg(1)
+%( kernel_v > "3.9" || CONFIG_ARCH_WANT_OLD_COMPAT_IPC == "y" %?
+	shmflg = int_arg(3)
+	shmaddr_uaddr = pointer_arg(2)
+%:
+	shmflg = int_arg(2)
+	shmaddr_uaddr = pointer_arg(5)
+%)
+	argstr = sprintf("%d, %p, %s", shmid, shmaddr_uaddr,
+	 		 _shmat_flags_str(shmflg))
 }
 probe nd_syscall.compat_sys_shmat.return = kprobe.function("compat_sys_shmat").return ?
 {

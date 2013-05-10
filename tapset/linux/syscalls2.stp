@@ -1,6 +1,6 @@
 // syscalls tapset part 2 [N-Z]
 // Copyright (C) 2005 IBM Corp.
-// Copyright (C) 2005, 2006, 2007, 2010 Red Hat Inc.
+// Copyright (C) 2005, 2006, 2007, 2010, 2013 Red Hat Inc.
 // Copyright (C) 2007 Quentin Barnes.
 //
 // This file is part of systemtap, and is free software.  You can
@@ -1524,14 +1524,15 @@ probe syscall.semctl.return = kernel.function("sys_semctl").return ?
 # compat_sys_semctl ________________________________________
 #
 # long compat_sys_semctl(int first, int second, int third, void __user *uptr)
+# COMPAT_SYSCALL_DEFINE4(semctl, int, semid, int, semnum, int, cmd, int, arg)
 #
 probe syscall.compat_sys_semctl = kernel.function("compat_sys_semctl").call ?
 {
 	name = "compat_sys_semctl"
-	semid = $first
-	semnum = $second
-	cmd = $third
-	argstr = sprintf("%d, %d, %d, %p", $first, $second, $third, $uptr)
+	semid = @choose_defined($semid, $first)
+	semnum = @choose_defined($semnum, $second)
+	cmd = @choose_defined($cmd, $third)
+	argstr = sprintf("%d, %d, %s", semid, semnum, _semctl_cmd(cmd))
 }
 probe syscall.compat_sys_semctl.return = kernel.function("compat_sys_semctl").return ?
 {
@@ -2300,15 +2301,23 @@ probe syscall.shmat.return = kernel.function("sys_shmat").return ?
 #
 # long compat_sys_shmat(int first, int second, compat_uptr_t third,
 #			int version, void __user *uptr)
+# COMPAT_SYSCALL_DEFINE3(shmat, int, shmid, compat_uptr_t, shmaddr,
+#			 int, shmflg)
 #
 probe syscall.compat_sys_shmat = kernel.function("compat_sys_shmat").call ?
 {
 	name = "compat_sys_shmat"
-	first = $first
-	second = $second
-	third = $third
-	uptr_uaddr = $uptr
-	argstr = sprintf("%d, %d, %d, %d, %p", $first, $second, $third, $version, $uptr)
+%( systemtap_v <= "2.2" %?
+	first = @choose_defined($shmid, $first)
+	second = @choose_defined($shmflg, $second)
+	third = @choose_defined($third, 0)
+	uptr_uaddr = @choose_defined($shmaddr, $uptr)
+%)
+	shmid = @choose_defined($shmid, $first)
+	shmaddr_uaddr = @choose_defined($shmaddr, $uptr)
+	shmflg = @choose_defined($shmflg, $second)
+	argstr = sprintf("%d, %p, %s", shmid, shmaddr_uaddr,
+			 _shmat_flags_str(shmflg))
 }
 probe syscall.compat_sys_shmat.return =	kernel.function("compat_sys_shmat").return ?
 {
