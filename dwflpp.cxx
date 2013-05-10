@@ -2473,13 +2473,13 @@ dwflpp::print_members(Dwarf_Die *vardie, ostream &o, set<string> &dupes)
     {
     case 1:				// No children.
       o << _F("%s is empty", dwarf_type_name(vardie).c_str());
-      break;
+      return;
 
     case -1:				// Error.
     default:				// Shouldn't happen.
       o << dwarf_type_name(vardie)
         << ": " << dwarf_errmsg (-1);
-      break;
+      return;
 
     case 0:				// Success.
       break;
