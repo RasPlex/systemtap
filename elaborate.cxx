@@ -112,17 +112,17 @@ derived_probe::printsig_nested (ostream& o) const
 
 
 void
-derived_probe::collect_derivation_chain (std::vector<probe*> &probes_list)
+derived_probe::collect_derivation_chain (std::vector<probe*> &probes_list) const
 {
-  probes_list.push_back(this);
+  probes_list.push_back(const_cast<derived_probe*>(this));
   base->collect_derivation_chain(probes_list);
 }
 
 
 void
-derived_probe::collect_derivation_pp_chain (std::vector<probe_point*> &pp_list)
+derived_probe::collect_derivation_pp_chain (std::vector<probe_point*> &pp_list) const
 {
-  pp_list.push_back(base_pp);
+  pp_list.push_back(const_cast<probe_point*>(base_pp));
   base->collect_derivation_pp_chain(pp_list);
 }
 
@@ -133,8 +133,9 @@ derived_probe::derived_locations ()
   ostringstream o;
   vector<probe_point*> reference_point;
   collect_derivation_pp_chain(reference_point);
-  for(unsigned i=0; i<reference_point.size(); ++i)
-    o << " from: " << reference_point[i]->str(false); // no ?,!,etc
+  if (reference_point.size() > 0)
+    for(unsigned i=1; i<reference_point.size(); ++i)
+      o << " from: " << reference_point[i]->str(false); // no ?,!,etc
   return o.str();
 }
 
@@ -144,8 +145,8 @@ derived_probe::sole_location () const
 {
   if (locations.size() == 0 || locations.size() > 1)
     throw semantic_error (_N("derived_probe with no locations",
-                                   "derived_probe with no locations",
-                                   locations.size()), this->tok);
+                             "derived_probe with no locations",
+                             locations.size()), this->tok);
   else
     return locations[0];
 }
@@ -154,6 +155,22 @@ derived_probe::sole_location () const
 probe_point*
 derived_probe::script_location () const
 {
+  // This feeds function::pn() in the tapset, which is documented as the
+  // script-level probe point expression, *after wildcard expansion*.  If
+  // it were not for wildcard stuff, we'd just return the last item in the
+  // derivation chain.  But alas ... we need to search for the last one
+  // that doesn't have a * in the textual representation.  Heuristics, eww.
+  vector<probe_point*> chain;
+  collect_derivation_pp_chain (chain);
+
+  for (int i=chain.size()-1; i>=0; i--)
+    {
+      string pp_printed = lex_cast(* chain[i]);
+      if (pp_printed.find('*') == string::npos)
+        return chain[i];
+    }
+
+  // else fall back to old logic
   // XXX PR14297 make this more accurate wrt complex wildcard expansions
   const probe* p = almost_basest();
   probe_point *a = p->get_alias_loc();
@@ -803,6 +820,7 @@ probe::create_alias(probe_point* l, probe_point* a)
   p->tok = tok;
   p->locations.push_back(l);
   p->body = body;
+  p->base = this;
   p->privileged = privileged;
   p->epilogue_style = false;
   return new alias_derived_probe(this, l, p);
@@ -953,6 +971,9 @@ derive_probes (systemtap_session& s,
       assert_no_interrupts();
 
       probe_point *loc = p->locations[i];
+
+      if (s.verbose > 4)
+        clog << "derive-probes " << *loc << endl;
 
       try
         {

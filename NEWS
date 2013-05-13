@@ -9,6 +9,9 @@
   See java/README for information on how to set up Java/Byteman
   functionality.
 
+- The pn() tapset function's return value may be slightly different
+  for complicated web of wildcarded/aliased probes.
+
 - The dyninst backend has improved in several aspects:
 
   - Setting custom values for global variables is now supported, both

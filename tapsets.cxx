@@ -2153,7 +2153,7 @@ query_one_library (const char *library, dwflpp & dw,
           derived_comps.push_back(*it);
       probe_point* derived_loc = new probe_point(*specific_loc);
       derived_loc->components = derived_comps;
-      probe *new_base = base_probe->create_alias(derived_loc, specific_loc);
+      probe *new_base = new probe (base_probe, derived_loc);
       derive_probes(dw.sess, new_base, results);
       if (dw.sess.verbose > 2)
         clog << _("module=") << library_path;
@@ -2215,7 +2215,7 @@ query_one_plt (const char *entry, long addr, dwflpp & dw,
           derived_comps.push_back(*it);
       probe_point* derived_loc = new probe_point(*specific_loc);
       derived_loc->components = derived_comps;
-      probe *new_base = base_probe->create_alias(derived_loc, specific_loc);
+      probe *new_base = new probe (base_probe, derived_loc);
       string e = string(entry);
       plt_expanding_visitor pltv (e);
       pltv.replace (new_base->body);
@@ -6574,7 +6574,7 @@ sdt_query::convert_location ()
 
   probe_point* derived_loc = new probe_point(*specific_loc);
   derived_loc->components = derived_comps;
-  return base_probe->create_alias(derived_loc, specific_loc);
+  return new probe (base_probe, derived_loc);
 }
 
 
@@ -6683,7 +6683,7 @@ dwarf_builder::build(systemtap_session & sess,
                   ppc->tok = location->components[0]->tok; // overwrite [0] slot, pattern matched above
                   pp->components[0] = ppc;
 
-                  probe* new_probe = new probe (*base, pp);
+                  probe* new_probe = new probe (base, pp);
 
                   // We override "optional = true" here, as if the
                   // wildcarded probe point was given a "?" suffix.
@@ -6784,7 +6784,7 @@ dwarf_builder::build(systemtap_session & sess,
                   ppc->tok = location->components[0]->tok; // overwrite [0] slot, pattern matched above
                   pp->components[0] = ppc;
 
-                  probe* new_probe = new probe (*base, pp);
+                  probe* new_probe = new probe (base, pp);
 
                   derive_probes (sess, new_probe, finished_results);
 

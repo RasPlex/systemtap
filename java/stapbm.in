@@ -1,0 +1,190 @@
+#!/bin/bash
+
+# $1 - install/uninstall
+# $2 - PID/unique name
+# $3 - RULE name
+# $4 - class
+# $5 - method
+# $6 - number of args
+# $7 - entry/exit/line
+
+exec 1>&2  # redirect byteman/etc. tracing output to stderr, for easier filtering
+
+if [ $# -ne 7 ]; then
+    echo "need exactly seven arguments"
+    exit 1
+fi
+
+arg_command=$1
+arg_jvmpid=$2
+arg_rulename=$3
+arg_class=$4
+arg_method=$5
+arg_argcount=$6
+arg_probetype=$7
+
+SYSTEMTAP_DIR=${SYSTEMTAP_DIR-$HOME/.systemtap}
+BYTEMAN_HOME=${BYTEMAN_HOME-/usr/share/java/byteman}
+JAVA_HOME=${JAVA_HOME-/usr/lib/jvm/java}
+
+
+# the byteman and byteman-submit jars should be in ${BYTEMAN_HOME}/lib
+BYTEMAN_JAR=${BYTEMAN_HOME}/byteman.jar
+if [ ! -r ${BYTEMAN_JAR} ]; then
+    echo "Missing $BYTEMAN_JAR" 
+    exit 1
+fi
+
+BYTEMAN_SUBMIT_JAR=${BYTEMAN_HOME}/byteman-submit.jar
+if [ ! -r ${BYTEMAN_SUBMIT_JAR} ]; then
+    echo "Missing $BYTEMAN_SUBMIT_JAR"
+    exit 1
+fi
+
+BYTEMAN_INSTALL_JAR=${BYTEMAN_HOME}/byteman-install.jar
+if [ ! -r ${BYTEMAN_INSTALL_JAR} ]; then
+    echo "Missing $BYTEMAN_INSTALL_JAR"
+    exit 1
+fi
+
+#BYTEMAN_INSTALL_OPTS=${BYTEMAN_INSTALL_OPTS--Dorg.jboss.byteman.transform.all=true -Dorg.jboss.byteman.verbose}
+BYTEMAN_INSTALL_OPTS=${BYTEMAN_INSTALL_OPTS--Dorg.jboss.byteman.transform.all=true}
+
+# XXX: need a verbosity indication
+
+
+TOOLS_JAR=${JAVA_HOME}/lib/tools.jar
+if [ ! -f ${TOOLS_JAR} ]; then
+    echo "Missing $TOOLS_JAR"
+    exit 1
+fi
+
+# resolve $*prefix fully
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+pkglibexecdir=@libexecdir@/@PACKAGE@
+pkglibexecdir=`eval echo $pkglibexecdir`
+pkglibexecdir=`eval echo $pkglibexecdir`
+
+num=`ls -1 ${JAVA_HOME}/jre/lib/ext/HelperSDT.jar ${JAVA_HOME}/jre/lib/*/libHelperSDT_*.so 2>/dev/null | wc -l`
+if [ $num -lt 2 ]; then
+    echo "Missing HelperSDT JNI class/shared library"
+    echo "Install them like this, as root:"
+    echo ""
+    echo "for so in ${pkglibexecdir}/libHelperSDT_*.so; do"
+    echo '  arch=`basename $so | cut -f2 -d_ | cut -f1 -d.`'
+    echo "  ln -sf ${pkglibexecdir}/libHelperSDT_"'${arch}'".so ${JAVA_HOME}/jre/lib/"'${arch}'"/"
+    echo "done"
+    echo "ln -sf ${pkglibexecdir}/HelperSDT.jar ${JAVA_HOME}/jre/lib/ext/"
+    exit 1
+fi
+
+flagdir="$SYSTEMTAP_DIR/java"
+mkdir -p $flagdir
+
+# Find our target jvm pid.  Filter out byteman and jps itself, to
+# avoid possible infinite recursion (whereby stap recognizes the
+# impending start of those jvm's and sends a new stapbm on a wild
+# goose chase).
+target_pid=`jps -l | grep $arg_jvmpid | cut -f1 -d" " | head -1`
+if [ "x$target_pid" = "x" ]; then
+    # echo "JVMID $arg_jvmpid not found" # XXX: verbose
+    exit 1
+fi
+target_pid=`jps -l | grep $arg_jvmpid | egrep -v 'org.jboss.byteman|sun.tools.jps' | cut -f1 -d" " | head -1`
+if [ "x$target_pid" = "x" ]; then
+    exit 0   # silently quit; ass-u-me unintended recursion
+fi
+
+# Our target jvm may not have the byteman agent installed yet.  Let's do
+# that first.  We use a signal file in $flagdir to show that the
+# JVM is ready for further bytemanning without a prior setup step,
+# and include in it the designated byteman agent listening-port number.
+#
+byteman_installed_portfile=$flagdir/`hostname`-${target_pid}-bm
+
+exec 200>>$byteman_installed_portfile # open/create lock file
+flock -x 200  # exclusive-lock it
+
+if [ -s $byteman_installed_portfile ]; then
+    bmport=`cat $byteman_installed_portfile`
+    # echo "Byteman agent reused for java pid $target_pid, port $bmport"
+    # XXX: liveness-check the port; bmsubmit with no argument just lists current rules
+    # if fails, delete the _portfile and retry everything
+else
+    # bmport=9091
+    bmport=`expr 9090 + $RANDOM % 10000`
+    existing=`netstat -atn | awk '{print $4}' | grep ':'$bmport'$'`
+    if [ "x$existing" != "x" ]; then
+        echo "Byteman port $bmport already in use, retrying."
+        exec "$@"
+    fi
+    java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} org.jboss.byteman.agent.install.Install -b -p $bmport -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid >/dev/null 2>&1 # XXX: verbosity
+    if [ $? -ne 0 ]; then
+        echo "Byteman agent failed to install for java pid $target_pid, port $bmport"
+        exit 1
+    fi
+    echo $bmport > $byteman_installed_portfile
+
+    # XXX: verbose
+    # echo "Byteman agent installed for java pid $target_pid, port $bmport"
+
+    # XXX: Erase file to keep it from sticking around indefinitely,
+    # in case process ends, machine reboots, pid gets reused
+    # XXX: consider explicit notification to stapbm via process("java").begin/end ?
+    # ... or else: liveness-check below
+fi
+exec 200>&-   # close file & release flock
+
+
+function echo_bytemanrule()
+{
+    echo "RULE $arg_rulename"
+    echo "CLASS $arg_class"
+    echo "METHOD $arg_method"
+    echo "HELPER HelperSDT"
+    case "$arg_probetype" in
+        entry)
+	    echo "AT ENTRY"
+	    ;;
+        exi*)
+	    echo "AT RETURN"
+	    ;;
+        *)
+	    echo "AT LINE $arg_probetype"
+	    ;;
+    esac
+    echo "IF TRUE"
+    case "$arg_argcount" in
+        0) echo 'DO METHOD_STAP_PROBE0("'$arg_rulename'")' ;;
+        1) echo 'DO METHOD_STAP_PROBE1("'$arg_rulename'", $1)' ;;
+        2) echo 'DO METHOD_STAP_PROBE2("'$arg_rulename'", $1, $2)' ;;
+        3) echo 'DO METHOD_STAP_PROBE3("'$arg_rulename'", $1, $2, $3)' ;;
+        4) echo 'DO METHOD_STAP_PROBE4("'$arg_rulename'", $1, $2, $3, $4)' ;;
+        5) echo 'DO METHOD_STAP_PROBE5("'$arg_rulename'", $1, $2, $3, $4, $5)' ;;
+        6) echo 'DO METHOD_STAP_PROBE6("'$arg_rulename'", $1, $2, $3, $4, $5, $6)' ;;
+        7) echo 'DO METHOD_STAP_PROBE7("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7)' ;;
+        8) echo 'DO METHOD_STAP_PROBE8("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7, $8)' ;;
+        9) echo 'DO METHOD_STAP_PROBE9("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7, $8, $9)' ;;
+      10) echo 'DO METHOD_STAP_PROBE10("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)' ;;
+        *) echo 'bad arg-count'; exit 1 ;;
+    esac
+    echo "ENDRULE"
+}
+
+
+# Generate the byteman rule file on-the-fly
+btmfile=$flagdir/`hostname`-$$.btm
+echo_bytemanrule > $btmfile
+trap 'rm -f $btmfile' 0 1 2 3 4 5 9 15
+
+if [ $arg_command = "uninstall" ]; then
+    bmcmd=-u
+else
+    bmcmd=-l
+fi
+
+# XXX: need a verbosity to suppress the redirection
+java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile >/dev/null 2>&1
+exit $?
+

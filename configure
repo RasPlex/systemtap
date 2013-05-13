@@ -11066,6 +11066,8 @@ ac_config_files="$ac_config_files stapdyn/Makefile"
 
 ac_config_files="$ac_config_files java/Makefile"
 
+ac_config_files="$ac_config_files java/stapbm"
+
 ac_config_files="$ac_config_files staprun/Makefile"
 
 ac_config_files="$ac_config_files staprun/run-staprun"
@@ -11913,6 +11915,7 @@ do
     "dtrace") CONFIG_FILES="$CONFIG_FILES dtrace" ;;
     "stapdyn/Makefile") CONFIG_FILES="$CONFIG_FILES stapdyn/Makefile" ;;
     "java/Makefile") CONFIG_FILES="$CONFIG_FILES java/Makefile" ;;
+    "java/stapbm") CONFIG_FILES="$CONFIG_FILES java/stapbm" ;;
     "staprun/Makefile") CONFIG_FILES="$CONFIG_FILES staprun/Makefile" ;;
     "staprun/run-staprun") CONFIG_FILES="$CONFIG_FILES staprun/run-staprun" ;;
     "re2c-migrate/Makefile") CONFIG_FILES="$CONFIG_FILES re2c-migrate/Makefile" ;;
@@ -12721,6 +12724,7 @@ $as_echo X"$file" |
     done ;;
     "run-stap":F) chmod +x run-stap ;;
     "dtrace":F) chmod +x dtrace ;;
+    "java/stapbm":F) chmod +x java/stapbm ;;
     "staprun/run-staprun":F) chmod +x staprun/run-staprun ;;
     "doc/beginners":C) rm -f $ac_abs_top_builddir/doc/beginners/en-US $ac_abs_top_builddir/doc/beginners/build/en-US/testsuite && mkdir -p $ac_abs_top_builddir/doc/beginners/build/en-US && ln -s $ac_abs_top_srcdir/doc/SystemTap_Beginners_Guide/en-US $ac_abs_top_builddir/doc/beginners/en-US && ln -s $ac_abs_top_srcdir/testsuite $ac_abs_top_builddir/doc/beginners/build/en-US/testsuite ;;
 

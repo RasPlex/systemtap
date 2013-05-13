@@ -116,7 +116,7 @@ probe_point::probe_point ():
 unsigned probe::last_probeidx = 0;
 
 probe::probe ():
-  body (0), tok (0), systemtap_v_conditional (0), privileged (false)
+  body (0), base (0), tok (0), systemtap_v_conditional (0), privileged (false)
 {
   this->name = string ("probe_") + lex_cast(last_probeidx ++);
 }
@@ -125,16 +125,17 @@ probe::probe ():
 // Copy constructor, but with overriding probe-point.  To be used when
 // mapping script-level probe points to another one, early during pass
 // 2.  There should be no symbol resolution done yet.
-probe::probe(const probe& p, probe_point* l)
+probe::probe(probe* p, probe_point* l)
 {
+  this->base = p;
   this->name = string ("probe_") + lex_cast(last_probeidx ++);
-  this->tok = p.tok;
+  this->tok = p->tok;
   this->locations.push_back(l);
-  this->body = p.body; // NB: not needed to be copied yet; a later derived_probe will
-  this->privileged = p.privileged;
-  this->systemtap_v_conditional = p.systemtap_v_conditional;
-  assert (p.locals.size() == 0);
-  assert (p.unused_locals.size() == 0);
+  this->body = p->body; // NB: not needed to be copied yet; a later derived_probe will
+  this->privileged = p->privileged;
+  this->systemtap_v_conditional = p->systemtap_v_conditional;
+  assert (p->locals.size() == 0);
+  assert (p->unused_locals.size() == 0);
 }
 
 
@@ -1191,12 +1192,39 @@ void probe::printsig (ostream& o) const
     }
 }
 
+const probe* 
+probe::basest () const 
+{
+  return base ? base->basest() : this; 
+}
+
+
+const probe* 
+probe::almost_basest () const {
+  if (base)
+    return base->base ? base->almost_basest() : this; 
+  else
+    return 0;
+}
+
 
 void
-probe::collect_derivation_chain (std::vector<probe*> &probes_list)
+probe::collect_derivation_chain (std::vector<probe*> &probes_list) const
 {
-  probes_list.push_back(this);
+  probes_list.push_back(const_cast<probe*>(this));
+  if (base)
+    base->collect_derivation_chain(probes_list);
 }
+
+
+void
+probe::collect_derivation_pp_chain (std::vector<probe_point*> &pp_list) const
+{
+  pp_list.push_back(const_cast<probe_point*>(this->locations[0]));
+  if (base)
+    base->collect_derivation_pp_chain(pp_list);
+}
+
 
 
 void probe_point::print (ostream& o, bool print_extras) const

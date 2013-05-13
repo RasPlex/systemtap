@@ -1,50 +1,49 @@
 probe java("multiparams").class("multiparams").method("printMessage1(int)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage2(long, int)")
 {
-  printf("%s %d %d\n", user_string($name), $arg1, $arg2)
+  printf("%s %d %d\n", pn(), $arg1, $arg2)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage3(double, long, int)")
 {
-  printf("%s %d %d %d\n", user_string($name), $arg1, $arg2, $arg3)
+  printf("%s %d %d %d\n", pn(), $arg1, $arg2, $arg3)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage4(float, double, long, int)")
 {
-  printf("%s %d %d %d %d\n", user_string($name), $arg1, $arg2, $arg3, $arg4)
+  printf("%s %d %d %d %d\n", pn(), $arg1, $arg2, $arg3, $arg4)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage5(byte, float, double, long, int)")
 {
-  printf("%s %d %d %d %d %d\n", user_string($name), $arg1, $arg2, $arg3, $arg4, $arg5)
+  printf("%s %d %d %d %d %d\n", pn(), $arg1, $arg2, $arg3, $arg4, $arg5)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage6(boolean, byte, float, double, long, int)")
 {
-  printf("%s %d %d %d %d %d %d\n", user_string($name), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6)
+  printf("%s %d %d %d %d %d %d\n", pn(), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage7(char, boolean, byte, float, double, long, int)")
 {
-  printf("%s %d %d %d %d %d %d %d\n", user_string($name), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7)
+  printf("%s %d %d %d %d %d %d %d\n", pn(), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage8(short, char, boolean, byte, float, double, long, int)")
 {
-  printf("%s %d %d %d %d %d %d %d %d\n", user_string($name), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8)
+  printf("%s %d %d %d %d %d %d %d %d\n", pn(), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage9(short, short, char, boolean, byte, float, double, long, int)")
 {
-  printf("%s %d %d %d %d %d %d %d %d %d\n", user_string($name), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8, $arg9)
+  printf("%s %d %d %d %d %d %d %d %d %d\n", pn(), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8, $arg9)
 }
 
 probe java("multiparams").class("multiparams").method("printMessage10(short, short, short, char, boolean, byte, float, double, long, int)")
 {
-  printf("%s %d %d %d %d %d %d %d %d %d %d\n", user_string($name), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8, $arg9, $arg10)
+  printf("%s %d %d %d %d %d %d %d %d %d %d\n", pn(), $arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8, $arg9, $arg10)
 }
-probe end,error {exit()}

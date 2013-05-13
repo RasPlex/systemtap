@@ -20,9 +20,8 @@ CLEANFILES =
 AM_CFLAGS = -g
 AM_CFLAGS += -I$(builddir)/../includes/sys
 AM_CFLAGS += -I$(srcdir)/../includes
-AM_CFLAGS += -I$(srcdir)/java # XXX?
+AM_CFLAGS += -I$(srcdir)/java
 AM_CFLAGS += -I$(JAVADIR)/include/linux -I$(JAVADIR)/include
-AM_CFLAGS += -DBINDIR='"$(bindir)"' -DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' -DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"'
 AM_CFLAGS += -fPIC -shared
 
 bin_PROGRAMS = 
@@ -48,21 +47,20 @@ libHelperSDT_so_LDFLAGS = -lc
 # build HelperSDT.class
 noinst_DATA += HelperSDT.class
 CLEANFILES += HelperSDT.class
-HelperSDT.class:
+HelperSDT.class: HelperSDT.java
 	$(JAVAC) -d . $(srcdir)/HelperSDT.java
 
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
 noinst_DATA += HelperSDT.jar
 CLEANFILES += HelperSDT.jar
-HelperSDT.jar: HelperSDT.class libHelperSDT.so
-	$(JAR) cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+HelperSDT.jar: HelperSDT.class
+	$(JAR) cvf HelperSDT.jar HelperSDT.class
 
 # place/install libHelperSDT.so and HelperSDT.jar
 install-exec-local:
 	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 install-data-local: HelperSDT.jar
 	$(INSTALL_DATA) -D HelperSDT.jar $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
-
 uninstall-local:
 	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 	rm -rf $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar

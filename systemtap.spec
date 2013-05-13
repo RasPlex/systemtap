@@ -272,7 +272,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: systemtap-runtime = %{version}-%{release}
-Requires: byteman
+Requires: byteman > 2.0
 
 %description runtime-java
 This package includes support files needed to run systemtap scripts

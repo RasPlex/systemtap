@@ -713,22 +713,23 @@ struct probe
 {
   std::vector<probe_point*> locations;
   statement* body;
+  struct probe* base;
   const token* tok;
   const token* systemtap_v_conditional; //checking systemtap compatibility
   std::vector<vardecl*> locals;
   std::vector<vardecl*> unused_locals;
   static unsigned last_probeidx;
   probe ();
-  probe (const probe& p, probe_point *l);
+  probe (probe* p, probe_point *l);
   void print (std::ostream& o) const;
   virtual void printsig (std::ostream &o) const;
-  virtual void collect_derivation_chain (std::vector<probe*> &probes_list);
-  virtual void collect_derivation_pp_chain (std::vector<probe_point*> &) {}
+  virtual void collect_derivation_chain (std::vector<probe*> &probes_list) const;
+  virtual void collect_derivation_pp_chain (std::vector<probe_point*> &) const;
   virtual const probe_alias *get_alias () const { return 0; }
   virtual probe_point *get_alias_loc () const { return 0; }
   virtual probe* create_alias(probe_point* l, probe_point* a);
-  virtual const probe* basest () const { return this; }
-  virtual const probe* almost_basest () const { return 0; }
+  virtual const probe* basest () const;
+  virtual const probe* almost_basest () const;
   virtual ~probe() {}
   bool privileged;
   std::string name;

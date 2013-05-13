@@ -331,10 +331,7 @@ CLEANFILES = $(am__append_5)
 #AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
 AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-I$(srcdir)/java -I$(JAVADIR)/include/linux \
-	-I$(JAVADIR)/include -DBINDIR='"$(bindir)"' \
-	-DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' \
-	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"' \
-	-fPIC -shared $(am__append_1)
+	-I$(JAVADIR)/include -fPIC -shared $(am__append_1)
 noinst_DATA = $(am__append_4)
 pkglibexec_SCRIPTS = $(am__append_2)
 @HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
@@ -685,17 +682,16 @@ override JAVA_ARCH:=$(JAVA_ARCH:i%86=i386)
 override JAVA_ARCH:=$(JAVA_ARCH:sparcv9=sparc)
 override JAVA_ARCH:=$(JAVA_ARCH:sparc64=sparcv9)
 override JAVA_ARCH:=$(JAVA_ARCH:arm%=arm)
-@HAVE_JAVA_TRUE@HelperSDT.class:
+@HAVE_JAVA_TRUE@HelperSDT.class: HelperSDT.java
 @HAVE_JAVA_TRUE@	$(JAVAC) -d . $(srcdir)/HelperSDT.java
-@HAVE_JAVA_TRUE@HelperSDT.jar: HelperSDT.class libHelperSDT.so
-@HAVE_JAVA_TRUE@	$(JAR) cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
+@HAVE_JAVA_TRUE@HelperSDT.jar: HelperSDT.class
+@HAVE_JAVA_TRUE@	$(JAR) cvf HelperSDT.jar HelperSDT.class
 
 # place/install libHelperSDT.so and HelperSDT.jar
 @HAVE_JAVA_TRUE@install-exec-local:
 @HAVE_JAVA_TRUE@	$(INSTALL_PROGRAM) -D libHelperSDT.so $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 @HAVE_JAVA_TRUE@install-data-local: HelperSDT.jar
 @HAVE_JAVA_TRUE@	$(INSTALL_DATA) -D HelperSDT.jar $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
-
 @HAVE_JAVA_TRUE@uninstall-local:
 @HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 @HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar

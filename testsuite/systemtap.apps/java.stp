@@ -2,41 +2,40 @@
 
 probe java("singleparam").class("singleparam").method("printMessage(int)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("singleparam").class("singleparam").method("printMessage(long)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("singleparam").class("singleparam").method("printMessage(double)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("singleparam").class("singleparam").method("printMessage(float)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("singleparam").class("singleparam").method("printMessage(byte)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("singleparam").class("singleparam").method("printMessage(boolean)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("singleparam").class("singleparam").method("printMessage(char)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
 
 probe java("singleparam").class("singleparam").method("printMessage(short)")
 {
-  printf("%s %d\n", user_string($name), $arg1)
+  printf("%s %d\n", pn(), $arg1)
 }
-probe end,error {exit()}

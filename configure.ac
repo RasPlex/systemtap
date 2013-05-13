@@ -675,6 +675,7 @@ fi
 AC_CONFIG_FILES([dtrace], [chmod +x dtrace])
 AC_CONFIG_FILES(stapdyn/Makefile)
 AC_CONFIG_FILES(java/Makefile)
+AC_CONFIG_FILES([java/stapbm], [chmod +x java/stapbm])
 AC_CONFIG_FILES(staprun/Makefile)
 AC_CONFIG_FILES([staprun/run-staprun], [chmod +x staprun/run-staprun])
 AC_CONFIG_FILES(re2c-migrate/Makefile)

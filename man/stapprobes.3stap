@@ -815,18 +815,14 @@ or line in a Java program.
 Systemtap does so by generating a Byteman script listing the probes to
 instrument and then invoking the Byteman
 .IR bminstall
-utility. A custom option "\-D OPTION" (see the Byteman documentation
-for more details) can be passed to bminstall by invoking "stap \-J
-OPTION". The systemtap option "\-j" is also provided as a shorthand for
-"\-J org.jboss.byteman.compile.to.bytecode".
+utility.
 .PP
 This Java instrumentation support is currently a prototype feature
-with major limitations: java probes attach only to one Java process at
-a time; other Java processes beyond the first one to be observed are
-ignored. Moreover, Java probing currently does not work across users;
-the stap script must run (with appropriate permissions) under the same
-user that the Java process being probed. (Thus a stap script under
-root currently cannot probe Java methods in a non-root-user Java process.)
+with major limitations.  Moreover, Java probing currently does not
+work across users; the stap script must run (with appropriate
+permissions) under the same user that the Java process being
+probed. (Thus a stap script under root currently cannot probe Java
+methods in a non-root-user Java process.)
 
 .PP
 The first probe type refers to Java processes by the name of the Java process:
@@ -866,16 +862,10 @@ java(PID).class("CLASSNAME").method("PATTERN").return
 utility.)
 .PP
 Context variables defined within java probes include
-.IR $provider
-(which identifies the class providing the definition of the triggered
-method) and
-.IR $name
-(which gives the signature of the method). Arguments to the method can be
-accessed using context variables
 .IR $arg1
 through
 .IR $arg10
-(for up to the first 10 arguments of a method).
+(for up to the first 10 arguments of a method), represented as integers or strings.
 
 .SS PROCFS
 

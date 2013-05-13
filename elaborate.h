@@ -156,8 +156,8 @@ struct derived_probe: public probe
   // return arguments of probe if there
   virtual void getargs (std::list<std::string> &) const {}
   void printsig_nested (std::ostream &o) const;
-  virtual void collect_derivation_chain (std::vector<probe*> &probes_list);
-  virtual void collect_derivation_pp_chain (std::vector<probe_point*> &pp_list);
+  virtual void collect_derivation_chain (std::vector<probe*> &probes_list) const;
+  virtual void collect_derivation_pp_chain (std::vector<probe_point*> &pp_list) const;
   std::string derived_locations ();
 
   virtual void print_dupe_stamp(std::ostream&) {}
