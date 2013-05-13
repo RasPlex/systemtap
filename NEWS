@@ -14,6 +14,9 @@
     with -G when compiling a script, and from the stapdyn command line
     when loading a precompiled module.
 
+- A systemd service file and tmpfile have been added to allow
+  systemtap-server to be managed natively by systemd.
+
 - Due to the removal of register_timer_hook in recent kernels, the
   behaviour of timer.profile has been changed slightly. This probe is
   now an alias which uses the old mechanism where possible, but falls
