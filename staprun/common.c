@@ -339,10 +339,11 @@ void usage(char *prog)
 	"                the second argument.\n"
         "-T timeout      Specifies upper limit on amount of time reader thread\n"
         "                will wait for new full trace buffer. Value should be an\n"
-        "                integer >= 1, which is timeout value in ms. Default 200ms.\n\n"
+        "                integer >= 1, which is timeout value in ms. Default 200ms.\n"
 #ifdef HAVE_OPENAT
         "-F fd           Specifies file descriptor for module relay directory\n"
 #endif
+	"\n"
 	"MODULE can be either a module name or a module path.  If a\n"
 	"module name is used, it is searched in the following directory:\n"));
         {
