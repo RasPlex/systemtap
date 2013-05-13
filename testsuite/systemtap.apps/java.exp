@@ -6,6 +6,8 @@ if {[catch { exec which javac } res]} {
 
 set test "singleparam"
 
+if {! [installtest_p]} then { untested $test; return }
+
 # Test per method probing
 
 catch { exec javac -d ./ $srcdir/$subdir/singleparam.java } err
