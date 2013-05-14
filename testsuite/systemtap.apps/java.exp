@@ -1,3 +1,9 @@
+set test "java"
+if {[catch { exec which javac } res]} {
+    untested "$test - no javac"
+    return
+}
+
 set test "singleparam"
 
 # Test per method probing
