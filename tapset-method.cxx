@@ -428,10 +428,12 @@ java_builder::build (systemtap_session & sess,
 void
 register_tapset_java (systemtap_session& s)
 {
+  (void) s;
+
+#ifdef HAVE_JAVA
   match_node* root = s.pattern_root;
   derived_probe_builder *builder = new java_builder ();
 
-#ifdef HAVE_JAVA
   root->bind_str (TOK_JAVA)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
     ->bind(builder);
