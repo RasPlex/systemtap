@@ -1,4 +1,7 @@
-* What's new in version 2.2
+* What's new in version 2.3
+
+
+* What's new in version 2.2, 2013-05-14
 
 - Experimental support has been added for probing Java methods using
   Byteman 2.0 as a backend. Java method probes can target method entries,

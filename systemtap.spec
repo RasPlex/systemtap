@@ -31,7 +31,7 @@
 %{!?with_java: %global with_java 1}
 
 Name: systemtap
-Version: 2.2
+Version: 2.3
 Release: 1%{?dist}
 # for version, see also configure.ac
 
