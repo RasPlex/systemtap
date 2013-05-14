@@ -1086,7 +1086,10 @@ struct symbol_fetcher
 
   void throwone (const token* t)
   {
-    throw semantic_error (_("Expecting symbol or array index expression"), t);
+    if (t->type == tok_operator && t->content == ".") // guess someone misused . in $foo->bar.baz expression
+      throw semantic_error (_("Expecting symbol or array index expression, try -> instead"), t);
+    else
+      throw semantic_error (_("Expecting symbol or array index expression"), t);
   }
 };
 

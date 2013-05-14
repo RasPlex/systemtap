@@ -38,7 +38,14 @@ There might be a spelling error in the probe point name ("sycsall" vs.
 "syscall").  Wildcard probes may not find a match at all in the
 tapsets.  Recheck the names using
 .IR "stap \-l PROBEPOINT" .
-
+Another common mistake is to use the
+.IR .
+operator instead of the correct 
+.IR \->
+when dereferencing context variable subfields or pointers:
+.IR $foo\->bar\->baz
+even if in C one would say
+.IR foo\->bar.baz .
 
 .TP
 unavailable context variables
