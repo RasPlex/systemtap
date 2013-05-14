@@ -13,10 +13,10 @@ set exepath "./${test}_exe"
 set res [target_compile $srcpath $exepath executable "additional_flags=-g libs=-lpthread"]
 if { $res != "" } {
     verbose "target_compile failed: $res" 2
-    fail "$test - unable to compile $srcpath"
+    fail "$test - unable to compile [file tail $srcpath]"
     return
 } else {
-    pass "$test - compiled $srcpath"
+    pass "$test - compiled [file tail $srcpath]"
 }
 
 set test_script {
