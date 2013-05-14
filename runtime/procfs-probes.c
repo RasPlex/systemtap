@@ -52,7 +52,7 @@ _stp_proc_open_file(struct inode *inode, struct file *filp)
 	struct stap_procfs_probe *spp;
 	int res;
 
-	spp = (struct stap_procfs_probe *)PDE(inode)->data;
+	spp = (struct stap_procfs_probe *)PDE_DATA(inode);
 	if (spp == NULL) {
 		return -EINVAL;
 	}

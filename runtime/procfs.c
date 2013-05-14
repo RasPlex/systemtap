@@ -21,6 +21,20 @@
 #include <linux/mount.h>
 #include <linux/pid_namespace.h>
 #endif
+#include "proc_fs_compatibility.h"
+
+#if defined(STAPCONF_PATH_LOOKUP) && !defined(STAPCONF_KERN_PATH_PARENT)
+#define kern_path_parent(name, nameidata) \
+	path_lookup(name, LOOKUP_PARENT, nameidata)
+#endif
+
+/* If STAPCONF_PDE_DATA isn't defined, we're using the original /proc
+ * interface (where 'struct proc_dir_entry' isn't opaque). In this
+ * case allow the (undocumented) feature of slashes
+ * (i.e. subdirectories) in paths. */
+#ifndef STAPCONF_PDE_DATA
+#define _STP_ALLOW_PROCFS_PATH_SUBDIRS
+#endif
 
 /* The maximum number of files AND directories that can be opened.
  * It would be great if the translator would emit this based on the actual
@@ -30,28 +44,19 @@
 #define STP_MAX_PROCFS_FILES 16
 #endif
 
-#if defined(STAPCONF_PATH_LOOKUP) && !defined(STAPCONF_KERN_PATH_PARENT)
-#define kern_path_parent(name, nameidata) \
-	path_lookup(name, LOOKUP_PARENT, nameidata)
-#endif
-
 static int _stp_num_pde = 0;
 static struct proc_dir_entry *_stp_pde[STP_MAX_PROCFS_FILES];
-static struct proc_dir_entry *_stp_procfs_files[STP_MAX_PROCFS_FILES];
-static struct proc_dir_entry *_stp_proc_stap = NULL;
+
+/* _stp_proc_root is the '/proc/systemtap/{module_name}' directory. */
 static struct proc_dir_entry *_stp_proc_root = NULL;
 
 static void _stp_close_procfs(void);
 
-// 2.6.24 fixed proc_dir_entry refcounting.
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
-#define LAST_ENTRY_COUNT 0
-#else
-#define LAST_ENTRY_COUNT 1
-#endif
 
 /*
- * Removes /proc/systemtap/{module_name} and /proc/systemtap (if empty)
+ * Removes '/proc/systemtap/{module_name}'. Notice we're leaving
+ * '/proc/systemtap' behind.  There is no way on newer kernels to know
+ * if a procfs directory is empty.
  */
 static void _stp_rmdir_proc_module(void)
 {
@@ -62,137 +67,99 @@ static void _stp_rmdir_proc_module(void)
 		return;
 	}
 
-        if (_stp_proc_root && _stp_proc_root->subdir == NULL) {
-		if (atomic_read(&_stp_proc_root->count) != LAST_ENTRY_COUNT)
-			printk("Removal of /proc/systemtap/%s is deferred until it is no longer in use.\n"
-			       "Systemtap module removal will block.\n",
-			       THIS_MODULE->name);	
-		remove_proc_entry(THIS_MODULE->name, _stp_proc_stap);
+	if (_stp_proc_root) {
+		proc_remove(_stp_proc_root);
 		_stp_proc_root = NULL;
 	}
 
-	if (_stp_proc_stap && _stp_proc_stap->subdir == NULL) {
-		/* Important! Do not attempt removal of
-		 * /proc/systemtap if in use.  This will put the PDE
-		 * in deleted state pending usage count dropping to
-		 * 0. During this time, kern_path_parent() will still
-		 * find it and allow new modules to use it, even
-		 * though it will not show up in directory
-		 * listings. */
-
- 		if (atomic_read(&_stp_proc_stap->count) == LAST_ENTRY_COUNT) {
-			remove_proc_entry("systemtap", NULL);
-			_stp_proc_stap = NULL;
-		}
-	}
 	_stp_unlock_transport_dir();
 }
 
 
 /*
- * Safely creates /proc/systemtap (if necessary) and
- * /proc/systemtap/{module_name}.
+ * Safely creates '/proc/systemtap' (if necessary) and
+ * '/proc/systemtap/{module_name}'.
  */
 static int _stp_mkdir_proc_module(void)
 {	
-        if (_stp_proc_root == NULL) {
+	int found = 0;
+	char proc_root_name[STP_MODULE_NAME_LEN + sizeof("systemtap/")];
 #if defined(STAPCONF_PATH_LOOKUP) || defined(STAPCONF_KERN_PATH_PARENT)
-		struct nameidata nd;
-
-		if (!_stp_lock_transport_dir()) {
-			errk("Unable to create '/proc/systemap':"
-			     " can't lock transport directory.\n");
-			goto done;
-		}
-		
-		/* We use kern_path_parent() because there is no
-		 * lookup function for procfs we can call directly.
-		 * And proc_mkdir() will always succeed, creating
-		 * multiple directory entries, all with the same
-		 * name.
-		 *
-		 * Why "/proc/systemtap/foo"?  kern_path_parent() is
-		 * basically the same thing as calling the old
-		 * path_lookup() with flags set to LOOKUP_PARENT,
-		 * which means to look up the parent of the path,
-		 * which in this case is "/proc/systemtap". */
-
-		if (kern_path_parent("/proc/systemtap/foo", &nd)) {
-			/* doesn't exist, so create it */
-			_stp_proc_stap = proc_mkdir ("systemtap", NULL);
-			if (_stp_proc_stap == NULL) {
-				errk("Unable to create '/proc/systemap':"
-				     " proc_mkdir failed.\n");
-				_stp_unlock_transport_dir();
-				goto done;
-			}
-		} else {
-                        #ifdef STAPCONF_NAMEIDATA_CLEANUP
-                        _stp_proc_stap = PDE(nd.path.dentry->d_inode);
-                        path_put (&nd.path);
-
-                        #else
-			_stp_proc_stap = PDE(nd.dentry->d_inode);
-			path_release (&nd);
-			#endif
-		}
+	struct nameidata nd;
 #else  /* STAPCONF_VFS_PATH_LOOKUP */
-		struct path path;
-		struct vfsmount *mnt;
-		int rc;
-
-		if (!_stp_lock_transport_dir()) {
-			errk("Unable to create '/proc/systemap':"
-			     " can't lock transport directory.\n");
-			goto done;
-		}
-
-		/* See if '/proc/systemtap' exists. */
-		if (! init_pid_ns.proc_mnt) {
-			errk("Unable to create '/proc/systemap':"
-			     " '/proc' doesn't exist.\n");
-			_stp_unlock_transport_dir();
-			goto done;
-		}
-		mnt = init_pid_ns.proc_mnt;
-		rc = vfs_path_lookup(mnt->mnt_root, mnt, "systemtap", 0,
-				     &path);
-
-		/* If '/proc/systemtap' exists, update
-		 * _stp_proc_stap.  Otherwise create the directory. */
-		if (rc == 0) {
-                        _stp_proc_stap = PDE(path.dentry->d_inode);
-                        path_put (&path);
-		}
-		else if (rc == -ENOENT) {
-			_stp_proc_stap = proc_mkdir("systemtap", NULL);
-			if (_stp_proc_stap == NULL) {
-				errk("Unable to create '/proc/systemap':"
-				     " proc_mkdir failed.\n");
-				_stp_unlock_transport_dir();
-				goto done;
-			}
-		}
+	struct path path;
+	struct vfsmount *mnt;
+	int rc;
 #endif	/* STAPCONF_VFS_PATH_LOOKUP */
 
-		/* Now that we've found '/proc/systemtap', create the
-		 * module specific directory
-		 * '/proc/systemtap/MODULE_NAME'. */
-		_stp_proc_root = proc_mkdir(THIS_MODULE->name, _stp_proc_stap);
-#ifdef STAPCONF_PROCFS_OWNER
-		if (_stp_proc_root != NULL)
-			_stp_proc_root->owner = THIS_MODULE;
-#endif
-		if (_stp_proc_root == NULL)
-			errk("Unable to create '/proc/systemap/%s':"
-			     " proc_mkdir failed.\n", THIS_MODULE->name);
+        if (_stp_proc_root != NULL)
+		return 0;
 
-		_stp_unlock_transport_dir();
+	if (!_stp_lock_transport_dir()) {
+		errk("Unable to create '/proc/systemap/%s':"
+		     " can't lock transport directory.\n",
+		     THIS_MODULE->name);
+		return -EINVAL;
 	}
+
+#if defined(STAPCONF_PATH_LOOKUP) || defined(STAPCONF_KERN_PATH_PARENT)
+	/* Why "/proc/systemtap/foo"?  kern_path_parent() is basically
+	 * the same thing as calling the old path_lookup() with flags
+	 * set to LOOKUP_PARENT, which means to look up the parent of
+	 * the path, which in this case is "/proc/systemtap". */
+	if (! kern_path_parent("/proc/systemtap/foo", &nd)) {
+		found = 1;
+#ifdef STAPCONF_NAMEIDATA_CLEANUP
+		path_put(&nd.path);
+#else  /* !STAPCONF_NAMEIDATA_CLEANUP */
+		path_release(&nd);
+#endif	/* !STAPCONF_NAMEIDATA_CLEANUP */
+	}
+#else  /* STAPCONF_VFS_PATH_LOOKUP */
+	/* See if '/proc/systemtap' exists. */
+	if (! init_pid_ns.proc_mnt) {
+		errk("Unable to create '/proc/systemap':"
+		     " '/proc' doesn't exist.\n");
+		goto done;
+	}
+	mnt = init_pid_ns.proc_mnt;
+	rc = vfs_path_lookup(mnt->mnt_root, mnt, "systemtap", 0, &path);
+	if (rc == 0) {
+		found = 1;
+		path_put (&path);
+	}
+#endif	/* STAPCONF_VFS_PATH_LOOKUP */
+
+	/* If we couldn't find "/proc/systemtap", create it. */
+	if (!found) {
+		struct proc_dir_entry *de;
+
+		de = proc_mkdir ("systemtap", NULL);
+		if (de == NULL) {
+			errk("Unable to create '/proc/systemap':"
+			     " proc_mkdir failed.\n");
+			goto done;
+ 		}
+	}
+
+	/* Create the "systemtap/{module_name} directory in procfs. */
+	strlcpy(proc_root_name, "systemtap/", sizeof(proc_root_name));
+	strlcat(proc_root_name, THIS_MODULE->name, sizeof(proc_root_name));
+	_stp_proc_root = proc_mkdir(proc_root_name, NULL);
+#ifdef STAPCONF_PROCFS_OWNER
+	if (_stp_proc_root != NULL)
+		_stp_proc_root->owner = THIS_MODULE;
+#endif
+	if (_stp_proc_root == NULL)
+		errk("Unable to create '/proc/systemap/%s':"
+		     " proc_mkdir failed.\n", THIS_MODULE->name);
+
 done:
-	return (_stp_proc_root) ? 0 : 1;
+	_stp_unlock_transport_dir();
+	return (_stp_proc_root) ? 0 : -EINVAL;
 }
 
+#ifdef _STP_ALLOW_PROCFS_PATH_SUBDIRS
 /*
  * This checks our local cache to see if we already made the dir.
  */
@@ -206,9 +173,12 @@ static struct proc_dir_entry *_stp_procfs_lookup(const char *dir, struct proc_di
 	}
 	return NULL;
 }
+#endif	/* _STP_ALLOW_PROCFS_PATH_SUBDIRS */
+
 
 static int _stp_create_procfs(const char *path, int num,
-			      const struct file_operations *fops, int perm) 
+			      const struct file_operations *fops, int perm,
+			      void *data) 
 {  
 	const char *p; char *next;
 	struct proc_dir_entry *last_dir, *de;
@@ -227,53 +197,57 @@ static int _stp_create_procfs(const char *path, int num,
 	else
 		p = path;
 	
+#ifdef _STP_ALLOW_PROCFS_PATH_SUBDIRS
 	while ((next = strchr(p, '/'))) {
 		if (_stp_num_pde == STP_MAX_PROCFS_FILES)
 			goto too_many;
 		*next = 0;
 		de = _stp_procfs_lookup(p, last_dir);
 		if (de == NULL) {
-			    last_dir = proc_mkdir(p, last_dir);
-			    if (!last_dir) {
-				    _stp_error("Could not create directory \"%s\"\n", p);
-				    goto err;
-			    }
-			    _stp_pde[_stp_num_pde++] = last_dir;
-#ifdef STAPCONF_PROCFS_OWNER
-			    last_dir->owner = THIS_MODULE;
-#endif
-			    last_dir->uid = _stp_uid;
-			    last_dir->gid = _stp_gid;
-		} else {
-			if (!S_ISDIR(de->mode)) {
+			last_dir = proc_mkdir(p, last_dir);
+			if (!last_dir) {
 				_stp_error("Could not create directory \"%s\"\n", p);
 				goto err;
 			}
+			_stp_pde[_stp_num_pde++] = last_dir;
+#ifdef STAPCONF_PROCFS_OWNER
+			last_dir->owner = THIS_MODULE;
+#endif
+			proc_set_user(last_dir, KUIDT_INIT(_stp_uid),
+				      KGIDT_INIT(_stp_gid));
+		}
+		else {
 			last_dir = de;
 		}
 		p = next + 1;
 	}
+#else  /* !_STP_ALLOW_PROCFS_PATH_SUBDIRS */
+	if (strchr(p, '/') != NULL) {
+		_stp_error("Could not create path \"%s\","
+			   " contains subdirectories\n", p);
+		goto err;
+	}
+#endif	/* !_STP_ALLOW_PROCFS_PATH_SUBDIRS */
 	
 	if (_stp_num_pde == STP_MAX_PROCFS_FILES)
 		goto too_many;
 	
-	de = proc_create(p, perm, last_dir, fops);
-
+	de = proc_create_data(p, perm, last_dir, fops, data);
 	if (de == NULL) {
-		_stp_error("Could not create file \"%s\" in path \"%s\"\n", p, path);
+		_stp_error("Could not create file \"%s\" in path \"%s\"\n",
+			   p, path);
 		goto err;
 	}
 #ifdef STAPCONF_PROCFS_OWNER
 	de->owner = THIS_MODULE;
 #endif
-	de->uid = _stp_uid;
-	de->gid = _stp_gid;
+	proc_set_user(de, KUIDT_INIT(_stp_uid), KGIDT_INIT(_stp_gid));
 	_stp_pde[_stp_num_pde++] = de;
-	_stp_procfs_files[num] = de;
 	return 0;
 	
 too_many:
-	_stp_error("Attempted to open too many procfs files. Maximum is %d\n", STP_MAX_PROCFS_FILES);
+	_stp_error("Attempted to open too many procfs files. Maximum is %d\n",
+		   STP_MAX_PROCFS_FILES);
 err:
 	_stp_close_procfs();
 	return -1;
@@ -284,7 +258,7 @@ static void _stp_close_procfs(void)
 	int i;
 	for (i = _stp_num_pde-1; i >= 0; i--) {
 		struct proc_dir_entry *pde = _stp_pde[i];
-		remove_proc_entry(pde->name, pde->parent);
+		proc_remove(pde);
 	}
 	_stp_num_pde = 0;
 }
