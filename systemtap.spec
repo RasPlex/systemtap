@@ -771,6 +771,9 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Tue May 14 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2-1
+- Upstream release.
+
 * Wed Feb 13 2013 Serguei Makarov <smakarov@redhat.com> - 2.1-1
 - Upstream release.
 
