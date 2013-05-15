@@ -298,10 +298,10 @@ static void*
 sdt_benchmark_thread(void* p)
 {
   unsigned long i = *(unsigned long*)p;
-  PROBE(stap, benchmark-thread-begin);
+  PROBE(stap, benchmark__thread__begin);
   while (i--)
     PROBE1(stap, benchmark, i);
-  PROBE(stap, benchmark-thread-end);
+  PROBE(stap, benchmark__thread__end);
   return NULL;
 }
 
@@ -321,7 +321,7 @@ run_sdt_benchmark(systemtap_session& s)
   times (& tms_before);
   gettimeofday (&tv_before, NULL);
 
-  PROBE(stap, benchmark-begin);
+  PROBE(stap, benchmark__begin);
 
   pthread_t pthreads[threads];
   for (unsigned long i = 0; i < threads; ++i)
@@ -329,7 +329,7 @@ run_sdt_benchmark(systemtap_session& s)
   for (unsigned long i = 0; i < threads; ++i)
     pthread_join(pthreads[i], NULL);
 
-  PROBE(stap, benchmark-end);
+  PROBE(stap, benchmark__end);
 
   times (& tms_after);
   gettimeofday (&tv_after, NULL);
