@@ -165,8 +165,12 @@ derived_probe::script_location () const
 
   for (int i=chain.size()-1; i>=0; i--)
     {
-      string pp_printed = lex_cast(* chain[i]);
-      if (pp_printed.find('*') == string::npos)
+      probe_point pp_copy (* chain [i]);
+      // drop any ?/! denotations that would confuse a glob-char search
+      pp_copy.optional = false;
+      pp_copy.sufficient = false;
+      string pp_printed = lex_cast(pp_copy);
+      if (! contains_glob_chars(pp_printed))
         return chain[i];
     }
 
