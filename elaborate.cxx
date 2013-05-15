@@ -163,7 +163,11 @@ derived_probe::script_location () const
   vector<probe_point*> chain;
   collect_derivation_pp_chain (chain);
 
-  for (int i=chain.size()-1; i>=0; i--)
+  // NB: we actually start looking from the second-to-last item, so the user's
+  // direct input is not considered.  Input like 'kernel.function("init_once")'
+  // will thus be listed with the resolved @file:line too, disambiguating the
+  // distinct functions by this name, and matching our historical behavior.
+  for (int i=chain.size()-2; i>=0; i--)
     {
       probe_point pp_copy (* chain [i]);
       // drop any ?/! denotations that would confuse a glob-char search

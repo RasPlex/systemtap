@@ -85,3 +85,43 @@ expect {
     eof { fail $test }
 }
 catch { close }; catch { wait }
+
+set test init_once-glob
+spawn stap -l {kernel.function("init_once*")}
+expect {
+    -re {kernel.function."init_once@fs/inode.c:\d+".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test init_once-noglob
+spawn stap -l {kernel.function("init_once")}
+expect {
+    -re {kernel.function."init_once@fs/inode.c:\d+".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test begin-glob
+spawn stap -l {begin*}
+expect {
+    -re {begin\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test begin-noglob
+spawn stap -l {begin}
+expect {
+    -re {begin\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
