@@ -2450,9 +2450,9 @@ dwflpp::translate_location(struct obstack *pool,
 
 
 void
-dwflpp::print_members(Dwarf_Die *vardie, ostream &o, set<string> &dupes)
+dwflpp::print_members(Dwarf_Die *typedie, ostream &o, set<string> &dupes)
 {
-  const int typetag = dwarf_tag (vardie);
+  const int typetag = dwarf_tag (typedie);
 
   /* compile and partial unit included for recursion through
      imported_unit below. */
@@ -2462,22 +2462,23 @@ dwflpp::print_members(Dwarf_Die *vardie, ostream &o, set<string> &dupes)
       typetag != DW_TAG_compile_unit &&
       typetag != DW_TAG_partial_unit)
     {
-      o << _F(" Error: %s isn't a struct/class/union", dwarf_type_name(vardie).c_str());
+      o << _F(" Error: %s isn't a struct/class/union",
+	      dwarf_type_name(typedie).c_str());
       return;
     }
 
   // Try to get the first child of vardie.
   Dwarf_Die die_mem, import;
   Dwarf_Die *die = &die_mem;
-  switch (dwarf_child (vardie, die))
+  switch (dwarf_child (typedie, die))
     {
     case 1:				// No children.
-      o << _F("%s is empty", dwarf_type_name(vardie).c_str());
+      o << _F("%s is empty", dwarf_type_name(typedie).c_str());
       return;
 
     case -1:				// Error.
     default:				// Shouldn't happen.
-      o << dwarf_type_name(vardie)
+      o << dwarf_type_name(typedie)
         << ": " << dwarf_errmsg (-1);
       return;
 

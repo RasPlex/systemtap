@@ -108,8 +108,26 @@ inline Dwarf_Die *
 dwarf_attr_die (Dwarf_Die *die, unsigned int attr, Dwarf_Die *result)
 {
   Dwarf_Attribute attr_mem;
-  return dwarf_formref_die (dwarf_attr_integrate (die, attr, &attr_mem),
-                            result);
+  if (dwarf_formref_die (dwarf_attr_integrate (die, attr, &attr_mem),
+			 result) != NULL)
+    {
+      /* If we want a type make sure we get the actual DIE describing
+	 the real type. */
+      if (attr == DW_AT_type)
+	{
+	  Dwarf_Attribute sigm;
+	  Dwarf_Attribute *sig = dwarf_attr (result, DW_AT_signature, &sigm);
+	  if (sig != NULL)
+	    result = dwarf_formref_die (sig, result);
+
+	  /* A DW_AT_signature might point to a type_unit, then
+	     the actual type DIE we want is the first child.  */
+	  if (result != NULL && dwarf_tag (result) == DW_TAG_type_unit)
+	    dwarf_child (result, result);
+	}
+      return result;
+    }
+  return NULL;
 }
 
 

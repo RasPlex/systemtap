@@ -1,6 +1,11 @@
 #! stap -p2
 
-probe process("debugtypes.exe").function("func") {
+probe process("debugtypes.exe").function("func1") {
   println($p->l)
   println(@cast($p, "struct s1")->l)
+}
+
+probe process("debugtypes.exe").function("func2") {
+  println($q->l)
+  println(@cast($q, "struct s2")->l)
 }
