@@ -1,0 +1,87 @@
+# PR14297-related testing
+
+set test plt-glob
+spawn stap -l {process("stap").plt("re??")}
+expect {
+    -re {process."stap"..plt."read".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test plt-glob2
+spawn stap -l {process("stap").plt("re*")}
+expect {
+    -re {process."stap"..plt."read".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+# NB: this would be nice to probe, but we don't have the
+# autoconf $prefix available here in the dejagnu scripts.
+# spawn stap -l "process(\"${prefix}/bin/stap*\").plt(\"re*\""
+# NB: we expect the extra "?" suffix due to filename globbing
+#    -re {process."[^\r\n]*stap"..plt."read"..\r\n} { pass $test }
+
+set test plt-non-glob
+spawn stap -l {process("stap").plt("read")}
+expect {
+    -re {process."stap"..plt."read".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test mark-non-glob
+spawn stap -l {process("stap").mark("pass5__end")}
+expect {
+    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test mark-glob
+spawn stap -l {process("stap").mark("pass[12345678]__end")}
+expect {
+    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test mark-glob2
+spawn stap -l {process("stap").mark("pass*__end")}
+expect {
+    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test syscall-glob
+spawn stap -l {syscall.rea*}
+expect {
+    -re {syscall.read\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+set test syscall-noglob
+spawn stap -l {syscall.read}
+expect {
+    -re {syscall.read\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
