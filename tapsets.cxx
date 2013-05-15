@@ -2211,7 +2211,7 @@ query_one_plt (const char *entry, long addr, dwflpp & dw,
                                              new literal_string(entry));
             derived_comps.push_back(*it);
             derived_comps.push_back(new probe_point::component(TOK_STATEMENT,
-                                                               new literal_number(addr)));
+                                                               new literal_number(addr, true)));
           }
         else
           derived_comps.push_back(*it);
