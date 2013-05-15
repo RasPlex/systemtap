@@ -145,7 +145,7 @@ derived_probe::sole_location () const
 {
   if (locations.size() == 0 || locations.size() > 1)
     throw semantic_error (_N("derived_probe with no locations",
-                             "derived_probe with no locations",
+                             "derived_probe with too many locations",
                              locations.size()), this->tok);
   else
     return locations[0];
@@ -779,6 +779,7 @@ struct alias_derived_probe: public derived_probe
 
   virtual const probe_alias *get_alias () const { return alias; }
   virtual probe_point *get_alias_loc () const { return alias_loc; }
+  virtual probe_point *sole_location () const;
 
 private:
   const probe_alias *alias; // Used to check for recursion
@@ -799,6 +800,13 @@ alias_derived_probe::alias_derived_probe(probe *base, probe_point *l,
     alias_loc->components.insert(alias_loc->components.end(),
                                  suffix->begin(), suffix->end());
   }
+}
+
+
+probe_point*
+alias_derived_probe::sole_location () const
+{
+  return const_cast<probe_point*>(alias_loc);
 }
 
 
