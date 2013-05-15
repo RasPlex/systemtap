@@ -77,51 +77,38 @@ printscript(systemtap_session& s, ostream& o)
           assert_no_interrupts();
 
           derived_probe* p = s.probes[i];
-          // NB: p->basest() is not so interesting;
-          // p->almost_basest() doesn't quite work, so ...
-          vector<probe*> chain;
-          p->collect_derivation_chain (chain);
-          probe* second = (chain.size()>1) ? chain[chain.size()-2] : chain[0];
-
-          if (s.verbose > 5) {
-          p->printsig(cerr); cerr << endl;
-          cerr << "chain[" << chain.size() << "]:" << endl;
-          for (unsigned j=0; j<chain.size(); j++)
-            {
-              cerr << "  [" << j << "]: " << endl;
-              cerr << "\tlocations[" << chain[j]->locations.size() << "]:" << endl;
-              for (unsigned k=0; k<chain[j]->locations.size(); k++)
-                {
-                  cerr << "\t  [" << k << "]: ";
-                  chain[j]->locations[k]->print(cerr);
-                  cerr << endl;
-                }
-              const probe_alias *a = chain[j]->get_alias();
-              if (a)
-                {
-                  cerr << "\taliases[" << a->alias_names.size() << "]:" << endl;
-                  for (unsigned k=0; k<a->alias_names.size(); k++)
-                    {
-                      cerr << "\t  [" << k << "]: ";
-                      a->alias_names[k]->print(cerr);
-                      cerr << endl;
-                    }
-                }
-            }
+          if (s.verbose > 2) {
+            vector<probe*> chain;
+            p->collect_derivation_chain (chain);
+            p->printsig(cerr); cerr << endl;
+            cerr << "chain[" << chain.size() << "]:" << endl;
+            for (unsigned j=0; j<chain.size(); j++)
+              {
+                cerr << "  [" << j << "]: " << endl;
+                cerr << "\tlocations[" << chain[j]->locations.size() << "]:" << endl;
+                for (unsigned k=0; k<chain[j]->locations.size(); k++)
+                  {
+                    cerr << "\t  [" << k << "]: ";
+                    chain[j]->locations[k]->print(cerr);
+                    cerr << endl;
+                  }
+                const probe_alias *a = chain[j]->get_alias();
+                if (a)
+                  {
+                    cerr << "\taliases[" << a->alias_names.size() << "]:" << endl;
+                    for (unsigned k=0; k<a->alias_names.size(); k++)
+                      {
+                        cerr << "\t  [" << k << "]: ";
+                        a->alias_names[k]->print(cerr);
+                        cerr << endl;
+                      }
+                  }
+              }
           }
-
+          
           stringstream tmps;
-          // XXX PR14297 make this more accurate wrt complex wildcard expansions
-          const probe_point *a = second->get_alias_loc();
-          if (a)
-            {
-              a->print(tmps);
-            }
-          else
-            {
-              assert (second->locations.size() >= 1);
-              second->locations[0]->print(tmps); // XXX: choosing only one location is less arbitrary here than in get_alias_loc(), but still ...
-            }
+          const probe_point *a = p->script_location();
+          a->print(tmps);
           string pp = tmps.str();
 
           // Now duplicate-eliminate.  An alias may have expanded to

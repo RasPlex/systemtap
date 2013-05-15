@@ -1,5 +1,5 @@
 // -*- C++ -*-
-// Copyright (C) 2005-2011 Red Hat Inc.
+// Copyright (C) 2005-2013 Red Hat Inc.
 //
 // This file is part of systemtap, and is free software.  You can
 // redistribute it and/or modify it under the terms of the GNU General
@@ -146,8 +146,6 @@ struct derived_probe: public probe
   derived_probe (probe* b, probe_point* l, bool rewrite_loc=false);
   probe* base; // the original parsed probe
   probe_point* base_pp; // the probe_point that led to this derivation
-  virtual const probe* basest () const { return base->basest(); }
-  virtual const probe* almost_basest () const { return base->almost_basest() ?: this; }
   virtual ~derived_probe () {}
   virtual void join_group (systemtap_session& s) = 0;
   virtual probe_point* sole_location () const;

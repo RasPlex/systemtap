@@ -2153,7 +2153,7 @@ query_one_library (const char *library, dwflpp & dw,
           derived_comps.push_back(*it);
       probe_point* derived_loc = new probe_point(*specific_loc);
       derived_loc->components = derived_comps;
-      probe *new_base = new probe (base_probe, derived_loc);
+      probe *new_base = new probe (new probe (base_probe, specific_loc), derived_loc);
       derive_probes(dw.sess, new_base, results);
       if (dw.sess.verbose > 2)
         clog << _("module=") << library_path;
@@ -2207,9 +2207,11 @@ query_one_plt (const char *entry, long addr, dwflpp & dw,
           it != specific_loc->components.end(); ++it)
         if ((*it)->functor == TOK_PLT)
           {
+            *it = new probe_point::component(TOK_PLT,
+                                             new literal_string(entry));
             derived_comps.push_back(*it);
             derived_comps.push_back(new probe_point::component(TOK_STATEMENT,
-                new literal_number(addr)));
+                                                               new literal_number(addr)));
           }
         else
           derived_comps.push_back(*it);
@@ -6574,7 +6576,7 @@ sdt_query::convert_location ()
 
   probe_point* derived_loc = new probe_point(*specific_loc);
   derived_loc->components = derived_comps;
-  return new probe (base_probe, derived_loc);
+  return new probe (new probe (base_probe, specific_loc), derived_loc);
 }
 
 

@@ -1,5 +1,5 @@
 // parse tree functions
-// Copyright (C) 2005-2011 Red Hat Inc.
+// Copyright (C) 2005-2013 Red Hat Inc.
 //
 // This file is part of systemtap, and is free software.  You can
 // redistribute it and/or modify it under the terms of the GNU General
@@ -131,7 +131,7 @@ probe::probe(probe* p, probe_point* l)
   this->name = string ("probe_") + lex_cast(last_probeidx ++);
   this->tok = p->tok;
   this->locations.push_back(l);
-  this->body = p->body; // NB: not needed to be copied yet; a later derived_probe will
+  this->body = deep_copy_visitor::deep_copy(p->body);
   this->privileged = p->privileged;
   this->systemtap_v_conditional = p->systemtap_v_conditional;
   assert (p->locals.size() == 0);
@@ -1190,21 +1190,6 @@ void probe::printsig (ostream& o) const
       if (i > 0) o << ",";
       locations[i]->print (o);
     }
-}
-
-const probe* 
-probe::basest () const 
-{
-  return base ? base->basest() : this; 
-}
-
-
-const probe* 
-probe::almost_basest () const {
-  if (base)
-    return base->base ? base->almost_basest() : this; 
-  else
-    return 0;
 }
 
 

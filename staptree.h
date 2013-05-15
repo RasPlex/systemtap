@@ -728,8 +728,6 @@ struct probe
   virtual const probe_alias *get_alias () const { return 0; }
   virtual probe_point *get_alias_loc () const { return 0; }
   virtual probe* create_alias(probe_point* l, probe_point* a);
-  virtual const probe* basest () const;
-  virtual const probe* almost_basest () const;
   virtual ~probe() {}
   bool privileged;
   std::string name;

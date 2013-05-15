@@ -122,7 +122,7 @@ derived_probe::collect_derivation_chain (std::vector<probe*> &probes_list) const
 void
 derived_probe::collect_derivation_pp_chain (std::vector<probe_point*> &pp_list) const
 {
-  pp_list.push_back(const_cast<probe_point*>(base_pp));
+  pp_list.push_back(const_cast<probe_point*>(this->sole_location()));
   base->collect_derivation_pp_chain(pp_list);
 }
 
@@ -170,18 +170,8 @@ derived_probe::script_location () const
         return chain[i];
     }
 
-  // else fall back to old logic
-  // XXX PR14297 make this more accurate wrt complex wildcard expansions
-  const probe* p = almost_basest();
-  probe_point *a = p->get_alias_loc();
-  if (a) return a;
-  const vector<probe_point*>& locs = p->locations;
-  if (locs.size() == 0 || locs.size() > 1)
-    throw semantic_error (_N("derived_probe with no locations",
-                                   "derived_probe with too many locations",
-                                   locs.size()), this->tok);
-  else
-    return locs[0];
+  // If that didn't work, just fallback to -something-.
+  return sole_location();
 }
 
 
