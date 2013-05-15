@@ -46,6 +46,16 @@ expect {
 }
 catch { close }; catch { wait }
 
+set test mark-non-glob2
+spawn stap -l {process("stap").mark("pass5-end")}
+expect {
+    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
 set test mark-glob
 spawn stap -l {process("stap").mark("pass[12345678]__end")}
 expect {
