@@ -298,7 +298,7 @@ static void*
 sdt_benchmark_thread(void* p)
 {
   unsigned long i = *(unsigned long*)p;
-  PROBE(stap, benchmark__thread__begin);
+  PROBE(stap, benchmark__thread__start);
   while (i--)
     PROBE1(stap, benchmark, i);
   PROBE(stap, benchmark__thread__end);
@@ -321,7 +321,7 @@ run_sdt_benchmark(systemtap_session& s)
   times (& tms_before);
   gettimeofday (&tv_before, NULL);
 
-  PROBE(stap, benchmark__begin);
+  PROBE(stap, benchmark__start);
 
   pthread_t pthreads[threads];
   for (unsigned long i = 0; i < threads; ++i)
