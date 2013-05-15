@@ -2217,7 +2217,8 @@ query_one_plt (const char *entry, long addr, dwflpp & dw,
           derived_comps.push_back(*it);
       probe_point* derived_loc = new probe_point(*specific_loc);
       derived_loc->components = derived_comps;
-      probe *new_base = new probe (base_probe, derived_loc);
+      probe *new_base = new probe (new probe (base_probe, specific_loc),
+                                   derived_loc);
       string e = string(entry);
       plt_expanding_visitor pltv (e);
       pltv.replace (new_base->body);
