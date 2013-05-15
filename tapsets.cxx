@@ -2194,7 +2194,6 @@ query_one_plt (const char *entry, long addr, dwflpp & dw,
     vector<derived_probe *> & results)
 {
       probe_point* specific_loc = new probe_point(*base_loc);
-      specific_loc->optional = true;
       vector<probe_point::component*> derived_comps;
 
       if (dw.sess.verbose > 2)
