@@ -14,6 +14,10 @@ set unrestricted_probe_types [list \
   "end(number)" \
   "error" \
   "error(number)" \
+  "java(number).class(string).method(string)" \
+  "java(number).class(string).method(string).return" \
+  "java(string).class(string).method(string)" \
+  "java(string).class(string).method(string).return" \
   "never" \
   "process.begin" \
   "process.end" \
@@ -161,9 +165,11 @@ set restricted_probe_types [list \
   "kernel.statement(string)" \
   "kernel.trace(string)" \
   "kprobe.function(string)" \
+  "kprobe.function(string).call" \
   "kprobe.function(string).return" \
   "kprobe.function(string).return.maxactive(number)" \
   "kprobe.module(string).function(string)" \
+  "kprobe.module(string).function(string).call" \
   "kprobe.module(string).function(string).return" \
   "kprobe.module(string).function(string).return.maxactive(number)" \
   "kprobe.statement(number).absolute" \
@@ -183,6 +189,7 @@ set restricted_probe_types [list \
   "module(string).statement(string)" \
   "perf.type(number).config(number)" \
   "perf.type(number).config(number).sample(number)" \
+  "perf.type(number).config(number).sample(number).counter(string)" \
   "perf.type(number).config(number).process" \
   "perf.type(number).config(number).process(string)" \
   "perf.type(number).config(number).process(string).counter(string)" \
@@ -201,7 +208,7 @@ set restricted_probe_types [list \
   "procfs(string).umask(number).read" \
   "procfs(string).umask(number).read.maxsize(number)" \
   "procfs(string).umask(number).write" \
-  "timer.profile" \
+  "timer.profile.tick" \
   "netfilter.hook(string).pf(string)" \
   "netfilter.pf(string).hook(string)" \
   "netfilter.hook(string).pf(string).priority(string)" \
@@ -270,6 +277,11 @@ proc add_args { probe_type } {
 
     # Replace plt with plt("*") (all shlib calls)
     regsub -all "plt\\(string\\)" $probe "plt(\"*\")" probe
+
+    # Replace java stuff
+    regsub -all "java\\(number\\)" $probe "java(0)" probe
+    regsub -all "java\\(string\\)" $probe "java(\"foobar\")" probe
+    # class and method parms can stay till the last-ditch replacement below
 
     # Replace "(number)" with "(10)"
     regsub -all "\\(number\\)" $probe "(10)" probe
