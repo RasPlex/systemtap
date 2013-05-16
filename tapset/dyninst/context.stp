@@ -100,7 +100,10 @@ function target:long ()
 	STAP_RETVALUE = stp_session_attributes()->target;
 %}
 
-// TODO function module_name:string ()
+function module_name:string ()
+%{ /* pure */ /* unprivileged */
+	strlcpy(STAP_RETVALUE, stp_session_attributes()->module_name, MAXSTRINGLEN);
+%}
 
 function stp_pid:long ()
 %{ /* pure */ /* unprivileged */

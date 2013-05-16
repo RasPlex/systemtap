@@ -16,6 +16,7 @@ static struct _stp_session_attributes _stp_init_session_attributes = {
 	.suppress_warnings = 0,
 	.stp_pid = 0,
 	.target = 0,
+	.module_name = "",
 };
 
 static void stp_session_attributes_init(void)
@@ -45,6 +46,11 @@ static int stp_session_attribute_setter(const char *name, const char *value)
 	else if (strcmp(name, "@target") == 0) {
 		_stp_init_session_attributes.target
 		    = strtoul(value, NULL, 10);
+		return 0;
+	}
+	else if (strcmp(name, "@module_name") == 0) {
+		strlcpy(_stp_init_session_attributes.module_name,
+				value, MAXSTRINGLEN);
 		return 0;
 	}
 	return -EINVAL;

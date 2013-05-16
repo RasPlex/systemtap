@@ -357,6 +357,16 @@ mutator::init_session_attributes()
         stapwarn() << "couldn't set 'target' global" << endl;
     }
 
+  size_t module_endpath = module_name.rfind('/');
+  size_t module_basename_start =
+    (module_endpath != string::npos) ? module_endpath + 1 : 0;
+  size_t module_basename_end = module_name.find('.', module_basename_start);
+  size_t module_basename_len = module_basename_end - module_basename_start;
+  string module_basename(module_name, module_basename_start, module_basename_len);
+  rc = global_setter("@module_name", module_basename.c_str());
+  if (rc != 0)
+    stapwarn() << "couldn't set 'module_name' global" << endl;
+
   return;
 }
 
