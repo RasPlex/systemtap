@@ -75,7 +75,7 @@ main(int argc, char * const argv[])
           break;
 
         case 'w':
-          stapdyn_supress_warnings = true;
+          stapdyn_suppress_warnings = true;
           break;
 
         case 'V':

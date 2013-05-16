@@ -1,18 +1,9 @@
 if {! [installtest_p]} { return }
 
-proc dyninst_kfails {index} {
-    # With no real transport layer, dyninst can't eliminate duplicate
-    # warnings. PR15110
-    setup_kfail 15110 "*-*-*"
-}
-
 foreach runtime [get_runtime_list] {
     set test "warnings2 default"
     if {$runtime != ""} {
 	lappend test "($runtime)"
-	if { [info procs ${runtime}_kfails] ne "" } {
-	    ${runtime}_kfails $i
-	}
 	spawn stap --runtime=$runtime \
 	    -e {probe begin {warn ("1") warn ("2") warn ("1") exit ()}}
     } else {

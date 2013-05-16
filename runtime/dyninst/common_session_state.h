@@ -6,6 +6,7 @@
 static void *_stp_shm_base;
 static void *_stp_shm_alloc(size_t size);
 
+#include "session_attributes.h"
 #include "transport.h"
 
 // Global state shared throughout the module
@@ -20,6 +21,8 @@ struct stp_runtime_session {
 	atomic_t _skipped_count_uprobe_unreg;
 
         unsigned long _hash_seed;
+
+	struct _stp_session_attributes _session_attributes;
 
 #ifdef STP_ALIBI
 	atomic_t _probe_alibi[STP_PROBE_COUNT];
@@ -73,6 +76,14 @@ static inline unsigned long _stap_hash_seed()
 	if (likely(_stp_session()))
 		return _stp_session()->_hash_seed;
 	return 0;
+}
+
+
+static inline struct _stp_session_attributes *stp_session_attributes(void)
+{
+	if (likely(_stp_session()))
+		return &_stp_session()->_session_attributes;
+	return NULL;
 }
 
 
@@ -183,6 +194,8 @@ static int stp_session_init(void)
 	atomic_set(skipped_count_uprobe_unreg(), 0);
 
 	_stp_session()->_hash_seed = _stp_random_u ((unsigned long)-1);
+
+	stp_session_attributes_init();
 
 #ifdef STP_ALIBI
 	// Initialize all the alibi counters

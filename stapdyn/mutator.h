@@ -51,6 +51,9 @@ class mutator {
     // Initialize the module global variables
     bool init_modoptions();
 
+    // Initialize the session attributes
+    void init_session_attributes();
+
     // Initialize the module session
     bool run_module_init();
 

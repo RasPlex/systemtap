@@ -47,7 +47,7 @@ set_dlsym(T*& pointer, void* handle, const char* symbol, bool required=true)
 extern unsigned stapdyn_log_level;
 
 // Whether to suppress warnings, set by -w
-extern bool stapdyn_supress_warnings;
+extern bool stapdyn_suppress_warnings;
 
 // Return a stream for logging at the given verbosity level.
 std::ostream& staplog(unsigned level=0);

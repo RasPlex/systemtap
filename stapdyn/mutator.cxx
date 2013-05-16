@@ -321,6 +321,34 @@ mutator::init_modoptions()
   return true;
 }
 
+void
+mutator::init_session_attributes()
+{
+  typeof(&stp_global_setter) global_setter = NULL;
+  set_dlsym(global_setter, module, "stp_global_setter", false);
+
+  if (global_setter == NULL)
+    {
+      // Just return.
+      return;
+    }
+
+  // Note that the list of supported attributes should match with the
+  // list in 'struct _stp_sesion_attributes' in
+  // runtime/dyninst/session_attributes.h.
+
+  int rc = global_setter("@log_level", lex_cast(stapdyn_log_level).c_str());
+  if (rc != 0)
+    stapwarn() << "couldn't set 'log_level' global" << endl;
+
+  rc = global_setter("@suppress_warnings",
+		     lex_cast(stapdyn_suppress_warnings).c_str());
+  if (rc != 0)
+    stapwarn() << "couldn't set 'suppress_warnings' global" << endl;
+
+  return;
+}
+
 // Initialize the module session
 bool
 mutator::run_module_init()
@@ -370,6 +398,8 @@ mutator::run_module_init()
   // Before init runs, set any custom variables
   if (!modoptions.empty() && !init_modoptions())
     return false;
+
+  init_session_attributes();
 
   int rc = session_init();
   if (rc)

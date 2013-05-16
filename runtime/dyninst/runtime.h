@@ -132,6 +132,7 @@ static int _stp_sched_getcpu(void)
 
 /* see common_session_state.h */
 static inline struct _stp_transport_session_data *stp_transport_data(void);
+static inline struct _stp_session_attributes *stp_session_attributes(void);
 
 /*
  * By definition, we can only debug our own processes with dyninst, so
@@ -158,6 +159,7 @@ static inline struct _stp_transport_session_data *stp_transport_data(void);
 #include "addr-map.c"
 #include "stat.c"
 #include "unwind.c"
+#include "session_attributes.c"
 
 /* Support function for int64_t module parameters. */
 static int set_int64_t(const char *val, int64_t *mp)

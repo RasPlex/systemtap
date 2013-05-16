@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <search.h>
 
 #include "transport.h"
 
@@ -179,6 +180,61 @@ __stp_dyninst_transport_queue_add(unsigned type, int data_index,
 	pthread_mutex_unlock(&(sess_data->queue_mutex));
 }
 
+/* Handle duplicate warning elimination. Returns 0 if we've seen this
+ * warning (and should be eliminated), 1 otherwise. */
+static int
+__stp_d_t_eliminate_duplicate_warnings(char *data, size_t bytes)
+{
+	static void *seen = 0;
+	static unsigned seen_count = 0;
+	char *dupstr = strndup (data, bytes);
+	char *retval;
+	int rc = 1;
+
+	if (! dupstr) {
+		/* OOM, should not happen. */
+		return 1;
+	}
+
+	retval = tfind (dupstr, &seen,
+			(int (*)(const void*, const void*))strcmp);
+	if (! retval) {			/* new message */
+		/* We set a maximum for stored warning messages, to
+		 * prevent a misbehaving script/environment from
+		 * emitting countless _stp_warn()s, and overflow
+		 * staprun's memory. */
+#define MAX_STORED_WARNINGS 1024
+		if (seen_count++ == MAX_STORED_WARNINGS) {
+			fprintf(_stp_err,
+				"WARNING deduplication table full\n");
+			free (dupstr);
+		}
+		else if (seen_count > MAX_STORED_WARNINGS) {
+			/* Be quiet in the future, but stop counting
+			 * to preclude overflow. */
+			free (dupstr);
+			seen_count = MAX_STORED_WARNINGS + 1;
+		}
+		else if (seen_count < MAX_STORED_WARNINGS) {
+			/* NB: don't free dupstr; it's going into the tree. */
+			retval = tsearch (dupstr, & seen,
+					  (int (*)(const void*, const void*))strcmp);
+			if (retval == 0) {
+				/* OOM, should not happen.  Next time
+				 * we should get the 'full'
+				 * message. */
+				free (dupstr);
+				seen_count = MAX_STORED_WARNINGS;
+			}
+		}
+	}
+	else {				/* old message */
+		free (dupstr);
+		rc = 0;
+	}
+	return rc;
+}
+
 static void *
 _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 {
@@ -226,6 +282,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 
 		// Process the queue twice. First handle the OOB data.
 		for (size_t i = 0; i < q->items; i++) {
+			int write_data = 1;
 			item = &(q->queue[i]);
 			if (item->type != STP_DYN_OOB_DATA)
 				continue;
@@ -239,16 +296,35 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 			c = stp_session_context(item->data_index);
 			data = &c->transport_data;
 			read_ptr = data->log_buf + item->offset;
-			size = write(err_fd, read_ptr, item->bytes);
-			if (size != item->bytes)
-				fprintf(_stp_err,
-					"write only wrote %ld bytes (%ld),"
-					" errno %d\n",
-					(long)size, (long)item->bytes, errno);
-			data->log_start = _STP_D_T_LOG_INC(data->log_start);
+
+			/* Note that "WARNING:" should not be
+			 * translated, since it is part of the module
+			 * cmd protocol. */
+			if (strncmp(read_ptr, "WARNING:", 7) == 0) {
+				if (stp_session_attributes()->suppress_warnings) {
+					write_data = 0;
+				}
+				/* If we're not verbose, eliminate
+				 * duplicate warning messages. */
+				else if (stp_session_attributes()->log_level
+					 == 0) {
+					write_data = __stp_d_t_eliminate_duplicate_warnings(read_ptr, item->bytes);
+				}
+			}
+
+			if (write_data) {
+				size = write(err_fd, read_ptr, item->bytes);
+				if (size != item->bytes)
+					fprintf(_stp_err,
+						"write only wrote %ld bytes"
+						" (%ld), errno %d\n",
+						(long)size,
+						(long)item->bytes, errno);
+			}
 
 			// Signal there is a log buffer available to
 			// any waiters.
+			data->log_start = _STP_D_T_LOG_INC(data->log_start);
 			pthread_mutex_lock(&(data->log_mutex));
 			pthread_cond_signal(&(data->log_space_avail));
 			pthread_mutex_unlock(&(data->log_mutex));

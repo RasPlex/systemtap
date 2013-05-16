@@ -178,7 +178,7 @@ static ostream nullstream(NULL);
 unsigned stapdyn_log_level = 0;
 
 // Whether to suppress warnings, set by -w
-bool stapdyn_supress_warnings = false;
+bool stapdyn_suppress_warnings = false;
 
 // Return a stream for logging at the given verbosity level.
 ostream&
@@ -193,7 +193,7 @@ staplog(unsigned level)
 ostream&
 stapwarn(void)
 {
-  if (stapdyn_supress_warnings)
+  if (stapdyn_suppress_warnings)
     return nullstream;
   return clog << program_invocation_short_name << ": WARNING: ";
 }

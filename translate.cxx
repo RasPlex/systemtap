@@ -1538,7 +1538,10 @@ c_unparser::emit_global_init_setters ()
 
       o->newline(-1) << "} else ";
     }
-  o->line() << "return -EINVAL;";
+
+  // Call the runtime function that handles session attributes, like
+  // log_level, etc.
+  o->line() << "return stp_session_attribute_setter(name, value);";
   o->newline(-1) << "}";
   o->newline();
 }
