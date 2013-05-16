@@ -142,7 +142,7 @@ probe syscall.sigaltstack = kernel.function("sys_sigaltstack")
 	if (@defined($regs)) {
 		uss_uaddr = @choose_defined($uss, $regs->bx)
 		uoss_uaddr = @choose_defined($uoss, $regs->cx)
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		regs = $regs
 %)
 	}
@@ -150,7 +150,7 @@ probe syscall.sigaltstack = kernel.function("sys_sigaltstack")
 		uss_uaddr = $bx
 		# Make sure the register value didn't get sign extended.
 		uoss_uaddr = __ulong(@cast(&$bx, "pt_regs", "kernel<asm/ptrace.h>")->cx)
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		regs = &$bx
 %)
 	}
@@ -158,7 +158,7 @@ probe syscall.sigaltstack = kernel.function("sys_sigaltstack")
 		uss_uaddr = $ebx
 		# Make sure the register value didn't get sign extended.
 		uoss_uaddr = __ulong(@cast(&$ebx, "pt_regs", "kernel<asm/ptrace.h>")->ecx)
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		regs = &$ebx
 %)
 	}

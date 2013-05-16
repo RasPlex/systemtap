@@ -1035,7 +1035,7 @@ probe syscall.fork = kernel.function("do_fork").call
 	child_tid_uaddr = $child_tidptr
 
 	if (@defined($regs)) {
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		regs = $regs
 %)
 		if (!__is_user_regs($regs)) {
@@ -1050,7 +1050,7 @@ probe syscall.fork = kernel.function("do_fork").call
 			name = "fork"
 		}
 	} else {
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		regs = 0
 %)
 		if ($clone_flags & %{ CLONE_VM | CLONE_UNTRACED %}) {

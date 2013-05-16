@@ -35,7 +35,7 @@ probe syscall.sigaltstack
 {
 	printf("%s, %s\n", name, argstr)
 	printf("%p, %p\n", uss_uaddr, uoss_uaddr)
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	printf("%p\n", regs)
 %)
 }

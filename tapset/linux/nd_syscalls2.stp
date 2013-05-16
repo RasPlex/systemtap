@@ -2793,7 +2793,7 @@ probe nd_syscall.compat_sys_shmat = kprobe.function("compat_sys_shmat") ?
 	// 		 _shmat_flags_str(shmflg))
 	// no asmlinkage
 
-%( systemtap_v <= "2.2" %?
+%( systemtap_v < "2.3" %?
 	first = int_arg(1)
 	second = int_arg(2)
 	third = u32_arg(3)

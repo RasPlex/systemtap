@@ -2307,7 +2307,7 @@ probe syscall.shmat.return = kernel.function("sys_shmat").return ?
 probe syscall.compat_sys_shmat = kernel.function("compat_sys_shmat").call ?
 {
 	name = "compat_sys_shmat"
-%( systemtap_v <= "2.2" %?
+%( systemtap_v < "2.3" %?
 	first = @choose_defined($shmid, $first)
 	second = @choose_defined($shmflg, $second)
 	third = @choose_defined($third, 0)
