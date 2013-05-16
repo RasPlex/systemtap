@@ -436,19 +436,25 @@ register_tapset_java (systemtap_session& s)
 
   root->bind_str (TOK_JAVA)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
+    ->bind_privilege(pr_all)
     ->bind(builder);
 
   root->bind_str (TOK_JAVA)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
-    ->bind (TOK_RETURN)->bind(builder);
+    ->bind (TOK_RETURN)
+    ->bind_privilege(pr_all)
+    ->bind(builder);
 
   root->bind_num (TOK_JAVA)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
+    ->bind_privilege(pr_all)
     ->bind (builder);
 
   root->bind_num (TOK_JAVA)
     ->bind_str (TOK_CLASS)->bind_str (TOK_METHOD)
-    ->bind (TOK_RETURN)->bind (builder);
+    ->bind (TOK_RETURN)
+    ->bind_privilege(pr_all)
+    ->bind (builder);
 #endif
 }
 
