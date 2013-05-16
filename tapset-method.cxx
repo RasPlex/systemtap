@@ -300,7 +300,7 @@ java_builder::build (systemtap_session & sess,
 
   derived_loc->components = java_marker;
   probe* new_mark_probe = new probe (base, derived_loc);
-  base->body = b;
+  new_mark_probe->body = b;
 
   derive_probes (sess, new_mark_probe, finished_results);
 
