@@ -31,7 +31,7 @@
 %{!?with_java: %global with_java 1}
 
 Name: systemtap
-Version: 2.3
+Version: 2.2.1
 Release: 1%{?dist}
 # for version, see also configure.ac
 
@@ -771,6 +771,9 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Thu May 16 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2.1-1
+- Upstream release.
+
 * Tue May 14 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2-1
 - Upstream release.
 
