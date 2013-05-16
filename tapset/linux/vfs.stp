@@ -25,7 +25,7 @@ function __find_bdevname:string(dev:long, bdev:long)
 	return bdevname(bdev)
 }
 
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 /* deprecated */
 function ppos_pos:long (ppos:long)
 {
@@ -128,7 +128,7 @@ function _get_fopv_size:long (iovp:long, nr_segs:long)
 	return -1
 }
 
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 /* deprecated */
 function _dev_minor:long (dev:long)
 {
@@ -150,7 +150,7 @@ probe generic.fop.llseek = kernel.function("generic_file_llseek")
 	file = $file
 
 	offset = $offset
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	origin = @choose_defined($whence, $origin)
 %)
 	whence = @choose_defined($whence, $origin)
@@ -167,7 +167,7 @@ probe generic.fop.llseek.return = kernel.function("generic_file_llseek").return
 	retstr = sprintf("%d", $return)
 	file = $file
 	offset = $offset
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	origin = @choose_defined($whence, $origin)
 %)
 	whence = @choose_defined($whence, $origin)
@@ -611,7 +611,7 @@ probe vfs.block_sync_page = kernel.function("block_sync_page") ?
 	devname = __find_bdevname(dev, __page_bdev($page))
 	ino = __page_ino($page)
 
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	# 'page_index' is deprecated
 	page_index = __page_index($page)
 %)
@@ -635,7 +635,7 @@ probe vfs.buffer_migrate_page = kernel.function("buffer_migrate_page") ?
         ino = __page_ino($page)
 	devname = __find_bdevname(dev,__page_bdev($page))
 
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	# 'page_index' is deprecated
 	page_index = __page_index($page)
 %)
@@ -954,7 +954,7 @@ probe _vfs.block_prepare_write = kernel.function("__block_write_begin") !,
 		_inode = __page_ino($page)
 		from = $pos & (%{ PAGE_CACHE_SIZE  %} - 1)
 		to = from + $len		
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		# write_from and write_upto are deprecated
 		write_from = from
 		write_upto = to
@@ -962,7 +962,7 @@ probe _vfs.block_prepare_write = kernel.function("__block_write_begin") !,
 	}
 	else {
 		_inode = $inode
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		# write_from and write_upto are deprecated
 		write_from = $from
 		write_upto = $to
@@ -987,7 +987,7 @@ probe _vfs.block_prepare_write.return =
 		_inode = __page_ino($page)
 		from = $pos & (%{ PAGE_CACHE_SIZE  %} - 1)
 		to = from + $len		
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		# write_from and write_upto are deprecated
 		write_from = from
 		write_upto = to
@@ -995,7 +995,7 @@ probe _vfs.block_prepare_write.return =
 	}
 	else {
 		_inode = $inode
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 		# write_from and write_upto are deprecated
 		write_from = $from
 		write_upto = $to

@@ -2,7 +2,7 @@
 
 probe begin {
   print(
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	ppos_pos (0) +
 %)
 	__address_inode(0) +

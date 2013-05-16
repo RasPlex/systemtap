@@ -58,7 +58,7 @@ probe nd_syscall.sigaltstack = kprobe.function("sys_sigaltstack")
 	asmlinkage()
 	uss_uaddr = pointer_arg(1)
 	uoss_uaddr = pointer_arg(2)
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	regs_uaddr = pointer_arg(3)
 	regs = pointer_arg(3)
 %)

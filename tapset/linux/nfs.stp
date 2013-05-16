@@ -262,7 +262,7 @@ probe nfs.fop.llseek = kernel.function ("nfs_file_llseek") !,
 
         maxbyte = __file_maxbytes($filp)
         offset = $offset
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
         origin = @choose_defined($whence, $origin)
 %)
 	whence = @choose_defined($whence, $origin)

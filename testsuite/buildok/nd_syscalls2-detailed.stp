@@ -852,7 +852,7 @@ probe nd_syscall.shmat.return ?
 probe nd_syscall.compat_sys_shmat ?
 {
 	printf("%s, %s\n", name, argstr)
-%( systemtap_v <= "2.2" %?
+%( systemtap_v < "2.3" %?
 	printf("%d, %d, %d, %p\n", first, second, third, uptr_uaddr)
 %)
 	printf("%d, %p, %d\n", shmid, shmaddr_uaddr, shmflg)

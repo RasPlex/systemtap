@@ -1372,14 +1372,14 @@ probe nd_syscall.fork = kprobe.function("do_fork")
 	clone_flags = ulong_arg(1)
 	stack_start = ulong_arg(2)
 %(kernel_v >= "3.8.0" %?
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	regs = 0
 %)
 	stack_size = ulong_arg(3)
 	parent_tid_uaddr = pointer_arg(4)
 	child_tid_uaddr = pointer_arg(5)
 %:
-%(systemtap_v <= "2.2" %?
+%(systemtap_v < "2.3" %?
 	regs = pointer_arg(3)
 %)
 	stack_size = ulong_arg(4)
