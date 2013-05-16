@@ -26,6 +26,15 @@ arg_probetype=$7
 SYSTEMTAP_DIR=${SYSTEMTAP_DIR-$HOME/.systemtap}
 BYTEMAN_HOME=${BYTEMAN_HOME-/usr/share/java/byteman}
 JAVA_HOME=${JAVA_HOME-/usr/lib/jvm/java}
+BYTEMAN_INSTALL_OPTS=${BYTEMAN_INSTALL_OPTS--Dorg.jboss.byteman.transform.all=true}
+STAPBM_VERBOSE=${STAPBM_VERBOSE-no}
+
+
+if [ "$STAPBM_VERBOSE" != "no" ]; then
+    BYTEMAN_INSTALL_OPTS="$BYTEMAN_INSTALL_OPTS -Dorg.jboss.byteman.verbose"
+else
+    exec >/dev/null 2>&1
+fi
 
 
 # the byteman and byteman-submit jars should be in ${BYTEMAN_HOME}/lib
@@ -46,11 +55,6 @@ if [ ! -r ${BYTEMAN_INSTALL_JAR} ]; then
     echo "Missing $BYTEMAN_INSTALL_JAR"
     exit 1
 fi
-
-#BYTEMAN_INSTALL_OPTS=${BYTEMAN_INSTALL_OPTS--Dorg.jboss.byteman.transform.all=true -Dorg.jboss.byteman.verbose}
-BYTEMAN_INSTALL_OPTS=${BYTEMAN_INSTALL_OPTS--Dorg.jboss.byteman.transform.all=true}
-
-# XXX: need a verbosity indication
 
 
 TOOLS_JAR=${JAVA_HOME}/lib/tools.jar
@@ -88,7 +92,9 @@ mkdir -p $flagdir
 # goose chase).
 target_pid=`jps -l | grep $arg_jvmpid | cut -f1 -d" " | head -1`
 if [ "x$target_pid" = "x" ]; then
-    # echo "JVMID $arg_jvmpid not found" # XXX: verbose
+    if [ "$STAPBM_VERBOSE" != "no" ]; then
+        echo "JVMID $arg_jvmpid not found"
+    fi
     exit 1
 fi
 target_pid=`jps -l | grep $arg_jvmpid | egrep -v 'org.jboss.byteman|sun.tools.jps' | cut -f1 -d" " | head -1`
@@ -108,7 +114,11 @@ flock -x 200  # exclusive-lock it
 
 if [ -s $byteman_installed_portfile ]; then
     bmport=`cat $byteman_installed_portfile`
-    # echo "Byteman agent reused for java pid $target_pid, port $bmport"
+
+    if [ "$STAPBM_VERBOSE" != "no" ]; then
+        echo "Byteman agent reused for java pid $target_pid, port $bmport"
+    fi
+
     # XXX: liveness-check the port; bmsubmit with no argument just lists current rules
     # if fails, delete the _portfile and retry everything
 else
@@ -119,16 +129,19 @@ else
         echo "Byteman port $bmport already in use, retrying."
         exec "$@"
     fi
-    java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} org.jboss.byteman.agent.install.Install -b -p $bmport -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid >/dev/null 2>&1 # XXX: verbosity
+    if [ "$STAPBM_VERBOSE" != "no" ]; then
+        echo java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} org.jboss.byteman.agent.install.Install -b -p $bmport -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid
+    fi
+    java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} org.jboss.byteman.agent.install.Install -b -p $bmport -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid
     if [ $? -ne 0 ]; then
         echo "Byteman agent failed to install for java pid $target_pid, port $bmport"
         exit 1
     fi
     echo $bmport > $byteman_installed_portfile
 
-    # XXX: verbose
-    # echo "Byteman agent installed for java pid $target_pid, port $bmport"
-
+    if [ "$STAPBM_VERBOSE" != "no" ]; then
+        echo "Byteman agent installed for java pid $target_pid, port $bmport"
+    fi
     # XXX: Erase file to keep it from sticking around indefinitely,
     # in case process ends, machine reboots, pid gets reused
     # XXX: consider explicit notification to stapbm via process("java").begin/end ?
@@ -178,13 +191,20 @@ btmfile=$flagdir/`hostname`-$$.btm
 echo_bytemanrule > $btmfile
 trap 'rm -f $btmfile' 0 1 2 3 4 5 9 15
 
+if [ "$STAPBM_VERBOSE" != "no" ]; then
+    echo "Byteman rule file:"
+    cat $btmfile
+fi
+
 if [ $arg_command = "uninstall" ]; then
     bmcmd=-u
 else
     bmcmd=-l
 fi
 
-# XXX: need a verbosity to suppress the redirection
-java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile >/dev/null 2>&1
+if [ "$STAPBM_VERBOSE" != "no" ]; then
+    echo java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
+fi
+java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
 exit $?
 

@@ -5,10 +5,11 @@
   Byteman 2.0 as a backend. Java method probes can target method entries,
   returns, or specific statements in the method as specified by line number.
 
-      probe java("org.my.MyApp").class("^java.lang.Object").method("foo(int)") { ...}
+      probe java("org.my.MyApp").class("^java.lang.Object").method("foo(int)")
+         { println($$parms) }
 
   See java/README for information on how to set up Java/Byteman
-  functionality.
+  functionality.  Set env STAPBM_VERBOSE=yes for more tracing. 
 
 - The stap -l output and pn() tapset function's return value may be slightly
   different for complicated web of wildcarded/aliased probes.
