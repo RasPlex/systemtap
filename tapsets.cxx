@@ -7700,8 +7700,12 @@ uprobe_derived_probe_group::emit_module_inode_decls (systemtap_session& s)
   s.op->newline() << "static int stapiu_probe_handler "
                   << "(struct stapiu_consumer *sup, struct pt_regs *regs) {";
   s.op->newline(1);
+
+  // Since we're sharing the entry function, we have to dynamically choose the probe_type
+  string probe_type = "(sup->return_p ? stp_probe_type_uretprobe : stp_probe_type_uprobe)";
   common_probe_entryfn_prologue (s, "STAP_SESSION_RUNNING", "sup->probe",
-                                 "stp_probe_type_uprobe");
+                                 probe_type);
+
   s.op->newline() << "c->uregs = regs;";
   s.op->newline() << "c->user_mode_p = 1;";
   // NB: IP is already set by stapiu_probe_prehandler in uprobes-inode.c
