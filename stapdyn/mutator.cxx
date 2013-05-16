@@ -346,6 +346,17 @@ mutator::init_session_attributes()
   if (rc != 0)
     stapwarn() << "couldn't set 'suppress_warnings' global" << endl;
 
+  rc = global_setter("@stp_pid", lex_cast(getpid()).c_str());
+  if (rc != 0)
+    stapwarn() << "couldn't set 'stp_pid' global" << endl;
+
+  if (target_mutatee)
+    {
+      rc = global_setter("@target", lex_cast(target_mutatee->process_id()).c_str());
+      if (rc != 0)
+        stapwarn() << "couldn't set 'target' global" << endl;
+    }
+
   return;
 }
 

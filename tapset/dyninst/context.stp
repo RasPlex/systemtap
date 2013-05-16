@@ -95,11 +95,17 @@ function user_mode:long ()
 
 // TODO function is_return:long ()
 
-// TODO function target:long ()
+function target:long ()
+%{ /* pure */ /* unprivileged */
+	STAP_RETVALUE = stp_session_attributes()->target;
+%}
 
 // TODO function module_name:string ()
 
-// TODO function stp_pid:long ()
+function stp_pid:long ()
+%{ /* pure */ /* unprivileged */
+	STAP_RETVALUE = stp_session_attributes()->stp_pid;
+%}
 
 // TODO function remote_id:long ()
 

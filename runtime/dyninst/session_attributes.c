@@ -14,14 +14,13 @@
 static struct _stp_session_attributes _stp_init_session_attributes = {
 	.log_level = 0,
 	.suppress_warnings = 0,
+	.stp_pid = 0,
+	.target = 0,
 };
 
 static void stp_session_attributes_init(void)
 {
-	stp_session_attributes()->log_level
-	    = _stp_init_session_attributes.log_level;
-	stp_session_attributes()->suppress_warnings
-	    = _stp_init_session_attributes.suppress_warnings;
+	*stp_session_attributes() = _stp_init_session_attributes;
 }
 
 static int stp_session_attribute_setter(const char *name, const char *value)
@@ -35,6 +34,16 @@ static int stp_session_attribute_setter(const char *name, const char *value)
 	}
 	else if (strcmp(name, "@suppress_warnings") == 0) {
 		_stp_init_session_attributes.suppress_warnings
+		    = strtoul(value, NULL, 10);
+		return 0;
+	}
+	else if (strcmp(name, "@stp_pid") == 0) {
+		_stp_init_session_attributes.stp_pid
+		    = strtoul(value, NULL, 10);
+		return 0;
+	}
+	else if (strcmp(name, "@target") == 0) {
+		_stp_init_session_attributes.target
 		    = strtoul(value, NULL, 10);
 		return 0;
 	}

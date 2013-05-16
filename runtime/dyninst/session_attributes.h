@@ -12,6 +12,8 @@
 struct _stp_session_attributes {
 	unsigned long log_level;
 	unsigned long suppress_warnings;
+	unsigned long stp_pid;
+	unsigned long target;
 };
 
 static void stp_session_attributes_init(void);
