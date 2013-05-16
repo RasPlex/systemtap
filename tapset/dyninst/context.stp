@@ -93,7 +93,13 @@ function user_mode:long ()
 	return 1;
 }
 
-// TODO function is_return:long ()
+function is_return:long ()
+%{ /* pure */ /* unprivileged */
+	if (CONTEXT->probe_type == stp_probe_type_uretprobe)
+		STAP_RETVALUE = 1;
+	else
+		STAP_RETVALUE = 0;
+%}
 
 function target:long ()
 %{ /* pure */ /* unprivileged */

@@ -7868,8 +7868,13 @@ uprobe_derived_probe_group::emit_module_dyninst_decls (systemtap_session& s)
   s.op->newline() << "int enter_dyninst_uprobe "
                   << "(uint64_t index, struct pt_regs *regs) {";
   s.op->newline(1) << "struct stapdu_probe *sup = &stapdu_probes[index];";
+
+  // Since we're sharing the entry function, we have to dynamically choose the probe_type
+  string probe_type = "((sup->flags & STAPDYN_PROBE_FLAG_RETURN) ?"
+                      " stp_probe_type_uretprobe : stp_probe_type_uprobe)";
   common_probe_entryfn_prologue (s, "STAP_SESSION_RUNNING", "sup->probe",
-                                 "stp_probe_type_uprobe");
+                                 probe_type);
+
   s.op->newline() << "c->uregs = regs ?: &stapdu_dummy_uregs;";
   s.op->newline() << "c->user_mode_p = 1;";
   // XXX: once we have regs, check how dyninst sets the IP
