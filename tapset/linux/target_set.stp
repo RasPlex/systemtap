@@ -21,41 +21,42 @@ probe begin
 		_target_set[target()] = stp_pid()
 }
 
-%( arch != "ia64" && kernel_v >= "2.6.18" %?
-probe nd_syscall.fork.return
-{
-	pid = returnval()
-	if (pid in _target_set)
-		next
-	ppid = pid()
-	if (ppid in _target_set)
-		_target_set[pid] = ppid
-}
-
-probe nd_syscall.exit
-{
-	delete _target_set[pid()]
-}
-
-%: 
 
 # ia64 systems and pre-2.6.18 systems don't support dwarfless probes,
 # so we'll use 'syscall' probes instead of 'nd_syscall' probes.
-probe syscall.fork.return
+
+probe process.begin!,
+%( arch != "ia64" && kernel_v >= "2.6.18" %?
+      nd_syscall.fork.return!,
+%)
+      syscall.fork.return
 {
-	pid = $return
-	if (pid in _target_set)
-		next
-	ppid = pid()
-	if (ppid in _target_set)
+	if (is_return()) {
+		# fork.return runs in parent context
+		pid = @choose_defined($return, returnval())
+		ppid = pid()
+	} else {
+		# process.begin runs in child context
+		pid = pid()
+		ppid = ppid()
+	}
+
+	# NB: when using process.*, if target() execs we'll see a process.end
+	# (removing it) then a new process.begin.  The target's ppid (stp_pid)
+	# is not part of the target set, so check for this case.
+	if (pid == target() || ppid in _target_set)
 		_target_set[pid] = ppid
 }
 
-probe syscall.exit
+probe process.end!,
+%( arch != "ia64" && kernel_v >= "2.6.18" %?
+      nd_syscall.exit!,
+%)
+      syscall.exit
 {
 	delete _target_set[pid()]
 }
-%)
+
 
 /**
  * sfunction target_set_report - Print a report about the target set

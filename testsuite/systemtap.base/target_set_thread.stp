@@ -1,0 +1,7 @@
+probe process.mark("benchmark__start"),
+      process.mark("benchmark__thread__end"),
+      process.mark("benchmark__end")
+{
+    if (target_set_pid(pid()))
+        println($$name)
+}

@@ -1,0 +1,20 @@
+set test "target_set_thread"
+
+# target_set should not forget a process once one of its threads ends.
+# (this is an issue with using syscall.exit, which is only a true process exit
+#  if that was the last thread in the thread group.)
+
+set ::result_string {benchmark__start
+benchmark__thread__end
+benchmark__end}
+
+set script $srcdir/$subdir/$test.stp
+set command {stap --benchmark-sdt-loops=1 --benchmark-sdt-threads=1}
+
+foreach runtime [get_runtime_list] {
+    if {$runtime != ""} {
+        stap_run3 "$test ($runtime)" $script --runtime=$runtime -c $command
+    } else {
+        stap_run3 $test $script -c $command
+    }
+}

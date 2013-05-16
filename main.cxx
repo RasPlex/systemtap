@@ -312,8 +312,9 @@ run_sdt_benchmark(systemtap_session& s)
   unsigned long loops = s.benchmark_sdt_loops ?: 10000000;
   unsigned long threads = s.benchmark_sdt_threads ?: 1;
 
-  clog << _F("Beginning SDT benchmark with %lu loops in %lu threads.",
-             loops, threads) << endl;
+  if (s.verbose > 0)
+    clog << _F("Beginning SDT benchmark with %lu loops in %lu threads.",
+               loops, threads) << endl;
 
   struct tms tms_before, tms_after;
   struct timeval tv_before, tv_after;
@@ -333,12 +334,13 @@ run_sdt_benchmark(systemtap_session& s)
 
   times (& tms_after);
   gettimeofday (&tv_after, NULL);
-  clog << _F("Completed SDT benchmark in %ldusr/%ldsys/%ldreal ms.",
-             (tms_after.tms_utime - tms_before.tms_utime) * 1000 / _sc_clk_tck,
-             (tms_after.tms_stime - tms_before.tms_stime) * 1000 / _sc_clk_tck,
-             ((tv_after.tv_sec - tv_before.tv_sec) * 1000 +
-              ((long)tv_after.tv_usec - (long)tv_before.tv_usec) / 1000))
-       << endl;
+  if (s.verbose > 0)
+    clog << _F("Completed SDT benchmark in %ldusr/%ldsys/%ldreal ms.",
+               (tms_after.tms_utime - tms_before.tms_utime) * 1000 / _sc_clk_tck,
+               (tms_after.tms_stime - tms_before.tms_stime) * 1000 / _sc_clk_tck,
+               ((tv_after.tv_sec - tv_before.tv_sec) * 1000 +
+                ((long)tv_after.tv_usec - (long)tv_before.tv_usec) / 1000))
+         << endl;
 
   return EXIT_SUCCESS;
 }
