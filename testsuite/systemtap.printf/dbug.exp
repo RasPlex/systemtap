@@ -1,0 +1,30 @@
+set test "dbug"
+set ::result_string {begin:1: debug line 1
+begin:2: debug line 2
+begin:3: debug line 3
+begin:4: debug line 4
+begin:5: debug line 5
+begin:6: debug line 6
+begin:7: debug line 7
+begin:8: debug line 8
+begin:9: debug line 9
+begin:10: debug line 10
+begin:11: debug line 11
+begin:12: debug line 12
+begin:13: debug line 13
+begin:14: debug line 14
+begin:15: debug line 15
+begin:16: debug line 16
+begin:17: debug line 17
+WARNING: finished}
+
+foreach runtime [get_runtime_list] {
+    if {$runtime != ""} {
+	# Use STP_LOG_BUF_ENTRIES_SHIFT to set the number of log
+	# buffers to a small number to stress the log buffers.
+	stap_run2 $srcdir/$subdir/$test.stp -DSTP_LOG_BUF_ENTRIES_SHIFT=2 \
+	    -g --runtime=$runtime
+    } else {
+	stap_run2 $srcdir/$subdir/$test.stp -g
+    }
+}

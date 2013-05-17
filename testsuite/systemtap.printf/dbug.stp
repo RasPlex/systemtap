@@ -1,0 +1,26 @@
+# Note that normally '__FUNCTION__' and '__LINE__' are passed to
+# _stp_dbug(), but since we need consistent output for testing
+# purposes, we've faked them out.
+
+probe begin
+{
+	%{ { _stp_dbug("begin", 1, "debug line 1\n"); 0; } %}
+	%{ { _stp_dbug("begin", 2, "debug line 2\n"); 0; } %}
+	%{ { _stp_dbug("begin", 3, "debug line 3\n"); 0; } %}
+	%{ { _stp_dbug("begin", 4, "debug line 4\n"); 0; } %}
+	%{ { _stp_dbug("begin", 5, "debug line 5\n"); 0; } %}
+	%{ { _stp_dbug("begin", 6, "debug line 6\n"); 0; } %}
+	%{ { _stp_dbug("begin", 7, "debug line 7\n"); 0; } %}
+	%{ { _stp_dbug("begin", 8, "debug line 8\n"); 0; } %}
+	%{ { _stp_dbug("begin", 9, "debug line 9\n"); 0; } %}
+	%{ { _stp_dbug("begin", 10, "debug line 10\n"); 0; } %}
+	%{ { _stp_dbug("begin", 11, "debug line 11\n"); 0; } %}
+	%{ { _stp_dbug("begin", 12, "debug line 12\n"); 0; } %}
+	%{ { _stp_dbug("begin", 13, "debug line 13\n"); 0; } %}
+	%{ { _stp_dbug("begin", 14, "debug line 14\n"); 0; } %}
+	%{ { _stp_dbug("begin", 15, "debug line 15\n"); 0; } %}
+	%{ { _stp_dbug("begin", 16, "debug line 16\n"); 0; } %}
+	%{ { _stp_dbug("begin", 17, "debug line 17\n"); 0; } %}
+	warn("finished\n")	
+	exit()
+}

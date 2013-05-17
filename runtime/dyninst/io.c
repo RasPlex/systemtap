@@ -53,12 +53,21 @@ static void _stp_vlog (enum code type, const char *func, int line,
 	size_t start = 0;
 	size_t num;
 	char tmp[STP_LOG_BUF_LEN];
-	char *buf = _stp_dyninst_transport_log_buffer();
+	char *buf;
 
-	/* If we can't get a buffer, the transport must be not up yet.
-	 * Instead use our temporary buffer. */
-	if (buf == NULL)
+	/* If we're writing a debug message, just use the temporary
+	 * buffer. These messages end up going through the normal
+	 * transport path, not the OOB data path. */
+	if (type == DBUG) {
 		buf = tmp;
+	}
+	else {
+		/* If we can't get a buffer, the transport must be not
+		 * up yet.  Instead use our temporary buffer. */
+		buf = _stp_dyninst_transport_log_buffer();
+		if (buf == NULL)
+			buf = tmp;
+	}
 
 	if (type == DBUG) {
 		start = snprintf(buf, STP_LOG_BUF_LEN, "%s:%d: ", func, line);
@@ -93,18 +102,21 @@ static void _stp_vlog (enum code type, const char *func, int line,
 		buf[num + start] = '\0';
 	}
 
-	/* If we're using the temporary buffer, just output it to
-	 * _stp_err. */
-	if (buf == tmp) {
-		fprintf(_stp_err, "%s", buf);
-	}
-	else if (type != DBUG) {
-                /* NB: don't explicitly send the \0 terminator. */
-		_stp_dyninst_transport_write_oob_data(buf, num + start);
-	}
-	else {
+	if (type == DBUG) {
 		_stp_print(buf);
 		_stp_print_flush();
+	}
+	else {
+		/* If we're using the temporary buffer, just output it
+		 * to _stp_err. */
+		if (buf == tmp) {
+			fprintf(_stp_err, "%s", buf);
+		}
+		else {
+        	        /* NB: don't explicitly send the \0 terminator. */
+			_stp_dyninst_transport_write_oob_data(buf,
+							      num + start);
+		}
 	}
 }
 
