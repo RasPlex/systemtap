@@ -14,7 +14,9 @@ struct _stp_session_attributes {
 	unsigned long suppress_warnings;
 	unsigned long stp_pid;
 	unsigned long target;
-        char module_name[MAXSTRINGLEN];
+	long tz_gmtoff;
+	char tz_name[MAXSTRINGLEN];
+	char module_name[MAXSTRINGLEN];
 };
 
 static void stp_session_attributes_init(void);

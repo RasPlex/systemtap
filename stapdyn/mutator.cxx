@@ -14,6 +14,7 @@ extern "C" {
 #include <dlfcn.h>
 #include <wordexp.h>
 #include <signal.h>
+#include <time.h>
 }
 
 #include <BPatch_snippet.h>
@@ -366,6 +367,20 @@ mutator::init_session_attributes()
   rc = global_setter("@module_name", module_basename.c_str());
   if (rc != 0)
     stapwarn() << "couldn't set 'module_name' global" << endl;
+
+  time_t now_t = time(NULL);
+  struct tm* now = localtime(&now_t);
+  if (now)
+    {
+      rc = global_setter("@tz_gmtoff", lex_cast(-now->tm_gmtoff).c_str());
+      if (rc != 0)
+        stapwarn() << "couldn't set 'tz_gmtoff' global" << endl;
+      rc = global_setter("@tz_name", now->tm_zone);
+      if (rc != 0)
+        stapwarn() << "couldn't set 'tz_name' global" << endl;
+    }
+  else
+    stapwarn() << "couldn't discover local timezone info" << endl;
 
   return;
 }
