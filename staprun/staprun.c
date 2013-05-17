@@ -2,7 +2,7 @@
  *
  * staprun.c - SystemTap module loader
  *
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -264,10 +264,10 @@ static int remove_module(const char *name, int verb)
 }
 
 
-/* As per PR13193, some kernels have a buggy kprobes-optimization code,
-   which results in BUG/panics in certain circumstances.  We turn off
-   kprobes optimization as a conservative measure, unless told otherwise
-   by an environment variable.
+/* As per PR13193 & PR1548, some kernels have a buggy
+   kprobes-optimization code, which results in BUG/panics in certain
+   circumstances.  We turn off kprobes optimization as a conservative
+   measure, unless told otherwise by an environment variable.
 */
 void disable_kprobes_optimization()
 {
@@ -279,7 +279,9 @@ void disable_kprobes_optimization()
 
         /* PR13814; disable this facility for new enough kernels, containing
          * these fix commits: 86b4ce31 46484688 3f33ab1c */
-        if ((uname (&uts) == 0) && (strverscmp (uts.release, "3.4") >= 0))
+        /* PR15484; whoops, not enough, problem still seen on Debian
+         * 3.8.12 kernel. */
+        if (0 && (uname (&uts) == 0) && (strverscmp (uts.release, "3.4") >= 0))
                 return;
 
         if (getenv ("STAP_PR13193_OVERRIDE"))
