@@ -97,7 +97,7 @@ common_probe_entryfn_prologue (systemtap_session& s,
   s.op->newline() << "atomic_inc(probe_alibi(" << probe << "->index));";
   s.op->newline() << "#else";
 
-  s.op->newline() << "struct context* __restrict__ c;";
+  s.op->newline() << "struct context* __restrict__ c = NULL;";
   s.op->newline() << "#if !INTERRUPTIBLE";
   s.op->newline() << "unsigned long flags;";
   s.op->newline() << "#endif";
@@ -360,7 +360,7 @@ common_probe_entryfn_epilogue (systemtap_session& s,
 
   if (s.runtime_usermode_p())
     {
-      s.op->newline() << "_stp_runtime_entryfn_put_context();";
+      s.op->newline() << "if (c) _stp_runtime_entryfn_put_context();";
       s.op->newline() << "errno = _stp_saved_errno;";
       s.op->newline(-1) << "}";
     }

@@ -1,0 +1,7 @@
+/*
+ * be_loaded.stp
+ *
+ * Simple test that begin/end probes work with a command loaded
+ */
+
+probe begin, end { println(pp()) }

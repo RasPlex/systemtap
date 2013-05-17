@@ -56,22 +56,13 @@ static int _stp_runtime_contexts_alloc(void)
     return 0;
 }
 
+/* Free the context resources.
+ *
+ * NB: This should *not* be called by every process which has mmaped the shared
+ * memory.  Only the main process which created shm and originally called
+ * _stp_runtime_contexts_alloc should be the one to free it.
+ */
 static void _stp_runtime_contexts_free(void)
-{
-    /*
-     * On shutdown, _stp_runtime_context_free() gets called. However,
-     * there is no guarentee that even though _stp_print_flush() has
-     * been called at this point, that the data has been actually
-     * flushed. So, we still need the context structure's mutexes
-     * alive.
-     *
-     * We'll destroy the context structure's mutexes using
-     * __stp_runtime_contexts_free() (below) when we destroy the
-     * shared memory over in _stp_shm_destroy().
-     */
-}
-
-static void __stp_runtime_contexts_free(void)
 {
     int i;
 

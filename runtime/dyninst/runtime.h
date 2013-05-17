@@ -94,7 +94,6 @@ static inline int pseudo_atomic_cmpxchg(atomic_t *v, int oldval, int newval)
 
 /* Semi-forward declarations from runtime_context.h, needed by stat.c/shm.c. */
 static int _stp_runtime_num_contexts;
-static void __stp_runtime_contexts_free(void);
 
 /* Semi-forward declarations from this file, needed by stat.c/transport.c. */
 static int stp_pthread_mutex_init_shared(pthread_mutex_t *mutex);
@@ -401,7 +400,6 @@ static void stp_dyninst_dtor(void)
     stp_dyninst_session_exit();
 
     _stp_print_cleanup();
-    _stp_dyninst_transport_shutdown();
     _stp_shm_destroy();
 
     if (_stp_mem_fd != -1) {

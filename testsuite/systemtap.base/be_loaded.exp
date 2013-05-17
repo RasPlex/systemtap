@@ -1,0 +1,16 @@
+# Simple test that begin/end probes work with a command loaded
+
+set test "be_loaded"
+
+set ::result_string {begin
+end}
+
+set script $srcdir/$subdir/$test.stp
+
+foreach runtime [get_runtime_list] {
+    if {$runtime != ""} {
+        stap_run3 "$test ($runtime)" $script --runtime=$runtime -c true
+    } else {
+        stap_run3 $test $script -c true
+    }
+}
