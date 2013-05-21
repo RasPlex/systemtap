@@ -14,6 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <spawn.h>
 
 #include <sys/syscall.h>
 
@@ -235,6 +236,31 @@ __stp_d_t_eliminate_duplicate_warnings(char *data, size_t bytes)
 	return rc;
 }
 
+static void
+__stp_d_t_run_command(char *command)
+{
+	/*
+	 * NB: Calling system() or posix_spawn from a thread could be
+	 * dangerous (since we're calling fork()/exec() from a
+	 * thread). If odd things start happenning, we'll need to come
+	 * up with an alternate solution. One possible solution would
+	 * be to fork a new process before starting the thread (and
+	 * creating any mutexes, opening files, etc.). Then this
+	 * thread would communicate with that new process and have it
+	 * call system()/posix_spawn() and return the result.
+	 *
+	 * FIXME: We'll need to make sure the output from system goes
+	 * to the correct file descriptor. We may need some posix file
+	 * actions to pass to posix_spawnp().
+	 */
+	char *spawn_argv[4] = { "sh", "-c", command, NULL };
+	int rc = posix_spawnp(NULL, "sh", NULL, NULL, spawn_argv, NULL);
+	if (rc != 0) {
+		fprintf(_stp_err, "ERROR: %s : %s\n", command, strerror(rc));
+	}
+	/* Notice we're not waiting on the resulting process to finish. */
+}
+
 static void *
 _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 {
@@ -280,39 +306,46 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 		// will be accessing it until we're finished with it
 		// (and we make it the write queue).
 
-		// Process the queue twice. First handle the OOB data.
+		// Process the queue twice. First handle the OOB data types.
 		for (size_t i = 0; i < q->items; i++) {
 			int write_data = 1;
 			item = &(q->queue[i]);
-			if (item->type != STP_DYN_OOB_DATA)
+			if (! (item->type & STP_DYN_OOB_DATA_MASK))
 				continue;
-#ifdef DEBUG_TRANS
-			fprintf(_stp_err,
-				"%s:%d - STP_DYN_OOB_DATA (%ld"
-				" bytes at offset %ld)\n",
-				__FUNCTION__, __LINE__, item->bytes,
-				item->offset);
-#endif
+
 			c = stp_session_context(item->data_index);
 			data = &c->transport_data;
 			read_ptr = data->log_buf + item->offset;
 
-			/* Note that "WARNING:" should not be
-			 * translated, since it is part of the module
-			 * cmd protocol. */
-			if (strncmp(read_ptr, "WARNING:", 7) == 0) {
-				if (stp_session_attributes()->suppress_warnings) {
-					write_data = 0;
-				}
-				/* If we're not verbose, eliminate
-				 * duplicate warning messages. */
-				else if (stp_session_attributes()->log_level
-					 == 0) {
-					write_data = __stp_d_t_eliminate_duplicate_warnings(read_ptr, item->bytes);
-				}
-			}
+			switch (item->type) {
+			case STP_DYN_OOB_DATA:
+#ifdef DEBUG_TRANS
+				fprintf(_stp_err,
+					"%s:%d - STP_DYN_OOB_DATA (%ld"
+					" bytes at offset %ld)\n",
+					__FUNCTION__, __LINE__, item->bytes,
+					item->offset);
+#endif
 
-			if (write_data) {
+				/* Note that "WARNING:" should not be
+				 * translated, since it is part of the
+				 * module cmd protocol. */
+				if (strncmp(read_ptr, "WARNING:", 7) == 0) {
+					if (stp_session_attributes()->suppress_warnings) {
+						write_data = 0;
+					}
+					/* If we're not verbose, eliminate
+					 * duplicate warning messages. */
+					else if (stp_session_attributes()->log_level
+						 == 0) {
+						write_data = __stp_d_t_eliminate_duplicate_warnings(read_ptr, item->bytes);
+					}
+				}
+
+				if (! write_data) {
+					break;
+				}
+
 				size = write(err_fd, read_ptr, item->bytes);
 				if (size != item->bytes)
 					fprintf(_stp_err,
@@ -320,6 +353,27 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 						" (%ld), errno %d\n",
 						(long)size,
 						(long)item->bytes, errno);
+				break;
+
+			case STP_DYN_SYSTEM:
+#ifdef DEBUG_TRANS
+				fprintf(_stp_err, "%s:%d - STP_DYN_SYSTEM (%.*s) %d bytes\n",
+					__FUNCTION__, __LINE__,
+					(int)item->bytes, (char *)read_ptr,
+					(int)item->bytes);
+#endif
+				/*
+				 * Note that the null character is
+				 * already included in the system
+				 * string.
+				 */
+				__stp_d_t_run_command(read_ptr);
+				break;
+			default:
+				fprintf(_stp_err,
+					"Error - unknown OOB item type %d\n",
+					item->type);
+				break;
 			}
 
 			// Signal there is a log buffer available to
@@ -383,7 +437,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 				stopping = 1;
 				break;
 			default:
-				if (item->type != STP_DYN_OOB_DATA) {
+				if (! (item->type & STP_DYN_OOB_DATA_MASK)) {
 					fprintf(_stp_err,
 						"Error - unknown item type"
 						" %d\n", item->type);
@@ -397,6 +451,33 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 		q->items = 0;
 	}
 	return NULL;
+}
+
+static int _stp_ctl_send(int type, void *data, unsigned len)
+{
+#ifdef DEBUG_TRANS
+	fprintf(_stp_err, "%s:%d - type 0x%x data %p len %d\n",
+		__FUNCTION__, __LINE__, type, data, len);
+#endif
+
+	// This thread should already have a context structure.
+	if (contexts == NULL)
+		return EINVAL;
+
+	// Currently, we're only handling 'STP_SYSTEM' control
+	// messages, converting it to a STP_DYN_SYSTEM message.
+	if (type != STP_SYSTEM)
+		return 0;
+
+	char *buffer = _stp_dyninst_transport_log_buffer();
+	if (buffer == NULL)
+		return 0;
+
+	memcpy(buffer, data, len);
+	size_t offset = buffer - contexts->transport_data.log_buf;
+	__stp_dyninst_transport_queue_add(STP_DYN_SYSTEM,
+					  contexts->data_index, offset, len);
+	return len;
 }
 
 static void _stp_dyninst_transport_signal_exit(void)

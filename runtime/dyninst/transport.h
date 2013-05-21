@@ -12,6 +12,9 @@
 #define STP_DYN_EXIT		0x0001
 #define STP_DYN_NORMAL_DATA	0x0002
 #define STP_DYN_OOB_DATA	0x0004
+#define STP_DYN_SYSTEM		0x0008
+
+#define STP_DYN_OOB_DATA_MASK (STP_DYN_OOB_DATA | STP_DYN_SYSTEM)
 
 // The size of print buffers. This limits the maximum amount of data a
 // print can send. Note that it must be a power of 2 (which is why
