@@ -1082,7 +1082,7 @@ probe kernel.function("*@net/socket.c").return
 <title>targetexample.stp</title>
 <programlisting>probe syscall.* {
   if (pid() == target())
-    printf("%s/n", name)
+    printf("%s\n", name)
 }	</programlisting>
 </example>
 
