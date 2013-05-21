@@ -555,12 +555,6 @@ static int _stp_dyninst_transport_session_start(void)
 	return 0;
 }
 
-static int _stp_dyninst_transport_init(const char *name)
-{
-	// Nothing to do here...
-	return 0;
-}
-
 static int
 _stp_dyninst_transport_write_oob_data(char *buffer, size_t bytes)
 {

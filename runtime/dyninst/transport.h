@@ -112,8 +112,6 @@ static int _stp_dyninst_transport_session_init(void);
 
 static int _stp_dyninst_transport_session_start(void);
 
-static int _stp_dyninst_transport_init(const char *name);
-
 static int _stp_dyninst_transport_write_oob_data(char *buffer, size_t bytes);
 
 static int _stp_dyninst_transport_write(void);

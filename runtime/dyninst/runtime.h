@@ -340,17 +340,11 @@ int stp_dyninst_shm_connect(const char* name)
     }
 
     rc = _stp_shm_connect(name);
-    if (rc != 0)
-	return rc;
-
-    rc = _stp_dyninst_transport_init(name);
     return rc;
 }
 
 int stp_dyninst_session_init(void)
 {
-    int rc;
-
     /* We don't have a chance to indicate errors in the ctor, so do it here. */
     if (stp_dyninst_ctor_rc != 0) {
 	return stp_dyninst_ctor_rc;
@@ -360,10 +354,6 @@ int stp_dyninst_session_init(void)
      * with stapdyn 2.0 -- we no longer support this case.  */
     if (_stp_shm_base == NULL)
 	return -ENOMEM;
-
-    rc = _stp_dyninst_transport_init(_stp_shm_name);
-    if (rc != 0)
-	return rc;
 
     return systemtap_module_init();
 }
