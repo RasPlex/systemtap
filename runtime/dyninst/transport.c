@@ -240,15 +240,6 @@ static void
 __stp_d_t_run_command(char *command)
 {
 	/*
-	 * NB: Calling system() or posix_spawn from a thread could be
-	 * dangerous (since we're calling fork()/exec() from a
-	 * thread). If odd things start happenning, we'll need to come
-	 * up with an alternate solution. One possible solution would
-	 * be to fork a new process before starting the thread (and
-	 * creating any mutexes, opening files, etc.). Then this
-	 * thread would communicate with that new process and have it
-	 * call system()/posix_spawn() and return the result.
-	 *
 	 * FIXME: We'll need to make sure the output from system goes
 	 * to the correct file descriptor. We may need some posix file
 	 * actions to pass to posix_spawnp().
