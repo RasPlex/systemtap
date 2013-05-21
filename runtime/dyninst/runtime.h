@@ -309,11 +309,10 @@ static void stp_dyninst_ctor(void)
         rc = -errno;
     }
 
-    /* XXX We don't really want to be using the target's stdio. (PR14491)
-     * But while we are, clone our own FILE handles so we're not affected by
-     * the target's actions, like closing stdout/stderr early.
-     */
-    _stp_out = _stp_clone_file(stdout);
+    /* XXX Some debug output still prints on stderr.  We clone our own FILE
+     * handle so we're not affected if the target closes its stderr.
+     * XXX This may be overkill, and ineffective besides if we attach to a
+     * process that already closed its stderr.  */
     _stp_err = _stp_clone_file(stderr);
 
     if (rc == 0)
@@ -387,11 +386,6 @@ static void stp_dyninst_dtor(void)
 
     if (_stp_mem_fd != -1) {
 	close (_stp_mem_fd);
-    }
-
-    if (_stp_out && _stp_out != stdout) {
-	fclose(_stp_out);
-	_stp_out = stdout;
     }
 
     if (_stp_err && _stp_err != stderr) {

@@ -263,7 +263,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 	if (sess_data == NULL)
 		return NULL;
 
-	out_fd = fileno(_stp_out);
+	out_fd = STDOUT_FILENO; // TODO PR14791 allow a -o output file
 	err_fd = fileno(_stp_err);
 	if (out_fd < 0 || err_fd < 0)
 		return NULL;

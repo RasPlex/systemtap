@@ -19,10 +19,10 @@
 #define WARN_STRING "WARNING: "
 #define ERR_STRING "ERROR: "
 
-// XXX for now, all IO is going in-process to stdout/stderr via
-// _stp_out/_stp_err; see runtime/dyninst/runtime.h for initialization.
+// XXX most output now goes through the transport, but some debug output still
+// prints in-process to stderr via the _stp_err handle copy; see
+// runtime/dyninst/runtime.h for initialization.
 
-static FILE* _stp_out = NULL;
 static FILE* _stp_err = NULL;
 
 
