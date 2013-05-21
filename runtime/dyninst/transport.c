@@ -154,6 +154,10 @@ static int _stp_transport_thread_started = 0;
 #define _STP_D_T_WRITE_QUEUE(sess_data) \
 	(&((sess_data)->queues[(sess_data)->write_queue]))
 
+// Limit remembered strings in __stp_d_t_eliminate_duplicate_warnings
+#define MAX_STORED_WARNINGS 1024
+
+
 static void
 __stp_dyninst_transport_queue_add(unsigned type, int data_index,
 				  size_t offset, size_t bytes)
@@ -204,7 +208,6 @@ __stp_d_t_eliminate_duplicate_warnings(char *data, size_t bytes)
 		 * prevent a misbehaving script/environment from
 		 * emitting countless _stp_warn()s, and overflow
 		 * staprun's memory. */
-#define MAX_STORED_WARNINGS 1024
 		if (seen_count++ == MAX_STORED_WARNINGS) {
 			fprintf(_stp_err,
 				"WARNING deduplication table full\n");
