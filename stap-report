@@ -36,7 +36,7 @@ elif [ -f /var/log/packages ]; then
   # slackware
   run "cat /var/log/packages | egrep 'systemtap|elfutils|kernel|gcc|dyninst|avahi|nss|nspr|dejagnu' | sort -k9"
 fi
-run "egrep 'PROBE|TRACE|MARKER|_DEBUG_|MODULE|FENTRY|_SIG' /lib/modules/`uname -r`/build/.config | grep -v not.set | sort | fmt -w 80"
+run "egrep 'PROBE|TRACE|MARKER|KALLSYM|_DEBUG_|MODULE|FENTRY|_SIG' /lib/modules/`uname -r`/build/.config | grep -v not.set | sort | fmt -w 80"
 run "find /debugfs /proc /sys /dev /sys/kernel/debug -path '*kprobe*' -o -path '*yama*' -type f 2>/dev/null | xargs grep -H ."
 run "lsmod"
 run "avahi-browse -r -t _stap._tcp"
