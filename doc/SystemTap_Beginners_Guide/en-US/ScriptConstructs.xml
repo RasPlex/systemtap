@@ -357,7 +357,7 @@ and limits the string to <replaceable>n</replaceable> bytes.
 	Having the address a pointer points to may not be useful.
 	You might be more interested in the fields of the data structure the
 	pointer points to.
-	You can use the the <quote><command>$</command></quote> suffix to pretty print
+	You can use the <quote><command>$</command></quote> suffix to pretty print
 	the data structure.
 	The following command-line example uses the pretty printing suffix to
 	print more details about the data structures passed into the function

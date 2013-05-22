@@ -170,7 +170,7 @@
 	<term>-S <replaceable>size</replaceable>,<replaceable>count</replaceable></term>
 	<listitem>
 	  <para>Limit files to <replaceable>size</replaceable> megabytes and
-	    limit the the number of files kept around to
+	    limit the number of files kept around to
 	    <replaceable>count</replaceable>. The file names will have a
 	    sequence number suffix. This option implements logrotate operations
 	    for SystemTap.</para>

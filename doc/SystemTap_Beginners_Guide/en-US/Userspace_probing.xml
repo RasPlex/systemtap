@@ -68,10 +68,10 @@ by specifying the path to executable (PATH).
 SystemTap makes use of the <command>PATH</command> environment variable,
 so both the name used on the command-line to start the executable and the absolute path
 to the executable can be used.
-Several of user-space probe events limit their scope to a
+Several of the user-space probe events limit their scope to a
 particular executable name (PATH) because
-SystemTap must use debug information to statically analyzed where to
-places the probes, but for many user-space probes events the process ID
+SystemTap must use debug information to statically analyze where to
+place the probes. But for many user-space probe events, the process ID
 and executable name are optional. 
 Any <command>process</command> event in the list below that include process ID or
 the path to the executable must include those arguments.
@@ -282,7 +282,7 @@ FIXME description of how to use the stack backtracing
 
 <para>
       The probe point (<command>pp</command>) function indicates which
-      particular event triggered the the SystemTap event handler.
+      particular event triggered the SystemTap event handler.
       A probe on the entry into a function would list the function name.
       However, in many cases the same probe point event may be triggered by
       many different modules in the program; this is particularly true for

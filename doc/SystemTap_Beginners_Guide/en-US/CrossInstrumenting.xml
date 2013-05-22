@@ -291,7 +291,7 @@
   </note>
 
   <para>
-    Once the the <emphasis>instrumentation module</emphasis> is compiled, copy
+    Once the <emphasis>instrumentation module</emphasis> is compiled, copy
     it to the <emphasis>target system</emphasis> and then load it using:
   </para>
 
