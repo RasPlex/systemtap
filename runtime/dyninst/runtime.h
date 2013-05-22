@@ -309,12 +309,6 @@ static void stp_dyninst_ctor(void)
         rc = -errno;
     }
 
-    /* XXX Some debug output still prints on stderr.  We clone our own FILE
-     * handle so we're not affected if the target closes its stderr.
-     * XXX This may be overkill, and ineffective besides if we attach to a
-     * process that already closed its stderr.  */
-    _stp_err = _stp_clone_file(stderr);
-
     if (rc == 0)
         rc = _stp_runtime_contexts_init();
 
@@ -386,11 +380,6 @@ static void stp_dyninst_dtor(void)
 
     if (_stp_mem_fd != -1) {
 	close (_stp_mem_fd);
-    }
-
-    if (_stp_err && _stp_err != stderr) {
-	fclose(_stp_err);
-	_stp_err = stderr;
     }
 }
 

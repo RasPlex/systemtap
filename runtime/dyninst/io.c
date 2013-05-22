@@ -19,28 +19,6 @@
 #define WARN_STRING "WARNING: "
 #define ERR_STRING "ERROR: "
 
-// XXX most output now goes through the transport, but some debug output still
-// prints in-process to stderr via the _stp_err handle copy; see
-// runtime/dyninst/runtime.h for initialization.
-
-static FILE* _stp_err = NULL;
-
-
-/* Clone a FILE* for private use.  On error, fallback to the original. */
-static FILE* _stp_clone_file(FILE* file)
-{
-    int fd = dup(fileno(file));
-    if (fd != -1) {
-	fcntl(fd, F_SETFD, FD_CLOEXEC);
-	FILE* newfile = fdopen(fd, "wb");
-	if (newfile)
-	    return newfile;
-
-	close(fd);
-    }
-    return file;
-}
-
 enum code { INFO=0, WARN, ERROR, DBUG };
 
 static void _stp_vlog (enum code type, const char *func, int line,
@@ -52,21 +30,21 @@ static void _stp_vlog (enum code type, const char *func, int line,
 {
 	size_t start = 0;
 	size_t num;
-	char tmp[STP_LOG_BUF_LEN];
+	char local_buffer[STP_LOG_BUF_LEN];
 	char *buf;
 
 	/* If we're writing a debug message, just use the temporary
 	 * buffer. These messages end up going through the normal
 	 * transport path, not the OOB data path. */
 	if (type == DBUG) {
-		buf = tmp;
+		buf = local_buffer;
 	}
 	else {
 		/* If we can't get a buffer, the transport must be not
 		 * up yet.  Instead use our temporary buffer. */
 		buf = _stp_dyninst_transport_log_buffer();
 		if (buf == NULL)
-			buf = tmp;
+			buf = local_buffer;
 	}
 
 	if (type == DBUG) {
@@ -102,21 +80,19 @@ static void _stp_vlog (enum code type, const char *func, int line,
 		buf[num + start] = '\0';
 	}
 
-	if (type == DBUG) {
+	if (buf != local_buffer) {
+		/* If we successfully got log space, send it as OOB now.
+		 * NB: don't explicitly send the \0 terminator. */
+		_stp_dyninst_transport_write_oob_data(buf, num + start);
+	}
+	else if (type == DBUG) {
+		/* Debug messages go over the normal data path.  */
 		_stp_print(buf);
 		_stp_print_flush();
 	}
 	else {
-		/* If we're using the temporary buffer, just output it
-		 * to _stp_err. */
-		if (buf == tmp) {
-			fprintf(_stp_err, "%s", buf);
-		}
-		else {
-        	        /* NB: don't explicitly send the \0 terminator. */
-			_stp_dyninst_transport_write_oob_data(buf,
-							      num + start);
-		}
+		/* Fallback to local stderr as a last resort.  */
+		fprintf(stderr, "%s", buf);
 	}
 }
 

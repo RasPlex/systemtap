@@ -158,6 +158,26 @@ static int _stp_transport_thread_started = 0;
 #define MAX_STORED_WARNINGS 1024
 
 
+// If the transport has an error or debug message to print, it can't very well
+// recurse on itself, so we just print to the local stderr and hope...
+static void _stp_transport_err (const char *fmt, ...)
+	__attribute ((format (printf, 1, 2)));
+static void _stp_transport_err (const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	vfprintf (stderr, fmt, args);
+	va_end(args);
+}
+
+#ifdef DEBUG_TRANS
+#define _stp_transport_debug(fmt, ...) \
+    _stp_transport_err("%s:%d - " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#else
+#define _stp_transport_debug(fmt, ...) do { } while(0)
+#endif
+
+
 static void
 __stp_dyninst_transport_queue_add(unsigned type, int data_index,
 				  size_t offset, size_t bytes)
@@ -209,8 +229,7 @@ __stp_d_t_eliminate_duplicate_warnings(char *data, size_t bytes)
 		 * emitting countless _stp_warn()s, and overflow
 		 * staprun's memory. */
 		if (seen_count++ == MAX_STORED_WARNINGS) {
-			fprintf(_stp_err,
-				"WARNING deduplication table full\n");
+			_stp_transport_err("WARNING deduplication table full\n");
 			free (dupstr);
 		}
 		else if (seen_count > MAX_STORED_WARNINGS) {
@@ -250,7 +269,7 @@ __stp_d_t_run_command(char *command)
 	char *spawn_argv[4] = { "sh", "-c", command, NULL };
 	int rc = posix_spawnp(NULL, "sh", NULL, NULL, spawn_argv, NULL);
 	if (rc != 0) {
-		fprintf(_stp_err, "ERROR: %s : %s\n", command, strerror(rc));
+		_stp_transport_err("ERROR: %s : %s\n", command, strerror(rc));
 	}
 	/* Notice we're not waiting on the resulting process to finish. */
 }
@@ -267,7 +286,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 		return NULL;
 
 	out_fd = STDOUT_FILENO; // TODO PR14791 allow a -o output file
-	err_fd = fileno(_stp_err);
+	err_fd = STDERR_FILENO;
 	if (out_fd < 0 || err_fd < 0)
 		return NULL;
 
@@ -313,13 +332,9 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 
 			switch (item->type) {
 			case STP_DYN_OOB_DATA:
-#ifdef DEBUG_TRANS
-				fprintf(_stp_err,
-					"%s:%d - STP_DYN_OOB_DATA (%ld"
-					" bytes at offset %ld)\n",
-					__FUNCTION__, __LINE__, item->bytes,
-					item->offset);
-#endif
+				_stp_transport_debug(
+                                        "STP_DYN_OOB_DATA (%ld bytes at offset %ld)\n",
+					item->bytes, item->offset);
 
 				/* Note that "WARNING:" should not be
 				 * translated, since it is part of the
@@ -342,7 +357,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 
 				size = write(err_fd, read_ptr, item->bytes);
 				if (size != item->bytes)
-					fprintf(_stp_err,
+					_stp_transport_err(
 						"write only wrote %ld bytes"
 						" (%ld), errno %d\n",
 						(long)size,
@@ -350,12 +365,9 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 				break;
 
 			case STP_DYN_SYSTEM:
-#ifdef DEBUG_TRANS
-				fprintf(_stp_err, "%s:%d - STP_DYN_SYSTEM (%.*s) %d bytes\n",
-					__FUNCTION__, __LINE__,
+				_stp_transport_debug("STP_DYN_SYSTEM (%.*s) %d bytes\n",
 					(int)item->bytes, (char *)read_ptr,
 					(int)item->bytes);
-#endif
 				/*
 				 * Note that the null character is
 				 * already included in the system
@@ -364,7 +376,7 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 				__stp_d_t_run_command(read_ptr);
 				break;
 			default:
-				fprintf(_stp_err,
+				_stp_transport_err(
 					"Error - unknown OOB item type %d\n",
 					item->type);
 				break;
@@ -384,19 +396,16 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 
 			switch (item->type) {
 			case STP_DYN_NORMAL_DATA:
-#ifdef DEBUG_TRANS
-				fprintf(_stp_err, "%s:%d - STP_DYN_NORMAL_DATA"
+				_stp_transport_debug("STP_DYN_NORMAL_DATA"
 					" (%ld bytes at offset %ld)\n",
-					__FUNCTION__, __LINE__, item->bytes,
-					item->offset);
-#endif
+					item->bytes, item->offset);
 				c = stp_session_context(item->data_index);
 				data = &c->transport_data;
 				read_ptr = (data->print_buf
 					    + _STP_D_T_PRINT_NORM(item->offset));
 				size = write(out_fd, read_ptr, item->bytes);
 				if (size != item->bytes)
-					fprintf(_stp_err,
+					_stp_transport_err(
 						"Error: write() only wrote"
 						" %ld bytes (%ld), errno %d\n",
 						(long)size, (long)item->bytes, errno);
@@ -415,24 +424,18 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 				pthread_cond_signal(&(data->print_space_avail));
 				pthread_mutex_unlock(&(data->print_mutex));
 
-#ifdef DEBUG_TRANS
-				fprintf(_stp_err,
-					"%s:%d - STP_DYN_NORMAL_DATA flushed,"
-					" read_offset %ld, write_offset"
-					" %ld)\n", __FUNCTION__, __LINE__,
+				_stp_transport_debug(
+					"STP_DYN_NORMAL_DATA flushed,"
+					" read_offset %ld, write_offset %ld)\n",
 					data->read_offset, data->write_offset);
-#endif
 				break;
 			case STP_DYN_EXIT:
-#ifdef DEBUG_TRANS
-				fprintf(_stp_err, "%s:%d - STP_DYN_EXIT\n",
-					__FUNCTION__, __LINE__);
-#endif
+				_stp_transport_debug("STP_DYN_EXIT\n");
 				stopping = 1;
 				break;
 			default:
 				if (! (item->type & STP_DYN_OOB_DATA_MASK)) {
-					fprintf(_stp_err,
+					_stp_transport_err(
 						"Error - unknown item type"
 						" %d\n", item->type);
 				}
@@ -449,10 +452,8 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 
 static int _stp_ctl_send(int type, void *data, unsigned len)
 {
-#ifdef DEBUG_TRANS
-	fprintf(_stp_err, "%s:%d - type 0x%x data %p len %d\n",
-		__FUNCTION__, __LINE__, type, data, len);
-#endif
+	_stp_transport_debug("type 0x%x data %p len %d\n",
+			type, data, len);
 
 	// This thread should already have a context structure.
 	if (contexts == NULL)
@@ -587,12 +588,9 @@ static int _stp_dyninst_transport_write(void)
 	// the transport thread (the consumer) only writes to
 	// 'read_offset'. Any concurrent-running probe will be using a
 	// different context.
-#ifdef DEBUG_TRANS
-	fprintf(_stp_err,
-		"%s:%d - read_offset %ld, write_offset %ld, write_bytes %ld\n",
-		__FUNCTION__, __LINE__, data->read_offset,
-		data->write_offset, data->write_bytes);
-#endif
+	_stp_transport_debug(
+		"read_offset %ld, write_offset %ld, write_bytes %ld\n",
+		data->read_offset, data->write_offset, data->write_bytes);
 
 	// Notice we're not normalizing 'write_offset'. The consumer
 	// thread needs "raw" offsets.
@@ -735,10 +733,7 @@ static void *_stp_dyninst_transport_reserve_bytes(int numbytes)
 
 	// This thread should already have a context structure.
 	if (contexts == NULL) {
-#ifdef DEBUG_TRANS
-		fprintf(_stp_err, "%s:%d - NULL contexts!\n",
-			__FUNCTION__, __LINE__);
-#endif
+		_stp_transport_debug("NULL contexts!\n");
 		return NULL;
 	}
 
@@ -811,13 +806,10 @@ recheck:
 		// fail if there isn't anything in the queue for this
 		// context structure.
 		if (space_before < numbytes && space_after < numbytes) {
-#ifdef DEBUG_TRANS
-			fprintf(_stp_err,
-				"%s:%d - waiting for more space, numbytes %d,"
+			_stp_transport_debug(
+				"waiting for more space, numbytes %d,"
 				" before %ld, after %ld\n",
-				__FUNCTION__, __LINE__, numbytes, space_before,
-				space_after);
-#endif
+				numbytes, space_before, space_after);
 
 			// Setup a timeout for
 			// STP_DYNINST_TIMEOUT_SECS seconds into the
@@ -846,15 +838,12 @@ recheck:
 		// If we *still* don't have enough space available,
 		// quit. We've done all we can do.
 		if (space_before < numbytes && space_after < numbytes) {
-#ifdef DEBUG_TRANS
-			fprintf(_stp_err,
-				"%s:%d - not enough space available,"
+			_stp_transport_debug(
+				"not enough space available,"
 				" numbytes %d, before %ld, after %ld,"
 				" read_offset %ld, write_offset %ld\n",
-				__FUNCTION__, __LINE__, numbytes,
-				space_before, space_after, read_offset,
-				data->write_offset);
-#endif
+				numbytes, space_before, space_after,
+				read_offset, data->write_offset);
 			return NULL;
 		}
 	}
@@ -869,15 +858,12 @@ recheck:
 		       + _STP_D_T_PRINT_NORM(data->write_offset)
 		       + data->write_bytes);
 		data->write_bytes += numbytes;
-#ifdef DEBUG_TRANS
-		fprintf(_stp_err,
-			"%s:%d - reserve %d bytes after, bytes available"
+		_stp_transport_debug(
+			"reserve %d bytes after, bytes available"
 			" (%ld, %ld) read_offset %ld, write_offset %ld,"
 			" write_bytes %ld\n",
-			__FUNCTION__, __LINE__, numbytes, space_before,
-			space_after, data->read_offset, data->write_offset,
-			data->write_bytes);
-#endif
+			numbytes, space_before, space_after, data->read_offset,
+			data->write_offset, data->write_bytes);
 		return ret;
 	}
 
@@ -888,11 +874,8 @@ recheck:
 		_stp_dyninst_transport_write();
 		// Flushing the buffer updates the write_offset, which
 		// could have caused it to wrap. Start all over.
-#ifdef DEBUG_TRANS
-		fprintf(_stp_err,
-			"%s:%d - rechecking available bytes after a flush...\n",
-			__FUNCTION__, __LINE__);
-#endif
+		_stp_transport_debug(
+			"rechecking available bytes after a flush...\n");
 		goto recheck;
 	}
 
@@ -902,15 +885,12 @@ recheck:
 			      & _STP_DYNINST_BUFFER_SIZE);
 	ret = data->print_buf;
 	data->write_bytes += numbytes;
-#ifdef DEBUG_TRANS
-	fprintf(_stp_err,
-		"%s:%d - reserve %d bytes before, bytes available"
+	_stp_transport_debug(
+		"reserve %d bytes before, bytes available"
 		" (%ld, %ld) read_offset %ld, write_offset %ld,"
 		" write_bytes %ld\n",
-		__FUNCTION__, __LINE__, numbytes, space_before,
-		space_after, data->read_offset, data->write_offset,
-		data->write_bytes);
-#endif
+		numbytes, space_before, space_after, data->read_offset,
+		data->write_offset, data->write_bytes);
 	return ret;
 }
 
