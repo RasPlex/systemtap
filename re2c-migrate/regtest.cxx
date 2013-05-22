@@ -27,6 +27,16 @@ void print_usage(char *progname)
   fprintf (stderr, "$ %s 2 <regex> <string>\n", progname);
 }
 
+/* Quick-and-dirty thing to correct backslashes in C code: */
+string escape_str(string n) {
+  string foo("");
+  for (string::iterator it = n.begin(); it != n.end(); it++) {
+    if (*it == '\\') foo += "\\\\";
+    else foo += *it;
+  }
+  return foo;
+}
+
 int main(int argc, char *argv [])
 {
   if (argc < 2)
@@ -50,7 +60,7 @@ int main(int argc, char *argv [])
           translator_output o(cout);
 
           string t(argv[3]);
-          string match_expr = "\"" + t + "\""; // TODOXXX escape argv[3]
+          string match_expr = "\"" + escape_str(t) + "\"";
           
           // emit code skeleton
           o.line() << "// test output for systemtap-re2c";
@@ -67,7 +77,7 @@ int main(int argc, char *argv [])
           o.indent(1);
           o.newline() << "int ans = ";
           d.emit_matchop_start (&o);
-          o.line() << match_expr; // TODOXXX escape argv[3]
+          o.line() << match_expr;
           d.emit_matchop_end (&o);
           o.line() << ";";
           o.newline() << "printf(\"match %s\\n\", ans ? \"succeed\" : \"fail\");";
@@ -76,7 +86,7 @@ int main(int argc, char *argv [])
           } else if (test_type == 0) {
             o.newline() << "exit(ans ? 0 : 1);";
           }
-          /* TODO test type 2 should fail to compile */
+          /* TODOXXX test type 2 should fail to compile */
           o.newline(-1) << "}";
           o.newline();
           
