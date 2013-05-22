@@ -274,10 +274,26 @@ __stp_d_t_run_command(char *command)
 	/* Notice we're not waiting on the resulting process to finish. */
 }
 
+static ssize_t
+_stp_write_retry(int fd, const void *buf, size_t count)
+{
+	size_t remaining = count;
+	while (remaining > 0) {
+		ssize_t ret = write(fd, buf, remaining);
+		if (ret >= 0) {
+			buf += ret;
+			remaining -= ret;
+		}
+		else if (errno != EINTR) {
+			return ret;
+		}
+	}
+	return count;
+}
+
 static void *
 _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 {
-	ssize_t size;
 	int stopping = 0;
 	int out_fd, err_fd;
 	struct _stp_transport_session_data *sess_data = stp_transport_data();
@@ -355,13 +371,10 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 					break;
 				}
 
-				size = write(err_fd, read_ptr, item->bytes);
-				if (size != item->bytes)
+				if (_stp_write_retry(err_fd, read_ptr, item->bytes) < 0)
 					_stp_transport_err(
-						"write only wrote %ld bytes"
-						" (%ld), errno %d\n",
-						(long)size,
-						(long)item->bytes, errno);
+						"couldn't write %ld bytes OOB data: %s\n",
+						(long)item->bytes, strerror(errno));
 				break;
 
 			case STP_DYN_SYSTEM:
@@ -403,12 +416,10 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 				data = &c->transport_data;
 				read_ptr = (data->print_buf
 					    + _STP_D_T_PRINT_NORM(item->offset));
-				size = write(out_fd, read_ptr, item->bytes);
-				if (size != item->bytes)
+				if (_stp_write_retry(out_fd, read_ptr, item->bytes) < 0)
 					_stp_transport_err(
-						"Error: write() only wrote"
-						" %ld bytes (%ld), errno %d\n",
-						(long)size, (long)item->bytes, errno);
+						"couldn't write %ld bytes data: %s\n",
+						(long)item->bytes, strerror(errno));
 
 				pthread_mutex_lock(&(data->print_mutex));
 
