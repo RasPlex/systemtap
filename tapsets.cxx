@@ -7889,6 +7889,7 @@ uprobe_derived_probe_group::emit_module_dyninst_decls (systemtap_session& s)
   common_probe_entryfn_epilogue (s, true);
   s.op->newline() << "return 0;";
   s.op->newline(-1) << "}";
+  s.op->newline() << "#include \"dyninst/uprobes-regs.c\"";
   s.op->assert_0_indent();
 }
 
