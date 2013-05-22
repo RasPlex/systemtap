@@ -48,7 +48,7 @@ static struct context * _stp_runtime_entryfn_get_context(void)
 	return contexts[smp_processor_id()];
 }
 
-static inline void _stp_runtime_entryfn_put_context(void)
+static inline void _stp_runtime_entryfn_put_context(struct context *c __attribute__((unused)))
 {
 	/* Do nothing. */
 	return;

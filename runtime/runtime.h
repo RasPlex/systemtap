@@ -16,7 +16,7 @@ static int _stp_runtime_contexts_alloc(void);
 static void _stp_runtime_contexts_free(void);
 static int _stp_runtime_get_data_index(void);
 static struct context *_stp_runtime_entryfn_get_context(void);
-static void _stp_runtime_entryfn_put_context(void);
+static void _stp_runtime_entryfn_put_context(struct context *);
 static struct context *_stp_runtime_get_context(void);
 
 #if defined(__KERNEL__)

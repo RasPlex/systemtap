@@ -2099,7 +2099,7 @@ c_unparser::emit_module_exit ()
   // In dyninst mode, now we're done with the contexts, transport, everything!
   if (session->runtime_usermode_p())
     {
-      o->newline() << "_stp_runtime_entryfn_put_context();";
+      o->newline() << "_stp_runtime_entryfn_put_context(c);";
       o->newline() << "_stp_dyninst_transport_shutdown();";
       o->newline() << "_stp_runtime_contexts_free();";
     }

@@ -90,12 +90,15 @@ common_probe_entryfn_prologue (systemtap_session& s,
       // and there's *nothing* for the probe to do.  (even alibi is in shm)
       // So failure skips this whole block through the end of the epilogue.
       s.op->newline() << "if (likely(session_state())) {";
-      s.op->newline(1) << "int _stp_saved_errno = errno;";
+      s.op->indent(1);
     }
 
   s.op->newline() << "#ifdef STP_ALIBI";
   s.op->newline() << "atomic_inc(probe_alibi(" << probe << "->index));";
   s.op->newline() << "#else";
+
+  if (s.runtime_usermode_p())
+    s.op->newline() << "int _stp_saved_errno = errno;";
 
   s.op->newline() << "struct context* __restrict__ c = NULL;";
   s.op->newline() << "#if !INTERRUPTIBLE";
@@ -339,7 +342,7 @@ common_probe_entryfn_epilogue (systemtap_session& s,
   // buffers are stored there).
   if (!s.runtime_usermode_p())
     {
-      s.op->newline() << "_stp_runtime_entryfn_put_context();";
+      s.op->newline() << "_stp_runtime_entryfn_put_context(c);";
     }
   if (! s.suppress_handler_errors) // PR 13306
     {
@@ -356,14 +359,16 @@ common_probe_entryfn_epilogue (systemtap_session& s,
   s.op->newline() << "local_irq_restore (flags);";
   s.op->newline() << "#endif";
 
+  if (s.runtime_usermode_p())
+    {
+      s.op->newline() << "_stp_runtime_entryfn_put_context(c);";
+      s.op->newline() << "errno = _stp_saved_errno;";
+    }
+
   s.op->newline() << "#endif // STP_ALIBI";
 
   if (s.runtime_usermode_p())
-    {
-      s.op->newline() << "if (c) _stp_runtime_entryfn_put_context();";
-      s.op->newline() << "errno = _stp_saved_errno;";
-      s.op->newline(-1) << "}";
-    }
+    s.op->newline(-1) << "}";
 }
 
 

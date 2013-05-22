@@ -467,7 +467,8 @@ static int _stp_ctl_send(int type, void *data, unsigned len)
 			type, data, len);
 
 	// This thread should already have a context structure.
-	if (contexts == NULL)
+        struct context* c = _stp_runtime_get_context();
+	if (c == NULL)
 		return EINVAL;
 
 	// Currently, we're only handling 'STP_SYSTEM' control
@@ -480,9 +481,9 @@ static int _stp_ctl_send(int type, void *data, unsigned len)
 		return 0;
 
 	memcpy(buffer, data, len);
-	size_t offset = buffer - contexts->transport_data.log_buf;
+	size_t offset = buffer - c->transport_data.log_buf;
 	__stp_dyninst_transport_queue_add(STP_DYN_SYSTEM,
-					  contexts->data_index, offset, len);
+					  c->data_index, offset, len);
 	return len;
 }
 
@@ -574,21 +575,23 @@ static int
 _stp_dyninst_transport_write_oob_data(char *buffer, size_t bytes)
 {
 	// This thread should already have a context structure.
-	if (contexts == NULL)
+        struct context* c = _stp_runtime_get_context();
+	if (c == NULL)
 		return EINVAL;
 
-	size_t offset = buffer - contexts->transport_data.log_buf;
+	size_t offset = buffer - c->transport_data.log_buf;
 	__stp_dyninst_transport_queue_add(STP_DYN_OOB_DATA,
-					  contexts->data_index, offset, bytes);
+					  c->data_index, offset, bytes);
 	return 0;
 }
 
 static int _stp_dyninst_transport_write(void)
 {
 	// This thread should already have a context structure.
-	if (contexts == NULL)
+        struct context* c = _stp_runtime_get_context();
+	if (c == NULL)
 		return 0;
-	struct _stp_transport_context_data *data = &contexts->transport_data;
+	struct _stp_transport_context_data *data = &c->transport_data;
 	size_t bytes = data->write_bytes;
 
 	if (bytes == 0)
@@ -614,7 +617,7 @@ static int _stp_dyninst_transport_write(void)
 	data->write_offset = _STP_D_T_PRINT_ADD(data->write_offset, bytes);
 
 	__stp_dyninst_transport_queue_add(STP_DYN_NORMAL_DATA,
-					  contexts->data_index,
+					  c->data_index,
 					  saved_write_offset, bytes);
 	return 0;
 }
@@ -669,12 +672,13 @@ _stp_dyninst_transport_log_buffer_full(struct _stp_transport_context_data *data)
 static char *_stp_dyninst_transport_log_buffer(void)
 {
 	// This thread should already have a context structure.
-	if (contexts == NULL)
+        struct context* c = _stp_runtime_get_context();
+	if (c == NULL)
 		return NULL;
 
 	// Note that the context structure is locked, so only one
 	// probe at a time can be operating on it.
-	struct _stp_transport_context_data *data = &contexts->transport_data;
+	struct _stp_transport_context_data *data = &c->transport_data;
 
 	// If there isn't an available log buffer, wait.
 	if (_stp_dyninst_transport_log_buffer_full(data)) {
@@ -743,12 +747,13 @@ static void *_stp_dyninst_transport_reserve_bytes(int numbytes)
 	void *ret;
 
 	// This thread should already have a context structure.
-	if (contexts == NULL) {
-		_stp_transport_debug("NULL contexts!\n");
+        struct context* c = _stp_runtime_get_context();
+	if (c == NULL) {
+		_stp_transport_debug("NULL context!\n");
 		return NULL;
 	}
 
-	struct _stp_transport_context_data *data = &contexts->transport_data;
+	struct _stp_transport_context_data *data = &c->transport_data;
 	size_t space_before, space_after, read_offset;
 
 recheck:
@@ -908,10 +913,11 @@ recheck:
 static void _stp_dyninst_transport_unreserve_bytes(int numbytes)
 {
 	// This thread should already have a context structure.
-	if (contexts == NULL)
+        struct context* c = _stp_runtime_get_context();
+	if (c == NULL)
 		return;
 
-	struct _stp_transport_context_data *data = &contexts->transport_data;
+	struct _stp_transport_context_data *data = &c->transport_data;
 	if (unlikely(numbytes <= 0 || numbytes > data->write_bytes))
 		return;
 
