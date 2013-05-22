@@ -910,6 +910,30 @@ bool eval_pp_conditional (systemtap_session& s,
 
       return result;
     }
+  else if (l->type == tok_identifier && l->content == "runtime")
+    {
+      if (! (r->type == tok_string))
+        throw parse_error (_("expected string literal"), r);
+
+      string query_runtime = r->content;
+      string target_runtime;
+
+      target_runtime = (s.runtime_mode == systemtap_session::dyninst_runtime
+			? "dyninst" : "kernel");
+      int nomatch = fnmatch (query_runtime.c_str(),
+                             target_runtime.c_str(),
+                             FNM_NOESCAPE); // still spooky
+
+      bool result;
+      if (op->type == tok_operator && op->content == "==")
+        result = !nomatch;
+      else if (op->type == tok_operator && op->content == "!=")
+        result = nomatch;
+      else
+        throw parse_error (_("expected '==' or '!='"), op);
+
+      return result;
+    }
   else if (l->type == tok_identifier && startswith(l->content, "CONFIG_"))
     {
       if (r->type == tok_string)
@@ -990,8 +1014,9 @@ bool eval_pp_conditional (systemtap_session& s,
     throw parse_error (_("expected number literal as right value"), r);
 
   else
-    throw parse_error (_("expected 'arch' or 'kernel_v' or 'kernel_vr' or 'CONFIG_...'\n"
-		       "             or comparison between strings or integers"), l);
+    throw parse_error (_("expected 'arch', 'kernel_v', 'kernel_vr', 'systemtap_v',\n"
+			 "             'runtime', 'systemtap_privilege', 'CONFIG_...', or\n"
+			 "             comparison between strings or integers"), l);
 }
 
 

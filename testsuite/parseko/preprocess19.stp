@@ -1,0 +1,6 @@
+#! stap -p1
+
+# bad runtime comparison operator - not '==' or '!='
+%( runtime >= "foo" %?
+   probe begin { }
+%)

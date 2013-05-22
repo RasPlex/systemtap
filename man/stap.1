@@ -717,6 +717,17 @@ compiled with. Here the second part is
 and the third part is a string literal, either "stapusr" or "stapsys"
 or "stapdev".
 .PP
+If the first part is the identifier
+.BR runtime ,
+the test refers to the systemtap runtime mode. See
+.BR ALTERNATE\ RUNTIMES
+below for more information on runtimes.
+The second  
+part is one of the two string comparison operators
+.BR == " or " != ,
+and the third part is a string literal for matching it.  This
+comparison is a wildcard (mis)match.
+.PP
 Otherwise, the CONDITION is expected to be a comparison between two string
 literals or two numeric literals.  In this case, the arguments are the only
 variables usable.

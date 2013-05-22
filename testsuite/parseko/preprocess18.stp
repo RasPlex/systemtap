@@ -1,0 +1,6 @@
+#! stap -p1
+
+# bad runtime - not a string
+%( runtime == foo %?
+   probe begin { }
+%)

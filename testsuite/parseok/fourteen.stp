@@ -26,3 +26,10 @@ global
       %: "FAIL7" %)
    %: "FAIL8" %)
 %: "FAIL9" %)
+
+global
+%( runtime == "kernel" %? kernel
+%: %( runtime == "dyninst" %? dyninst
+   %: "FAIL10"
+   %)
+%)
