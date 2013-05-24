@@ -13,13 +13,17 @@
 global reads, writes, total_io
 
 probe vfs.read.return {
-  reads[pid(),execname()] += $return
-  total_io[pid(),execname()] += $return
+  if ($return > 0) {
+    reads[pid(),execname()] += $return
+    total_io[pid(),execname()] += $return
+  }
 }
 
 probe vfs.write.return {
-  writes[pid(),execname()] += $return
-  total_io[pid(),execname()] += $return
+  if ($return > 0) {
+    writes[pid(),execname()] += $return
+    total_io[pid(),execname()] += $return
+  }
 }
 
 function humanreadable(bytes) {
