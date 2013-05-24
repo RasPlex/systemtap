@@ -64,9 +64,9 @@ $ staprun pmod
 There are (at least) 2 different usage scenarios for the
 /lib/modules/VERSION/systemtap directory.
 
-1) Most restrictive usage.  If only root should be able to able to
-add "approved" systemtap modules to /lib/modules/VERSION/systemtap,
-the permissions should be 755, like this:
+1) Most restrictive usage.  If only root should be able to add
+"approved" systemtap modules to /lib/modules/VERSION/systemtap, the
+permissions should be 755, like this:
 
 drwxr-xr-x 2 root root 4096 2007-08-07 13:54 systemtap/
 
