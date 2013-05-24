@@ -73,7 +73,7 @@ instructions (written in a simple scripting language), translates
 those instructions into C code, compiles this C code, and loads the
 resulting module into a running Linux kernel or a DynInst user-space
 mutator, to perform the requested system trace/probe functions.  You
-can supply the script in a named file (FILENAME) from standard input
+can supply the script in a named file (FILENAME), from standard input
 (use \- instead of FILENAME), or from the command line (using \-e
 SCRIPT).  The program runs until it is interrupted by the user, or if
 the script voluntarily invokes the
@@ -1493,7 +1493,7 @@ the following patterns would be searched, in sequence:
 .IR 2.6.12/*.stp ,
 .IR 2.6/*.stp ,
 and finally
-.IR *.stp
+.IR *.stp .
 Stopping the translator after pass 1 causes it to print the parse trees.
 
 .PP
