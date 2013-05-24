@@ -1319,6 +1319,16 @@ keywords: process scheduler time tracepoint
   # stap schedtimes.stp -c "sleep 0.2"
 
 
+process/thread-business.stp - monitor syscall history
+keywords: process syscall
+
+  Prints a periodic tabular report about the counts of syscall activity
+  of all threads on the system, along with a textual
+  recent-syscall-history for each
+
+  # stap thread-business.stp -c "sleep 10"
+
+
 process/wait4time.stp - Trace Time Spent in wait4 Syscalls
 keywords: syscall process
 
@@ -2056,6 +2066,16 @@ keywords: syscall
   times.  Can be filtered by process IDs, process names and users.
 
   # ./syscalltimes -c 'sleep 0.2'
+
+
+process/thread-business.stp - monitor syscall history
+keywords: process syscall
+
+  Prints a periodic tabular report about the counts of syscall activity
+  of all threads on the system, along with a textual
+  recent-syscall-history for each
+
+  # stap thread-business.stp -c "sleep 10"
 
 
 process/wait4time.stp - Trace Time Spent in wait4 Syscalls
