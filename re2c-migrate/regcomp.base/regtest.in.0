@@ -41,3 +41,35 @@
 
 # be sure overflow behaves nicely
 2:a{129490281098409821098209381020972091420947092174092717092}:aaa
+
+# attempts to to pinpoint FAIL: regtest 0:^a(bc+|b[eh])g|.h$:abh
+
+# TODOXXX these seem to be okay
+0:h$:abh
+0:.h$:abh
+0:a|.h$:abh
+0:^a|.h$:abh
+0:^ag|.h$:abh
+0:^a(bc+)g|.h$:abh
+0:a(bc+|b[eh])g|.h$:abh
+0:^a(bc)g|.h:abh
+0:^a(bc+)g|.h:abh
+0:^(a)|.h$:abh
+0:^ag|.h$:agh
+
+# TODOXXX these seem to fail
+0:^a(bc)g|.h$:abh
+0:^a(b[eh])g|.h$:abh
+0:^a(bc+|b[eh])g|.h$:abh
+0:^a(bc|be)g|.h$:abh
+0:^a(bc+|b[eh])g|h$:abh
+
+# TODOXXX for further testing
+0:^|$:
+0:a|$:
+0:^a|$:
+0:^a|h$:h
+0:^ag|h$:h
+0:^acg|.h$:ah
+0:^ab|.h$:ah
+0:^acg|.h$:abh

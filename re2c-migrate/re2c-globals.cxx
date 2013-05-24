@@ -26,6 +26,7 @@ namespace re2c
 {
 
 bool DFlag = false;
+// bool DFlag = true;
 bool eFlag = false;
 bool uFlag = false;
 bool wFlag = false;

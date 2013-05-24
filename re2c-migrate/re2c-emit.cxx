@@ -17,6 +17,8 @@
  Author for null_stream stuff: Marcus Boerger <helly@users.sourceforge.net>
 */
 
+//#define RE2C_DEPTHDEBUG
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1736,7 +1738,17 @@ void DFA::findSCCs()
 		}
 	}
 
+#ifdef RE2C_DEPTHDEBUG
+        std::cerr << "PERFORMED SCC::TRAVERSE" << std::endl;
+        std::cerr << this << std::endl;
+#endif
+
 	calcDepth(head);
+
+#ifdef RE2C_DEPTHDEBUG
+        std::cerr << "PERFORMED CALCDEPTH" << std::endl;
+        std::cerr << this << std::endl;
+#endif
 }
 
 void DFA::split(State *s)
@@ -1812,6 +1824,15 @@ void DFA::prepare()
 			nRules = s->rule->accept + 1;
 		}
 	}
+
+#ifdef RE2C_DEPTHDEBUG
+        // TODOXXX wrap in #ifdef
+        std::cerr << "PRINTING DEPTH-CALC DFA: " << std::endl;
+        std::cerr << "======================== " << std::endl;
+        std::cerr << this << std::endl;
+        std::cerr << "======================== " << std::endl;
+        std::cerr << std::endl;
+#endif
 
 	unsigned nSaves = 0;
 	saves = new unsigned[nRules];

@@ -200,6 +200,13 @@ std::ostream& operator<<(std::ostream &o, const State &s)
 		o << " accepts " << s.rule->accept;
 	}
 
+        if (s.link)
+        {
+          o << " link " << s.link->label;
+        }
+
+        o << " depth " << s.depth;
+
 	o << "\n";
 
 	unsigned lb = 0;
@@ -284,6 +291,8 @@ struct GoTo
 	Char	ch;
 	void	*to;
 };
+
+//#define RE2C_STATEDEBUG
 
 DFA::DFA(Ins *ins, unsigned ni, unsigned lb, unsigned ub, const Char *rep)
 	: lbChar(lb)
@@ -380,6 +389,18 @@ DFA::DFA(Ins *ins, unsigned ni, unsigned lb, unsigned ub, const Char *rep)
 	delete [] work;
 	delete [] goTo;
 	delete [] span;
+
+#ifdef RE2C_STATEDEBUG
+        State *ps = head;
+        std::cerr << "PRINTING RESULTING DFA: " << std::endl;
+        std::cerr << "======================= " << std::endl;
+        while (ps) {
+          std::cerr << "STATE " << ps << std::endl;
+          ps = ps->next;
+        }
+        std::cerr << "======================= " << std::endl;
+        std::cerr << std::endl;
+#endif
 }
 
 DFA::~DFA()
