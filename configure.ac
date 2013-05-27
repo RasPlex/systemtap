@@ -196,11 +196,12 @@ AC_ARG_ENABLE([docs],
     [enable building documentation (default on if latex etc. found).]),
   [enable_docs=$enableval],
   [enable_docs="check"])
+AC_CHECK_PROG(have_xvfb, xvfb-run, yes, no)
 AC_CHECK_PROG(have_latex, latex, yes, no)
 AC_CHECK_PROG(have_dvips, dvips, yes, no)
 AC_CHECK_PROG(have_ps2pdf, ps2pdf, yes, no)
 AC_CHECK_PROG(have_latex2html, latex2html, yes, no)
-if test "x${have_latex}${have_dvips}${have_ps2pdf}${have_latex2html}" != "xyesyesyesyes"; then
+if test "x${have_latex}${have_dvips}${have_ps2pdf}${have_latex2html}${have_xvfb}" != "xyesyesyesyesyes"; then
    if test "$enable_docs" == "yes"; then
       AC_MSG_ERROR([cannot find all tools for building documentation])
    fi

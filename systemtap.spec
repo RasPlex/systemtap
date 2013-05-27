@@ -115,6 +115,7 @@ BuildRequires: emacs
 %if %{with_java}
 BuildRequires: jpackage-utils java-devel
 %endif
+BuildRequires: /usr/bin/xvfb-run
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -665,6 +666,7 @@ done
 %{_datadir}/systemtap/tapset
 %{_mandir}/man1/stap.1*
 %{_mandir}/man1/stap-prep.1*
+%{_mandir}/man1/stap-report.1*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
@@ -700,6 +702,7 @@ done
 %dir %{_libdir}/systemtap
 %{_libdir}/systemtap/staplog.so*
 %endif
+%{_mandir}/man1/stap-report.1*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
@@ -723,6 +726,7 @@ done
 %{_mandir}/man1/stap.1*
 %{_mandir}/man1/stap-prep.1*
 %{_mandir}/man1/stap-merge.1*
+%{_mandir}/man1/stap-report.1*
 %{_mandir}/man3/*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*

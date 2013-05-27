@@ -16,7 +16,7 @@ all: $(SBG).pdf $(SBG)/index.html
 # publican isn't make -j safe. So cheat a little, always create pdf and html
 # at the same time, then make html depend on pdf build for copying.
 $(SBG).pdf:
-	publican build --formats=pdf,html --langs=en-US && \
+	xvfb-run -a publican build --formats=pdf,html --langs=en-US && \
 	mv build/en-US/pdf/*$(SBG)*.pdf $(SBG).pdf
 
 $(SBG)/index.html: $(SBG).pdf
