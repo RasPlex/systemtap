@@ -280,11 +280,13 @@ stapdfa::emit_declaration (translator_output *o)
   o->newline() << "const char *start = cur;";
   o->newline() << "unsigned l = strlen(cur) + 1;"; /* include \0 byte at end of string */
   o->newline() << "const char *mar;";
+
   o->newline() << "#define YYCTYPE char";
   o->newline() << "#define YYCURSOR cur";
   o->newline() << "#define YYLIMIT cur";
   o->newline() << "#define YYMARKER mar";
-  o->newline() << "#define YYFILL(n) ({ if ((cur - start) + n > l) return 0; })";
+  // XXX: YYFILL is disabled as it doesn't play well with ^
+  // o->newline() << "#define YYFILL(n) ({ if ((cur - start) + n > l) return 0; })";
 
   try
     {
@@ -330,6 +332,7 @@ stapdfa::prepare_rule (RegExp *expr)
 {
   // Enable regex match to start at any point in the string:
   if (!expr->anchored) expr = new CatOp (padRE, expr);
+  // expr = new CatOp (padRE, expr); // XXX: basically the same effect??
 
 #define CODE_YES "{ return 1; }"
 #define CODE_NO "{ return 0; }"
