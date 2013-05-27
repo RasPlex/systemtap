@@ -303,6 +303,7 @@ DFA::DFA(Ins *ins, unsigned ni, unsigned lb, unsigned ub, const Char *rep)
 	, toDo(NULL)
 	, free_ins(ins)
 	, free_rep(rep)
+        , maxFill(1)
 {
 	Ins **work = new Ins * [ni + 1];
 	unsigned nc = ub - lb;

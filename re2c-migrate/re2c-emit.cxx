@@ -156,7 +156,6 @@ std::string yyFillLength("@@");
 std::string yySetConditionParam("@@");
 std::string yySetStateParam("@@");
 std::string yySetupRule("");
-unsigned maxFill = 1;
 unsigned next_label = 0;
 unsigned cGotoThreshold = 9;
 

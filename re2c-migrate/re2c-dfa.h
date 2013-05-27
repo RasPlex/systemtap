@@ -272,6 +272,7 @@ public:
 	State	*toDo;
 	const Ins     *free_ins;
 	const Char    *free_rep;
+        unsigned maxFill;
 
 protected:
 	bool    bSaveOnHead;
@@ -301,6 +302,7 @@ public:
 		, head(oth.head)
 		, tail(oth.tail)
 		, toDo(oth.toDo)
+                , maxFill(oth.maxFill)
 	{
 	}
 	DFA& operator = (const DFA& oth)
