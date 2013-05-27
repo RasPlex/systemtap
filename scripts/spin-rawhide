@@ -75,7 +75,6 @@ git archive --prefix=systemtap-$CHANGELOG_VERSION/ -o ../systemtap/systemtap-$CH
 
 cd ../systemtap
 
-sed -i "s/with_publican 1/with_publican 0/g" systemtap.spec
 sed -i "s/Release: .*/Release: $GIT_VERSION_TAG\%\{\?dist\}/" systemtap.spec
 sed -i "s/^Source:.*/Source: %{name}-%{version}-$GIT_VERSION_TAG.tar.gz/" systemtap.spec
 
@@ -92,4 +91,4 @@ fedpkg new-sources systemtap-$CHANGELOG_VERSION-$GIT_VERSION_TAG.tar.gz
 
 fedpkg commit -m "Automated weekly systemtap rawhide release: $GIT_VERSION_TAG" -p 
 
-#fedpkg chain-build dyninst
+fedpkg build

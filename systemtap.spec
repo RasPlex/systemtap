@@ -115,6 +115,7 @@ BuildRequires: emacs
 %if %{with_java}
 BuildRequires: jpackage-utils java-devel
 %endif
+# A workaround for BZ920216 which requires an X server to build docs
 BuildRequires: /usr/bin/xvfb-run
 
 # Install requirements
