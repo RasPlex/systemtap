@@ -28,11 +28,24 @@
 # indefinite repetition should not fail via reading past the end
 0:.*:stuffs
 
-# PR15063 -- what's the right thing to do for the below??
-# 2:$^:
-# 2:$.*:
-# 1:$a^:a
-# 0:$.*:a
+# test cases for PR15063 (dealing with ^$ subtleties)
+1:$^:
+0:$.*:
+1:$a^:a
+0:$.*:a
+1:$.+:a
+
+0:.*^:
+0:.*^:a
+1:.+^:a
+
+# according to the ERE standard (http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html#tag_09_04_09) the following should NEVER match
+1:a^b:
+1:a^b:ab
+1:a^b:a
+1:e$f:
+1:e$f:ef
+1:e$f:e
 
 # attempts to pinpoint chr class errors
 0:[^ab]:c
