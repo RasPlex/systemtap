@@ -1,0 +1,41 @@
+// rcu tapset
+// Copyright (C) 2013 Red Hat
+//
+// This file is part of systemtap, and is free software.  You can
+// redistribute it and/or modify it under the terms of the GNU General
+// Public License (GPL); either version 2, or (at your option) any
+// later version.
+
+%{
+#include <linux/rcupdate.h>
+#ifndef rcu_dereference_check
+#define STAP_ALWAYS_ACQUIRE_RCU_LOCK
+#endif
+%}
+
+function rcu_dereference:long (protected_pointer:long) %{ /* pure */
+    void *protected_pointer = (void *)(long)STAP_ARG_protected_pointer;
+    long fetched_value;
+
+#ifndef STAP_ALWAYS_ACQUIRE_RCU_LOCK
+    int lock_acquired = 0;
+
+    if (! rcu_read_lock_held()) {
+	rcu_read_lock();
+	lock_acquired = 1;
+    }
+#else
+    rcu_read_lock();
+#endif
+
+    fetched_value = (long)rcu_dereference(protected_pointer);
+
+#ifndef STAP_ALWAYS_ACQUIRE_RCU_LOCK
+    if (lock_acquired) {
+	rcu_read_unlock();
+    }
+#else
+    rcu_read_unlock();
+#endif
+    STAP_RETVALUE = fetched_value;
+%}

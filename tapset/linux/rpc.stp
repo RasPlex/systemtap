@@ -276,7 +276,9 @@ probe _sunrpc.clnt.create_client.return.rpc_create_client =
 probe sunrpc.clnt.clone_client = kernel.function("rpc_clone_client") !,
       	module("sunrpc").function("rpc_clone_client")
 {
-	servername = kernel_string($clnt->cl_server)
+	servername = kernel_string(@choose_defined($clnt->cl_server,
+				   @cast(rcu_dereference($clnt->cl_xprt),
+					 "struct rpc_xprt")->servername))
 	progname = kernel_string($clnt->cl_protname)
 	prog = prog_from_clnt($clnt)
 	vers = vers_from_clnt($clnt)
@@ -322,7 +324,9 @@ probe sunrpc.clnt.clone_client.return =
 probe sunrpc.clnt.shutdown_client = kernel.function("rpc_shutdown_client") !,
       	module("sunrpc").function("rpc_shutdown_client")
 {
-	servername = kernel_string($clnt->cl_server)
+	servername = kernel_string(@choose_defined($clnt->cl_server,
+				   @cast(rcu_dereference($clnt->cl_xprt),
+					 "struct rpc_xprt")->servername))
 	progname = kernel_string($clnt->cl_protname)
 	prog = prog_from_clnt($clnt)
 	vers = vers_from_clnt($clnt)
@@ -392,7 +396,9 @@ probe sunrpc.clnt.bind_new_program =
 	kernel.function("rpc_bind_new_program") !,
       	module("sunrpc").function("rpc_bind_new_program")
 {
-	servername = kernel_string($old->cl_server)
+	servername = kernel_string(@choose_defined($old->cl_server,
+				   @cast(rcu_dereference($old->cl_xprt),
+					 "struct rpc_xprt")->servername))
 	old_progname = kernel_string($old->cl_protname)
 	old_prog = prog_from_clnt($old)
 	old_vers = vers_from_clnt($old)
@@ -431,7 +437,9 @@ probe sunrpc.clnt.bind_new_program.return =
 probe sunrpc.clnt.call_sync = kernel.function("rpc_call_sync") !,
       	module("sunrpc").function("rpc_call_sync")
 {
-	servername = kernel_string($clnt->cl_server)
+	servername = kernel_string(@choose_defined($clnt->cl_server,
+				   @cast(rcu_dereference($clnt->cl_xprt),
+					 "struct rpc_xprt")->servername))
 	progname = kernel_string($clnt->cl_protname)
 	prog = prog_from_clnt($clnt)
 	vers = vers_from_clnt($clnt)
@@ -476,7 +484,9 @@ probe sunrpc.clnt.call_sync.return = kernel.function("rpc_call_sync").return !,
 probe sunrpc.clnt.call_async = kernel.function("rpc_call_async") !,
       	module("sunrpc").function("rpc_call_async")
 {
-	servername = kernel_string($clnt->cl_server)
+	servername = kernel_string(@choose_defined($clnt->cl_server,
+				   @cast(rcu_dereference($clnt->cl_xprt),
+					 "struct rpc_xprt")->servername))
 	progname = kernel_string($clnt->cl_protname)
 	prog = prog_from_clnt($clnt)
 	vers = vers_from_clnt($clnt)
@@ -518,7 +528,9 @@ probe sunrpc.clnt.call_async.return =
 probe sunrpc.clnt.restart_call = kernel.function("rpc_restart_call") !,
       	module("sunrpc").function("rpc_restart_call")
 {
-	servername = kernel_string($task->tk_client->cl_server)
+	servername = kernel_string(@choose_defined($task->tk_client->cl_server,
+				   @cast(rcu_dereference($task->tk_client->cl_xprt),
+					 "struct rpc_xprt")->servername))
 	prog = prog_from_clnt($task->tk_client)
 	xid = $task->tk_rqstp->rq_xid
 	tk_pid = $task->tk_pid
