@@ -2099,7 +2099,7 @@ c_unparser::emit_module_exit ()
   // In dyninst mode, now we're done with the contexts, transport, everything!
   if (session->runtime_usermode_p())
     {
-      o->newline() << "_stp_runtime_entryfn_put_context();";
+      o->newline() << "_stp_runtime_entryfn_put_context(c);";
       o->newline() << "_stp_dyninst_transport_shutdown();";
       o->newline() << "_stp_runtime_contexts_free();";
     }
@@ -2758,8 +2758,8 @@ c_unparser_assignment::c_assignop(tmpvar & res,
       assert(lval.type() == pe_stats);
       assert(rval.type() == pe_long);
       assert(res.type() == pe_long);
-      o->newline() << res << " = " << rval << ";";
-      o->newline() << "_stp_stat_add (" << lval << ", " << res << ");";
+      o->newline() << "_stp_stat_add (" << lval << ", " << rval << ");";
+      res = rval;
     }
   else if (res.type() == pe_long)
     {

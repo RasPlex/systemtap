@@ -642,6 +642,13 @@ function _sys_open_flag_str:string (f:long)
 	if (flags & O_APPEND)
 		strlcat (STAP_RETVALUE, "|O_APPEND", MAXSTRINGLEN);
 #endif
+#ifdef O_ASYNC
+	if (flags & O_ASYNC)
+		strlcat (STAP_RETVALUE, "|O_ASYNC", MAXSTRINGLEN);
+#elif defined(FASYNC)
+	if (flags & FASYNC)
+		strlcat (STAP_RETVALUE, "|O_ASYNC", MAXSTRINGLEN);
+#endif
 #ifdef O_CLOEXEC
 	if (flags & O_CLOEXEC)
 		strlcat (STAP_RETVALUE, "|O_CLOEXEC", MAXSTRINGLEN);
@@ -649,13 +656,6 @@ function _sys_open_flag_str:string (f:long)
 #ifdef O_CREAT
 	if (flags & O_CREAT)
 		strlcat (STAP_RETVALUE, "|O_CREAT", MAXSTRINGLEN);
-#endif
-#ifdef O_ASYNC
-	if (flags & O_ASYNC)
-		strlcat (STAP_RETVALUE, "|O_ASYNC", MAXSTRINGLEN);
-#elif defined(FASYNC)
-	if (flags & FASYNC)
-		strlcat (STAP_RETVALUE, "|O_ASYNC", MAXSTRINGLEN);
 #endif
 #ifdef O_DIRECT
 	if (flags & O_DIRECT)
@@ -696,10 +696,6 @@ function _sys_open_flag_str:string (f:long)
 #ifdef O_TRUNC
 	if (flags & O_TRUNC)
 		strlcat (STAP_RETVALUE, "|O_TRUNC", MAXSTRINGLEN);
-#endif
-#ifdef O_CLOEXEC
-	if (flags & O_CLOEXEC)
-		strlcat (STAP_RETVALUE, "|O_CLOEXEC", MAXSTRINGLEN);
 #endif
 %}
 

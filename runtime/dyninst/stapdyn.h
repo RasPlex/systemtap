@@ -28,6 +28,11 @@ extern "C" {
  */
 
 
+/* With -fvisibility=hidden, we have to expose these manually.
+ * Using "protected" keeps internal references always internal.  */
+#pragma GCC visibility push(protected)
+
+
 /**** STAP 2.0 : ****/
 
 extern int stp_dyninst_session_init(void);
@@ -85,6 +90,9 @@ extern int stp_global_setter(const char *name, const char *value);
 #define STAPDYN_PROBE_ALL_FLAGS (uint64_t)(STAPDYN_PROBE_FLAG_RETURN	\
     | STAPDYN_PROBE_FLAG_PROC_BEGIN | STAPDYN_PROBE_FLAG_PROC_END	\
     | STAPDYN_PROBE_FLAG_THREAD_BEGIN | STAPDYN_PROBE_FLAG_THREAD_END)
+
+
+#pragma GCC visibility pop
 
 #ifdef __cplusplus
 }

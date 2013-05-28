@@ -16,10 +16,26 @@ user-space code, and monitoring user-process events.
 </para>
 
 <para>
-The SystemTap user-space probing requires the utrace kernel
-extensions which provide an API for tracking various user-space events.
-More details about the utrace infrastructure are available at 
-<ulink url="http://sourceware.org/systemtap/wiki/utrace" />.
+SystemTap requires the uprobes module to perform user-space probing. If your
+Linux kernel is version 3.5 or higher, it already includes uprobes. The
+following command can verify whether the current kernel supports uprobes
+natively:
+</para>
+
+<screen>grep CONFIG_UPROBES /boot/config-`uname -r`</screen>
+
+<para>
+If uprobes is integrated, the output should be:
+</para>
+
+<screen>CONFIG_UPROBES=y</screen>
+
+<para>
+If you are running a kernel prior to version 3.5, SystemTap will automatically
+build the uprobes module. However, you will also need the utrace kernel
+extensions, which is required by the SystemTap user-space probing to track
+various user-space events. More details about the utrace infrastructure are
+available at <ulink url="http://sourceware.org/systemtap/wiki/utrace" />.
 The following command determines whether the currently running Linux kernel
 provides the needed utrace support:
 </para>
@@ -27,30 +43,14 @@ provides the needed utrace support:
 <screen>grep CONFIG_UTRACE /boot/config-`uname -r`</screen>
 
 <para>
-If the Linux kernel support user-space probing, the following output is printed:
+If the Linux kernel supports user-space probing, the following output is
+printed:
 </para>
 
 <screen>CONFIG_UTRACE=y</screen>
 
-<para>
-The SystemTap user-space probing also needs the uprobes kernel
-module. If the uprobes kernel module is not available, you will
-see an error message like the following when attempting to run a script that requires
-the uprobes kernel module:
-</para>
-
-<screen>SystemTap's version of uprobes is out of date.
-As root, or a member of the 'root' group, run
-"make -C /usr/share/systemtap/runtime/uprobes".
-Pass 4: compilation failed.  Try again with another '--vp 0001' option.</screen>
-
-<para>
-If this occurs, you need to generate a uprobes.ko module for the kernel as directed.
-</para>
-
 <!-- FIXME How does uprobes work for cross compilation and
  using a compile server? -->
-
 
 <section id="uevents">
 	<title>User-Space Events</title>
@@ -68,10 +68,10 @@ by specifying the path to executable (PATH).
 SystemTap makes use of the <command>PATH</command> environment variable,
 so both the name used on the command-line to start the executable and the absolute path
 to the executable can be used.
-Several of user-space probe events limit their scope to a
+Several of the user-space probe events limit their scope to a
 particular executable name (PATH) because
-SystemTap must use debug information to statically analyzed where to
-places the probes, but for many user-space probes events the process ID
+SystemTap must use debug information to statically analyze where to
+place the probes. But for many user-space probe events, the process ID
 and executable name are optional. 
 Any <command>process</command> event in the list below that include process ID or
 the path to the executable must include those arguments.
@@ -282,7 +282,7 @@ FIXME description of how to use the stack backtracing
 
 <para>
       The probe point (<command>pp</command>) function indicates which
-      particular event triggered the the SystemTap event handler.
+      particular event triggered the SystemTap event handler.
       A probe on the entry into a function would list the function name.
       However, in many cases the same probe point event may be triggered by
       many different modules in the program; this is particularly true for

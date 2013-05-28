@@ -214,6 +214,7 @@ compile_dyninst (systemtap_session& s)
   if (s.architecture == "i386")
     cmd.push_back("-march=i586");
 
+  cmd.push_back("-fvisibility=hidden");
   cmd.push_back("-O2");
   cmd.push_back("-I" + s.runtime_path);
   cmd.push_back("-D__DYNINST__");

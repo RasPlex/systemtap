@@ -463,6 +463,9 @@ keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-inde
 </li><li><a href="process/schedtimes.stp">process/schedtimes.stp</a> - Track Time Processes Spend in Various States Using Tracepoints<br>
 keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SCHEDULER">SCHEDULER</a> <a href="keyword-index.html#TIME">TIME</a> <a href="keyword-index.html#TRACEPOINT">TRACEPOINT</a> <br>
 <p>The schedtimes.stp script instruments the scheduler to track the amount of time that each process spends in running, sleeping, queuing, and waiting for io. On exit the script prints out the accumulated time for each state of processes observed.  Optionally, this script can be used with the &#39;-c&#39; or &#39;-x&#39; options to focus on a specific PID.<p><font size="-2"><pre># stap schedtimes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a href="process/thread-business.stp">process/thread-business.stp</a> - monitor syscall history<br>
+keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SYSCALL">SYSCALL</a> <br>
+<p>Prints a periodic tabular report about the counts of syscall activity of all threads on the system, along with a textual recent-syscall-history for each<p><font size="-2"><pre># stap thread-business.stp -c &quot;sleep 10&quot;</pre></font></p>
 </li><li><a href="process/wait4time.stp">process/wait4time.stp</a> - Trace Time Spent in wait4 Syscalls<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <br>
 <p>The script watches each wait4 syscall on the system. At the end of each wait4 syscall the script prints out a line with a timestamp in microseconds, the pid, the executable name in parentheses, the &quot;wait4:&quot; key, the duration of the wait and the PID that the wait4 was waiting for. If the waited for PID is not specified , it is &quot;-1&quot;.<p><font size="-2"><pre># stap wait4time.stp -c &quot;sleep 0.2&quot;</pre></font></p>
@@ -512,6 +515,9 @@ keywords: <a href="keyword-index.html#PROFILING">PROFILING</a> <br>
 </li><li><a href="profiling/pf3.stp">profiling/pf3.stp</a> - Profile Kernel/User Functions<br>
 keywords: <a href="keyword-index.html#PROFILING">PROFILING</a> <br>
 <p>The pf3.stp script sets up time-based sampling. Every five seconds it prints out a sorted list with the top twenty kernel and/or user functions with samples.  Use any of --ldd, --all-modules, -d MODULE, -d /PATH/TO/EXEC to add more symbolic info.<p><font size="-2"><pre># stap pf3.stp -c &quot;sleep 6&quot; --all-modules --ldd</pre></font></p>
+</li><li><a href="profiling/pf4.stp">profiling/pf4.stp</a> - Profile Kernel/User Backtraces<br>
+keywords: <a href="keyword-index.html#PROFILING">PROFILING</a> <br>
+<p>The pf4.stp script sets up time-based sampling. Every five seconds it prints out a sorted list with the top twenty kernel and/or user stack backtraces (on a per-cpu basis).  Use any of --ldd, --all-modules, -d MODULE, -d /PATH/TO/EXEC to add more symbolic info.<p><font size="-2"><pre># stap pf4.stp -c &quot;sleep 6&quot; --all-modules --ldd</pre></font></p>
 </li><li><a href="profiling/sched_switch.stp">profiling/sched_switch.stp</a> - Display the Task Switches Happening in the Scheduler<br>
 keywords: <a href="keyword-index.html#PROFILING">PROFILING</a> <a href="keyword-index.html#FUNCTION">FUNCTION</a> <br>
 <p>The sched_switch.stp script takes two arguments, first argument can be &quot;pid&quot; or &quot;name&quot; to indicate what is being passed as second argument. The script will trace the process based on pid/name and print the scheduler switches happening with the process. If no arguments are passed, it displays all the scheduler switches. This can be used to understand which tasks schedule out the current process being traced, and when it gets scheduled in again.<p><font size="-2"><pre># stap  sched_switch.stp -c &quot;sleep 1&quot;</pre></font></p>
@@ -689,6 +695,9 @@ keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <br>
 </li><li><a href="process/syscalltimes">process/syscalltimes</a> - System-Wide Syscall Statistics with Filtering<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <br>
 <p>Combination shell/systemtap script to measure system call counts and times.  Can be filtered by process IDs, process names and users.<p><font size="-2"><pre># ./syscalltimes -c &#39;sleep 0.2&#39;</pre></font></p>
+</li><li><a href="process/thread-business.stp">process/thread-business.stp</a> - monitor syscall history<br>
+keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SYSCALL">SYSCALL</a> <br>
+<p>Prints a periodic tabular report about the counts of syscall activity of all threads on the system, along with a textual recent-syscall-history for each<p><font size="-2"><pre># stap thread-business.stp -c &quot;sleep 10&quot;</pre></font></p>
 </li><li><a href="process/wait4time.stp">process/wait4time.stp</a> - Trace Time Spent in wait4 Syscalls<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <br>
 <p>The script watches each wait4 syscall on the system. At the end of each wait4 syscall the script prints out a line with a timestamp in microseconds, the pid, the executable name in parentheses, the &quot;wait4:&quot; key, the duration of the wait and the PID that the wait4 was waiting for. If the waited for PID is not specified , it is &quot;-1&quot;.<p><font size="-2"><pre># stap wait4time.stp -c &quot;sleep 0.2&quot;</pre></font></p>

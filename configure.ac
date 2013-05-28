@@ -196,6 +196,8 @@ AC_ARG_ENABLE([docs],
     [enable building documentation (default on if latex etc. found).]),
   [enable_docs=$enableval],
   [enable_docs="check"])
+AC_CHECK_PROG(have_xvfb, xvfb-run, yes, no)
+AM_CONDITIONAL([HAVE_XVFB], [test "$have_xvfb" == "yes"])
 AC_CHECK_PROG(have_latex, latex, yes, no)
 AC_CHECK_PROG(have_dvips, dvips, yes, no)
 AC_CHECK_PROG(have_ps2pdf, ps2pdf, yes, no)

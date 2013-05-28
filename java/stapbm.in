@@ -90,14 +90,14 @@ mkdir -p $flagdir
 # avoid possible infinite recursion (whereby stap recognizes the
 # impending start of those jvm's and sends a new stapbm on a wild
 # goose chase).
-target_pid=`jps -l | grep $arg_jvmpid | cut -f1 -d" " | head -1`
+target_pid=`ps -f -C java | grep $arg_jvmpid | awk '{print $2}' | head -1`
 if [ "x$target_pid" = "x" ]; then
     if [ "$STAPBM_VERBOSE" != "no" ]; then
         echo "JVMID $arg_jvmpid not found"
     fi
     exit 1
 fi
-target_pid=`jps -l | grep $arg_jvmpid | egrep -v 'org.jboss.byteman|sun.tools.jps' | cut -f1 -d" " | head -1`
+target_pid=`ps -f -C java | grep $arg_jvmpid | egrep -v 'org.jboss.byteman|sun.tools.jps' | awk '{print $2}' | head -1`
 if [ "x$target_pid" = "x" ]; then
     exit 0   # silently quit; ass-u-me unintended recursion
 fi
@@ -179,7 +179,7 @@ function echo_bytemanrule()
         7) echo 'DO METHOD_STAP_PROBE7("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7)' ;;
         8) echo 'DO METHOD_STAP_PROBE8("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7, $8)' ;;
         9) echo 'DO METHOD_STAP_PROBE9("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7, $8, $9)' ;;
-      10) echo 'DO METHOD_STAP_PROBE10("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)' ;;
+	10) echo 'DO METHOD_STAP_PROBE10("'$arg_rulename'", $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)' ;;
         *) echo 'bad arg-count'; exit 1 ;;
     esac
     echo "ENDRULE"
@@ -205,6 +205,22 @@ fi
 if [ "$STAPBM_VERBOSE" != "no" ]; then
     echo java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
 fi
-java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
-exit $?
+
+byteman_submitted_portfile=$flagdir/`hostname`-${arg_rulename}-bm
+exec 200>>$byteman_submitted_portfile # open/create lock file
+flock -x 200  # exclusive-lock it
+if [ -s $byteman_submitted_portfile ]; then
+    if [ "$bmcmd" != "-u" ]; then
+	exit 0
+    else
+	java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
+    fi
+else
+    echo $bmport > $byteman_submitted_portfile
+    java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile    
+    submitexit = $?
+fi
+exec 200>&-   # close file & release flock
+exit $submitexit
+
 

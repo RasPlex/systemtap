@@ -27,7 +27,7 @@ static int _stp_runtime_num_contexts;
 
 /* Locally-cached context pointer -- see _stp_runtime_entryfn_get_context()
  * and _stp_runtime_entryfn_put_context().  */
-static __thread struct context *contexts;
+static __thread struct context *tls_context;
 
 static int _stp_runtime_contexts_init(void)
 {
@@ -80,8 +80,8 @@ static int _stp_runtime_get_data_index(void)
 
     /* If this thread has already gotten a context structure,
      * return the data index from it. */
-    if (contexts != NULL)
-	return contexts->data_index;
+    if (tls_context != NULL)
+	return tls_context->data_index;
 
     /* This shouldn't happen. */
     /* FIXME: assert? */
@@ -112,9 +112,9 @@ static struct context * _stp_runtime_entryfn_get_context(void)
     struct context *c;
     int i, index, rc, data_index;
 
-    /* If 'contexts' (which is thread-local storage) is already set
+    /* If 'tls_context' (which is thread-local storage) is already set
      * for this thread, we are re-entrant, so just quit. */
-    if (contexts != NULL)
+    if (tls_context != NULL)
 	return NULL;
 
     data_index = _stp_context_index();
@@ -130,8 +130,8 @@ static struct context * _stp_runtime_entryfn_get_context(void)
 	if (pthread_mutex_trylock(&c->lock) == 0) {
 	    /* We found a free context structure. Now that it is
 	     * locked, set the TLS pointer and return the context. */
-	    contexts = c;
-	    return contexts;
+	    tls_context = c;
+	    return tls_context;
 	}
     }
 
@@ -140,19 +140,19 @@ static struct context * _stp_runtime_entryfn_get_context(void)
     c = stp_session_context(data_index);
     rc = pthread_mutex_lock(&c->lock);
     if (rc == 0) {
-	contexts = c;
-	return contexts;
+	tls_context = c;
+	return tls_context;
     }
     return NULL;
 }
 
-static void _stp_runtime_entryfn_put_context(void)
+static void _stp_runtime_entryfn_put_context(struct context *c)
 {
-    if (contexts) {
-	struct context *c = contexts;
-	contexts = NULL;
+    if (c && c == tls_context) {
+	tls_context = NULL;
 	pthread_mutex_unlock(&c->lock);
     }
+    // else, warn about bad state?
     return;
 }
 
@@ -162,7 +162,7 @@ static struct context *_stp_runtime_get_context(void)
      * here. This function is called after
      * _stp_runtime_entryfn_get_context() and has no corresponding
      * "put" function. */
-    return contexts;
+    return tls_context;
 }
 
 static void _stp_runtime_context_wait(void)

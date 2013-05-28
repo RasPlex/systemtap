@@ -994,6 +994,16 @@ keywords: syscall
   # ./syscalltimes -c 'sleep 0.2'
 
 
+process/thread-business.stp - monitor syscall history
+keywords: process syscall
+
+  Prints a periodic tabular report about the counts of syscall activity
+  of all threads on the system, along with a textual
+  recent-syscall-history for each
+
+  # stap thread-business.stp -c "sleep 10"
+
+
 process/threadstacks.stp - Override default new-pthread stack sizes
 keywords: thread guru
 
@@ -1120,6 +1130,17 @@ keywords: profiling
   -d /PATH/TO/EXEC to add more symbolic info.
 
   # stap pf3.stp -c "sleep 6" --all-modules --ldd
+
+
+profiling/pf4.stp - Profile Kernel/User Backtraces
+keywords: profiling
+
+  The pf4.stp script sets up time-based sampling. Every five seconds it
+  prints out a sorted list with the top twenty kernel and/or user stack
+  backtraces (on a per-cpu basis).  Use any of --ldd, --all-modules, -d
+  MODULE, -d /PATH/TO/EXEC to add more symbolic info.
+
+  # stap pf4.stp -c "sleep 6" --all-modules --ldd
 
 
 profiling/sched_switch.stp - Display the Task Switches Happening in the Scheduler
