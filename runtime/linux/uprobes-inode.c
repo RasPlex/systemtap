@@ -15,7 +15,6 @@
 #include <linux/list.h>
 #include <linux/namei.h>
 #include <linux/mutex.h>
-#include <linux/rwlock.h>
 #include <linux/spinlock.h>
 #include <linux/uprobes.h>
 
