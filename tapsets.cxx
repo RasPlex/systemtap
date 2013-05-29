@@ -9940,12 +9940,21 @@ tracepoint_builder::init_dw(systemtap_session& s)
               assert_no_interrupts();
               Dwarf_Attribute attr;
               const char* name = dwarf_formstring (dwarf_attr (cudie, DW_AT_comp_dir, &attr));
-              if (name) 
+              if (name)
                 {
-                  if (s.verbose > 2)
-                    clog << _F("Located kernel source tree (DW_AT_comp_dir) at '%s'", name) << endl;
+                  // check that the path actually exists locally before we try to use it
+                  if (file_exists(name))
+                    {
+                      if (s.verbose > 2)
+                        clog << _F("Located kernel source tree (DW_AT_comp_dir) at '%s'", name) << endl;
+                      s.kernel_source_tree = name;
+                    }
+                  else
+                    {
+                      if (s.verbose > 2)
+                        clog << _F("Ignoring inaccessible kernel source tree (DW_AT_comp_dir) at '%s'", name) << endl;
+                    }
 
-                  s.kernel_source_tree = name;
                   break; // skip others; modern Kbuild uses same comp_dir for them all
                 }
             }
