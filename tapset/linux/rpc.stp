@@ -1,7 +1,7 @@
 // rpc tapset
 // Copyright (C) 2006 IBM Corp.
 // Copyright (C) 2007 Bull S.A.S
-// Copyright (C) 2008, 2010-2012 Red Hat
+// Copyright (C) 2008, 2010-2013 Red Hat
 //
 // This file is part of systemtap, and is free software.  You can
 // redistribute it and/or modify it under the terms of the GNU General
@@ -195,12 +195,22 @@ probe _sunrpc.clnt.create_client.rpc_new_client =
 	kernel.function("rpc_new_client").call !,
 	module("sunrpc").function("rpc_new_client").call
 {
-	# kernel <= 2.6.18
-	servername = kernel_string($servname)
-	progname = kernel_string($program->name)
-	prog = $program->number
-	vers = vers = vers_from_prog($program, $vers)
-	authflavor = $flavor
+	if (@defined($args)) {
+		# kernel > 2.6.18
+		servername = kernel_string($args->servername)
+		progname = kernel_string($args->program->name)
+		prog = $args->prognumber
+		vers = vers_from_prog($args->program, $args->version)
+		authflavor = $args->authflavor
+	}
+	else {
+		# kernel <= 2.6.18
+		servername = kernel_string($servname)
+		progname = kernel_string($program->name)
+		prog = $program->number
+		vers = vers_from_prog($program, $vers)
+		authflavor = $flavor
+	}
 
 	prot = $xprt->prot
 	port = @choose_defined($xprt->port, port_from_xprt($xprt))
