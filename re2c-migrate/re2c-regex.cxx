@@ -813,9 +813,14 @@ Range * Scanner::getRange(SubStr &s) const
 
 		if (ub < lb)
 		{
-			unsigned tmp = lb;
-			lb = ub;
-			ub = tmp;
+                  // we have a reversed range such as b-a, so
+                  // rather than swapping the ends, raise an error!
+
+                  fatalf("Inverted character range %c-%c", lb, ub);
+
+                  // unsigned tmp = lb;
+                  // lb = ub;
+                  // ub = tmp;
 		}
 		
 		xlb = xlat(lb);
