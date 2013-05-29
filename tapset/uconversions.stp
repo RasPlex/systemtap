@@ -203,8 +203,6 @@ function user_string_utf32:string (addr:long) %{ /* pure */ /* myproc-unprivileg
   uint32_t c32, *source = (uint32_t*)(intptr_t)STAP_ARG_addr;
   char *destination = STAP_RETVALUE;
 
-  assert_is_myproc();
-
   *destination = '\0';
   while (len > 1 && (c32 = uread(source))) {
     if ((rc = _stp_convert_utf32(destination, len, c32)) <= 0) {
@@ -254,8 +252,6 @@ function user_string_utf16:string (addr:long) %{ /* pure */ /* myproc-unprivileg
   uint32_t c32;
   uint16_t c16low, *source = (uint16_t*)(intptr_t)STAP_ARG_addr;
   char *destination = STAP_RETVALUE;
-
-  assert_is_myproc();
 
   *destination = '\0';
   while (len > 1 && (c32 = uread(source))) {
