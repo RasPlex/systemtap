@@ -1567,7 +1567,11 @@ probe syscall.semop = kernel.function("sys_semtimedop").call ?
 {
 	name = "semop"
 	semid = $semid
+%( systemtap_v < "2.3" %?
 	tsops_uaddr = $tsops
+%:
+	sops_uaddr = $tsops
+%)
 	nsops = $nsops
 	argstr = sprintf("%d, %p, %d", $semid, $tsops, $nsops)
 }

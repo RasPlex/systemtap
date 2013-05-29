@@ -551,7 +551,7 @@ probe nd_syscall.semget.return ?
 probe nd_syscall.semop ?
 {
 	printf("%s(%s)\n", name, argstr)
-	printf("%d %p %d\n", semid, tsops_uaddr, nsops)
+	printf("%d %p %d\n", semid, sops_uaddr, nsops)
 }
 probe nd_syscall.semop.return ?
 {

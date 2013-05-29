@@ -1,5 +1,7 @@
 * What's new in version 2.3
 
+- The tapset [nd_]syscall.semop parameter tsops_uaddr is renamed sops_uaddr for
+  consistency with [nd_]syscall.semtimedop.
 
 * What's new in version 2.2.1, 2013-05-16
 * What's new in version 2.2, 2013-05-14
@@ -54,7 +56,7 @@
     'syscall.compat_sys_shmat' and 'nd_syscall.compat_sys_shmat' probe
     aliases.
 
-- The folowing tapset functions are deprecated in release 2.2:
+- The following tapset functions are deprecated in release 2.2:
   'ppos_pos', '_dev_minor', and '_dev_major'
 
 - The folowing tapset functions used to return error strings instead

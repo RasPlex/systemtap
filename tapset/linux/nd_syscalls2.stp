@@ -1842,14 +1842,18 @@ probe nd_syscall.semop = kprobe.function("sys_semtimedop") ?
 {
 	name = "semop"
 	// semid = $semid
-	// tsops_uaddr = $tsops
+	// [t]sops_uaddr = $tsops
 	// nsops = $nsops
 	// argstr = sprintf("%d, %p, %d", $semid, $tsops, $nsops)
 	asmlinkage()
 	semid = int_arg(1)
+%( systemtap_v < "2.3" %?
 	tsops_uaddr = pointer_arg(2)
+%:
+	sops_uaddr = pointer_arg(2)
+%)
 	nsops = uint_arg(3)
-	argstr = sprintf("%d, %p, %d", semid, tsops_uaddr, nsops)
+	argstr = sprintf("%d, %p, %d", semid, pointer_arg(2), nsops)
 }
 probe nd_syscall.semop.return = kprobe.function("sys_semtimedop").return ?
 {
