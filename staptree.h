@@ -170,6 +170,7 @@ struct regex_query: public binary_expression
 {
   // XXX: right MUST be a literal_string*
   void visit (visitor* u);
+  void print (std::ostream& o) const;
 };
 
 struct comparison: public binary_expression

@@ -345,7 +345,7 @@ void regex_query::print (ostream& o) const
   // a parenthesized RHS.
   o << "(" << *left << ") "
     << op
-    << " " << *re;
+    << " " << *right;
 }
 
 
