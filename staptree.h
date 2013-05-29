@@ -166,9 +166,11 @@ struct array_in: public expression
   void visit (visitor* u);
 };
 
-struct regex_query: public binary_expression
+struct regex_query: public expression
 {
-  // XXX: right MUST be a literal_string*
+  expression* left;
+  std::string op;
+  literal_string* right;
   void visit (visitor* u);
   void print (std::ostream& o) const;
 };

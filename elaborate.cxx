@@ -1508,16 +1508,12 @@ public:
 
     try
       {
-        string re = dynamic_cast<literal_string*>(q->right)->value;
+        string re = q->right->value;
         regex_to_stapdfa (&session, re, session.dfa_counter);
       }
     catch (const semantic_error &e)
       {
         throw semantic_error(e.what(), q->right->tok);
-      }
-    catch (exception &e) // dynamic_cast<...> failed
-      {
-        throw semantic_error(_F("BUG %s", e.what()), q->right->tok);
       }
   }
 };
