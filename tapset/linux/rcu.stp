@@ -8,17 +8,11 @@
 
 %{
 #include <linux/rcupdate.h>
-#ifndef rcu_dereference_check
-#define STAP_ALWAYS_ACQUIRE_RCU_LOCK
-#endif
 %}
 
 function rcu_dereference:long (protected_pointer:long) %{ /* pure */
     void *protected_pointer = (void *)(long)STAP_ARG_protected_pointer;
     long fetched_value;
-#ifndef STAP_ALWAYS_ACQUIRE_RCU_LOCK
-    int lock_acquired = 0;
-#endif
 
     /* We call kderef() here to ensure the memory is valid to read.
      * Note the result is thrown away, then we use the "real"
@@ -26,24 +20,10 @@ function rcu_dereference:long (protected_pointer:long) %{ /* pure */
      * safe. */
     (void)kderef(sizeof(*protected_pointer), protected_pointer);
 
-#ifndef STAP_ALWAYS_ACQUIRE_RCU_LOCK
-    if (! rcu_read_lock_held()) {
-	rcu_read_lock();
-	lock_acquired = 1;
-    }
-#else
     rcu_read_lock();
-#endif
-
     fetched_value = (long)rcu_dereference(protected_pointer);
-
-#ifndef STAP_ALWAYS_ACQUIRE_RCU_LOCK
-    if (lock_acquired) {
-	rcu_read_unlock();
-    }
-#else
     rcu_read_unlock();
-#endif
     STAP_RETVALUE = fetched_value;
+
     CATCH_DEREF_FAULT();
 %}
