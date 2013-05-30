@@ -441,7 +441,11 @@ function returnstr:string (format:long) %{ /* pure */
 			snprintf (STAP_RETVALUE, MAXSTRINGLEN, "%ld", ret);
 	} else {
 no_ret:
+#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044 TODO: set cutoff
 		strlcpy(STAP_RETVALUE, "N/A", MAXSTRINGLEN);
+#else
+		CONTEXT->last_error = "No registers available in this context";
+#endif
 	}
 %}
 

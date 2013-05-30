@@ -16,7 +16,7 @@
  * message immediately to staprun and to the bulk transport
  * (relayfs) if it is being used. If the last character given
  * is not a newline, then one is added. This function is not 
- * as effecient as printf and should be used only for urgent
+ * as efficient as printf and should be used only for urgent
  * messages. 
  */
 function log (msg:string) %{ /* unprivileged */

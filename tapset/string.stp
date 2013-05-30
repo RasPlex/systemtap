@@ -43,13 +43,19 @@ function substr:string(str:string,start:long, length:long) %{ /* pure */ /* unpr
  * @pos: the position to get the character from  (first character is 0)
  *
  * Description: This function returns the character at a given position in
- * the string or zero if thestring doesn't have as many characters.
+ * the string or zero if the string doesn't have as many characters. Reports
+ * an error if pos is out of bounds.
  */
 function stringat:long(str:string, pos:long) %{ /* pure */ /* unprivileged */
 	if (STAP_ARG_pos >= 0 && STAP_ARG_pos < strlen(STAP_ARG_str))
 		STAP_RETVALUE = STAP_ARG_str[STAP_ARG_pos];
-	else
+	else {
+#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044 TODO: set cutoff
 		STAP_RETVALUE = 0;
+#else
+		CONTEXT->last_error = "Position out of bounds";
+#endif
+	}
 %}
 
 /**
