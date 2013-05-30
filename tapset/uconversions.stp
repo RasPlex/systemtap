@@ -37,10 +37,26 @@
  * @addr: the user space address to retrieve the string from
  *
  * Description: Returns the null terminated C string from a given user space
- * memory address. Reports "<unknown>" on the rare cases when userspace
+ * memory address. Reports an error on the rare cases when userspace
  * data is not accessible.
  */
-function user_string:string (addr:long) { return user_string2 (addr, "<unknown>") }
+function user_string:string (addr:long)
+%{ /* pure */ /* myproc-unprivileged */
+	long rc;
+	rc = _stp_strncpy_from_user (STAP_RETVALUE,
+		(const char __user*) (uintptr_t) STAP_ARG_addr, MAXSTRINGLEN);
+	if (rc < 0) { // Check for error
+#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+		strlcpy (STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
+#else
+		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+			"user string copy fault %ld at %p", rc,
+			(void *) (uintptr_t) STAP_ARG_addr);
+		CONTEXT->last_error = CONTEXT->error_buffer;
+#endif
+	}
+%}
+
 
 /**
  * sfunction user_string2 - Retrieves string from user space with alternative error string
@@ -52,12 +68,14 @@ function user_string:string (addr:long) { return user_string2 (addr, "<unknown>"
  * memory address. Reports the given error message on the rare cases when
  * userspace data is not accessible.
  */
-function user_string2:string (addr:long, err_msg:string) %{ /* pure */ /* myproc-unprivileged */
-  if (_stp_strncpy_from_user (STAP_RETVALUE,
-        (const char __user*) (uintptr_t) STAP_ARG_addr,
-        MAXSTRINGLEN) < 0)
-    strlcpy (STAP_RETVALUE, STAP_ARG_err_msg, MAXSTRINGLEN);
-%}
+function user_string2:string (addr:long, err_msg:string) {
+%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+	ret = user_string(addr)
+	return (ret == "<unknown>") ? err_msg : ret
+%:
+	try { return user_string(addr) } catch { return err_msg }
+%)
+}
 
 /**
  * sfunction user_string_warn - Retrieves string from user space
@@ -65,10 +83,32 @@ function user_string2:string (addr:long, err_msg:string) %{ /* pure */ /* myproc
  * @addr: the user space address to retrieve the string from
  *
  * Description: Returns the null terminated C string from a given user space
- * memory address. Reports "<unknown>" on the rare cases when userspace
- * data is not accessible and warns (but does not abort) about the failure.
+ * memory address. Reports "" on the rare cases when userspace data is
+ * not accessible and warns (but does not abort) about the failure.
  */
-function user_string_warn:string (addr:long) %{ /* pure */ /* myproc-unprivileged */
+function user_string_warn:string (addr:long) {
+%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+	return user_string2_warn(addr, "<unknown>")
+%:
+	return user_string2_warn(addr, "")
+%)
+}
+
+
+/**
+ * sfunction user_string2_warn - Retrieves string from user space with
+ * alternative warning string
+ *
+ * @addr: the user space address to retrieve the string from
+ * @warn_msg: the warning message to return when data isn't available
+ * 
+ * Description: Returns the null terminated C string from a given user space
+ * memory address. Reports the given warning message on the rare cases
+ * when userspace data is not accessible and warns (but does not abort)
+ * about the failure.
+ */
+function user_string2_warn:string (addr:long, warn_msg:string)
+%{ /* pure */ /* myproc-unprivileged */
   long rc;
   rc = _stp_strncpy_from_user (STAP_RETVALUE,
       (const char __user*) (uintptr_t) STAP_ARG_addr, MAXSTRINGLEN);
@@ -79,7 +119,7 @@ function user_string_warn:string (addr:long) %{ /* pure */ /* myproc-unprivilege
         "user string copy fault %ld at %p", rc,
         (void *) (uintptr_t) STAP_ARG_addr);
     _stp_warn(CONTEXT->error_buffer);
-    strlcpy (STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
+    strlcpy (STAP_RETVALUE, STAP_ARG_warn_msg, MAXSTRINGLEN);
   }
 %}
 
@@ -110,12 +150,27 @@ function user_string_quoted:string (addr:long) %{ /* pure */ /* myproc-unprivile
  * @n: the maximum length of the string (if not null terminated)
  *
  * Description: Returns the C string of a maximum given length from a
- * given user space address. Returns "<unknown>" on the rare cases
+ * given user space address. Reports an error on the rare cases
  * when userspace data is not accessible at the given address.
  */
-function user_string_n:string (addr:long, n:long) {
-	return user_string_n2(addr, n, "<unknown>")
-}
+function user_string_n:string (addr:long, n:long)
+%{ /* pure */ /* myproc-unprivileged */
+	long rc;
+	int64_t len = clamp_t(int64_t, STAP_ARG_n + 1, 1, MAXSTRINGLEN);
+	rc = _stp_strncpy_from_user(STAP_RETVALUE,
+		(char __user *) (uintptr_t) STAP_ARG_addr, len);
+	if (rc < 0)
+#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+		strlcpy(STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
+#else
+		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+			"user string copy fault %ld at %p", rc,
+			(void *) (uintptr_t) STAP_ARG_addr);
+		CONTEXT->last_error = CONTEXT->error_buffer;
+#endif
+	else
+		STAP_RETVALUE[len - 1] = '\0';
+%}
 
 /**
  * sfunction user_string_n2 - Retrieves string of given length from user space
@@ -129,15 +184,14 @@ function user_string_n:string (addr:long, n:long) {
  * the rare cases when userspace data is not accessible at the given
  * address.
  */
-function user_string_n2:string (addr:long, n:long, err_msg:string) %{ /* pure */ /* myproc-unprivileged */
-	int64_t len = clamp_t(int64_t, STAP_ARG_n + 1, 1, MAXSTRINGLEN);
-	if (_stp_strncpy_from_user(STAP_RETVALUE,
-				(char __user *) (uintptr_t) STAP_ARG_addr,
-				len) < 0)
-		strlcpy(STAP_RETVALUE, STAP_ARG_err_msg, MAXSTRINGLEN);
-	else
-		STAP_RETVALUE[len - 1] = '\0';
-%}
+function user_string_n2:string (addr:long, n:long, err_msg:string) {
+%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+	ret = user_string_n(addr, n)
+	return (ret == "<unknown>") ? err_msg : ret
+%:
+	try { return user_string_n(addr, n) } catch { return err_msg }
+%)
+}
 
 /**
  * sfunction user_string_n_warn - Retrieves string from user space
@@ -150,7 +204,29 @@ function user_string_n2:string (addr:long, n:long, err_msg:string) %{ /* pure */
  * when userspace data is not accessible and warns (but does not abort)
  * about the failure.
  */
-function user_string_n_warn:string (addr:long, n:long) %{ /* pure */ /* myproc-unprivileged */
+function user_string_n_warn:string (addr:long, n:long) {
+%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+	return user_string2_n_warn(addr, n, "<unknown>")
+%:
+	return user_string2_n_warn(addr, n, "")
+%)
+}
+
+/**
+ * sfunction user_string2_n_warn - Retrieves string from user space with
+ * alternative warning string
+ *
+ * @addr: the user space address to retrieve the string from
+ * @n: the maximum length of the string (if not null terminated)
+ * @warn_msg: the warning message to return when data isn't available
+ * 
+ * Description: Returns up to n characters of a C string from a given
+ * user space memory address. Reports the given warning message on the
+ * rare cases when userspace data is not accessible and warns (but does
+ * not abort) about the failure.
+ */
+function user_string2_n_warn:string (addr:long, n:long, warn_msg:string)
+%{ /* pure */ /* myproc-unprivileged */
 	int64_t len = clamp_t(int64_t, STAP_ARG_n + 1, 1, MAXSTRINGLEN);
 	long rc;
 	rc = _stp_strncpy_from_user(STAP_RETVALUE,
@@ -162,7 +238,7 @@ function user_string_n_warn:string (addr:long, n:long) %{ /* pure */ /* myproc-u
 				"user string copy fault %ld at %p", rc,
 				(void *) (uintptr_t) STAP_ARG_addr);
 		_stp_warn(CONTEXT->error_buffer);
-		strlcpy (STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
+		strlcpy (STAP_RETVALUE, STAP_ARG_warn_msg, MAXSTRINGLEN);
 	} else
 		STAP_RETVALUE[len - 1] = '\0';
 %}
