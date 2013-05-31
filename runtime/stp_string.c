@@ -64,7 +64,7 @@ static int _stp_vscnprintf(char *buf, size_t size, const char *fmt, va_list args
  * in will have "..." after the second quote.
  * @param user Set this to indicate the input string pointer is a userspace pointer.
  */
-static void _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
+static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 {
 	char c = '\0', *out = outstr;
 
@@ -77,7 +77,11 @@ static void _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 
 	if (user) {
 		if (_stp_read_address(c, in, USER_DS))
+#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
 			goto bad;
+#else
+			return -1;
+#endif
 	} else
 		c = *in;
 
@@ -147,7 +151,11 @@ static void _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 		in++;
 		if (user) {
 			if (_stp_read_address(c, in, USER_DS))
+#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
 				goto bad;
+#else
+				return -1;
+#endif
 		} else
 			c = *in;
 	}
@@ -163,9 +171,10 @@ static void _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 			*out++ = '"';
 	}
 	*out = '\0';
-	return;
+	return 0;
 bad:
 	strlcpy (outstr, "<unknown>", len);
+	return -1;
 }
 
 /**
