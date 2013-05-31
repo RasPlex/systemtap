@@ -23,6 +23,7 @@
 #ifndef STAPCONF_TASK_UID
 #include <linux/cred.h>
 #endif
+#include "../uidgid_compatibility.h"
 #include "syscall.h"
 #include "utrace_compatibility.h"
 #include "task_finder_map.c"
@@ -851,7 +852,11 @@ __stp_utrace_attach_match_filename(struct task_struct *tsk,
 #ifdef STAPCONF_TASK_UID
 	tsk_euid = tsk->euid;
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+	tsk_euid = from_kuid_munged(current_user_ns(), task_euid(tsk));
+#else
 	tsk_euid = task_euid(tsk);
+#endif
 #endif
 	filelen = strlen(filename);
 	list_for_each(tgt_node, &__stp_task_finder_list) {
@@ -1660,7 +1665,11 @@ stap_start_task_finder(void)
 #ifdef STAPCONF_TASK_UID
 		tsk_euid = tsk->euid;
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+		tsk_euid = from_kuid_munged(current_user_ns(), task_euid(tsk));
+#else
 		tsk_euid = task_euid(tsk);
+#endif
 #endif
 		mmpathlen = strlen(mmpath);
 		list_for_each(tgt_node, &__stp_task_finder_list) {

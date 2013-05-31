@@ -19,10 +19,7 @@
  * some of the new interface's functions. */
 #ifndef STAPCONF_PDE_DATA
 
-#ifndef KUIDT_INIT
-#define KUIDT_INIT(value) ((uid_t) value)
-#define KGIDT_INIT(value) ((gid_t) value)
-
+#ifndef STAPCONF_LINUX_UIDGID_H
 static void proc_set_user(struct proc_dir_entry *de, uid_t uid, gid_t gid)
 {
 	de->uid = uid;

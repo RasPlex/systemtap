@@ -14,6 +14,7 @@
 #include "symbols.c"
 #include <linux/delay.h>
 #include <linux/poll.h>
+#include "../uidgid_compatibility.h"
 
 static _stp_mempool_t *_stp_pool_q;
 static struct list_head _stp_ctl_ready_q;
@@ -34,7 +35,11 @@ static ssize_t _stp_ctl_write_cmd(struct file *file, const char __user *buf, siz
 #ifdef STAPCONF_TASK_UID
 	uid_t euid = current->euid;
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+	uid_t euid = from_kuid_munged(current_user_ns(), current_euid());
+#else
 	uid_t euid = current_euid();
+#endif
 #endif
 
 	if (count < sizeof(u32))

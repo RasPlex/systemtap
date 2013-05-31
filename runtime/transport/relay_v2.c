@@ -31,6 +31,7 @@
 #include <linux/mm.h>
 #include <linux/relay.h>
 #include <linux/timer.h>
+#include "../uidgid_compatibility.h"
 
 #ifndef STP_RELAY_TIMER_INTERVAL
 /* Wakeup timer interval in jiffies (default 10 ms) */
@@ -234,8 +235,8 @@ __stp_relay_create_buf_file_callback(const char *filename,
 		file = NULL;
 	}
 	else if (file) {
-		file->d_inode->i_uid = _stp_uid;
-		file->d_inode->i_gid = _stp_gid;
+		file->d_inode->i_uid = KUIDT_INIT(_stp_uid);
+		file->d_inode->i_gid = KGIDT_INIT(_stp_gid);
 	}
 	return file;
 }
@@ -303,8 +304,8 @@ static int _stp_transport_data_fs_init(void)
 		goto err;
 	}
 
-	_stp_relay_data.dropped_file->d_inode->i_uid = _stp_uid;
-	_stp_relay_data.dropped_file->d_inode->i_gid = _stp_gid;
+	_stp_relay_data.dropped_file->d_inode->i_uid = KUIDT_INIT(_stp_uid);
+	_stp_relay_data.dropped_file->d_inode->i_gid = KGIDT_INIT(_stp_gid);
 
 	/* Create "trace" file. */
 	npages = _stp_subbuf_size * _stp_nsubbufs;

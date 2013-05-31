@@ -11,6 +11,7 @@
 
 #include <linux/debugfs.h>
 #include "transport.h"
+#include "../uidgid_compatibility.h"
 
 /* Defines the number of buffers allocated in control.c (which #includes
    this file) for the _stp_pool_q.  This is the number of .cmd messages
@@ -48,8 +49,8 @@ static int _stp_register_ctl_channel_fs(void)
 		return -1;
 	}
 
-	_stp_cmd_file->d_inode->i_uid = _stp_uid;
-	_stp_cmd_file->d_inode->i_gid = _stp_gid;
+	_stp_cmd_file->d_inode->i_uid = KUIDT_INIT(_stp_uid);
+	_stp_cmd_file->d_inode->i_gid = KGIDT_INIT(_stp_gid);
 
 	return 0;
 }

@@ -395,6 +395,7 @@ compile_pass (systemtap_session& s)
 
   output_autoconf(s, o, "autoconf-pagefault_disable.c", "STAPCONF_PAGEFAULT_DISABLE", NULL);
   output_exportconf(s, o, "kallsyms_lookup_name", "STAPCONF_KALLSYMS");
+  output_autoconf(s, o, "autoconf-uidgid.c", "STAPCONF_LINUX_UIDGID_H", NULL);
 
   o << module_cflags << " += -include $(STAPCONF_HEADER)" << endl;
 

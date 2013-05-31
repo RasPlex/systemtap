@@ -22,6 +22,7 @@
 #include <linux/pid_namespace.h>
 #endif
 #include "proc_fs_compatibility.h"
+#include "uidgid_compatibility.h"
 
 #if defined(STAPCONF_PATH_LOOKUP) && !defined(STAPCONF_KERN_PATH_PARENT)
 #define kern_path_parent(name, nameidata) \

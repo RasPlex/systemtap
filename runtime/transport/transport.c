@@ -20,6 +20,7 @@
 #include <linux/namei.h>
 #include <linux/delay.h>
 #include <linux/mutex.h>
+#include "../uidgid_compatibility.h"
 
 static int _stp_exit_flag = 0;
 
@@ -336,8 +337,13 @@ static int _stp_transport_init(void)
 	_stp_uid = current->uid;
 	_stp_gid = current->gid;
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+	_stp_uid = from_kuid_munged(current_user_ns(), current_uid());
+	_stp_gid = from_kgid_munged(current_user_ns(), current_gid());
+#else
 	_stp_uid = current_uid();
 	_stp_gid = current_gid();
+#endif
 #endif
 
 /* PR13489, missing inode-uprobes symbol-export workaround */
