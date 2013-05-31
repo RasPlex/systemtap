@@ -307,8 +307,6 @@ java_builder::build (systemtap_session & sess,
   // the begin portion of the probe to install byteman rules in the target jvm
 
   vector<probe_point::component*> java_begin_marker;
-  java_begin_marker.push_back( new probe_point::component 
-  			  (TOK_PROCESS, new literal_string ("java")));
   java_begin_marker.push_back( new probe_point::component (TOK_BEGIN));
 
   probe_point * der_begin_loc = new probe_point(java_begin_marker);

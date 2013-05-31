@@ -86,20 +86,20 @@ fi
 flagdir="$SYSTEMTAP_DIR/java"
 mkdir -p $flagdir
 
-# Find our target jvm pid.  Filter out byteman and jps itself, to
-# avoid possible infinite recursion (whereby stap recognizes the
-# impending start of those jvm's and sends a new stapbm on a wild
-# goose chase).
-target_pid=`ps -f -C java | grep $arg_jvmpid | awk '{print $2}' | head -1`
-if [ "x$target_pid" = "x" ]; then
-    if [ "$STAPBM_VERBOSE" != "no" ]; then
-        echo "JVMID $arg_jvmpid not found"
-    fi
-    exit 1
-fi
-target_pid=`ps -f -C java | grep $arg_jvmpid | egrep -v 'org.jboss.byteman|sun.tools.jps' | awk '{print $2}' | head -1`
-if [ "x$target_pid" = "x" ]; then
-    exit 0   # silently quit; ass-u-me unintended recursion
+# Find our target jvm pid.  Due to the possibility of our
+# target jvm pid being passed as a string, we need to allow
+# for the possiblity that more than one pid may match the
+# target jvm pid.  If this is the case, we need to have a
+# nested call to stapbm with the actual pid of the jvm pid
+
+if [[ $arg_jvmpid != *[[:digit:]]* ]]; then
+    target_pid=`jps -l | grep $arg_jvmpid | cut -f1 -d" "`
+    for target in $target_pid; do
+	$0 $arg_command $target $arg_rulename $arg_class $arg_method $arg_argcount $arg_probetype
+    done;
+    exit 0
+else
+    target_pid=$arg_jvmpid
 fi
 
 # Our target jvm may not have the byteman agent installed yet.  Let's do
@@ -206,21 +206,4 @@ if [ "$STAPBM_VERBOSE" != "no" ]; then
     echo java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
 fi
 
-byteman_submitted_portfile=$flagdir/`hostname`-${arg_rulename}-bm
-exec 200>>$byteman_submitted_portfile # open/create lock file
-flock -x 200  # exclusive-lock it
-if [ -s $byteman_submitted_portfile ]; then
-    if [ "$bmcmd" != "-u" ]; then
-	exit 0
-    else
-	java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
-    fi
-else
-    echo $bmport > $byteman_submitted_portfile
-    java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile    
-    submitexit = $?
-fi
-exec 200>&-   # close file & release flock
-exit $submitexit
-
-
+exec java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile

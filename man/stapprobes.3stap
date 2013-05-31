@@ -830,6 +830,9 @@ The first probe type refers to Java processes by the name of the Java process:
 java("PNAME").class("CLASSNAME").method("PATTERN")
 java("PNAME").class("CLASSNAME").method("PATTERN").return
 .ESAMPLE
+The PNAME argument must be a pre-existing jvm pid, and be identifiable
+via a jps listing.
+.PP
 The PATTERN parameter specifies the signature of the Java method to
 probe. The signature must consist of the exact name of the method,
 followed by a bracketed list of the types of the arguments, for
