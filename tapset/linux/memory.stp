@@ -153,7 +153,7 @@ probe vm.write_shared = kernel.function("do_wp_page") {
  *  The process attempting the write.
  *
  *  Fires when a write to a shared page requires a page copy.  This is
- *  always preceded by a vm.shared_write.
+ *  always preceded by a vm.write_shared.
  */
 probe vm.write_shared_copy =  kernel.function("cow_user_page") ?,
       kernel.function("copy_cow_page") ?

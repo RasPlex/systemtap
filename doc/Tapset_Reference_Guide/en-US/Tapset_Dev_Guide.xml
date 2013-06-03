@@ -230,7 +230,7 @@ probe kprocess.create = kernel.function("copy_process").return
  *  The process attempting the write.
  *
  *  Fires when a write to a shared page requires a page copy.  This is
- *  always preceded by a <command>vm.shared_write</command>.
+ *  always preceded by a <command>vm.write_shared</command>.
  **/
 </programlisting>
 </para>
