@@ -221,6 +221,7 @@ public:
 
 	Range(Range &r) : next(NULL), lb(r.lb), ub(r.ub)
 	{
+        	if (r.next != NULL) next = new Range(*r.next);
 		vFreeList.insert(this);
 	}
 
@@ -711,6 +712,8 @@ public:
 	std::string& unescape(SubStr& str_in, std::string& str_out) const;
 
 	Range * getRange(SubStr &s) const;
+	Range * ranToRA(SubStr s) const;
+	Range * namedChrClass(std::string name) const;
 	RegExp * matchChar(unsigned c) const;
 	RegExp * strToName(SubStr s) const;
 	RegExp * strToRE(SubStr s) const;

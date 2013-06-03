@@ -798,6 +798,34 @@ std::string& Scanner::unescape(SubStr& str_in, std::string& str_out) const
 
 Range * Scanner::getRange(SubStr &s) const
 {
+  // TODOXXX escaping nuances of [: -- needs further testcases
+  // check for '[:' digraph prior to unescaping, to skip escaped '['
+  if (s.len >= 2 && *s.str == '[' && *(s.str+1) == ':')
+    {
+      s.len -= 2;
+      s.str += 2;
+
+      std::string charclass = "";
+
+      for (;;)
+        {
+          if (s.len < 1) fatalf ("unclosed character class '[:%s'", charclass.c_str());
+
+          if (s.len >= 2 && *s.str == ':' && *(s.str+1) == ']')
+            {
+              s.len -= 2;
+              s.str += 2;
+
+              return namedChrClass(charclass);
+            }
+
+          charclass.push_back(*s.str);
+
+          s.len --;
+          s.str ++;
+        }
+    }
+
 	// unsigned lb = unescape(s), ub, xlb, xub, c;
 	unsigned lb = unescape(s), ub, xlb, c;
 
@@ -910,7 +938,36 @@ RegExp * Scanner::strToCaseInsensitiveRE(SubStr s) const
 	return re;
 }
 
-RegExp * Scanner::ranToRE(SubStr s) const
+std::map<std::string, Range *> namedCharacterClasses;
+
+Range  * Scanner::namedChrClass(std::string name) const
+{
+  // static initialization of table
+  if (namedCharacterClasses.empty())
+    {
+      namedCharacterClasses["alpha"] = ranToRA(SubStr("A-Za-z"));
+      namedCharacterClasses["alnum"] = ranToRA(SubStr("A-Za-z0-9"));
+      // TODOXXX blank
+      // TODOXXX cntrl
+      namedCharacterClasses["d"] = namedCharacterClasses["digit"] = ranToRA(SubStr("0-9"));
+      namedCharacterClasses["xdigit"] = ranToRA(SubStr("0-9a-fA-F"));
+      // TODOXXX graph
+      namedCharacterClasses["l"] = namedCharacterClasses["lower"] = ranToRA(SubStr("a-z"));
+      // TODOXXX print
+      // TODOXXX punct
+      // TODOXXX s,space
+      namedCharacterClasses["u"] = namedCharacterClasses["upper"] = ranToRA(SubStr("A-Z"));
+    }
+
+  if (namedCharacterClasses.find(name) == namedCharacterClasses.end())
+    {
+      fatalf("unknown character class '%s'", name.c_str());
+    }
+
+  return new Range(*namedCharacterClasses[name]);
+}
+
+Range  * Scanner::ranToRA(SubStr s) const
 {
         // ranToRE et al. used to take bracketed literal,
         // but the bracket-stripping is no longer needed
@@ -918,14 +975,22 @@ RegExp * Scanner::ranToRE(SubStr s) const
 	//s.str += 1;
 
 	if (s.len == 0)
-		return new NullOp;
+          fatal ("BUG: cannot create empty range from ranToRA");
 
 	Range *r = getRange(s);
 
 	while (s.len > 0)
 		r = doUnion(r, getRange(s));
 
-	return new MatchOp(r);
+        return r;
+}
+
+RegExp * Scanner::ranToRE(SubStr s) const
+{
+  if (s.len == 0)
+    return new NullOp;
+
+  return new MatchOp(ranToRA(s));
 }
 
 RegExp * Scanner::getAnyRE() const

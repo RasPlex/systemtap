@@ -685,12 +685,65 @@ regex_parser::parse_char_range ()
       c = peek ();
     }
 
-  // grab range to next ']'
-  while (c != ']')
+  // we need to respect balanced [: :] chr class parens in the range expr
+  unsigned depth = 0;
+  for (;;)
     {
-      accumulate.push_back (c);
-      next ();
-      c = peek ();
+      if (c == '\\')
+        {
+          accumulate.push_back(c);
+          next ();
+          c = peek ();
+
+          if (c == ']')
+            {
+              accumulate.push_back(c);
+              next ();
+              c = peek ();
+            }
+        }
+      else if (c == '[')
+        {
+          accumulate.push_back(c);
+          next ();
+          c = peek ();
+
+          if (c == ':')
+            {
+              // TODOXXX doublecheck -- is multiple-nesting (which always leads to error anyways) -- overkill ??
+              depth ++;
+              accumulate.push_back(c);
+              next ();
+              c = peek ();
+            }
+        }
+      else if (c == ']')
+        {
+          // TODOXXX -- doublecheck -- only close on :] ??
+          break;
+        }
+      else if (c == ':')
+        {
+          accumulate.push_back(c);
+          next ();
+          c = peek ();
+
+          if (c == ']')
+            {
+              if (depth == 0) break;
+
+              depth --;
+              accumulate.push_back(c);
+              next ();
+              c = peek ();
+            }
+        }
+      else
+        {
+          accumulate.push_back(c);
+          next ();
+          c = peek ();
+        }
     }
 
   // invToRE and ranToRE take this funky custom class
