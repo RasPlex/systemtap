@@ -945,17 +945,18 @@ Range  * Scanner::namedChrClass(std::string name) const
   // static initialization of table
   if (namedCharacterClasses.empty())
     {
+      // TODOXXX double-check these against the glibc source code or someplace like that?
       namedCharacterClasses["alpha"] = ranToRA(SubStr("A-Za-z"));
       namedCharacterClasses["alnum"] = ranToRA(SubStr("A-Za-z0-9"));
-      // TODOXXX blank
-      // TODOXXX cntrl
+      namedCharacterClasses["blank"] = ranToRA(SubStr(" \t"));
+      namedCharacterClasses["cntrl"] = ranToRA(SubStr("\x01-\x1F\x7F")); // TODOXXX test, include \x00 in range
       namedCharacterClasses["d"] = namedCharacterClasses["digit"] = ranToRA(SubStr("0-9"));
       namedCharacterClasses["xdigit"] = ranToRA(SubStr("0-9a-fA-F"));
-      // TODOXXX graph
+      namedCharacterClasses["graph"] = ranToRA(SubStr("\x21-\x7E")); // TODOXXX test
       namedCharacterClasses["l"] = namedCharacterClasses["lower"] = ranToRA(SubStr("a-z"));
-      // TODOXXX print
-      // TODOXXX punct
-      // TODOXXX s,space
+      namedCharacterClasses["print"] = ranToRA(SubStr("\x20-\x7E")); // TODOXXX test
+      namedCharacterClasses["punct"] = ranToRA(SubStr("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")); // TODOXXX test
+      namedCharacterClasses["s"] = namedCharacterClasses["space"] = ranToRA(SubStr(" \t\r\n\v\f")); // TODOXXX test
       namedCharacterClasses["u"] = namedCharacterClasses["upper"] = ranToRA(SubStr("A-Z"));
     }
 
