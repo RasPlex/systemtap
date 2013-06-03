@@ -1,8 +1,9 @@
 proc testline { line } {
     set test "regtest $line"
 
-    # split the line into a space-separated list, XXX respecting escapes
-    set splitline [split $line ":"]
+    # split the line into a space-separated list, while escaping "\\:" as ":"
+    set line [string map {\\: : : @} $line]
+    set splitline [split $line @]
     # XXX oddball idea -- perhaps switch the test syntax to CSV??
 
     # determine the required outcome

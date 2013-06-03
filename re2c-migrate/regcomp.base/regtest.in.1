@@ -160,14 +160,15 @@
 0:M[ou]'?am+[ae]r .*([AEae]l[- ])?[GKQ]h?[aeu]+([dtz][dhz]?)+af[iy]:Mulazim Awwal Mu'ammar Muhammad Abu Minyar al-Qadhafi
 
 # PR15064 -- character classes
-0:[[:digit:]]+:01234
-1:[[:alpha:]]+:01234
-0:^[[:digit:]]*$:01234
-1:^[[:digit:]]*$:01234a
-0:^[[:alnum:]]*$:01234a
-0:^[[:xdigit:]]*$:01234a
-1:^[[:xdigit:]]*$:01234g
-0:^[[:alnum:][:space:]]*$:Hello world
+# NB: we escape : as \: to allow field splitting
+0:[[\:digit\:]]+:01234
+1:[[\:alpha\:]]+:01234
+0:^[[\:digit\:]]*$:01234
+1:^[[\:digit\:]]*$:01234a
+0:^[[\:alnum\:]]*$:01234a
+0:^[[\:xdigit\:]]*$:01234a
+1:^[[\:xdigit\:]]*$:01234g
+0:^[[\:alnum\:][\:space\:]]*$:Hello world
 
 # XXX: subexpression reuse not supported and probably won't be
 # 0:(.*)*\1:xx
