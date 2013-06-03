@@ -163,7 +163,7 @@ function probemod:string () %{ /* pure */
 			strlcpy (STAP_RETVALUE, m->name, MAXSTRINGLEN);
 		else
 #if STAP_COMPAT_VERSION <= STAP_VERSION(2,2)
-			strlcpy (STAP_RETVALUE, "<unknown", MAXSTRINGLEN);
+			strlcpy (STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
 #else
 			CONTEXT->last_error = "Cannot determine kernel module name";
 #endif
