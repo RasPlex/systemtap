@@ -108,7 +108,7 @@ probe socket.sendmsg = kernel.function ("sock_sendmsg")
  * Fires at the conclusion of sending a message on a socket
  * via the sock_sendmsg() function
  */
-probe socket.sendmsg.return = kernel.function ("sock_sendmsg").return
+probe socket.sendmsg.return = kernel.function("sock_sendmsg").return
 {
 	name = "socket.sendmsg.return"
 	size = $return
@@ -137,7 +137,7 @@ probe socket.sendmsg.return = kernel.function ("sock_sendmsg").return
  * via the sock_recvmsg() function
  *
  */
-probe socket.recvmsg = kernel.function ("sock_recvmsg")
+probe socket.recvmsg = kernel.function("sock_recvmsg")
 {
 	name = "socket.recvmsg"
 	size = $size
@@ -167,7 +167,7 @@ probe socket.recvmsg = kernel.function ("sock_recvmsg")
  *
  *
  */
-probe socket.recvmsg.return = kernel.function ("sock_recvmsg").return
+probe socket.recvmsg.return = kernel.function("sock_recvmsg").return
 {
 	name = "socket.recvmsg.return"
 	size = $return
@@ -197,23 +197,26 @@ probe socket.recvmsg.return = kernel.function ("sock_recvmsg").return
  */
 //
 // 2.6.9~2.6.15:
-//     static ssize_t sock_aio_write(struct kiocb *iocb, const char __user *ubuf, size_t size, loff_t pos);
+//     static ssize_t sock_aio_write(struct kiocb *iocb,
+//		const char __user *ubuf, size_t size, loff_t pos);
 // 2.6.16~2.6.18:
-//     static ssize_t sock_aio_write(struct kiocb *iocb, const char __user *ubuf, size_t count, loff_t pos);
+//     static ssize_t sock_aio_write(struct kiocb *iocb,
+//		const char __user *ubuf, size_t count, loff_t pos);
 // 2.6.19~2.6.26:
-//     static ssize_t sock_aio_write(struct kiocb *iocb, const struct iovec *iov, unsigned long nr_segs, loff_t pos);
+//     static ssize_t sock_aio_write(struct kiocb *iocb,
+//		const struct iovec *iov, unsigned long nr_segs, loff_t pos);
 
-probe socket.aio_write = kernel.function ("sock_aio_write")
+probe socket.aio_write = kernel.function("sock_aio_write")
 {
 	name = "socket.aio_write"
-	_sock = _get_sock_addr ($iocb->ki_filp)
-	size = (@defined($iov) ? _get_sock_size ($iov, $nr_segs)
+	_sock = _get_sock_addr($iocb->ki_filp)
+	size = (@defined($iov) ? _get_sock_size($iov, $nr_segs)
 		: @choose_defined($count, $size))
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 }
 
 /**
@@ -233,16 +236,16 @@ probe socket.aio_write = kernel.function ("sock_aio_write")
  * Fires at the conclusion of sending a message on a socket
  * via the sock_aio_write() function
  */
-probe socket.aio_write.return = kernel.function ("sock_aio_write").return
+probe socket.aio_write.return = kernel.function("sock_aio_write").return
 {
 	name = "socket.aio_write.return"
 	size = $return
-	_sock = _get_sock_addr ($iocb->ki_filp)
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	_sock = _get_sock_addr($iocb->ki_filp)
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 	success = _success_check($return)
 }
 
@@ -264,23 +267,26 @@ probe socket.aio_write.return = kernel.function ("sock_aio_write").return
  */
 //
 // 2.6.9~2.6.15:
-//     static ssize_t sock_aio_read(struct kiocb *iocb, char __user *ubuf, size_t size, loff_t pos);
+//     static ssize_t sock_aio_read(struct kiocb *iocb, char __user *ubuf,
+//		size_t size, loff_t pos);
 // 2.6.16~2.6.18:
-//     static ssize_t sock_aio_read(struct kiocb *iocb, char __user *ubuf, size_t count, loff_t pos);
+//     static ssize_t sock_aio_read(struct kiocb *iocb, char __user *ubuf,
+//		size_t count, loff_t pos);
 // 2.6.19~2.6.26:
-//     static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov, unsigned long nr_segs, loff_t pos);
+//     static ssize_t sock_aio_read(struct kiocb *iocb,
+//		const struct iovec *iov, unsigned long nr_segs, loff_t pos);
 
-probe socket.aio_read = kernel.function ("sock_aio_read")
+probe socket.aio_read = kernel.function("sock_aio_read")
 {
 	name = "socket.aio_read"
-	_sock = _get_sock_addr ($iocb->ki_filp)
-	size = (@defined($iov) ? _get_sock_size ($iov, $nr_segs)
+	_sock = _get_sock_addr($iocb->ki_filp)
+	size =(@defined($iov) ? _get_sock_size($iov, $nr_segs)
 		: @choose_defined($count, $size))
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 }
 
 /**
@@ -300,16 +306,16 @@ probe socket.aio_read = kernel.function ("sock_aio_read")
  * Fires at the conclusion of receiving a message on a socket
  * via the sock_aio_read() function
  */
-probe socket.aio_read.return = kernel.function ("sock_aio_read").return
+probe socket.aio_read.return = kernel.function("sock_aio_read").return
 {
 	name = "socket.aio_read.return"
 	size = $return
-	_sock = _get_sock_addr ($iocb->ki_filp)
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	_sock = _get_sock_addr($iocb->ki_filp)
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 	success = _success_check($return)
 }
 
@@ -329,17 +335,17 @@ probe socket.aio_read.return = kernel.function ("sock_aio_read").return
  * Fires at the beginning of sending a message on a socket
  * via the sock_writev() function
  */
-probe socket.writev = kernel.function ("sock_writev") ?
+probe socket.writev = kernel.function("sock_writev") ?
 {
 	name = "socket.writev"
-	_sock = _get_sock_addr ($file)
-	size = (@defined($iov) ? _get_sock_size ($iov, $nr_segs)
-		: _get_sock_size ($vector, $count))
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	_sock = _get_sock_addr($file)
+	size = (@defined($iov) ? _get_sock_size($iov, $nr_segs)
+		: _get_sock_size($vector, $count))
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 }
 
 /**
@@ -359,16 +365,16 @@ probe socket.writev = kernel.function ("sock_writev") ?
  * Fires at the conclusion of sending a message on a socket
  * via the sock_writev() function
  */
-probe socket.writev.return = kernel.function ("sock_writev").return ?
+probe socket.writev.return = kernel.function("sock_writev").return ?
 {
 	name = "socket.writev.return"
 	size = $return
-	_sock = _get_sock_addr ($file)
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	_sock = _get_sock_addr($file)
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 	success = _success_check($return)
 }
 
@@ -388,17 +394,17 @@ probe socket.writev.return = kernel.function ("sock_writev").return ?
  * Fires at the beginning of receiving a message on a socket
  * via the sock_readv() function
  */
-probe socket.readv = kernel.function ("sock_readv") ?
+probe socket.readv = kernel.function("sock_readv") ?
 {
 	name = "socket.readv"
-	_sock = _get_sock_addr ($file)
-	size = (@defined($iov) ? _get_sock_size ($iov, $nr_segs)
-		: _get_sock_size ($vector, $count))
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	_sock = _get_sock_addr($file)
+	size = (@defined($iov) ? _get_sock_size($iov, $nr_segs)
+		: _get_sock_size($vector, $count))
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 }
 
 /**
@@ -418,16 +424,16 @@ probe socket.readv = kernel.function ("sock_readv") ?
  * Fires at the conclusion of receiving a message on a socket
  * via the sock_readv() function
  */
-probe socket.readv.return = kernel.function ("sock_readv").return ?
+probe socket.readv.return = kernel.function("sock_readv").return ?
 {
 	name = "socket.readv.return"
 	size = $return
-	_sock = _get_sock_addr ($file)
-	protocol = _sock_prot_num (_sock)
-	family = _sock_fam_num (_sock)
-	state = _sock_state_num (_sock)
-	flags = _sock_flags_num (_sock)
-	type = _sock_type_num (_sock)
+	_sock = _get_sock_addr($file)
+	protocol = _sock_prot_num(_sock)
+	family = _sock_fam_num(_sock)
+	state = _sock_state_num(_sock)
+	flags = _sock_flags_num(_sock)
+	type = _sock_type_num(_sock)
 	success = _success_check($return)
 }
 
@@ -493,7 +499,7 @@ probe socket.create.return = kernel.function("__sock_create").return
  *
  * Fires at the beginning of closing a socket.
  */
-probe socket.close = kernel.function ("sock_release")
+probe socket.close = kernel.function("sock_release")
 {
 	name = "socket.close"
 	protocol = $sock->sk->sk_protocol
@@ -512,7 +518,7 @@ probe socket.close = kernel.function ("sock_release")
  *
  * Fires at the conclusion of closing a socket.
  */
-probe socket.close.return = kernel.function ("sock_release").return
+probe socket.close.return = kernel.function("sock_release").return
 {
 	name = "socket.close.return"
 	/* void return */
@@ -529,7 +535,7 @@ probe socket.close.return = kernel.function ("sock_release").return
  * sfunction sock_prot_num2str - Given a protocol number, return a string representation
  * @proto: The protocol number
  */
-function sock_prot_num2str:string (proto:long)
+function sock_prot_num2str:string(proto:long)
 {
 	return (proto in _prot_num2str ? _prot_num2str[proto] : "UNDEF")
 }
@@ -538,7 +544,7 @@ function sock_prot_num2str:string (proto:long)
  * sfunction sock_prot_str2num - Given a protocol name (string), return the corresponding protocol number
  * @proto: The protocol name
  */
-function sock_prot_str2num:long (proto:string)
+function sock_prot_str2num:long(proto:string)
 {
 	return (proto in _prot_str2num ? _prot_str2num[proto] : -1)
 }
@@ -549,7 +555,7 @@ function sock_prot_str2num:long (proto:string)
  * sfunction sock_fam_num2str - Given a protocol family number, return a string representation
  * @family: The family number
  */
-function sock_fam_num2str:string (family:long)
+function sock_fam_num2str:string(family:long)
 {
 	return (family in _fam_num2str ? _fam_num2str[family] : "UNDEF")
 }
@@ -558,7 +564,7 @@ function sock_fam_num2str:string (family:long)
  * sfunction sock_fam_str2num - Given a protocol family name (string), return the corresponding protocol family number
  * @family: The family name
  */
-function sock_fam_str2num:long (family:string)
+function sock_fam_str2num:long(family:string)
 {
 	return (family in _fam_str2num ? _fam_str2num[family] : -1)
 }
@@ -569,7 +575,7 @@ function sock_fam_str2num:long (family:string)
  * sfunction sock_state_num2str - Given a socket state number, return a string representation
  * @state: The state number
  */
-function sock_state_num2str:string (state:long)
+function sock_state_num2str:string(state:long)
 {
 	return (state in _state_num2str ? _state_num2str[state] : "UNDEF")
 }
@@ -578,26 +584,26 @@ function sock_state_num2str:string (state:long)
  * sfunction sock_state_str2num - Given a socket state string, return the corresponding state number
  * @state: The state name
  */
-function sock_state_str2num:long (state:string)
+function sock_state_str2num:long(state:string)
 {
 	return (state in _state_str2num ? _state_str2num[state] : -1)
 }
 
 ######## SOCKET TYPE HELPER FUNCTIONS ########
 
-function sock_type_num2str:string (type:long)
+function sock_type_num2str:string(type:long)
 {
 	return (type in _type_num2str ? _type_num2str[type] : "UNDEF")
 }
 
-function sock_type_str2num:long (type:string)
+function sock_type_str2num:long(type:string)
 {
 	return (type in _type_str2num ? _type_str2num[type] : -1)
 }
 
 ######### SOCKET FLAGS HELPER FUNCTIONS #########
 
-function sock_flags_num2str:string (flags:long)
+function sock_flags_num2str:string(flags:long)
 %{ /* pure */
 #ifndef SOCK_PASSCRED
 #define SOCK_PASSCRED 3  /* introduced in 2.6.12? */
@@ -608,60 +614,60 @@ function sock_flags_num2str:string (flags:long)
 	unsigned long flags = STAP_ARG_flags;
 
 	STAP_RETVALUE[0] = '\0';
-	if (test_bit (SOCK_ASYNC_NOSPACE, &flags))
-		strlcat (STAP_RETVALUE, "ASYNC_NOSPACE|", MAXSTRINGLEN);
-	if (test_bit (SOCK_ASYNC_WAITDATA, &flags))
-		strlcat (STAP_RETVALUE, "ASYNC_WAITDATA|", MAXSTRINGLEN);
-	if (test_bit (SOCK_NOSPACE, &flags))
-		strlcat (STAP_RETVALUE, "NOSPACE|", MAXSTRINGLEN);
-	if (test_bit (SOCK_PASSCRED, &flags))
-		strlcat (STAP_RETVALUE, "PASSCRED|", MAXSTRINGLEN);
-	if (test_bit (SOCK_PASSSEC, &flags))
-		strlcat (STAP_RETVALUE, "PASSSEC|", MAXSTRINGLEN);
+	if (test_bit(SOCK_ASYNC_NOSPACE, &flags))
+		strlcat(STAP_RETVALUE, "ASYNC_NOSPACE|", MAXSTRINGLEN);
+	if (test_bit(SOCK_ASYNC_WAITDATA, &flags))
+		strlcat(STAP_RETVALUE, "ASYNC_WAITDATA|", MAXSTRINGLEN);
+	if (test_bit(SOCK_NOSPACE, &flags))
+		strlcat(STAP_RETVALUE, "NOSPACE|", MAXSTRINGLEN);
+	if (test_bit(SOCK_PASSCRED, &flags))
+		strlcat(STAP_RETVALUE, "PASSCRED|", MAXSTRINGLEN);
+	if (test_bit(SOCK_PASSSEC, &flags))
+		strlcat(STAP_RETVALUE, "PASSSEC|", MAXSTRINGLEN);
 	if (STAP_RETVALUE[0] != '\0')
 		STAP_RETVALUE[strlen(STAP_RETVALUE)-1] = '\0';
 %}
 
 ######### MESSAGE FLAGS HELPER FUNCTIONS #########
 
-function msg_flags_num2str:string (flags:long)
+function msg_flags_num2str:string(flags:long)
 %{ /* pure */
 	STAP_RETVALUE[0] = '\0';
 
 	if (STAP_ARG_flags & MSG_OOB)
-		strlcat (STAP_RETVALUE, "OOB|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "OOB|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_PEEK)
-		strlcat (STAP_RETVALUE, "PEEK|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "PEEK|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_DONTROUTE)
-		strlcat (STAP_RETVALUE, "DONTROUTE|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "DONTROUTE|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_TRYHARD)
-		strlcat (STAP_RETVALUE, "TRYHARD|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "TRYHARD|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_CTRUNC)
-		strlcat (STAP_RETVALUE, "CTRUNC|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "CTRUNC|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_PROBE)
-		strlcat (STAP_RETVALUE, "PROBE|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "PROBE|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_TRUNC)
-		strlcat (STAP_RETVALUE, "TRUNC|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "TRUNC|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_DONTWAIT)
-		strlcat (STAP_RETVALUE, "DONTWAIT|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "DONTWAIT|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_EOR)
-		strlcat (STAP_RETVALUE, "EOR|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "EOR|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_WAITALL)
-		strlcat (STAP_RETVALUE, "WAITALL|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "WAITALL|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_FIN)
-		strlcat (STAP_RETVALUE, "FIN|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "FIN|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_SYN)
-		strlcat (STAP_RETVALUE, "SYN|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "SYN|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_CONFIRM)
-		strlcat (STAP_RETVALUE, "CONFIRM|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "CONFIRM|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_RST)
-		strlcat (STAP_RETVALUE, "RST|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "RST|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_ERRQUEUE)
-		strlcat (STAP_RETVALUE, "ERRQUEUE|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "ERRQUEUE|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_NOSIGNAL)
-		strlcat (STAP_RETVALUE, "NOSIGNAL|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "NOSIGNAL|", MAXSTRINGLEN);
 	if (STAP_ARG_flags & MSG_MORE)
-		strlcat (STAP_RETVALUE, "MORE|", MAXSTRINGLEN);
+		strlcat(STAP_RETVALUE, "MORE|", MAXSTRINGLEN);
 
 	if (STAP_RETVALUE[0] != '\0')
 		STAP_RETVALUE[strlen(STAP_RETVALUE)-1] = '\0';
@@ -881,20 +887,22 @@ probe begin(-1001)
 # INTERNAL FUNCTIONS #
 ######################
 
-function _success_check:long (ret:long)
+function _success_check:long(ret:long)
 {
 	return (ret >= 0 ? 1 : 0)
 }
 
-function _get_sock_addr:long (file:long)
+function _get_sock_addr:long(file:long)
 %{ /* pure */
 	struct file *filep = (struct file *)(long)(STAP_ARG_file);
 	struct socket *sockp;
 	if (filep) {
 		struct dentry *dentry = kread(&(filep->f_dentry));
 		struct inode *inode = kread(&(dentry->d_inode));
-		sockp = &container_of(inode, struct socket_alloc, vfs_inode)->socket;
-	} else {
+		sockp = &container_of(inode, struct socket_alloc,
+				      vfs_inode)->socket;
+	}
+	else {
 		sockp = NULL;
 	}
 	if (sockp == NULL)
@@ -904,7 +912,7 @@ function _get_sock_addr:long (file:long)
 	CATCH_DEREF_FAULT();
 %}
 
-function _get_sock_size:long (iov:long, nr_segs:long)
+function _get_sock_size:long(iov:long, nr_segs:long)
 %{ /* pure */
 	struct iovec *iovp = (struct iovec *)(long)(STAP_ARG_iov);
 	if (iovp == NULL)
@@ -918,7 +926,7 @@ function _get_sock_size:long (iov:long, nr_segs:long)
 	CATCH_DEREF_FAULT();
 %}
 
-function _sock_prot_num:long (sock:long)
+function _sock_prot_num:long(sock:long)
 {
 	skp = sock? @cast(sock, "socket", "kernel")->sk : 0
 	if (skp == 0)
@@ -927,7 +935,7 @@ function _sock_prot_num:long (sock:long)
 		return @cast(skp, "sock", "kernel")->sk_protocol
 }
 
-function _sock_fam_num:long (sock:long)
+function _sock_fam_num:long(sock:long)
 {
 	ops = sock? @cast(sock, "socket", "kernel")->ops : 0
 	if (ops == 0)
@@ -936,7 +944,7 @@ function _sock_fam_num:long (sock:long)
 		return @cast(ops, "proto_ops", "kernel")->family
 }
 
-function _sock_state_num:long (sock:long)
+function _sock_state_num:long(sock:long)
 {
 	if (sock == 0)
 		return -1
@@ -944,7 +952,7 @@ function _sock_state_num:long (sock:long)
 		return @cast(sock, "socket", "kernel")->state
 }
 
-function _sock_type_num:long (sock:long)
+function _sock_type_num:long(sock:long)
 {
         if (sock == 0)
                 return -1
@@ -952,7 +960,7 @@ function _sock_type_num:long (sock:long)
                 return @cast(sock, "socket", "kernel")->type
 }
 
-function _sock_flags_num:long (sock:long)
+function _sock_flags_num:long(sock:long)
 {
         if (sock == 0)
                 return -1
