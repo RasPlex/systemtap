@@ -6,6 +6,9 @@
 - The tapset [nd_]syscall.semop parameter tsops_uaddr is renamed sops_uaddr for
   consistency with [nd_]syscall.semtimedop.
 
+- The following tapset functions are deprecated in release 2.3:
+  'stap_NFS_CLIENT' and '__getfh_inode'
+
 * What's new in version 2.2.1, 2013-05-16
 * What's new in version 2.2, 2013-05-14
 

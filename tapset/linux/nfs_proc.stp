@@ -50,11 +50,13 @@ function NFS_CLIENT:long(inode:long)
 	return @cast(NFS_SERVER(inode), "nfs_server", "kernel:nfs")->client
 }
 
+%( systemtap_v < "2.3" %?
 /* deprecated */
 function stap_NFS_CLIENT:long(inode:long)
 {
 	return NFS_CLIENT(inode)
 }
+%)
 
 function NFS_PROTO:long(inode:long)
 {
@@ -110,11 +112,13 @@ function __nfsv4_bitmask:long(dir:long, i:long)
 	return 0
 }
 
+%( systemtap_v < "2.3" %?
 /* deprecated */
 function __getfh_inode:long(dir:long)
 {
 	return NFS_FH(dir)
 }
+%)
 
 probe nfs.proc.entries = nfs.proc.lookup,
 			 nfs.proc.read ?,
