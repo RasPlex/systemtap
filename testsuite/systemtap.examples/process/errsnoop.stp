@@ -1,4 +1,4 @@
-#!/usr/bin/env stap -DMAXMAPENTRIES=20480 $0 $@; exit $?
+#! /usr/bin/env stap
 # errsnoop.stp
 # Copyright (C) 2009 Red Hat, Inc., Eugene Teo <eteo@redhat.com>
 #
@@ -9,7 +9,7 @@
 # attack "stupid userspace" apps
 #
 
-global error, trace
+global error%[6000], trace   // about 18.5MB kernel RAM
 
 probe syscall.* {
 	# assume syscall don't nest
@@ -22,22 +22,16 @@ probe syscall.*.return {
 		t = tid()
 		argstr = trace[t]
 		delete trace[t]
-
-		error[name, execname(), pid(), errno, argstr] <<< 1
+		errstr = sprintf("%3d/%s", errno, errno_str(errno))
+		error[sprintf("%-13s %17s %15s %5d %s", errstr, name, execname(), pid(), argstr)] <<< 1
 	}
 }
 
 probe timer.s(%( $# > 0 %? $1 %: 5 %)) {
 	ansi_clear_screen()
-	printf("%17s %15s %5s %4s %-12s %s\n",
-			"SYSCALL", "PROCESS", "PID", "HITS", "ERRSTR", "ARGSTR")
-	foreach([fn, comm, pid, errno, argstr] in error- limit %( $# > 1 %? $2 %: 20 %)) {
-		errstr = sprintf("%3d (%s)", errno, errno_str(errno))
-		printf("%17s %15s %5d %4d %-12s %s\n", fn, comm, pid,
-				@count(error[fn, comm, pid, errno, argstr]),
-#				errstr, substr(argstr,0,22)) # within cols#80
-				errstr, argstr)
-
-	}
+	printf("%4s %-13s %17s %15s %5s %s\n",
+	       "HITS", "ERRSTR", "SYSCALL", "PROCESS", "PID", "ARGSTR")
+	foreach([bigstr] in error- limit %( $# > 1 %? $2 %: 20 %))
+		printf("%4d %s\n", @count(error[bigstr]), bigstr)
 	delete error
 }
