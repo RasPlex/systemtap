@@ -695,12 +695,10 @@ regex_parser::parse_char_range ()
           next ();
           c = peek ();
 
-          if (c == ']')
-            {
-              accumulate.push_back(c);
-              next ();
-              c = peek ();
-            }
+          // grab escaped char regardless of what it is!
+          accumulate.push_back(c);
+          next ();
+          c = peek ();
         }
       else if (c == '[')
         {
