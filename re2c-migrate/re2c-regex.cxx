@@ -945,18 +945,19 @@ Range  * Scanner::namedChrClass(std::string name) const
   // static initialization of table
   if (namedCharacterClasses.empty())
     {
+      // original source for these is http://www.regular-expressions.info/posixbrackets.html
       // TODOXXX double-check these against the glibc source code or someplace like that?
       namedCharacterClasses["alpha"] = ranToRA(SubStr("A-Za-z"));
       namedCharacterClasses["alnum"] = ranToRA(SubStr("A-Za-z0-9"));
       namedCharacterClasses["blank"] = ranToRA(SubStr(" \t"));
-      namedCharacterClasses["cntrl"] = ranToRA(SubStr("\x01-\x1F\x7F")); // TODOXXX test, include \x00 in range
+      namedCharacterClasses["cntrl"] = ranToRA(SubStr("\x01-\x1F\x7F")); // XXX: include \x00 in range? -- probably not!
       namedCharacterClasses["d"] = namedCharacterClasses["digit"] = ranToRA(SubStr("0-9"));
       namedCharacterClasses["xdigit"] = ranToRA(SubStr("0-9a-fA-F"));
-      namedCharacterClasses["graph"] = ranToRA(SubStr("\x21-\x7E")); // TODOXXX test
+      namedCharacterClasses["graph"] = ranToRA(SubStr("\x21-\x7E"));
       namedCharacterClasses["l"] = namedCharacterClasses["lower"] = ranToRA(SubStr("a-z"));
-      namedCharacterClasses["print"] = ranToRA(SubStr("\x20-\x7E")); // TODOXXX test
-      namedCharacterClasses["punct"] = ranToRA(SubStr("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")); // TODOXXX test
-      namedCharacterClasses["s"] = namedCharacterClasses["space"] = ranToRA(SubStr(" \t\r\n\v\f")); // TODOXXX test
+      namedCharacterClasses["print"] = ranToRA(SubStr("\x20-\x7E"));
+      namedCharacterClasses["punct"] = ranToRA(SubStr("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"));
+      namedCharacterClasses["s"] = namedCharacterClasses["space"] = ranToRA(SubStr(" \t\r\n\v\f"));
       namedCharacterClasses["u"] = namedCharacterClasses["upper"] = ranToRA(SubStr("A-Z"));
     }
 

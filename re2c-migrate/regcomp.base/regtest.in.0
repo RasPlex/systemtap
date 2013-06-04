@@ -80,3 +80,25 @@
 0:^acg|.h$:ah
 0:^ab|.h$:ah
 0:^acg|.h$:abh
+
+#############################################
+# PR15064 -- additional (named-)chr-class tests
+
+# extra character classes, using re2c's octals
+# TODOXXX correct matching for cntrl
+1:^[[\:cntrl\:]]$:q
+0:^[[\:graph\:]]+$:excibitobabble
+1:^[[\:graph\:]]+$:many works many words
+# TODOXXX incorrect matching for graph
+0:^[[\:print\:]]+$:excibitobabble
+0:^[[\:print\:]]+$:many works many words
+# TODOXXX incorrect matching for print
+
+# quoting various symbols, including the [: :] brackets
+0:[\^a]:a
+1:[\^a]:b
+0:[\[\:alpha\:]]:\:]
+1:[\[\:alpha\:]]:\:
+0:[\[\:alpha\:]:\:
+0:[[\\\:alpha\:]:\:
+2:[[:alpha\\\:]]:a
