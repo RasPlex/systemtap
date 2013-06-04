@@ -11,15 +11,20 @@
  * @addr: User-space address
  *
  * Returns the short name of the user space module for the current task that
- * that the given address is part of. Returns "<unknown>" when the address
+ * that the given address is part of. Reports an error when the address
  * isn't in a (mapped in) module, or the module cannot be found for some reason.
  */
 function umodname:string (addr:long) %{
 /* pure */ /* myproc-unprivileged */ /* pragma:vma */
   const char *name = NULL;
   _stp_umod_lookup(STAP_ARG_addr, current, &name, NULL, NULL);
-  if (!name)
+  if (!name) {
+#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
     name = "<unknown>";
+#else
+    CONTEXT->last_error = "module cannot be found";
+#endif
+  }
   strlcpy (STAP_RETVALUE, name, MAXSTRINGLEN);
 %}
 
