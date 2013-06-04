@@ -1,6 +1,6 @@
 // Socket tapset
 // Copyright (C) 2006 IBM Corp.
-// Copyright (C) 2010 Red Hat Inc.
+// Copyright (C) 2010-2013 Red Hat Inc.
 //
 // This file is part of systemtap, and is free software.  You can
 // redistribute it and/or modify it under the terms of the GNU General
@@ -13,6 +13,55 @@
 #include <net/sock.h>
 #include <asm/bitops.h>
 %}
+
+###################
+# INTERNAL MACROS #
+###################
+
+// Note that since these macros are defined in this file, they are
+// local to this file. They are internal only.
+//
+// Note the '&@sock[0]' usage below. This allows calling the macros
+// with either a dwarf variable (like '$sock') or casts (like
+// '@cast(_sock, "socket", "kernel") without needing additional casts
+// inside the macros (which would then lose type information when
+// called with a dwarf variable).
+
+// Return whether the operation was successful.
+@define _sock_success_check(ret)
+%(
+	( @ret >= 0 ? 1 : 0 )
+%)
+
+// Return the socket protocol number.
+@define _sock_prot_num(sock)
+%(
+	( &@sock[0] ? ( @sock->sk ? @sock->sk->sk_protocol : -1 ) : -1 )
+%)
+
+// Return the socket family number.
+@define _sock_fam_num(sock)
+%(
+	( &@sock[0] ? ( @sock->ops ? @sock->ops->family : -1 ) : -1 )
+%)
+
+// Return the socket state number.
+@define _sock_state_num(sock)
+%(
+	( &@sock[0] ? @sock->state : -1 )
+%)
+
+// Return the socket type number.
+@define _sock_type_num(sock)
+%(
+	( &@sock[0] ? @sock->type : -1 )
+%)
+
+// Return the socket flags number.
+@define _sock_flags_num(sock)
+%(
+	( &@sock[0] ? @sock->flags : -1 )
+%)
 
 #################
 # PROBE ALIASES #
@@ -84,11 +133,11 @@ probe socket.sendmsg = kernel.function ("sock_sendmsg")
 {
 	name = "socket.sendmsg"
 	size = $size
-	protocol = $sock->sk->sk_protocol
-	family = $sock->ops->family
-	state = $sock->state
-	flags = $sock->flags
-	type = $sock->type
+	protocol = @_sock_prot_num($sock)
+	family = @_sock_fam_num($sock)
+	state = @_sock_state_num($sock)
+	flags = @_sock_flags_num($sock)
+	type = @_sock_type_num($sock)
 }
 
 /**
@@ -112,12 +161,12 @@ probe socket.sendmsg.return = kernel.function("sock_sendmsg").return
 {
 	name = "socket.sendmsg.return"
 	size = $return
-	protocol = $sock->sk->sk_protocol
-	family = $sock->ops->family
-	state = $sock->state
-	flags = $sock->flags
-	type = $sock->type
-	success = _success_check($return)
+	protocol = @_sock_prot_num($sock)
+	family = @_sock_fam_num($sock)
+	state = @_sock_state_num($sock)
+	flags = @_sock_flags_num($sock)
+	type = @_sock_type_num($sock)
+	success = @_sock_success_check($return)
 }
 
 /**
@@ -141,11 +190,11 @@ probe socket.recvmsg = kernel.function("sock_recvmsg")
 {
 	name = "socket.recvmsg"
 	size = $size
-	protocol = $sock->sk->sk_protocol
-	family = $sock->ops->family
-	state = $sock->state
-	flags = $sock->flags
-	type = $sock->type
+	protocol = @_sock_prot_num($sock)
+	family = @_sock_fam_num($sock)
+	state = @_sock_state_num($sock)
+	flags = @_sock_flags_num($sock)
+	type = @_sock_type_num($sock)
 }
 
 /**
@@ -171,12 +220,12 @@ probe socket.recvmsg.return = kernel.function("sock_recvmsg").return
 {
 	name = "socket.recvmsg.return"
 	size = $return
-	protocol = $sock->sk->sk_protocol
-	family = $sock->ops->family
-	state = $sock->state
-	flags = $sock->flags
-	type = $sock->type
-	success = _success_check($return)
+	protocol = @_sock_prot_num($sock)
+	family = @_sock_fam_num($sock)
+	state = @_sock_state_num($sock)
+	flags = @_sock_flags_num($sock)
+	type = @_sock_type_num($sock)
+	success = @_sock_success_check($return)
 }
 
 /**
@@ -212,11 +261,11 @@ probe socket.aio_write = kernel.function("sock_aio_write")
 	_sock = _get_sock_addr($iocb->ki_filp)
 	size = (@defined($iov) ? _get_sock_size($iov, $nr_segs)
 		: @choose_defined($count, $size))
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
 }
 
 /**
@@ -241,12 +290,12 @@ probe socket.aio_write.return = kernel.function("sock_aio_write").return
 	name = "socket.aio_write.return"
 	size = $return
 	_sock = _get_sock_addr($iocb->ki_filp)
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
-	success = _success_check($return)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
+	success = @_sock_success_check($return)
 }
 
 /**
@@ -280,13 +329,13 @@ probe socket.aio_read = kernel.function("sock_aio_read")
 {
 	name = "socket.aio_read"
 	_sock = _get_sock_addr($iocb->ki_filp)
-	size =(@defined($iov) ? _get_sock_size($iov, $nr_segs)
+	size = (@defined($iov) ? _get_sock_size($iov, $nr_segs)
 		: @choose_defined($count, $size))
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
 }
 
 /**
@@ -311,12 +360,12 @@ probe socket.aio_read.return = kernel.function("sock_aio_read").return
 	name = "socket.aio_read.return"
 	size = $return
 	_sock = _get_sock_addr($iocb->ki_filp)
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
-	success = _success_check($return)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
+	success = @_sock_success_check($return)
 }
 
 /**
@@ -341,11 +390,11 @@ probe socket.writev = kernel.function("sock_writev") ?
 	_sock = _get_sock_addr($file)
 	size = (@defined($iov) ? _get_sock_size($iov, $nr_segs)
 		: _get_sock_size($vector, $count))
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
 }
 
 /**
@@ -370,12 +419,12 @@ probe socket.writev.return = kernel.function("sock_writev").return ?
 	name = "socket.writev.return"
 	size = $return
 	_sock = _get_sock_addr($file)
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
-	success = _success_check($return)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
+	success = @_sock_success_check($return)
 }
 
 /**
@@ -400,11 +449,11 @@ probe socket.readv = kernel.function("sock_readv") ?
 	_sock = _get_sock_addr($file)
 	size = (@defined($iov) ? _get_sock_size($iov, $nr_segs)
 		: _get_sock_size($vector, $count))
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
 }
 
 /**
@@ -429,12 +478,12 @@ probe socket.readv.return = kernel.function("sock_readv").return ?
 	name = "socket.readv.return"
 	size = $return
 	_sock = _get_sock_addr($file)
-	protocol = _sock_prot_num(_sock)
-	family = _sock_fam_num(_sock)
-	state = _sock_state_num(_sock)
-	flags = _sock_flags_num(_sock)
-	type = _sock_type_num(_sock)
-	success = _success_check($return)
+	protocol = @_sock_prot_num(@cast(_sock, "socket", "kernel"))
+	family = @_sock_fam_num(@cast(_sock, "socket", "kernel"))
+	state = @_sock_state_num(@cast(_sock, "socket", "kernel"))
+	flags = @_sock_flags_num(@cast(_sock, "socket", "kernel"))
+	type = @_sock_type_num(@cast(_sock, "socket", "kernel"))
+	success = @_sock_success_check($return)
 }
 
 /**
@@ -456,7 +505,7 @@ probe socket.create = kernel.function("__sock_create")
 	protocol = $protocol
 	family = $family
 	type = $type
-	requester =$kern
+	requester = $kern
 }
 
 /**
@@ -480,9 +529,9 @@ probe socket.create.return = kernel.function("__sock_create").return
 	protocol = $protocol
 	family = $family
 	type = $type
-	requester =$kern
+	requester = $kern
 	err = $return
-	success = _success_check($return)
+	success = @_sock_success_check($return)
 }
 
 /**
@@ -502,11 +551,11 @@ probe socket.create.return = kernel.function("__sock_create").return
 probe socket.close = kernel.function("sock_release")
 {
 	name = "socket.close"
-	protocol = $sock->sk->sk_protocol
-	family = $sock->ops->family
-	state = $sock->state
-	flags = $sock->flags
-	type = $sock->type
+	protocol = @_sock_prot_num($sock)
+	family = @_sock_fam_num($sock)
+	state = @_sock_state_num($sock)
+	flags = @_sock_flags_num($sock)
+	type = @_sock_type_num($sock)
 }
 
 /**
@@ -887,11 +936,6 @@ probe begin(-1001)
 # INTERNAL FUNCTIONS #
 ######################
 
-function _success_check:long(ret:long)
-{
-	return (ret >= 0 ? 1 : 0)
-}
-
 function _get_sock_addr:long(file:long)
 %{ /* pure */
 	struct file *filep = (struct file *)(long)(STAP_ARG_file);
@@ -926,44 +970,34 @@ function _get_sock_size:long(iov:long, nr_segs:long)
 	CATCH_DEREF_FAULT();
 %}
 
+%( systemtap_v < "2.3" %?
+function _success_check:long(ret:long)
+{
+	return @_sock_success_check(ret)
+}
+
 function _sock_prot_num:long(sock:long)
 {
-	skp = sock? @cast(sock, "socket", "kernel")->sk : 0
-	if (skp == 0)
-		return -1
-	else
-		return @cast(skp, "sock", "kernel")->sk_protocol
+	return @_sock_prot_num(@cast(sock, "socket", "kernel"))
 }
 
 function _sock_fam_num:long(sock:long)
 {
-	ops = sock? @cast(sock, "socket", "kernel")->ops : 0
-	if (ops == 0)
-		return -1
-	else
-		return @cast(ops, "proto_ops", "kernel")->family
+	return @_sock_fam_num(@cast(sock, "socket", "kernel"))
 }
 
 function _sock_state_num:long(sock:long)
 {
-	if (sock == 0)
-		return -1
-	else
-		return @cast(sock, "socket", "kernel")->state
+	return @_sock_state_num(@cast(sock, "socket", "kernel"))
 }
 
 function _sock_type_num:long(sock:long)
 {
-        if (sock == 0)
-                return -1
-        else
-                return @cast(sock, "socket", "kernel")->type
+	return @_sock_type_num(@cast(sock, "socket", "kernel"))
 }
 
 function _sock_flags_num:long(sock:long)
 {
-        if (sock == 0)
-                return -1
-        else
-                return @cast(sock, "socket", "kernel")->flags
+	return @_sock_flags_num(@cast(sock, "socket", "kernel"))
 }
+%)

@@ -7,7 +7,9 @@
   consistency with [nd_]syscall.semtimedop.
 
 - The following tapset functions are deprecated in release 2.3:
-  'stap_NFS_CLIENT' and '__getfh_inode'
+  'stap_NFS_CLIENT', '__getfh_inode', '_success_check',
+  '_sock_prot_num', '_sock_fam_num', '_sock_state_num',
+  '_sock_type_num', and '_sock_flags_num'.
 
 * What's new in version 2.2.1, 2013-05-16
 * What's new in version 2.2, 2013-05-14
