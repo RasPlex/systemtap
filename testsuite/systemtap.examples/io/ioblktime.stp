@@ -1,6 +1,6 @@
 #! /usr/bin/env stap
 
-global req_time, etimes
+global req_time%[25000], etimes
 
 probe ioblock.request
 {
