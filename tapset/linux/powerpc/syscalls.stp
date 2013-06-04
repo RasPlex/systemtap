@@ -295,7 +295,7 @@ probe syscall.sys32_rt_sigqueueinfo.return = kernel.function("sys32_rt_sigqueuei
 	retstr = return_str(1, $return)
 }
 
-%( CONFIG_GENERIC_SIGALTSTACK == "n" %?
+%( CONFIG_GENERIC_SIGALTSTACK == "n" || kernel_v < "3.8" %?
 # sigaltstack ________________________________________________
 # long sys_sigaltstack(const stack_t __user *uss, stack_t __user *uoss,
 #		       unsigned long r5, unsigned long r6,

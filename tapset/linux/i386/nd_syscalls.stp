@@ -155,7 +155,7 @@ probe nd_syscall.set_zone_reclaim.return = kprobe.function("sys_set_zone_reclaim
 	retstr = returnstr(1)
 }
 
-%( CONFIG_GENERIC_SIGALTSTACK == "n" %?
+%( CONFIG_GENERIC_SIGALTSTACK == "n" || kernel_v < "3.8" %?
 # sigaltstack ________________________________________________
 # int sys_sigaltstack(unsigned long ebx)
 #

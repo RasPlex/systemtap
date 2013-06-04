@@ -126,7 +126,7 @@ probe syscall.set_zone_reclaim.return = kernel.function("sys_set_zone_reclaim").
 	retstr = return_str(1, $return)
 }
 
-%( CONFIG_GENERIC_SIGALTSTACK == "n" %?
+%( CONFIG_GENERIC_SIGALTSTACK == "n" || kernel_v < "3.8" %?
 # sigaltstack ________________________________________________
 # int sys_sigaltstack(unsigned long ebx)
 #

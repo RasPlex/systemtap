@@ -138,7 +138,7 @@ probe syscall.mmap2.return = kernel.function("sys_mmap2").return ?,
 }
 %)
 
-%( CONFIG_GENERIC_SIGALTSTACK == "n" %?
+%( CONFIG_GENERIC_SIGALTSTACK == "n" || kernel_v < "3.8" %?
 # sigaltstack ________________________________________________
 # asmlinkage long
 # sys_sigaltstack(const stack_t __user * uss, stack_t __user *uoss)
