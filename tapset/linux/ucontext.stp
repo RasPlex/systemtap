@@ -19,7 +19,7 @@ function umodname:string (addr:long) %{
   const char *name = NULL;
   _stp_umod_lookup(STAP_ARG_addr, current, &name, NULL, NULL);
   if (!name) {
-#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
     name = "<unknown>";
 #else
     CONTEXT->last_error = "module cannot be found";

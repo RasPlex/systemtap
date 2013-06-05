@@ -53,7 +53,7 @@ function format_ipaddr:string (addr:long, family:long)
 	}
 #endif /* CONFIG_IPV6 || CONFIG_IPV6_MODULE */
 	else
-#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		strncpy(STAP_RETVALUE, "*unknown address family*",
 			MAXSTRINGLEN);
 #else

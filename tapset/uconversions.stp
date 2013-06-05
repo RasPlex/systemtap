@@ -46,7 +46,7 @@ function user_string:string (addr:long)
 	rc = _stp_strncpy_from_user (STAP_RETVALUE,
 		(const char __user*) (uintptr_t) STAP_ARG_addr, MAXSTRINGLEN);
 	if (rc < 0) { // Check for error
-#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		strlcpy (STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
 #else
 		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
@@ -69,7 +69,7 @@ function user_string:string (addr:long)
  * userspace data is not accessible.
  */
 function user_string2:string (addr:long, err_msg:string) {
-%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+%(systemtap_v < "2.3" %? // PR15044
 	ret = user_string(addr)
 	return (ret == "<unknown>") ? err_msg : ret
 %:
@@ -87,7 +87,7 @@ function user_string2:string (addr:long, err_msg:string) {
  * not accessible and warns (but does not abort) about the failure.
  */
 function user_string_warn:string (addr:long) {
-%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+%(systemtap_v < "2.3" %? // PR15044
 	return user_string2_warn(addr, "<unknown>")
 %:
 	return user_string2_warn(addr, "")
@@ -135,7 +135,7 @@ function user_string2_warn:string (addr:long, warn_msg:string)
  */
 function user_string_quoted:string (addr:long)
 %{ /* pure */ /* myproc-unprivileged */
-#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 	if (STAP_ARG_addr == 0)
 		strlcpy (STAP_RETVALUE, "NULL", MAXSTRINGLEN);
 	else
@@ -171,7 +171,7 @@ function user_string_n:string (addr:long, n:long)
 	rc = _stp_strncpy_from_user(STAP_RETVALUE,
 		(char __user *) (uintptr_t) STAP_ARG_addr, len);
 	if (rc < 0)
-#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		strlcpy(STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
 #else
 		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
@@ -196,7 +196,7 @@ function user_string_n:string (addr:long, n:long)
  * address.
  */
 function user_string_n2:string (addr:long, n:long, err_msg:string) {
-%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+%(systemtap_v < "2.3" %? // PR15044
 	ret = user_string_n(addr, n)
 	return (ret == "<unknown>") ? err_msg : ret
 %:
@@ -216,7 +216,7 @@ function user_string_n2:string (addr:long, n:long, err_msg:string) {
  * about the failure.
  */
 function user_string_n_warn:string (addr:long, n:long) {
-%(systemtap_v < "9.0" %? // PR15044 TODO: set cutoff
+%(systemtap_v < "2.3" %? // PR15044
 	return user_string2_n_warn(addr, n, "<unknown>")
 %:
 	return user_string2_n_warn(addr, n, "")
@@ -268,7 +268,7 @@ function user_string2_n_warn:string (addr:long, n:long, warn_msg:string)
 function user_string_n_quoted:string (addr:long, n:long)
 %{ /* pure */ /* myproc-unprivileged */
 	int64_t len = clamp_t(int64_t, STAP_ARG_n + 1, 1, MAXSTRINGLEN);
-#if STAP_COMPAT_VERSION < STAP_VERSION(9,0) // PR15044: set cutoff
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 	if (STAP_ARG_addr == 0)
 		strlcpy(STAP_RETVALUE, "NULL", MAXSTRINGLEN);
 	else
