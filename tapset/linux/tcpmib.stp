@@ -71,7 +71,7 @@ function tcpmib_remote_addr:long(sk:long)
  */
 function tcpmib_local_port:long(sk:long)
 {
-	return ntohs(__tcp_sock_sport(sk))
+	return __tcp_sock_sport(sk)
 }
 
 /**
@@ -82,7 +82,7 @@ function tcpmib_local_port:long(sk:long)
  */
 function tcpmib_remote_port:long(sk:long)
 {
-	return ntohs(__tcp_sock_dport(sk))
+	return __tcp_sock_dport(sk)
 }
 
 /**
