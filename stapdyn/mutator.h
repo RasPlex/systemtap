@@ -42,7 +42,7 @@ class mutator {
     boost::shared_ptr<mutatee> target_mutatee; // the main target process we created or attached
     bool p_target_created; // we only kill and wait on the target we created
 
-    unsigned signal_count; // how many exit signals we've received
+    sigset_t signals_received; // record all signals we've caught
 
     // disable implicit constructors by not implementing these
     mutator (const mutator& other);

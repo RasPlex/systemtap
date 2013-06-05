@@ -268,6 +268,10 @@ struct stap_sigmasker {
         sigaddset (&mask, SIGTERM);
         sigprocmask (SIG_BLOCK, &mask, &old);
       }
+    stap_sigmasker(const sigset_t *mask)
+      {
+        sigprocmask (SIG_BLOCK, mask, &old);
+      }
     ~stap_sigmasker()
       {
         sigprocmask (SIG_SETMASK, &old, NULL);

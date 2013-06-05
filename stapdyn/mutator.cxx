@@ -83,29 +83,49 @@ g_thread_destroy_callback(BPatch_process *proc, BPatch_thread *thread)
 }
 
 
+static pthread_t g_main_thread = pthread_self();
+static const sigset_t *g_signal_mask;
+
 static void
 g_signal_handler(int signal)
 {
+  /* We only want the signal on our main thread, so it will interrupt the ppoll
+   * loop.  If we get it on a different thread, just forward it.  */
+  if (!pthread_equal(pthread_self(), g_main_thread))
+    {
+      pthread_kill(g_main_thread, signal);
+      return;
+    }
+
   for (size_t i = 0; i < g_mutators.size(); ++i)
     g_mutators[i]->signal_callback(signal);
 }
-
 
 __attribute__((constructor))
 static void
 setup_signals (void)
 {
   struct sigaction sa;
+  static sigset_t mask;
   static const int signals[] = {
-      SIGHUP, SIGPIPE, SIGINT, SIGTERM,
+      SIGHUP, SIGINT, SIGTERM, SIGQUIT,
   };
 
+  /* Prepare the global sigmask for future use.  */
+  sigemptyset (&mask);
+  for (size_t i = 0; i < sizeof(signals) / sizeof(*signals); ++i)
+    sigaddset (&mask, signals[i]);
+  g_signal_mask = &mask;
+
+  /* Prepare the common signal handler.  */
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = g_signal_handler;
   sa.sa_flags = SA_RESTART;
   sigemptyset (&sa.sa_mask);
   for (size_t i = 0; i < sizeof(signals) / sizeof(*signals); ++i)
     sigaddset (&sa.sa_mask, signals[i]);
+
+  /* Activate the handler for every signal.  */
   for (size_t i = 0; i < sizeof(signals) / sizeof(*signals); ++i)
     sigaction (signals[i], &sa, NULL);
 }
@@ -115,10 +135,12 @@ mutator:: mutator (const string& module_name,
                    vector<string>& module_options):
   module(NULL), module_name(resolve_path(module_name)),
   modoptions(module_options), p_target_created(false),
-  signal_count(0), utrace_enter_fn(NULL)
+  utrace_enter_fn(NULL)
 {
   // NB: dlopen does a library-path search if the filename doesn't have any
   // path components, which is why we use resolve_path(module_name)
+
+  sigemptyset(&signals_received);
 
   g_mutators.push_back(this);
 }
@@ -494,7 +516,11 @@ mutator::run_module_exit()
 bool
 mutator::update_mutatees()
 {
-  if (signal_count >= (p_target_created ? 2 : 1))
+  // We'll always break right away for SIGQUIT.  We'll also break for any other
+  // signal if we didn't create the process.  Otherwise, we should give the
+  // created process a chance to finish.
+  if (sigismember(&signals_received, SIGQUIT) ||
+      (!sigisemptyset(&signals_received) && !p_target_created))
     return false;
 
   if (target_mutatee && target_mutatee->is_terminated())
@@ -508,10 +534,6 @@ mutator::update_mutatees()
           mutatees.erase(mutatees.begin() + i);
           continue; // NB: without ++i
         }
-
-      if (m->is_stopped())
-        m->continue_execution();
-
       ++i;
     }
 
@@ -532,12 +554,13 @@ mutator::run ()
     {
       // For our first event, fire the target's process.begin probes (if any)
       target_mutatee->begin_callback();
+      target_mutatee->continue_execution();
 
       // Dyninst's notification FD was fixed in 8.1; for earlier versions we'll
       // fall back to the fully-blocking wait for now.
 #ifdef DYNINST_8_1
       // mask signals while we're preparing to poll
-      stap_sigmasker masked;
+      stap_sigmasker masked(g_signal_mask);
 
       // Polling with a notification FD lets us wait on Dyninst while still
       // letting signals break us out of the loop.
@@ -568,10 +591,19 @@ mutator::run ()
       // or for a script requested exit (e.g. from a timer probe).
     }
 
+  // Indicate failure if the target had anything but EXIT_SUCCESS
+  bool ret = true;
+  if (target_mutatee && target_mutatee->is_terminated())
+    ret = target_mutatee->check_exit();
+
+  // Detach from everything
+  target_mutatee.reset();
+  mutatees.clear();
+
   // Shutdown the stap module.
   run_module_exit();
 
-  return target_mutatee ? target_mutatee->check_exit() : true;
+  return ret;
 }
 
 
@@ -739,24 +771,9 @@ mutator::thread_destroy_callback(BPatch_process *proc, BPatch_thread *thread)
 
 // Callback to respond to signals.
 void
-mutator::signal_callback(int signal __attribute__((unused)))
+mutator::signal_callback(int signal)
 {
-  ++signal_count;
-
-  // First time, try to kill the target process, only if we created it.
-  if (signal_count == 1 && target_mutatee && p_target_created)
-    target_mutatee->kill(SIGTERM);
-
-  // Second time, mutator::run should break out anyway
-  if (signal_count == 2)
-    stapwarn() << "Multiple interrupts received, exiting..." << endl;
-
-  // Third time's the charm; the user wants OUT!
-  if (signal_count >= 3)
-    {
-      staperror() << "Too many interrupts received, aborting now!" << endl;
-      _exit (1);
-    }
+  sigaddset(&signals_received, signal);
 }
 
 

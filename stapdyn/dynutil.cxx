@@ -142,6 +142,13 @@ check_dyninst_exit(BPatch_process *process)
             code, strsignal(code));
       return false;
 
+    case NoExit:
+      if (process->isTerminated())
+        warnx("Warning: child process exited in an unknown manner");
+      else
+        warnx("Warning: child process has not exited");
+      return false;
+
     default:
       return false;
     }
