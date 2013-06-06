@@ -8,7 +8,7 @@
  */
 
 #ifndef _STP_COMPAT_H_ /* -*- linux-c -*- */
-#define _STP_COMPAT_H
+#define _STP_COMPAT_H_
 
 #ifdef CONFIG_COMPAT
 
