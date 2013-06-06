@@ -1,16 +1,17 @@
-/* Make sure however we entered a syscall, we know the calling module name.
-   the task finder vma tracker should have recorded it. */
+/* Make sure however we entered a syscall, we know the calling module name. The
+   The task finder vma tracker should have recorded it. */
 probe syscall.clock_gettime, syscall.getuid
 {
-  if (target() == pid())
-    {
-      if (umodname(uaddr()) != "<unknown>")
-	{
-	  log(name);
-	}
-      else
-	{
-	  printf("%s@%x unknown\n", name, uaddr());
-	}
-    }
+   if (target() == pid())
+   {
+      try
+      {
+         umodname(uaddr())
+         log(name)
+      }
+      catch
+      {
+         printf("%s@%x unknown\n", name, uaddr());
+      }
+   }
 }
