@@ -96,8 +96,7 @@ function user_string_warn:string (addr:long) {
 
 
 /**
- * sfunction user_string2_warn - Retrieves string from user space with
- * alternative warning string
+ * sfunction user_string2_warn - Retrieves string from user space with alternative warning string
  *
  * @addr: the user space address to retrieve the string from
  * @warn_msg: the warning message to return when data isn't available
@@ -225,8 +224,7 @@ function user_string_n_warn:string (addr:long, n:long) {
 }
 
 /**
- * sfunction user_string2_n_warn - Retrieves string from user space with
- * alternative warning string
+ * sfunction user_string2_n_warn - Retrieves string from user space with alternative warning string
  *
  * @addr: the user space address to retrieve the string from
  * @n: the maximum length of the string (if not null terminated)
