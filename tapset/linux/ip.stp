@@ -53,12 +53,8 @@ function format_ipaddr:string (addr:long, family:long)
 	}
 #endif /* CONFIG_IPV6 || CONFIG_IPV6_MODULE */
 	else
-#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		strncpy(STAP_RETVALUE, "*unknown address family*",
 			MAXSTRINGLEN);
-#else
-		CONTEXT->last_error = "*unknown address family*";
-#endif
 #if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
 	CATCH_DEREF_FAULT();
 #endif /* CONFIG_IPV6 || CONFIG_IPV6_MODULE */

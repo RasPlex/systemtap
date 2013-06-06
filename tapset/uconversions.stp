@@ -46,14 +46,7 @@ function user_string:string (addr:long)
 	rc = _stp_strncpy_from_user (STAP_RETVALUE,
 		(const char __user*) (uintptr_t) STAP_ARG_addr, MAXSTRINGLEN);
 	if (rc < 0) { // Check for error
-#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		strlcpy (STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
-#else
-		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
-			"user string copy fault %ld at %p", rc,
-			(void *) (uintptr_t) STAP_ARG_addr);
-		CONTEXT->last_error = CONTEXT->error_buffer;
-#endif
 	}
 %}
 
@@ -69,12 +62,8 @@ function user_string:string (addr:long)
  * userspace data is not accessible.
  */
 function user_string2:string (addr:long, err_msg:string) {
-%(systemtap_v < "2.3" %? // PR15044
 	ret = user_string(addr)
 	return (ret == "<unknown>") ? err_msg : ret
-%:
-	try { return user_string(addr) } catch { return err_msg }
-%)
 }
 
 /**
