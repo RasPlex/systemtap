@@ -59,21 +59,35 @@ probe process("utrace_syscall_args").syscall {
 	    mmap_args[5] = $arg5
 	    mmap_args[6] = $arg6
 
-%(arch == "s390" %?
-	    # s390 requires this for mmap.  Verified by running:
-	    # #  strace strace utrace_syscall_args
+%(arch == "s390" && kernel_v < "2.6.33" %?
+	    # For s390, mmap was handled by arch-specific code in
+	    # kernels before 2.6.33 that got a structure pointer in
+	    # argument 1 that holds all the actual arguments. Handle
+	    # this.
 	    addr = mmap_args[1]
-	    mmap_args[1] = user_long(addr)
-	    addr += 8
-	    mmap_args[2] = user_long(addr)
-	    addr += 8
-	    mmap_args[3] = user_long(addr)
-	    addr += 8
-	    mmap_args[4] = user_long(addr)
-	    addr += 8
-	    mmap_args[5] = user_long(addr)
-	    addr += 8
-	    mmap_args[6] = user_long(addr)
+	    if (! %{ _stp_is_comat_task() %}) {
+	    	mmap_args[1] = user_long(&@cast(addr, "mmap_arg_struct")->addr)
+		mmap_args[2] = user_long(&@cast(addr, "mmap_arg_struct")->len)
+		mmap_args[3] = user_long(&@cast(addr, "mmap_arg_struct")->prot)
+		mmap_args[4] = user_long(&@cast(addr, "mmap_arg_struct")->flags)
+		mmap_args[5] = user_long(&@cast(addr, "mmap_arg_struct")->fd)
+		mmap_args[6] = user_long(&@cast(addr,
+						"mmap_arg_struct")->offset)
+	    }
+	    else {
+		mmap_args[1] = user_int(&@cast(addr,
+					"mmap_arg_struct_emu31")->addr)
+		mmap_args[2] = user_int(&@cast(addr,
+					"mmap_arg_struct_emu31")->len)
+		mmap_args[3] = user_int(&@cast(addr,
+					"mmap_arg_struct_emu31")->prot)
+		mmap_args[4] = user_int(&@cast(addr,
+					"mmap_arg_struct_emu31")->flags)
+		mmap_args[5] = user_int(&@cast(addr,
+					"mmap_arg_struct_emu31")->fd)
+		mmap_args[6] = user_int(&@cast(addr,
+					"mmap_arg_struct_emu31")->offset)
+	    }
 %)
 	}
 	else if (syscalls_seen == 5 && $syscall == munmap_syscall_no()) {
