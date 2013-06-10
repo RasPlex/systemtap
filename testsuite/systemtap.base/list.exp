@@ -1,24 +1,30 @@
 # PR14297-related testing
 
-set test plt-glob
-spawn stap -l {process("stap").plt("re??")}
-expect {
-    -re {process."stap"..plt."read".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
+proc test_list { test input output_re } {
+    spawn stap -l $input
+    expect {
+        -re $output_re { pass $test }
+        -re {^[^\r\n]*\r\n} { exp_continue }
+        timeout { fail $test }
+        eof { fail $test }
+    }
+    catch { close }; catch { wait }
 }
-catch { close }; catch { wait }
 
-set test plt-glob2
-spawn stap -l {process("stap").plt("re*")}
-expect {
-    -re {process."stap"..plt."read".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
+proc test_uprobes_list { test input output_re } {
+    if {[uprobes_p]} {
+        test_list $test $input $output_re
+    } else {
+        unsupported $test
+    }
 }
-catch { close }; catch { wait }
+
+
+test_uprobes_list plt-glob {process("stap").plt("re??")} \
+    {process."stap"..plt."read".\r\n}
+
+test_uprobes_list plt-glob2 {process("stap").plt("re*")} \
+    {process."stap"..plt."read".\r\n}
 
 # NB: this would be nice to probe, but we don't have the
 # autoconf $prefix available here in the dejagnu scripts.
@@ -26,138 +32,44 @@ catch { close }; catch { wait }
 # NB: we expect the extra "?" suffix due to filename globbing
 #    -re {process."[^\r\n]*stap"..plt."read"..\r\n} { pass $test }
 
-set test plt-non-glob
-spawn stap -l {process("stap").plt("read")}
-expect {
-    -re {process."stap"..plt."read".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_uprobes_list plt-non-glob {process("stap").plt("read")} \
+    {process."stap"..plt."read".\r\n}
 
-set test mark-non-glob
-spawn stap -l {process("stap").mark("pass5__end")}
-expect {
-    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_uprobes_list mark-non-glob {process("stap").mark("pass5__end")} \
+    {process."stap"..mark."pass5__end".\r\n}
 
-set test mark-non-glob2
-spawn stap -l {process("stap").mark("pass5-end")}
-expect {
-    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_uprobes_list mark-non-glob2 {process("stap").mark("pass5-end")} \
+    {process."stap"..mark."pass5__end".\r\n}
 
-set test mark-glob
-spawn stap -l {process("stap").mark("pass[12345678]__end")}
-expect {
-    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_uprobes_list mark-glob {process("stap").mark("pass[12345678]__end")} \
+    {process."stap"..mark."pass5__end".\r\n}
 
-set test mark-glob2
-spawn stap -l {process("stap").mark("pass*__end")}
-expect {
-    -re {process."stap"..mark."pass5__end".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_uprobes_list mark-glob2 {process("stap").mark("pass*__end")} \
+    {process."stap"..mark."pass5__end".\r\n}
 
-set test syscall-glob
-spawn stap -l {syscall.rea*}
-expect {
-    -re {syscall.read\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list syscall-glob {syscall.rea*} \
+    {syscall.read\r\n}
 
-set test syscall-noglob
-spawn stap -l {syscall.read}
-expect {
-    -re {syscall.read\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list syscall-noglob {syscall.read} \
+    {syscall.read\r\n}
 
-set test init_once-glob
-spawn stap -l {kernel.function("init_once*")}
-expect {
-    -re {kernel.function."init_once@fs/inode.c:\d+".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list init_once-glob {kernel.function("init_once*")} \
+    {kernel.function."init_once@fs/inode.c:\d+".\r\n}
 
-set test init_once-noglob
-spawn stap -l {kernel.function("init_once")}
-expect {
-    -re {kernel.function."init_once@fs/inode.c:\d+".\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list init_once-noglob {kernel.function("init_once")} \
+    {kernel.function."init_once@fs/inode.c:\d+".\r\n}
 
-set test begin-glob
-spawn stap -l {begin*}
-expect {
-    -re {begin\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list begin-glob {begin*} \
+    {begin\r\n}
 
-set test begin-noglob
-spawn stap -l {begin}
-expect {
-    -re {begin\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list begin-noglob {begin} \
+    {begin\r\n}
 
 # This one is not so interesting, but we want to make sure the following test
 # statements are actually within an inline.
-set test copy_flags-inline
-spawn stap -l {kernel.function("copy_flags@kernel/fork.c").inline}
-expect {
-    -re {kernel.function."copy_flags@kernel/fork.c:\d+"..inline\r\n} { pass $test }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list copy_flags-inline {kernel.function("copy_flags@kernel/fork.c").inline} \
+    {kernel.function."copy_flags@kernel/fork.c:\d+"..inline\r\n}
 
 # PR15587: make sure we have line numbers on statements of an inline function
-set pass_once 0
-set test copy_flags-statement
-spawn stap -l {kernel.statement("copy_flags@kernel/fork.c:*")}
-expect {
-    -re {kernel.statement."copy_flags@kernel/fork.c:\d+".\r\n} {
-        if {[incr pass_once] == 1} { pass $test }
-    }
-    -re {^[^\r\n]*\r\n} { exp_continue }
-    timeout { fail $test }
-    eof { fail $test }
-}
-catch { close }; catch { wait }
+test_list copy_flags-statement {kernel.statement("copy_flags@kernel/fork.c:*")} \
+    {kernel.statement."copy_flags@kernel/fork.c:\d+".\r\n}
