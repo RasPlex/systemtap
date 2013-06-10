@@ -2560,8 +2560,7 @@ probe nd_syscall.io_destroy.return = kprobe.function("sys_io_destroy").return ?
 #		 struct io_event __user *events,
 #		 struct compat_timespec __user *timeout)
 #
-probe nd_syscall.io_getevents = kprobe.function("compat_sys_io_getevents") ?,
-                                kprobe.function("sys_io_getevents") ?
+probe nd_syscall.io_getevents = kprobe.function("sys_io_getevents") ?
 {
 	name = "io_getevents"
 	// ctx_id = $ctx_id
@@ -2582,8 +2581,36 @@ probe nd_syscall.io_getevents = kprobe.function("compat_sys_io_getevents") ?,
 	argstr = sprintf("%d, %d, %d, %p, %p, %s", ctx_id, min_nr,
 		nr, events_uaddr, timeout_uaddr, timestr)
 }
-probe nd_syscall.io_getevents.return = kprobe.function("compat_sys_io_getevents").return ?,
-                                       kprobe.function("sys_io_getevents").return ?
+probe nd_syscall.io_getevents.return =
+	kprobe.function("sys_io_getevents").return ?
+{
+	name = "io_getevents"
+	retstr = returnstr(1)
+}
+probe nd_syscall.compat_io_getevents =
+	kprobe.function("compat_sys_io_getevents") ?
+{
+	name = "io_getevents"
+	// ctx_id = $ctx_id
+	// min_nr = $min_nr
+	// nr = $nr
+	// events_uaddr = $events
+	// timeout_uaddr = $timeout
+	// timestr = _struct_compat_compat_timespec_u($timeout, 1)
+	// argstr = sprintf("%d, %d, %d, %p, %p, %s", $ctx_id, $min_nr,
+	// 	$nr, $events, $timeout, timestr)
+	asmlinkage()
+	ctx_id = ulong_arg(1)
+	min_nr = long_arg(2)
+	nr = long_arg(3)
+	events_uaddr = pointer_arg(4)
+	timeout_uaddr = pointer_arg(5)
+	timestr = _struct_compat_timespec_u(timeout_uaddr, 1)
+	argstr = sprintf("%d, %d, %d, %p, %p, %s", ctx_id, min_nr,
+		nr, events_uaddr, timeout_uaddr, timestr)
+}
+probe nd_syscall.compat_io_getevents.return =
+	kprobe.function("compat_sys_io_getevents").return ?
 {
 	name = "io_getevents"
 	retstr = returnstr(1)
