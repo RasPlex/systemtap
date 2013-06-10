@@ -159,16 +159,15 @@ function user_string_n:string (addr:long, n:long)
 	int64_t len = clamp_t(int64_t, STAP_ARG_n + 1, 1, MAXSTRINGLEN);
 	rc = _stp_strncpy_from_user(STAP_RETVALUE,
 		(char __user *) (uintptr_t) STAP_ARG_addr, len);
-	if (rc < 0)
-#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
+	if (rc < 0) {
 		strlcpy(STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
-#else
+#if STAP_COMPAT_VERSION >= STAP_VERSION(2,3) // PR15044
 		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
 			"user string copy fault %ld at %p", rc,
 			(void *) (uintptr_t) STAP_ARG_addr);
 		CONTEXT->last_error = CONTEXT->error_buffer;
 #endif
-	else
+	} else
 		STAP_RETVALUE[len - 1] = '\0';
 %}
 

@@ -77,11 +77,7 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 
 	if (user) {
 		if (_stp_read_address(c, in, USER_DS))
-#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 			goto bad;
-#else
-			return -1;
-#endif
 	} else
 		c = *in;
 
@@ -151,11 +147,7 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 		in++;
 		if (user) {
 			if (_stp_read_address(c, in, USER_DS))
-#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 				goto bad;
-#else
-				return -1;
-#endif
 		} else
 			c = *in;
 	}
@@ -174,7 +166,7 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 	return 0;
 bad:
 	strlcpy (outstr, "<unknown>", len);
-	return -1;
+	return -1; // PR15044
 }
 
 /**

@@ -50,9 +50,8 @@ function stringat:long(str:string, pos:long) %{ /* pure */ /* unprivileged */
 	if (STAP_ARG_pos >= 0 && STAP_ARG_pos < strlen(STAP_ARG_str))
 		STAP_RETVALUE = STAP_ARG_str[STAP_ARG_pos];
 	else {
-#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		STAP_RETVALUE = 0;
-#else
+#if STAP_COMPAT_VERSION >= STAP_VERSION(2,3) // PR15044
 		CONTEXT->last_error = "Position out of bounds";
 #endif
 	}
