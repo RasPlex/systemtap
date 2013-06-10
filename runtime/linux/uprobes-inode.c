@@ -136,7 +136,11 @@ stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 
 	struct stapiu_process *p, *process = NULL;
 
-	/* First find the related process, set by stapiu_change_plus.  */
+	/* First find the related process, set by stapiu_change_plus.
+	 * NB: This is a linear search performed for every probe hit!
+	 * This could be an algorithmic problem if the list gets large, but
+	 * we'll wait until this is demonstratedly a hotspot before optimizing.
+	 */
 	read_lock(&target->process_lock);
 	list_for_each_entry(p, &target->processes, target_process) {
 		if (p->tgid == current->tgid) {
@@ -145,8 +149,17 @@ stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 		}
 	}
 	read_unlock(&target->process_lock);
-	if (!process)
+	if (!process) {
+#ifdef UPROBE_HANDLER_REMOVE
+		/* Once we're past the starting phase, we can be sure that any
+		 * processes which are executing code in a mapping have already
+		 * been through task_finder.  So if it's not in our list of
+		 * target->processes, it can safely get removed.  */
+		if (stap_task_finder_complete())
+			return UPROBE_HANDLER_REMOVE;
+#endif
 		return 0;
+	}
 
 #ifdef STAPIU_NEEDS_REG_IP
 	/* Make it look like the IP is set as it would in the actual user task

@@ -24,6 +24,7 @@ struct stap_task_finder_target;
 #define __STP_TF_STOPPING	3
 #define __STP_TF_STOPPED	4
 static atomic_t __stp_task_finder_state = ATOMIC_INIT(__STP_TF_UNITIALIZED);
+static atomic_t __stp_task_finder_complete = ATOMIC_INIT(0);
 static atomic_t __stp_inuse_count = ATOMIC_INIT (0);
 
 #define __stp_tf_handler_start() (atomic_inc(&__stp_inuse_count))
@@ -1819,7 +1820,18 @@ stap_task_finder_post_init(void)
 		}
 	} while_each_thread(grp, tsk);
 	rcu_read_unlock();
+	atomic_set(&__stp_task_finder_complete, 1);
 	return;
+}
+
+
+/* Indicates whether task_finder has complete coverage of all processes.
+ * e.g. uprobes prefilter can be sure it's safe to REMOVE from an unknown process.
+ */
+static inline int
+stap_task_finder_complete(void)
+{
+	return atomic_read(&__stp_task_finder_complete) != 0;
 }
 
 
