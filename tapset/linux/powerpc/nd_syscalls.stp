@@ -562,7 +562,7 @@ probe nd_syscall.sys32_utimes = kprobe.function("sys32_utimes") ?
 	// argstr = sprintf("%s, %p", user_string_quoted($filename), tvp_uaddr)
 	asmlinkage()
 	filename_uaddr = pointer_arg(1)
-	path = user_string(filename_uaddr)
+	path = user_string_quoted(filename_uaddr)
 	tvp_uaddr = pointer_arg(2)
 	argstr = sprintf("%s, %p", user_string_quoted(filename_uaddr), tvp_uaddr)
 }

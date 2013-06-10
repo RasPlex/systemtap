@@ -469,7 +469,7 @@ probe syscall.sys32_utimes = kernel.function("sys32_utimes") ?
 {
 	name = "sys32_utimes"
 	filename_uaddr = $filename
-	path = user_string($filename)
+	path = user_string_quoted($filename)
 	tvp_uaddr = $tvs
 	argstr = sprintf("%s, %p", user_string_quoted($filename), tvp_uaddr)
 }

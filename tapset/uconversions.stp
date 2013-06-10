@@ -47,6 +47,12 @@ function user_string:string (addr:long)
 		(const char __user*) (uintptr_t) STAP_ARG_addr, MAXSTRINGLEN);
 	if (rc < 0) { // Check for error
 		strlcpy (STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
+#if STAP_COMPAT_VERSION >= STAP_VERSION(2,3)
+		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+			"user string copy fault %ld at %p", rc,
+			(void *) (uintptr_t) STAP_ARG_addr);
+		CONTEXT->last_error = CONTEXT->error_buffer;
+#endif
 	}
 %}
 
@@ -62,8 +68,12 @@ function user_string:string (addr:long)
  * userspace data is not accessible.
  */
 function user_string2:string (addr:long, err_msg:string) {
+%(systemtap_v < "2.3" %? // PR15044
 	ret = user_string(addr)
 	return (ret == "<unknown>") ? err_msg : ret
+%:
+	try { return user_string(addr) } catch { return err_msg }
+%)
 }
 
 /**
@@ -118,29 +128,29 @@ function user_string2_warn:string (addr:long, warn_msg:string)
  *
  * Description: Returns the null terminated C string from a given user space
  * memory address where any ASCII characters that are not printable are
- * replaced by the corresponding escape sequence in the returned string.
- * Reports "" for address zero or on the rare cases when userspace data
- * is not accessible at the given address.
+ * replaced by the corresponding escape sequence in the returned string. Note
+ * that the string will be surrounded by double quotes. On the rare cases when
+ * userspace data is not accessible at the given address, the address itself is
+ * returned as a string, but unquoted.
  */
 function user_string_quoted:string (addr:long)
 %{ /* pure */ /* myproc-unprivileged */
+	if (STAP_ARG_addr == 0)
 #if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
-	if (STAP_ARG_addr == 0)
-		strlcpy (STAP_RETVALUE, "NULL", MAXSTRINGLEN);
-	else
-		/* XXX: stp_text_str uses sleepy __get_user() => unsafe ?!  */
-		_stp_text_str(STAP_RETVALUE, (char *)(uintptr_t)STAP_ARG_addr,
-			MAXSTRINGLEN, 1, 1);
+		strlcpy(STAP_RETVALUE, "NULL", MAXSTRINGLEN);
 #else
-	if (STAP_ARG_addr == 0)
-		strlcpy (STAP_RETVALUE, "", MAXSTRINGLEN);
+		strlcpy(STAP_RETVALUE, "0x0", MAXSTRINGLEN);
+#endif
 	else {
 		int rc = _stp_text_str(STAP_RETVALUE,
 			(char *)(uintptr_t)STAP_ARG_addr, MAXSTRINGLEN, 1, 1);
 		if (rc < 0)
-			strlcpy (STAP_RETVALUE, "", MAXSTRINGLEN);
-	}
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
+			strlcpy(STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
+#else
+			snprintf(STAP_RETVALUE, MAXSTRINGLEN, "%p", (void *)STAP_ARG_addr);
 #endif
+	}
 %}
 
 /**
@@ -250,29 +260,28 @@ function user_string2_n_warn:string (addr:long, n:long, warn_msg:string)
  * Description: Returns up to n characters of a C string from the given
  * user space memory address where any ASCII characters that are not
  * printable are replaced by the corresponding escape sequence in the
- * returned string. Reports "" for address zero or on the rare cases
- * when userspace data is not accessible at the given address.
+ * returned string. Reports "NULL" for address zero or "<unknown>" on the rare
+ * cases when userspace data is not accessible at the given address.
  */
 function user_string_n_quoted:string (addr:long, n:long)
 %{ /* pure */ /* myproc-unprivileged */
 	int64_t len = clamp_t(int64_t, STAP_ARG_n + 1, 1, MAXSTRINGLEN);
+	if (STAP_ARG_addr == 0)
 #if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
-	if (STAP_ARG_addr == 0)
 		strlcpy(STAP_RETVALUE, "NULL", MAXSTRINGLEN);
-	else
-		/* XXX: stp_text_str uses sleepy __get_user() => unsafe ?!  */
-		_stp_text_str(STAP_RETVALUE, (char *)(uintptr_t)STAP_ARG_addr,
-				len, 1, 1);
 #else
-	if (STAP_ARG_addr == 0)
-		strlcpy (STAP_RETVALUE, "", MAXSTRINGLEN);
+		snprintf(STAP_RETVALUE, MAXSTRINGLEN, "%p", (void *)STAP_ARG_addr);
+#endif
 	else {
 		int rc = _stp_text_str(STAP_RETVALUE,
 			(char *)(uintptr_t)STAP_ARG_addr, len, 1, 1);
 		if (rc < 0)
-			strlcpy (STAP_RETVALUE, "", MAXSTRINGLEN);
-	}
+#if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
+			strlcpy(STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
+#else
+			snprintf(STAP_RETVALUE, MAXSTRINGLEN, "%p", (void *)STAP_ARG_addr);
 #endif
+	}
 %}
 
 /**

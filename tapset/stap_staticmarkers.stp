@@ -171,7 +171,7 @@ probe stap.pass6.end = process("stap").mark("pass6__end") {
  * Fires just before the call to unlink the module/source file. 
  */
 probe stap.cache_clean = process("stap").mark("cache__clean") { 
-	path = user_string($arg1)
+	path = user_string_quoted($arg1)
 }
 
 /**
@@ -183,8 +183,8 @@ probe stap.cache_clean = process("stap").mark("cache__clean") {
  *    cache_add_src and cache_add_nss will not fire.
  */
 probe stap.cache_add_mod = process("stap").mark("cache__add__module") { 
-	source_path = user_string($arg1)
-	dest_path = user_string($arg2)
+	source_path = user_string_quoted($arg1)
+	dest_path = user_string_quoted($arg2)
 }
 
 /**
@@ -196,8 +196,8 @@ probe stap.cache_add_mod = process("stap").mark("cache__add__module") {
  *   kernel module fails, this probe will not fire.
  */
 probe stap.cache_add_src = process("stap").mark("cache__add__source") { 
-	source_path = user_string($arg1)
-	dest_path = user_string($arg2)
+	source_path = user_string_quoted($arg1)
+	dest_path = user_string_quoted($arg2)
 }
 
 /**
@@ -210,8 +210,8 @@ probe stap.cache_add_src = process("stap").mark("cache__add__source") {
  *   not fire.
  */
 probe stap.cache_add_nss = process("stap").mark("cache__add__nss") ? { 
-	source_path = user_string($arg1)
-	dest_path = user_string($arg2)
+	source_path = user_string_quoted($arg1)
+	dest_path = user_string_quoted($arg2)
 }
 
 /**
@@ -223,8 +223,8 @@ probe stap.cache_add_nss = process("stap").mark("cache__add__nss") ? {
  *   is successful.
  */
 probe stap.cache_get = process("stap").mark("cache__get") { 
-	source_path = user_string($arg1)
-	module_path = user_string($arg2)
+	source_path = user_string_quoted($arg1)
+	module_path = user_string_quoted($arg2)
 }
 
 /**
@@ -234,7 +234,7 @@ probe stap.cache_get = process("stap").mark("cache__get") {
  * Fires at the entry of the stap_system command.
  */
 probe stap.system = process("stap").mark("stap_system__start") { 
-	command = user_string($arg1)
+	command = user_string_quoted($arg1)
 }
 
 /**
@@ -268,7 +268,7 @@ probe stap.system.return = process("stap").mark("stap_system__complete") {
  * Fires just before the call to insert the module.
  */
 probe staprun.insert_module = process("staprun").mark("insert__module") { 
-	path = user_string($arg1)
+	path = user_string_quoted($arg1)
 }
 
 /**
@@ -278,7 +278,7 @@ probe staprun.insert_module = process("staprun").mark("insert__module") {
  * Fires just before the call to remove the module.
  */
 probe staprun.remove_module = process("staprun").mark("remove__module") {
-	name = user_string($arg1)
+	name = user_string_quoted($arg1)
 }
 
 /**
