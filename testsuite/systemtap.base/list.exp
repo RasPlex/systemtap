@@ -135,3 +135,29 @@ expect {
     eof { fail $test }
 }
 catch { close }; catch { wait }
+
+# This one is not so interesting, but we want to make sure the following test
+# statements are actually within an inline.
+set test copy_flags-inline
+spawn stap -l {kernel.function("copy_flags@kernel/fork.c").inline}
+expect {
+    -re {kernel.function."copy_flags@kernel/fork.c:\d+"..inline\r\n} { pass $test }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }
+
+# PR15587: make sure we have line numbers on statements of an inline function
+set pass_once 0
+set test copy_flags-statement
+spawn stap -l {kernel.statement("copy_flags@kernel/fork.c:*")}
+expect {
+    -re {kernel.statement."copy_flags@kernel/fork.c:\d+".\r\n} {
+        if {[incr pass_once] == 1} { pass $test }
+    }
+    -re {^[^\r\n]*\r\n} { exp_continue }
+    timeout { fail $test }
+    eof { fail $test }
+}
+catch { close }; catch { wait }

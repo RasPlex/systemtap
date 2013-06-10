@@ -1653,7 +1653,8 @@ query_srcfile_line (const dwarf_line_t& line, void * arg)
               Dwarf_Die scope;
               q->dw.inner_die_containing_pc(i->die, addr, scope);
               query_statement (i->name, i->decl_file,
-                               q->line[0], &scope, addr, q);
+                               lineno, // NB: not q->line !
+                               &scope, addr, q);
             }
 	  else
 	    query_inline_instance_info (*i, q);
