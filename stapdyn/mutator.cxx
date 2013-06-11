@@ -131,11 +131,11 @@ setup_signals (void)
 }
 
 
-mutator:: mutator (const string& module_name,
-                   vector<string>& module_options):
+mutator::mutator (const string& module_name,
+                  vector<string>& module_options):
   module(NULL), module_name(resolve_path(module_name)),
   modoptions(module_options), p_target_created(false),
-  utrace_enter_fn(NULL)
+  p_target_error(false), utrace_enter_fn(NULL)
 {
   // NB: dlopen does a library-path search if the filename doesn't have any
   // path components, which is why we use resolve_path(module_name)
@@ -593,18 +593,37 @@ mutator::run ()
     }
 
   // Indicate failure if the target had anything but EXIT_SUCCESS
-  bool ret = true;
   if (target_mutatee && target_mutatee->is_terminated())
-    ret = target_mutatee->check_exit();
+    p_target_error = !target_mutatee->check_exit();
 
   // Detach from everything
   target_mutatee.reset();
   mutatees.clear();
 
   // Shutdown the stap module.
-  run_module_exit();
+  return run_module_exit();
+}
 
-  return ret;
+
+// Get the final exit status of this mutator
+int mutator::exit_status ()
+{
+  if (!module)
+    return EXIT_FAILURE;
+
+  // NB: Only shm modules are new enough to have stp_dyninst_exit_status at
+  // all, so we don't need to try in-target for old modules like session_exit.
+
+  typeof(&stp_dyninst_exit_status) get_exit_status = NULL;
+  set_dlsym(get_exit_status, module, "stp_dyninst_exit_status", false);
+  if (get_exit_status)
+    {
+      int status = get_exit_status();
+      if (status != EXIT_SUCCESS)
+        return status;
+    }
+
+  return p_target_error ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 

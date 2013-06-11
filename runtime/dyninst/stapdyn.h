@@ -82,6 +82,14 @@ extern int stp_dyninst_shm_connect(const char* name);
 extern int stp_global_setter(const char *name, const char *value);
 
 
+/**** STAP 2.3 : ****/
+
+/* Just returns an exit code, for indicating errors in the script.
+ * This should be called after stp_dyninst_session_exit (which really
+ * should have returned int itself, but now it's a legacy API).  */
+int stp_dyninst_exit_status(void);
+
+
 /**** STAP 2.x : ****/
 
 

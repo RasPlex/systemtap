@@ -382,6 +382,11 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 						write_data = __stp_d_t_eliminate_duplicate_warnings(read_ptr, item->bytes);
 					}
 				}
+				/* "ERROR:" also should not be translated.  */
+				else if (strncmp(read_ptr, "ERROR:", 5) == 0) {
+					if (_stp_exit_status == 0)
+						_stp_exit_status = 1;
+				}
 
 				if (! write_data) {
 					break;

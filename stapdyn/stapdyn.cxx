@@ -123,7 +123,10 @@ main(int argc, char * const argv[])
   if (pid && !session->attach_process(pid))
     return 1;
 
-  return session->run() ? EXIT_SUCCESS : EXIT_FAILURE;
+  if (!session->run())
+    return 1;
+
+  return session->exit_status();
 }
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */

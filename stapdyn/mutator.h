@@ -41,6 +41,7 @@ class mutator {
     std::vector<boost::shared_ptr<mutatee> > mutatees; // all attached target processes
     boost::shared_ptr<mutatee> target_mutatee; // the main target process we created or attached
     bool p_target_created; // we only kill and wait on the target we created
+    bool p_target_error; // indicates whether the target exited non-zero;
 
     sigset_t signals_received; // record all signals we've caught
 
@@ -89,6 +90,9 @@ class mutator {
 
     // Start the actual systemtap session!
     bool run ();
+
+    // Get the final exit status of this mutator
+    int exit_status();
 
     // Callback to respond to dynamically loaded libraries.
     // Check if it matches our targets, and instrument accordingly.

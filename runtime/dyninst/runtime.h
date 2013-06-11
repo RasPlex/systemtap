@@ -372,6 +372,12 @@ void stp_dyninst_session_exit(void)
     systemtap_module_exit();
 }
 
+static int _stp_exit_status = 0;
+int stp_dyninst_exit_status(void)
+{
+    return _stp_exit_status;
+}
+
 __attribute__((destructor))
 static void stp_dyninst_dtor(void)
 {
