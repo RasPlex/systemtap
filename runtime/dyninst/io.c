@@ -159,6 +159,9 @@ static void _stp_dbug (const char *func, int line, const char *fmt, ...)
 	va_end(args);
 }
 
-#define _stp_exit() do { } while (0) // no transport, no action yet
+static void _stp_exit (void)
+{
+	_stp_dyninst_transport_request_exit();
+}
 
 #endif /* _STAPDYN_IO_C_ */

@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <string.h>
 #include <search.h>
+#include <signal.h>
 
 #include "transport.h"
 
@@ -274,6 +275,21 @@ __stp_d_t_run_command(char *command)
 	/* Notice we're not waiting on the resulting process to finish. */
 }
 
+static void
+__stp_d_t_request_exit(void)
+{
+	/*
+	 * We want stapdyn to trigger this module's exit code from outside.  It
+	 * knows to do this on receipt of signals, so we must kill ourselves.
+	 * The signal handler will forward that to the main thread.
+	 *
+	 * NB: If the target process was created rather than attached, SIGTERM
+	 * waits for it to exit.  SIGQUIT always exits immediately.  It's
+	 * somewhat debateable which is most appropriate here...
+	 */
+	pthread_kill(pthread_self(), SIGTERM);
+}
+
 static ssize_t
 _stp_write_retry(int fd, const void *buf, size_t count)
 {
@@ -440,10 +456,17 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 					" read_offset %ld, write_offset %ld)\n",
 					data->read_offset, data->write_offset);
 				break;
+
 			case STP_DYN_EXIT:
 				_stp_transport_debug("STP_DYN_EXIT\n");
 				stopping = 1;
 				break;
+
+			case STP_DYN_REQUEST_EXIT:
+				_stp_transport_debug("STP_DYN_REQUEST_EXIT\n");
+				__stp_d_t_request_exit();
+				break;
+
 			default:
 				if (! (item->type & STP_DYN_OOB_DATA_MASK)) {
 					_stp_transport_err(
@@ -490,6 +513,11 @@ static int _stp_ctl_send(int type, void *data, unsigned len)
 static void _stp_dyninst_transport_signal_exit(void)
 {
 	__stp_dyninst_transport_queue_add(STP_DYN_EXIT, 0, 0, 0);
+}
+
+static void _stp_dyninst_transport_request_exit(void)
+{
+	__stp_dyninst_transport_queue_add(STP_DYN_REQUEST_EXIT, 0, 0, 0);
 }
 
 static int _stp_dyninst_transport_session_init(void)

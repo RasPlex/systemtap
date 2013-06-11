@@ -13,6 +13,7 @@
 #define STP_DYN_NORMAL_DATA	0x0002
 #define STP_DYN_OOB_DATA	0x0004
 #define STP_DYN_SYSTEM		0x0008
+#define STP_DYN_REQUEST_EXIT	0x0010
 
 #define STP_DYN_OOB_DATA_MASK (STP_DYN_OOB_DATA | STP_DYN_SYSTEM)
 
@@ -119,5 +120,7 @@ static int _stp_dyninst_transport_write(void);
 static char *_stp_dyninst_transport_log_buffer(void);
 
 static void _stp_dyninst_transport_shutdown(void);
+
+static void _stp_dyninst_transport_request_exit(void);
 
 #endif // TRANSPORT_H

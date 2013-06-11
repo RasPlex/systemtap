@@ -587,8 +587,9 @@ mutator::run ()
     }
   else // !target_mutatee
     {
-      // XXX TODO we really ought to wait for a signal before exiting,
-      // or for a script requested exit (e.g. from a timer probe).
+      // With no mutatees, we just wait for a signal to exit.
+      int signal;
+      sigwait(g_signal_mask, &signal);
     }
 
   // Indicate failure if the target had anything but EXIT_SUCCESS
