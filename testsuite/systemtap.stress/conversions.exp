@@ -24,7 +24,7 @@ proc run_conv_test {filename} {
 	}
 	verbose -log "done exp $test $errs"
 	catch {close}; catch {wait}
-	if {$errs == 20} { pass $test } else { fail "$test ($errs)" }
+	if {$errs == 22} { pass $test } else { fail "$test ($errs)" }
 	verbose -log "done $test $errs"
     }
 }

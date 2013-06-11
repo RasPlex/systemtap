@@ -87,13 +87,13 @@ probe kernel.trace("sched_switch") {
 probe kernel.trace("sched_switch") {
 	if (hits[13] == 0) {
 		hits[13] = 1
-		print (user_string_quoted ($1))
+		print (user_string2_warn ($1, "<only suspected, not known>"))
 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[14] == 0) {
 		hits[14] = 1
-		print (user_string_n ($1, 5))
+		print (user_string_quoted ($1))
 	}
 }
 probe kernel.trace("sched_switch") {
@@ -117,54 +117,60 @@ probe kernel.trace("sched_switch") {
 probe kernel.trace("sched_switch") {
 	if (hits[18] == 0) {
 		hits[18] = 1
-		print (user_string_n_quoted ($1, 5))
- 	}
+		print (user_string2_n_warn ($1, 5, "<only suspected, not known>"))
+	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[19] == 0) {
 		hits[19] = 1
-		print (user_short ($1))
-	}
+		print (user_string_n_quoted ($1, 5))
+ 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[20] == 0) {
 		hits[20] = 1
-		print (user_short_warn ($1))
+		print (user_short ($1))
 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[21] == 0) {
 		hits[21] = 1
-		print (user_int ($1))
+		print (user_short_warn ($1))
 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[22] == 0) {
 		hits[22] = 1
-		print (user_int_warn ($1))
+		print (user_int ($1))
 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[23] == 0) {
 		hits[23] = 1
-		print (user_long ($1))
+		print (user_int_warn ($1))
 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[24] == 0) {
 		hits[24] = 1
-		print (user_long_warn ($1))
+		print (user_long ($1))
 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[25] == 0) {
 		hits[25] = 1
-		print (user_char ($1))
+		print (user_long_warn ($1))
 	}
 }
 probe kernel.trace("sched_switch") {
 	if (hits[26] == 0) {
 		hits[26] = 1
+		print (user_char ($1))
+	}
+}
+probe kernel.trace("sched_switch") {
+	if (hits[27] == 0) {
+		hits[27] = 1
 		print (user_char_warn ($1))
 	}
 }

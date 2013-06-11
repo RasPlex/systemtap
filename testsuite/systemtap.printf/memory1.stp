@@ -1,7 +1,10 @@
 probe syscall.open {
-      actualLength = strlen (filename);
-
-      if (actualLength > 5 && actualLength < 15 && filename != "<unknown>") {
+      
+      actualLength = strlen (filename)-2; // -2 to account for the quotes
+      
+                                              // 34 = '"' -- i.e. valid filename
+      if (actualLength > 5 && actualLength < 15 && stringat(filename,0) == 34) {
+        filename = substr(filename, 1, actualLength)
         four = 4;
         five = 5;
         fifteen = 15;

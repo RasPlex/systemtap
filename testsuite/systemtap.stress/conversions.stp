@@ -17,7 +17,7 @@ probe begin { print (user_string2 ($1,"<only suspected, not known>")) }
 probe begin { print (user_string_warn ($1)) }
 probe begin { print (user_string2_warn ($1, "<only suspected, not known>")) }
 probe begin { print (user_string_quoted ($1)) }
-probe begin { try {print (user_string_n ($1, 5))} catch {print("<unknown>")} }
+probe begin { print (user_string_n ($1, 5)) }
 probe begin { print (user_string_n2 ($1, 5, "<only suspected, not known>")) }
 probe begin { print (user_string_n_warn ($1, 5)) }
 probe begin { print (user_string2_n_warn ($1, 5, "<only suspected, not known>")) }
