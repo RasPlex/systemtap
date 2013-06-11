@@ -1825,7 +1825,6 @@ void DFA::prepare()
 	}
 
 #ifdef RE2C_DEPTHDEBUG
-        // TODOXXX wrap in #ifdef
         std::cerr << "PRINTING DEPTH-CALC DFA: " << std::endl;
         std::cerr << "======================== " << std::endl;
         std::cerr << this << std::endl;

@@ -94,7 +94,7 @@
 0:^[[\:print\:]]+$:many works many words
 # TODOXXX incorrect matching for print
 
-# quoting various symbols, including the [: :] brackets
+# quoting various symbols, especially the [: :] brackets
 0:[\^a]:a
 1:[\^a]:b
 0:[\[\:alpha\:]]:\:]

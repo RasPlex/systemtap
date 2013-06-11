@@ -798,7 +798,6 @@ std::string& Scanner::unescape(SubStr& str_in, std::string& str_out) const
 
 Range * Scanner::getRange(SubStr &s) const
 {
-  // TODOXXX escaping nuances of [: -- needs further testcases
   // check for '[:' digraph prior to unescaping, to skip escaped '['
   if (s.len >= 2 && *s.str == '[' && *(s.str+1) == ':')
     {
@@ -946,7 +945,7 @@ Range  * Scanner::namedChrClass(std::string name) const
   if (namedCharacterClasses.empty())
     {
       // original source for these is http://www.regular-expressions.info/posixbrackets.html
-      // TODOXXX double-check these against the glibc source code or someplace like that?
+      // also checked against (intended to match) the c stdlib isFOO() chr class functions
       namedCharacterClasses["alpha"] = ranToRA(SubStr("A-Za-z"));
       namedCharacterClasses["alnum"] = ranToRA(SubStr("A-Za-z0-9"));
       namedCharacterClasses["blank"] = ranToRA(SubStr(" \t"));
@@ -1016,7 +1015,7 @@ RegExp * Scanner::invToRE(SubStr s) const
 	
 	RegExp * any = getAnyRE();
 
-        // TODOXXX this was probably erroneous
+        // XXX: this was probably erroneous when uncommented
 	// if (s.len <= 2)
 	// {
 	//	return any;

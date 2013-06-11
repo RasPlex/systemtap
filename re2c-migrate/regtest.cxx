@@ -70,6 +70,7 @@ int main(int argc, char *argv [])
           
           o.newline();
           d.emit_declaration (&o);
+          /* NB: test type 2 will fail to compile, produce exception */
           o.newline();
 
           o.newline() << "int main()";
@@ -86,7 +87,6 @@ int main(int argc, char *argv [])
           } else if (test_type == 0) {
             o.newline() << "exit(ans ? 0 : 1);";
           }
-          /* TODOXXX test type 2 should fail to compile */
           o.newline(-1) << "}";
           o.newline();
           
