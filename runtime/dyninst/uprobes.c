@@ -15,7 +15,7 @@
 
 // loc2c-generated code assumes pt_regs are available, so use this to make
 // sure we always have *something* for it to dereference...
-static struct pt_regs stapdu_dummy_uregs = {0};
+static struct pt_regs stapdu_dummy_uregs = {};
 
 /* These functions implement the ABI in stapdyn.h
  *

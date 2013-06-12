@@ -54,6 +54,23 @@ static void _stp_print_regs(struct pt_regs * regs)
 			EREG(si, regs), EREG(di, regs), EREG(bp, regs));
 }
 
+#elif defined(__powerpc__) || defined(__powerpc64__)
+
+static void _stp_print_regs(struct pt_regs * regs)
+{
+	int i;
+
+	_stp_printf("NIP: %016lX", regs->nip);
+	for (i = 0; i < 32; i++) {
+		if ((i % 4) == 0) {
+			_stp_printf("\n GPR%02d: ", i);
+		}
+
+		_stp_printf("%016lX ", regs->gpr[i]);
+	}
+	_stp_printf("\n");
+}
+
 #endif
 
 #endif /* _DYNINST_REGS_C_ */
