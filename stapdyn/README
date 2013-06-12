@@ -42,8 +42,18 @@ See also sourceware.org/bugzilla product:systemtap component:dyninst.
 
 For some more background on this project, see the presentations:
 
-- PD Week 2012: Scripted Introspection with Dyninst [Josh Stone]
+- PD Week 2012: Josh Stone
+  Scripted Introspection with Dyninst
   http://www.dyninst.org/meetings/2012/monday
 
-- LF Collab Summit 2012: SystemTap Sans Kernel [Josh Stone]
+- LF Collab Summit 2012: Josh Stone
+  SystemTap Sans Kernel
   https://events.linuxfoundation.org/events/collaboration-summit/slides-and-video
+
+- Tracing Summit 2012: David Smith & Josh Stone
+  Systemtap and new connections: dyninst, pcp, uprobes
+  http://www.tracingsummit.org/wiki/TracingSummit2012
+
+- PD Week 2013: Josh Stone & David Smith
+  stapdyn: Porting SystemTap onto Dyninst
+  http://research.cs.wisc.edu/htcondor/HTCondorWeek2013/monday_paradyn.html
