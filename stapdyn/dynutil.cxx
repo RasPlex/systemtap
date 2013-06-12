@@ -187,6 +187,9 @@ unsigned stapdyn_log_level = 0;
 // Whether to suppress warnings, set by -w
 bool stapdyn_suppress_warnings = false;
 
+// Output file name, set by -o
+char *stapdyn_outfile_name = NULL;
+
 // Return a stream for logging at the given verbosity level.
 ostream&
 staplog(unsigned level)

@@ -17,6 +17,7 @@ struct _stp_session_attributes {
 	long tz_gmtoff;
 	char tz_name[MAXSTRINGLEN];
 	char module_name[MAXSTRINGLEN];
+	char outfile_name[PATH_MAX];
 };
 
 static void stp_session_attributes_init(void);

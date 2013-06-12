@@ -65,6 +65,11 @@ static int stp_session_attribute_setter(const char *name, const char *value)
 				value, MAXSTRINGLEN);
 		return 0;
 	}
+	else if (strcmp(name, "@outfile_name") == 0) {
+		strlcpy(_stp_init_session_attributes.outfile_name,
+			value, PATH_MAX);
+		return 0;
+	}
 	return -EINVAL;
 }
 

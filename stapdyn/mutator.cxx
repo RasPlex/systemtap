@@ -404,6 +404,14 @@ mutator::init_session_attributes()
   else
     stapwarn() << "couldn't discover local timezone info" << endl;
 
+  if (stapdyn_outfile_name)
+    {
+      rc = global_setter("@outfile_name",
+			 lex_cast(stapdyn_outfile_name).c_str());
+      if (rc != 0)
+	stapwarn() << "couldn't set 'outfile_name' global" << endl;
+    }
+
   return;
 }
 

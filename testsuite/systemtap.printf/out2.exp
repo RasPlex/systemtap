@@ -4,26 +4,38 @@ set TEST_NAME "$subdir/$test"
 
 if {![installtest_p]} { untested $TEST_NAME; return }
 
-if {[catch {exec mktemp -t staptestXXXXXX} tmpfile]} {
-    puts stderr "Failed to create temporary file: $tmpfile"
-    untested $TEST_NAME
-    return
-}
+foreach runtime [get_runtime_list] {
+    set TEST_NAME "$subdir/$test"
+    if {$runtime != ""} {
+	lappend TEST_NAME "($runtime)"
+    }
 
-if {[catch {exec stap -o $tmpfile $tpath} res]} {
-    fail $TEST_NAME
-    puts "$res"
+    if {[catch {exec mktemp -t staptestXXXXXX} tmpfile]} {
+	puts stderr "Failed to create temporary file: $tmpfile"
+	untested $TEST_NAME
+	continue
+    }
+
+    if {$runtime != ""} {
+	set rc [catch {exec stap --runtime=$runtime -o $tmpfile $tpath} res]
+    } else {
+	set rc [catch {exec stap -o $tmpfile $tpath} res]
+    }
+    if {$rc} {
+	fail $TEST_NAME
+	puts "$res"
+	catch {exec rm -f $tmpfile}
+	continue
+    }
+
+    if {[catch {exec cmp $tmpfile $srcdir/$subdir/large_output} res]} {
+	fail $TEST_NAME
+	puts "$res"
+	catch {exec rm -f $tmpfile}
+	continue
+    }
+
+    pass $TEST_NAME
     catch {exec rm -f $tmpfile}
-    return
 }
-
-if {[catch {exec cmp $tmpfile $srcdir/$subdir/large_output} res]} {
-    fail $TEST_NAME
-    puts "$res"
-    catch {exec rm -f $tmpfile}
-    return
-}
-
-pass $TEST_NAME
-catch {exec rm -f $tmpfile}
 

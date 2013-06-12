@@ -49,6 +49,9 @@ extern unsigned stapdyn_log_level;
 // Whether to suppress warnings, set by -w
 extern bool stapdyn_suppress_warnings;
 
+// Output file name, set by -o
+extern char *stapdyn_outfile_name;
+
 // Return a stream for logging at the given verbosity level.
 std::ostream& staplog(unsigned level=0);
 

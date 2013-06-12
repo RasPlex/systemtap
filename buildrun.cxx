@@ -666,6 +666,12 @@ make_dyninst_run_command (systemtap_session& s, const string& remotedir,
       cmd.push_back(lex_cast(s.target_pid));
     }
 
+  if (!s.output_file.empty())
+    {
+      cmd.push_back("-o");
+      cmd.push_back(s.output_file);
+    }
+
   cmd.push_back((remotedir.empty() ? s.tmpdir : remotedir)
 		+ "/" + s.module_filename());
 

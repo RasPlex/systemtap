@@ -307,6 +307,24 @@ _stp_write_retry(int fd, const void *buf, size_t count)
 	return count;
 }
 
+static int
+stap_strfloctime(char *buf, size_t max, const char *fmt, time_t t)
+{
+	struct tm tm;
+	size_t ret;
+	if (buf == NULL || fmt == NULL || max <= 1)
+		return -EINVAL;
+	localtime_r(&t, &tm);
+        /* NB: this following invocation is the reason for stapdyn's
+           being built with -Wno-format-nonliteral.  strftime parsing
+           does not have security implications AFAIK, but gcc still
+           wants to check them. */
+	ret = strftime(buf, max, fmt, &tm);
+	if (ret == 0)
+		return -EINVAL;
+	return (int)ret;
+}
+
 static void *
 _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 {
@@ -317,7 +335,26 @@ _stp_dyninst_transport_thread_func(void *arg __attribute((unused)))
 	if (sess_data == NULL)
 		return NULL;
 
-	out_fd = STDOUT_FILENO; // TODO PR14791 allow a -o output file
+	if (strlen(stp_session_attributes()->outfile_name)) {
+		char buf[PATH_MAX];
+		int rc;
+
+		rc = stap_strfloctime(buf, PATH_MAX,
+				      stp_session_attributes()->outfile_name,
+				      time(NULL));
+		if (rc < 0) {
+			_stp_transport_err("Invalid FILE name format\n");
+			return NULL;
+		}
+		out_fd = open (buf, O_CREAT|O_TRUNC|O_WRONLY|O_CLOEXEC, 0666);
+		if (out_fd < 0) {
+			_stp_transport_err("ERROR: Couldn't open output file %s: %s\n",
+					   buf, strerror(rc));
+			return NULL;
+		}
+	}
+	else
+		out_fd = STDOUT_FILENO;
 	err_fd = STDERR_FILENO;
 	if (out_fd < 0 || err_fd < 0)
 		return NULL;

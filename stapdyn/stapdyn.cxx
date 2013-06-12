@@ -43,7 +43,15 @@ static void __attribute__ ((noreturn))
 usage (int rc)
 {
   clog << "Usage: " << program_invocation_short_name
-       << " MODULE [-c CMD | -x PID] [globalname=value ...]" << endl;
+       << " MODULE [-v] [-c CMD | -x PID] [-o FILE] [globalname=value ...]" << endl
+       << "-v              Increase verbosity." << endl
+       << "-c cmd          Command \'cmd\' will be run and " << program_invocation_short_name << " will" << endl
+       << "                exit when it does.  The '_stp_target' variable" << endl
+       << "                will contain the pid for the command." << endl
+       << "-x pid          Sets the '_stp_target' variable to pid." << endl
+       << "-o FILE         Send output to FILE. This supports strftime(3)" << endl
+       << "                formats for FILE." << endl;
+
   exit (rc);
 }
 
@@ -58,7 +66,7 @@ main(int argc, char * const argv[])
 
   // First, option parsing.
   int opt;
-  while ((opt = getopt (argc, argv, "c:x:vwV")) != -1)
+  while ((opt = getopt (argc, argv, "c:x:vwo:V")) != -1)
     {
       switch (opt)
         {
@@ -77,6 +85,10 @@ main(int argc, char * const argv[])
         case 'w':
           stapdyn_suppress_warnings = true;
           break;
+
+	case 'o':
+	  stapdyn_outfile_name = optarg;
+	  break;
 
         case 'V':
           fprintf(stderr, "Systemtap Dyninst loader/runner (version %s/%s, %s)\n"
