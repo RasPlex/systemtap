@@ -37,6 +37,7 @@ Major stapdyn known issues:
 - PR14702 - dyninst breaks exception handling
 - PR15049 - stapdyn mishandling interrupts
 - PR15136 - stapdyn doesn't fill registers on 32-bit x86
+- PR15614 - stapdyn only partially fills registers on ppc
 See also sourceware.org/bugzilla product:systemtap component:dyninst.
 
 For some more background on this project, see the presentations:
