@@ -15,13 +15,13 @@ int main()
   //staptest// swapon ("foobar_swap", 32775) =
 
   swapon(0, 0);
-  //staptest// swapon (NULL, 0) =
+  //staptest// swapon ( +(null), 0) =
 
   swapoff("foobar_swap");
   //staptest// swapoff ("foobar_swap") =
 
   swapoff(0);
-  //staptest// swapoff (NULL) =
+  //staptest// swapoff ( +(null)) =
 
   return 0;
 }

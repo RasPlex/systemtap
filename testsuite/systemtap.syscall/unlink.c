@@ -23,7 +23,7 @@ int main()
   //staptest// unlink ("foobar2") = -NNNN (ENOENT)
 
   unlink(0);
-  //staptest// unlink (NULL) = -NNNN (EFAULT)
+  //staptest// unlink ( +(null)) = -NNNN (EFAULT)
 
   unlink("..");
   //staptest// unlink ("..") = -NNNN (EISDIR)

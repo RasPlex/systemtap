@@ -7,7 +7,7 @@ int main()
   umask (0);
   //staptest// umask (00) = NNNN
   umask (7);
-  //staptest// umask (07) = 00
+  //staptest// umask (07) = 0
   umask (077);
   //staptest// umask (077) = 07
   umask (0666);
