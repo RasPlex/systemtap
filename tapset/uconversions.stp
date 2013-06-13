@@ -228,7 +228,7 @@ function user_string_n_quoted:string (addr:long, n:long)
 #if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		strlcpy(STAP_RETVALUE, "NULL", MAXSTRINGLEN);
 #else
-		snprintf(STAP_RETVALUE, MAXSTRINGLEN, "%p", (void *)STAP_ARG_addr);
+		snprintf(STAP_RETVALUE, MAXSTRINGLEN, "%p", (void *)(long)STAP_ARG_addr);
 #endif
 	else {
 		int rc = _stp_text_str(STAP_RETVALUE,
@@ -237,7 +237,7 @@ function user_string_n_quoted:string (addr:long, n:long)
 #if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 			strlcpy(STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);
 #else
-			snprintf(STAP_RETVALUE, MAXSTRINGLEN, "%p", (void *)STAP_ARG_addr);
+			snprintf(STAP_RETVALUE, MAXSTRINGLEN, "%p", (void *)(long)STAP_ARG_addr);
 #endif
 	}
 %}
