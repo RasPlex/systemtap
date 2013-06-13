@@ -612,7 +612,7 @@ probe syscall.pwrite = kernel.function("sys_pwrite64").call
 	count = $count
 	offset = $pos
 	argstr = sprintf("%d, %s, %d, %d", $fd,
-		text_strn(user_string_quoted($buf), syscall_string_trunc, 1),
+		user_string_n_quoted($buf, syscall_string_trunc),
 		$count, $pos)
 }
 probe syscall.pwrite.return = kernel.function("sys_pwrite64").return
@@ -631,12 +631,12 @@ probe syscall.pwrite32 = kernel.function("sys32_pwrite64").call ?
 %( arch == "s390" %?
 	buf_uaddr = $ubuf
 	argstr = sprintf("%d, %s, %d, %d", $fd,
-		text_strn(user_string_quoted($ubuf), syscall_string_trunc, 1),
+		user_string_n_quoted($ubuf, syscall_string_trunc),
 		$count, ($poshi << 32) + $poslo)
 %:
 	buf_uaddr = $buf
 	argstr = sprintf("%d, %s, %d, %d", $fd,
-		text_strn(user_string_quoted($buf), syscall_string_trunc, 1),
+		user_string_n_quoted($buf, syscall_string_trunc),
 		$count, ($poshi << 32) + $poslo)
 %)
 }
@@ -3631,7 +3631,7 @@ probe syscall.write = kernel.function("sys_write").call
 	fd = $fd
 	buf_uaddr = $buf
 	count = $count
-	argstr = sprintf("%d, %s, %d", $fd, text_strn(user_string_quoted($buf), syscall_string_trunc, 1), $count)
+	argstr = sprintf("%d, %s, %d", $fd, user_string_n_quoted($buf, syscall_string_trunc), $count)
 }
 probe syscall.write.return = kernel.function("sys_write").return
 {

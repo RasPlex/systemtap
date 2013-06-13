@@ -135,7 +135,7 @@ probe nd_syscall.add_key = kprobe.function("sys_add_key") ?
 	argstr = sprintf("%s, %s, %s, %d, %d",
 		user_string_quoted(type_uaddr),
 		user_string_quoted(description_uaddr),
-		text_strn(user_string_quoted(payload_uaddr), syscall_string_trunc, 1),
+		user_string_n_quoted(payload_uaddr, syscall_string_trunc),
 		plen, ringid)
 }
 probe nd_syscall.add_key.return = kprobe.function("sys_add_key").return ?
@@ -3562,7 +3562,7 @@ probe nd_syscall.mount = kprobe.function("compat_sys_mount") ?,
 	filesystemtype = user_string_quoted(pointer_arg(3))
 	mountflags = ulong_arg(4)
 	mountflags_str = _mountflags_str(mountflags)
-	data = text_strn(user_string_quoted(pointer_arg(5)), syscall_string_trunc, 1)
+	data = user_string_n_quoted(pointer_arg(5), syscall_string_trunc)
 	argstr = sprintf("%s, %s, %s, %s, %s",
 		user_string_quoted(pointer_arg(1)),
 		user_string_quoted(pointer_arg(2)),

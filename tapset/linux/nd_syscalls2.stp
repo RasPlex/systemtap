@@ -709,7 +709,7 @@ probe nd_syscall.pwrite = kprobe.function("sys_pwrite64") ?
 	count = ulong_arg(3)
 	offset = longlong_arg(4)
 	argstr = sprintf("%d, %s, %d, %d", fd,
-			text_strn(user_string_quoted(buf_uaddr), syscall_string_trunc, 1),
+			user_string_n_quoted(buf_uaddr, syscall_string_trunc),
 				count, offset)
 }
 probe nd_syscall.pwrite.return = kprobe.function("sys_pwrite64").return ?
@@ -743,7 +743,7 @@ probe nd_syscall.pwrite32 = kprobe.function("sys32_pwrite64") ?
 	count = ulong_arg(3)
 	offset = (u32_arg(4) << 32) + u32_arg(5)
 	argstr = sprintf("%d, %s, %d, %d", fd,
-			text_strn(user_string_quoted(buf_uaddr), syscall_string_trunc, 1),
+			user_string_n_quoted(buf_uaddr, syscall_string_trunc),
 				count, offset)
 }
 probe nd_syscall.pwrite32.return = kprobe.function("sys32_pwrite64").return ?
@@ -4462,7 +4462,7 @@ probe nd_syscall.write = kprobe.function("sys_write") ?
 	fd = uint_arg(1)
 	buf_uaddr = pointer_arg(2)
 	count = ulong_arg(3)
-	argstr = sprintf("%d, %s, %d", fd, text_strn(user_string_quoted(buf_uaddr), syscall_string_trunc, 1), count)
+	argstr = sprintf("%d, %s, %d", fd, user_string_n_quoted(buf_uaddr, syscall_string_trunc), count)
 
 }
 probe nd_syscall.write.return = kprobe.function("sys_write").return ?
