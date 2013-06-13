@@ -1,0 +1,10 @@
+set test "user_string_n_quoted"
+
+spawn stap $srcdir/$subdir/user_string_n_quoted.stp -c "echo this_is_a_test > /dev/null"
+expect {
+	-timeout 30
+	{"this_is_a_"...} { pass $test }
+	eof { fail $test }
+	timeout { fail "$test (timeout)" }
+}
+

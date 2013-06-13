@@ -223,6 +223,7 @@ function user_string2_n_warn:string (addr:long, n:long, warn_msg:string)
  */
 function user_string_n_quoted:string (addr:long, n:long)
 %{ /* pure */ /* myproc-unprivileged */
+	// Note the lack of STAP_ARG_n+1 as in other funcs() -- PR15617
 	int64_t len = clamp_t(int64_t, STAP_ARG_n, 0, MAXSTRINGLEN);
 	if (STAP_ARG_addr == 0)
 #if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
