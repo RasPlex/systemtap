@@ -596,8 +596,9 @@ mutator::run ()
   else // !target_mutatee
     {
       // With no mutatees, we just wait for a signal to exit.
-      int signal;
-      sigwait(g_signal_mask, &signal);
+      stap_sigmasker masked(g_signal_mask);
+      while (sigisemptyset(&signals_received))
+        sigsuspend(&masked.old);
     }
 
   // Indicate failure if the target had anything but EXIT_SUCCESS
