@@ -5,12 +5,13 @@ set script $srcdir/$subdir/$test.stp
 set header /tmp/$test.h
 file copy -force $srcdir/$subdir/$test.h $header
 
-stap_run2 $script kernel<$header> -g
-stap_run2 $script kernel<$header> -g -DSTP_LEGACY_PRINT
 foreach runtime [get_runtime_list] {
     if {$runtime != ""} {
-	stap_run2 $script kernel<$header> -g --runtime=$runtime
-	stap_run2 $script kernel<$header> -g --runtime=$runtime -DSTP_LEGACY_PRINT
+	# This should just use "<header>", but tcl exec insists on treating
+	# that as a redirect.  We can instead abuse the fact that the
+	# tokenize() used by @cast ignores leading delimiters.
+	stap_run2 $script :<$header> -g --runtime=$runtime
+	stap_run2 $script :<$header> -g --runtime=$runtime -DSTP_LEGACY_PRINT
     } else {
 	stap_run2 $script kernel<$header> -g
 	stap_run2 $script kernel<$header> -g -DSTP_LEGACY_PRINT

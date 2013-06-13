@@ -28,7 +28,7 @@ static inline __must_check long __copy_from_user(void *to,
 	 * code at the same time and the 2nd lseek() might finish
 	 * before the 1st read()...
 	 */
-	if (pread(_stp_mem_fd, to, n, (off_t)from) != n)
+	if (pread(_stp_mem_fd, to, n, (off_t)(uintptr_t)from) != n)
 		rc = -EFAULT;
 	return rc;
 }
@@ -42,7 +42,7 @@ static inline __must_check long __copy_to_user(void *to, const void *from,
 	 * The pwrite syscall is faster than lseek()/write() (since it
 	 * is only one syscall).
 	 */
-	if (pwrite(_stp_mem_fd, to, n, (off_t)from) != n)
+	if (pwrite(_stp_mem_fd, to, n, (off_t)(uintptr_t)from) != n)
 		rc = -EFAULT;
 	return rc;
 }
