@@ -19,6 +19,7 @@ static struct _stp_session_attributes _stp_init_session_attributes = {
 	.tz_gmtoff = 0,
 	.tz_name = "",
 	.module_name = "",
+	.outfile_name = "",
 };
 
 static void stp_session_attributes_init(void)
