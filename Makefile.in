@@ -2042,7 +2042,7 @@ git_version.h:
 cscope:
 	cd $(srcdir) && \
 	(echo -q ; git ls-files '*.cxx' '*.c' '*.h' | grep -v '^testsuite' ) > cscope.files && \
-	cscope -b -q
+	cscope -b -q @DYNINST_CXXFLAGS@
 
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@install-exec-local: install-scripts
 # scripts must be installed before this rule is run

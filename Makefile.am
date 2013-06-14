@@ -96,7 +96,7 @@ git_version.h:
 cscope:
 	cd $(srcdir) && \
 	(echo -q ; git ls-files '*.cxx' '*.c' '*.h' | grep -v '^testsuite' ) > cscope.files && \
-	cscope -b -q
+	cscope -b -q @DYNINST_CXXFLAGS@
 
 PHONIES =
 if BUILD_TRANSLATOR
