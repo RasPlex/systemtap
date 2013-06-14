@@ -121,6 +121,10 @@ static struct stapiu_process {
  * Note: target->process_lock nests inside this.  */
 static DEFINE_SPINLOCK(stapiu_process_slots_lock);
 
+#if defined(UPROBES_HITCOUNT)
+static atomic_t prehandler_hitcount = ATOMIC_INIT(0);
+static atomic_t handler_hitcount = ATOMIC_INIT(0);
+#endif
 
 /* The stap-generated probe handler for all inode-uprobes. */
 static int
@@ -135,6 +139,10 @@ stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 	struct stapiu_target *target = sup->target;
 
 	struct stapiu_process *p, *process = NULL;
+
+#if defined(UPROBES_HITCOUNT)
+	atomic_inc(&prehandler_hitcount);
+#endif
 
 	/* First find the related process, set by stapiu_change_plus.
 	 * NB: This is a linear search performed for every probe hit!
@@ -167,6 +175,10 @@ stapiu_probe_prehandler (struct uprobe_consumer *inst, struct pt_regs *regs)
 	{
 	unsigned long saved_ip = REG_IP(regs);
 	SET_REG_IP(regs, uprobe_get_swbp_addr(regs));
+#endif
+
+#if defined(UPROBES_HITCOUNT)
+	atomic_inc(&handler_hitcount);
 #endif
 
 	ret = stapiu_probe_handler(sup, regs);
@@ -449,6 +461,13 @@ stapiu_exit(struct stapiu_target *targets, size_t ntargets,
 {
 	stapiu_decrement_semaphores(targets, ntargets);
 	stapiu_exit_targets(targets, ntargets);
+#if defined(UPROBES_HITCOUNT)
+	_stp_printf("stapiu_probe_prehandler() called %d times\n",
+			atomic_read(&prehandler_hitcount));
+	_stp_printf("stapiu_probe_handler() called %d times\n",
+			atomic_read(&handler_hitcount));
+	_stp_print_flush();
+#endif
 }
 
 
