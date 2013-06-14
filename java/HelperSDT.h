@@ -2,8 +2,8 @@
 #include <jni.h>
 /* Header for class HelperSDT */
 
-#ifndef _Included_HelperSDT
-#define _Included_HelperSDT
+#ifndef _Included_org_systemtap_byteman_helper_HelperSDT
+#define _Included_org_systemtap_byteman_helper_HelperSDT
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,7 +12,7 @@ extern "C" {
  * Method:    METHOD_STAP_PROBE0
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE0
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE0
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -20,7 +20,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE0
  * Method:    METHOD_STAP_PROBE1
  * Signature: (Ljava/lang/String;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE1
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE1
   (JNIEnv *, jobject, jstring, jobject);
 
 /*
@@ -28,7 +28,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE1
  * Method:    METHOD_STAP_PROBE2
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE2
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE2
   (JNIEnv *, jobject, jstring, jobject, jobject);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE2
  * Method:    METHOD_STAP_PROBE3
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE3
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE3
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject);
 
 /*
@@ -44,7 +44,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE3
  * Method:    METHOD_STAP_PROBE4
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE4
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE4
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject, jobject);
 
 /*
@@ -52,7 +52,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE4
  * Method:    METHOD_STAP_PROBE5
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE5
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE5
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject, jobject, jobject);
 
 /*
@@ -60,7 +60,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE5
  * Method:    METHOD_STAP_PROBE6
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE6
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE6
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject, jobject, jobject, jobject);
 
 /*
@@ -68,7 +68,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE6
  * Method:    METHOD_STAP_PROBE7
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE7
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE7
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject, jobject, jobject, jobject, jobject);
 
 /*
@@ -76,7 +76,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE7
  * Method:    METHOD_STAP_PROBE8
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE8
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE8
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject);
 
 /*
@@ -84,7 +84,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE8
  * Method:    METHOD_STAP_PROBE9
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE9
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject);
 
 /*
@@ -92,7 +92,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
  * Method:    METHOD_STAP_PROBE10
  * Signature: (Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE10
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE10
   (JNIEnv *, jobject, jstring, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject, jobject);
 
 #ifdef __cplusplus

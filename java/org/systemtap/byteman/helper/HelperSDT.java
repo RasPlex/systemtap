@@ -1,3 +1,4 @@
+package org.systemtap.byteman.helper;
 public class HelperSDT<T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>
 {
     public native void METHOD_STAP_PROBE0(String rulename);

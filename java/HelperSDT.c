@@ -145,7 +145,7 @@ _staparg determine_java_type(JNIEnv *env, jobject _arg, _staparg staparg)
  * Method:    METHOD_STAP_PROBE0
  * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE0
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE0
 (JNIEnv *env, jobject obj, jstring _rulename)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -157,7 +157,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE0
  * Method:    METHOD_STAP_PROBE1
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE1
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE1
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -173,7 +173,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE1
  * Method:    METHOD_STAP_PROBE2
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE2
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE2
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -194,7 +194,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE2
  * Method:    METHOD_STAP_PROBE3
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE3
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE3
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -218,7 +218,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE3
  * Method:    METHOD_STAP_PROBE4
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE4
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE4
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -246,7 +246,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE4
  * Method:    METHOD_STAP_PROBE5
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE5
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE5
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -278,7 +278,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE5
  * Method:    METHOD_STAP_PROBE6
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE6
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE6
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -314,7 +314,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE6
  * Method:    METHOD_STAP_PROBE7
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE7
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE7
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -354,7 +354,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE7
  * Method:    METHOD_STAP_PROBE8
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE8
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE8
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -397,7 +397,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE8
  * Method:    METHOD_STAP_PROBE9
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE9
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8, jobject _arg9)
 {
   char* rulename = get_java_string(env, _rulename);
@@ -445,7 +445,7 @@ JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE9
  * Method:    METHOD_STAP_PROBE10
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_HelperSDT_METHOD_1STAP_1PROBE10
+JNIEXPORT void JNICALL Java_org_systemtap_byteman_helper_HelperSDT_METHOD_1STAP_1PROBE10
 (JNIEnv *env, jobject obj, jstring _rulename, jobject _arg1, jobject _arg2, jobject _arg3, jobject _arg4, jobject _arg5, jobject _arg6, jobject _arg7, jobject _arg8, jobject _arg9, jobject _arg10)
 {
   char* rulename = get_java_string(env, _rulename);

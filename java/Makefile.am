@@ -47,14 +47,14 @@ libHelperSDT_so_LDFLAGS = -lc
 # build HelperSDT.class
 noinst_DATA += HelperSDT.class
 CLEANFILES += HelperSDT.class
-HelperSDT.class: HelperSDT.java
-	$(JAVAC) -d . $(srcdir)/HelperSDT.java
+HelperSDT.class: $(srcdir)/org/systemtap/byteman/helper/HelperSDT.java
+	$(JAVAC) -d . $(srcdir)/org/systemtap/byteman/helper/HelperSDT.java
 
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
 noinst_DATA += HelperSDT.jar
 CLEANFILES += HelperSDT.jar
 HelperSDT.jar: HelperSDT.class
-	$(JAR) cvf HelperSDT.jar HelperSDT.class
+	$(JAR) cvf HelperSDT.jar org/systemtap/byteman/helper/HelperSDT.class
 
 # place/install libHelperSDT.so and HelperSDT.jar
 install-exec-local:

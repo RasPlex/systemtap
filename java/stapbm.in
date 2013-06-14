@@ -129,10 +129,14 @@ else
         echo "Byteman port $bmport already in use, retrying."
         exec "$@"
     fi
+
+# We use -javaagent parameters to make it possible to probe jboss-as
+# applications utilizing the -Djboss.modules.system.pkgs= parameter
+
     if [ "$STAPBM_VERBOSE" != "no" ]; then
-        echo java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} org.jboss.byteman.agent.install.Install -b -p $bmport -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid
+	echo java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} -javaagent:${BYTEMAN_HOME}/lib/byteman.jar=sys:${JAVA_HOME}/jre/lib/ext/HelperSDT.jar,listener:true,port:$bmport org.jboss.byteman.agent.install.Install -b -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid
     fi
-    java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} org.jboss.byteman.agent.install.Install -b -p $bmport -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid
+    java -classpath ${BYTEMAN_INSTALL_JAR}:${BYTEMAN_JAR}:${TOOLS_JAR} -javaagent:${BYTEMAN_JAR}=sys:${JAVA_HOME}/jre/lib/ext/HelperSDT.jar,listener:true,port:$bmport org.jboss.byteman.agent.install.Install -b -Dorg.jboss.byteman.listener-port=$bmport $BYTEMAN_INSTALL_OPTS $target_pid
     if [ $? -ne 0 ]; then
         echo "Byteman agent failed to install for java pid $target_pid, port $bmport"
         exit 1
@@ -155,7 +159,7 @@ function echo_bytemanrule()
     echo "RULE $arg_rulename"
     echo "CLASS $arg_class"
     echo "METHOD $arg_method"
-    echo "HELPER HelperSDT"
+    echo "HELPER org.systemtap.byteman.helper.HelperSDT"
     case "$arg_probetype" in
         entry)
 	    echo "AT ENTRY"
@@ -203,7 +207,7 @@ else
 fi
 
 if [ "$STAPBM_VERBOSE" != "no" ]; then
-    echo java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
+    echo java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} -javaagent:${BYTEMAN_JAR}=sys:${JAVA_HOME}/jre/lib/ext/HelperSDT.jar,script:$btmfile,port:$bmport,listener:true org.jboss.byteman.agent.submit.Submit $bmcmd $btmfile
 fi
 
-exec java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} org.jboss.byteman.agent.submit.Submit -p $bmport $bmcmd $btmfile
+exec java -classpath ${BYTEMAN_SUBMIT_JAR}:${BYTEMAN_JAR} -javaagent:${BYTEMAN_JAR}=sys:${JAVA_HOME}/jre/lib/ext/HelperSDT.jar,script:$btmfile,port:$bmport,listener:true org.jboss.byteman.agent.submit.Submit $bmcmd $btmfile
