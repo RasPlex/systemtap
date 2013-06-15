@@ -1,0 +1,49 @@
+set test "at_var_void_stmt"
+set testpath "$srcdir/$subdir"
+
+# Check the void statement reducer with @var.
+set output_string ".*?enter func sub\r\n"
+
+# Only run on make installcheck and uprobes present.
+if {! [installtest_p]} { untested "$test"; return }
+
+set res [target_compile ${testpath}/$test.c $test executable \
+    "additional_flags=-O2 additional_flags=-g"]
+
+if { $res != "" } {
+    verbose "target_compile failed: $res" 2
+    fail "unable to compile ${test}.c"
+}
+
+spawn stap -vvv $srcdir/$subdir/$test.stp -c ./$test $test
+set ok 0
+set logs 0
+
+expect {
+    -timeout 180
+
+    -re {^Eliding unused target symbol operator '@var'} {
+        incr logs; exp_continue
+    }
+
+    -re {^Eliding side-effect-free singleton block operator '@var'} {
+        incr logs; exp_continue
+    }
+
+    -re {^count = 3\r\n} { incr ok; exp_continue; }
+
+    -re {^[^\r\n]*\r\n} { exp_continue }
+
+    timeout { fail "$test (timeout)" }
+    eof { }
+}
+wait
+
+if {$ok == 1 && $logs == 2} {
+    pass "$test ($ok, $logs)"
+} {
+    fail "$test ($ok, $logs)"
+}
+
+# Cleanup
+if { $verbose == 0 } { catch { exec rm -f $test } }

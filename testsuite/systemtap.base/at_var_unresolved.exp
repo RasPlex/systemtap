@@ -1,0 +1,67 @@
+set test "at_var_unresolved"
+
+# Ensure that there is only one error message for an unresolved @var.
+
+# Only run on make installcheck
+if {! [installtest_p]} { untested "$test"; return }
+
+# Case 1: Test @var("name"):
+
+spawn stap -e "probe begin { println(@var(\"var_really_not_exist\")) exit() }"
+set errs 0
+
+expect {
+    -timeout 180
+
+    -re {^semantic error: unable to find global 'var_really_not_exist'.*? in kernel: operator '@var'} {
+        incr errs; exp_continue
+    }
+
+    -re {^sematnic error: } {
+        incr errs; exp_continue
+    }
+
+    -re {^[^\r\n]*\r\n} { exp_continue }
+
+    timeout { fail "$test (timeout)" }
+    eof { }
+}
+wait
+
+if {$errs == 1} {
+    pass "$test ($errs)"
+} {
+    fail "$test ($errs)"
+}
+
+
+# Case 2: Test @var("name@cuname"):
+
+set errs 0
+
+spawn stap -e "probe begin { println(@var(\"var_really_not_exist@*.c\")) exit() }"
+set ok 0
+
+expect {
+    -timeout 180
+
+    -re {^semantic error: unable to find global 'var_really_not_exist'.*? in kernel, in \*\.c} {
+        incr ok; exp_continue
+    }
+
+    -re {^sematnic error: } {
+        incr errs; exp_continue
+    }
+
+    -re {^[^\r\n]*\r\n} { exp_continue }
+
+    timeout { fail "$test (timeout)" }
+    eof { }
+}
+wait
+
+if {$ok == 1 && $errs == 0} {
+    pass "$test (cuname: $ok, $errs)"
+} {
+    fail "$test (cuname: $ok, $errs)"
+}

@@ -1,0 +1,122 @@
+set test "sdt_global_var"
+
+# Test accessing global variables in SDT probes.
+set result_string10 "z: @(\"my_global_var\") = 56
+z: \$my_global_var = 56
+j: @(\"my_global_var\") = 57
+j: \$my_global_var = 57"
+set result_string12 "
+l: @(\"my_global_var\") = 57
+l: \$my_global_var = 57"
+
+set extra_flags {{additional_flags=-O2} {additional_flags=-fPIE additional_flags=-pie additional_flags=-O2}}
+set extra_mssgs {-O2}
+
+set pbtype_flags {{""} {additional_flags=-DSTAP_SDT_V2}}
+set pbtype_mssgs {{uprobe} {V2_uprobe}}
+
+proc sdt_stap_run { TEST_NAME TEST_FILE FAIL args } {
+    foreach runtime [get_runtime_list] {
+	set full_test_name $TEST_NAME
+	if {$runtime != ""} {
+            if {$runtime == "dyninst" && [regexp "\-pie" $TEST_NAME]} {
+                setup_kfail 15052 "*-*-*"
+            }
+
+	    lappend full_test_name "($runtime)"
+	    set cmd [concat stap --runtime=$runtime $TEST_FILE $args]
+	} elseif {[uprobes_p]} {
+            if {[regexp "\-pie" $TEST_NAME]} {
+                setup_kfail 15688 "*-*-*"
+            }
+
+	    set cmd [concat stap $TEST_FILE $args]
+	} else {
+	    untested $full_test_name
+	    continue
+	}
+	send_log "executing: $cmd\n"
+	catch {eval exec $cmd} res
+
+	set skip 0
+	set n 0
+	set expected [split $::result_string "\n"]
+	foreach line [split $res "\n"] {
+	    if {![string equal $line [lindex $expected $n]]} {
+		$FAIL "$full_test_name"
+		send_log "line [expr $n + 1]: expected \"[lindex $expected $n]\"\n"
+		send_log "Got \"$line\"\n"
+		set skip 1
+		break
+	    }
+	    incr n
+	}
+	if {$skip != 0} {
+	    continue
+	}
+	if {[expr $n == [llength $expected]]} {
+	    pass "$full_test_name"
+	} else {
+	    $FAIL "$full_test_name"
+	    send_log "too few lines of output, got $n, expected [llength $expected]\n"
+	}
+    }
+}
+
+# Iterate pbtype_flags
+for {set p 0} {$p < [llength $pbtype_flags]} {incr p} {
+set pbtype_flag [lindex $pbtype_flags $p]
+set pbtype_mssg [lindex $pbtype_mssgs $p]
+
+# Iterate extra_flags, trying the cases with and without PIE
+for {set i 0} {$i < [llength $extra_flags]} {incr i} {
+set extra_flag [lindex $extra_flags $i]
+set extra_mssg [lindex $extra_mssgs $i]
+set testprog "sdt.c.exe.$i"
+
+set test_flags "additional_flags=-g"
+set test_flags "$test_flags [sdt_includes]"
+set test_flags "$test_flags additional_flags=-Wall"
+set test_flags "$test_flags additional_flags=-Wextra"
+set test_flags "$test_flags additional_flags=-Werror $pbtype_flag"
+
+set saveidx 0
+
+set res [target_compile $srcdir/$subdir/sdt.c $testprog executable "$test_flags $extra_flag"]
+if { $res != "" } {
+    verbose "target_compile failed: $res" 2
+    if {[string first "unrecognized command line option" $res] == -1} {
+      fail "compiling sdt.c $extra_mssg $pbtype_mssg"
+    } else {
+      untested "compiling sdt.c $extra_mssg $pbtype_mssg"
+    }
+    untested "$test $extra_mssg $pbtype_mssg"
+    continue
+} else {
+    pass "compiling sdt.c $extra_mssg $pbtype_mssg"
+}
+
+if {[installtest_p]} {
+    if {[regexp "^(ppc64|s390x)$" $::tcl_platform(machine)] \
+	    && [regexp "^(-O)" $extra_mssg]} {
+	# register name and constant is ambiguous in ppc/s390 asm syntax
+	# thus constant folding can throw the result off
+	set FAIL xfail
+    } else {
+	set FAIL fail
+    }
+    set ::result_string $result_string10
+    if { $pbtype_mssg == "uprobe" } {
+	append ::result_string $result_string12
+    }
+    sdt_stap_run "$test $extra_mssg $pbtype_mssg $extra_flag" \
+	-w $FAIL $srcdir/$subdir/$test.stp $testprog -c ./$testprog
+} else {
+    untested "$test $extra_mssg $pbtype_mssg"
+}
+catch {exec rm -f $testprog}
+
+} ; # for {set i 0} {$i < [llength $extra_flags]}
+
+} ; # for {set i 0} {$i < [llength $pbtype_flags]}
+

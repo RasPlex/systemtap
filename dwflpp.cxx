@@ -2270,7 +2270,7 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
     {
       stringstream alternatives;
       print_locals (scopes, alternatives);
-      if (e->cu_name == "")
+      if (pc)
         throw semantic_error (_F("unable to find local '%s', [man error::dwarf] dieoffset %s in %s, near pc %s %s %s %s (%s)",
                                  local.c_str(),
                                  lex_cast_hex(dwarf_dieoffset(scope_die)).c_str(),
@@ -2291,7 +2291,7 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                  module_name.c_str(),
                                  (scope_die == NULL) ? "" : _("in"),
                                  (dwarf_diename(scope_die) ?: "<unknown>"),
-                                 e->cu_name.c_str(),
+                                 cu_name().c_str(),
                                  (alternatives.str() == ""
                                   ? (_("<no alternatives>"))
 				  : (_("alternatives:")
@@ -2333,7 +2333,7 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
     }
 
   // Global vars don't need (cannot use) frame base in location descriptor.
-  if (e->cu_name != "")
+  if (pc == 0)
     return NULL;
 
   /* We start out walking the "lexical scopes" as returned by
@@ -2438,7 +2438,7 @@ dwflpp::translate_location(struct obstack *pool,
   // pc is in the dw address space of the current module, which is what
   // c_translate_location expects. get_cfa_ops wants the global dwfl address.
   // cfa_ops only make sense for locals.
-  if (e->cu_name == "")
+  if (pc)
     {
       Dwarf_Addr addr = pc + module_bias;
       cfa_ops = get_cfa_ops (addr);
@@ -3013,13 +3013,13 @@ dwflpp::literal_stmt_for_local (vector<Dwarf_Die>& scopes,
 
   if (sess.verbose>2)
     {
-      if (e->cu_name == "")
+      if (pc)
         clog << _F("finding location for local '%s' near address %#" PRIx64
                    ", module bias %#" PRIx64 "\n", local.c_str(), pc,
 	           module_bias);
       else
         clog << _F("finding location for global '%s' in CU '%s'\n",
-		   local.c_str(), e->cu_name.c_str());
+		   local.c_str(), cu_name().c_str());
     }
 
 

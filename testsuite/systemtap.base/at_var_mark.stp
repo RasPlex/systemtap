@@ -5,11 +5,12 @@ probe process.mark("pass*")
   if (more_addr == 0)
     {
       log("systemtap starting probe");
+      log("systemtap ending probe");
       more_addr = @var("morehelp@session.cxx");
+      printf("s = %d\n", @var("s"))
     }
   else
     {
-      log("systemtap ending probe");
       name = substr($$name, 0, 4);
       correct = @defined(@var("no_such_var_really_not")) ? "no" : "yes";
       diff = more_addr - @var("morehelp@session.cxx");

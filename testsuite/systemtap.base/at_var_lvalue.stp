@@ -1,0 +1,25 @@
+global i = 0
+
+function f(n)
+{
+  @var("foo@at_var_lvalue.c", @1)->bar =
+      @var("foo@at_var_lvalue.c", @1)->bar - 1
+  printf("%d: @var(\"foo@at_var_lvalue.c\", @1)->bar: %d\n", n,
+         @var("foo@at_var_lvalue.c", @1)->bar)
+}
+
+probe process.function("sub")
+{
+  if (i == 0) {
+      @var("foo")->bar = @var("foo")->bar - 1
+      printf("0: @var(\"foo\")->bar: %d\n", @var("foo")->bar)
+      @var("foo@at_var_lvalue.c")->bar = @var("foo@at_var_lvalue.c")->bar - 1
+      printf("0: @var(\"foo@at_var_lvalue.c\")->bar: %d\n",
+             @var("foo@at_var_lvalue.c")->bar)
+
+  } else {
+      f(i)
+  }
+
+  i++
+}

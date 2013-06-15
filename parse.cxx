@@ -3646,8 +3646,6 @@ target_symbol* parser::parse_target_symbol (const token* t)
       target_symbol *tsym = new target_symbol;
       tsym->tok = t;
       tsym->name = t->content;
-      tsym->target_name = "";
-      tsym->cu_name = "";
       parse_target_symbol_components(tsym);
       tsym->addressof = addressof;
       return tsym;
@@ -3655,20 +3653,27 @@ target_symbol* parser::parse_target_symbol (const token* t)
 
   if (t->type == tok_operator && t->content == "@var")
     {
-      target_symbol *tsym = new target_symbol;
-      tsym->tok = t;
-      tsym->name = t->content;
+      atvar_op *aop = new atvar_op;
+      aop->tok = t;
+      aop->name = t->content;
       expect_op("(");
-      expect_unknown(tok_string, tsym->target_name);
-      size_t found_at = tsym->target_name.find("@");
+      expect_unknown(tok_string, aop->target_name);
+      size_t found_at = aop->target_name.find("@");
       if (found_at != string::npos)
-	tsym->cu_name = tsym->target_name.substr(found_at + 1);
+        aop->cu_name = aop->target_name.substr(found_at + 1);
       else
-	tsym->cu_name = "";
+        aop->cu_name = "";
+      if (peek_op (","))
+        {
+          swallow ();
+          expect_unknown (tok_string, aop->module);
+        }
+      else
+        aop->module = "";
       expect_op(")");
-      parse_target_symbol_components(tsym);
-      tsym->addressof = addressof;
-      return tsym;
+      parse_target_symbol_components(aop);
+      aop->addressof = addressof;
+      return aop;
     }
 
   throw parse_error (_("expected @cast, @var or $var"));

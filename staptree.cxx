@@ -281,18 +281,21 @@ void target_symbol::chain (const semantic_error &er)
   this->saved_conversion_error = e;
 }
 
+
 string target_symbol::sym_name ()
 {
-  if (name == "@var")
-    {
-      if (cu_name == "")
-	return target_name;
-      else
-	return target_name.substr(0, target_name.length() - cu_name.length() - 1);
-    }
-  else
-    return name.substr(1);
+  return name.substr(1);
 }
+
+
+string atvar_op::sym_name ()
+{
+  if (cu_name == "")
+    return target_name;
+  else
+    return target_name.substr(0, target_name.length() - cu_name.length() - 1);
+}
+
 
 // ------------------------------------------------------------------------
 // parse tree printing
@@ -416,8 +419,16 @@ void target_symbol::print (ostream& o) const
   if (addressof)
     o << "&";
   o << name;
-  if (name == "@var")
-    o << "(\"" << target_name << "\")";
+  for (unsigned i = 0; i < components.size(); ++i)
+    o << components[i];
+}
+
+
+void atvar_op::print (ostream& o) const
+{
+  if (addressof)
+    o << "&";
+  o << name << "(\"" << target_name << "\")";
   for (unsigned i = 0; i < components.size(); ++i)
     o << components[i];
 }
@@ -1495,6 +1506,13 @@ cast_op::visit (visitor* u)
 
 
 void
+atvar_op::visit (visitor* u)
+{
+  u->visit_atvar_op(this);
+}
+
+
+void
 defined_op::visit (visitor* u)
 {
   u->visit_defined_op(this);
@@ -1831,6 +1849,12 @@ traversing_visitor::visit_cast_op (cast_op* e)
 }
 
 void
+traversing_visitor::visit_atvar_op (atvar_op* e)
+{
+  e->visit_components (this);
+}
+
+void
 traversing_visitor::visit_defined_op (defined_op* e)
 {
   e->operand->visit (this);
@@ -2015,6 +2039,19 @@ varuse_collecting_visitor::visit_target_symbol (target_symbol *e)
 
   functioncall_traversing_visitor::visit_target_symbol (e);
 }
+
+
+void
+varuse_collecting_visitor::visit_atvar_op (atvar_op *e)
+{
+  // Similar to visit_target_symbol
+
+  if (is_active_lvalue (e))
+    embedded_seen = true;
+
+  functioncall_traversing_visitor::visit_atvar_op (e);
+}
+
 
 void
 varuse_collecting_visitor::visit_cast_op (cast_op *e)
@@ -2462,6 +2499,12 @@ throwing_visitor::visit_target_symbol (target_symbol* e)
 }
 
 void
+throwing_visitor::visit_atvar_op (atvar_op* e)
+{
+  throwone (e->tok);
+}
+
+void
 throwing_visitor::visit_cast_op (cast_op* e)
 {
   throwone (e->tok);
@@ -2754,6 +2797,13 @@ update_visitor::visit_cast_op (cast_op* e)
 }
 
 void
+update_visitor::visit_atvar_op (atvar_op* e)
+{
+  e->visit_components (this);
+  provide (e);
+}
+
+void
 update_visitor::visit_defined_op (defined_op* e)
 {
   replace (e->operand);
@@ -3007,6 +3057,12 @@ void
 deep_copy_visitor::visit_cast_op (cast_op* e)
 {
   update_visitor::visit_cast_op(new cast_op(*e));
+}
+
+void
+deep_copy_visitor::visit_atvar_op (atvar_op* e)
+{
+  update_visitor::visit_atvar_op(new atvar_op(*e));
 }
 
 void

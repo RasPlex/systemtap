@@ -1085,6 +1085,11 @@ struct symbol_fetcher
     e->base->visit (this);
   }
 
+  void visit_atvar_op (atvar_op *e)
+  {
+    sym = e;
+  }
+
   void visit_cast_op (cast_op* e)
   {
     sym = e;
@@ -2960,6 +2965,7 @@ struct void_statement_reducer: public update_visitor
   void visit_functioncall (functioncall* e);
   void visit_print_format (print_format* e);
   void visit_target_symbol (target_symbol* e);
+  void visit_atvar_op (atvar_op* e);
   void visit_cast_op (cast_op* e);
   void visit_defined_op (defined_op* e);
 
@@ -3249,6 +3255,12 @@ void_statement_reducer::visit_print_format (print_format* e)
   relaxed_p = false;
   e = 0;
   provide (e);
+}
+
+void
+void_statement_reducer::visit_atvar_op (atvar_op* e)
+{
+  visit_target_symbol (e);
 }
 
 void
@@ -4583,6 +4595,42 @@ typeresolution_info::visit_target_symbol (target_symbol* e)
     throw (* (e->saved_conversion_error));
   else
     throw semantic_error(_("unresolved target-symbol expression"), e->tok);
+}
+
+
+void
+typeresolution_info::visit_atvar_op (atvar_op* e)
+{
+  // This occurs only if an @var() was not resolved over in
+  // tapset.cxx land, that error was properly suppressed, and the
+  // later unused-expression-elimination pass didn't get rid of it
+  // either.  So we have an @var() that is believed to be of
+  // genuine use, yet unresolved by the provider.
+
+  if (session.verbose > 2)
+    {
+      clog << _("Resolution problem with ");
+      if (current_function)
+        {
+          clog << "function " << current_function->name << endl;
+          current_function->body->print (clog);
+          clog << endl;
+        }
+      else if (current_probe)
+        {
+          clog << "probe " << *current_probe->sole_location() << endl;
+          current_probe->body->print (clog);
+          clog << endl;
+        }
+      else
+        //TRANSLATORS: simply saying not an issue with a probe or function
+        clog << _("other") << endl;
+    }
+
+  if (e->saved_conversion_error)
+    throw (* (e->saved_conversion_error));
+  else
+    throw semantic_error(_("unresolved @var() expression"), e->tok);
 }
 
 

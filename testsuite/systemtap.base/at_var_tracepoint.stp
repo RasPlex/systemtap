@@ -1,0 +1,9 @@
+# Test global vars are usable in the kernel tracepoint probes.
+
+probe kernel.trace("sched_switch")
+{
+  log("systemtap starting probe");
+  log("systemtap ending probe");
+  printf("sys_tz = %s\n", @var("sys_tz@kernel/time.c")$$);
+  exit();
+}

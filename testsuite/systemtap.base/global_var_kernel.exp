@@ -1,8 +1,9 @@
 set test "global_var_kernel"
 set testpath "$srcdir/$subdir"
 
-# Check the righ "kernel/time.c" is picked up.
-set output_string "sys_tz = {.tz_minuteswest=-?\\d+, .tz_dsttime=\\d+}\r\n"
+# Check the righ "kernel/time.c" is picked up (both in the syscall probe
+# context and the stap function context.
+set output_string "sys_tz = {.tz_minuteswest=-?\\d+, .tz_dsttime=\\d+}\r\nf: {.tz_minuteswest=-?\\d+, .tz_dsttime=\\d+}"
 
 # Only run on make installcheck
 if {! [installtest_p]} { untested "$test"; return }

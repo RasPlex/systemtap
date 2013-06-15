@@ -1,0 +1,5 @@
+probe process.function("sub")
+{
+  @var("no_such_variable", @1) = 3
+  exit()
+}

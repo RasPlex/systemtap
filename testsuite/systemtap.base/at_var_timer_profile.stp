@@ -1,0 +1,23 @@
+global active = 0
+
+probe process.function("sub")
+{
+  active = 1
+}
+
+probe timer.profile {
+  if (active && pid() == target()) {
+      printf("@var(\"foo\", @1)->bar: %d\n", @var("foo", @1)->bar);
+      printf("@var(\"foo@at_var_timer_profile.c\", @1)->bar: %d\n",
+             @var("foo@at_var_timer_profile.c", @1)->bar);
+      printf("@var(\"foo@at_var_timer_profile.c\", @2)->bar: %d\n",
+             @var("foo@at_var_timer_profile.c", @2)->bar);
+      printf("@var(\"foo\", @1)$: %s\n", @var("foo", @1)$);
+      printf("@var(\"foo\", @1)$$: %s\n", @var("foo", @1)$$);
+      printf("@defined(@var(\"foo\", \"badmodle\")): %s\n",
+             @defined(@var("foo", "badmodule")) ? "YES" : "NO")
+      printf("@defined(@var(\"foo\", @3)): %s\n",
+             @defined(@var("foo", @3)) ? "YES" : "NO")
+      exit()
+  }
+}

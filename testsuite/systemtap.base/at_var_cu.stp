@@ -1,0 +1,33 @@
+function out(ctx) {
+  printf("%s: @var(\"counter\", @1): %d\n", ctx, @var("counter", @1))
+  printf("%s: @var(\"counter@at_var_cu_2.c\", @1): %d\n", ctx,
+         @var("counter@at_var_cu_2.c", @1))
+  printf("%s: @var(\"counter@at_var_cu_3.c\", @1): %d\n", ctx,
+         @var("counter@at_var_cu_3.c", @1))
+  printf("%s: @var(\"counter@at_var_cu*.c\", @1): %d\n", ctx,
+         @var("counter@at_var_cu*.c", @1))
+}
+
+probe process.function("foo")
+{
+  out("foo")
+}
+
+probe process.function("bar")
+{
+  out("bar")
+}
+
+probe process.function("baz")
+{
+  out("baz")
+}
+
+probe process.function("bah")
+{
+  out("bah")
+  printf("bah': @var(\"counter@at_var_cu*.c\"): %d\n",
+         @var("counter@at_var_cu*.c"))
+  printf("bah': @var(\"main_global\"): %d\n",
+         @var("main_global"))
+}

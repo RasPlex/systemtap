@@ -1,0 +1,22 @@
+function f()
+{
+  printf("@var(\"foo\", @1)->bar: %d\n", @var("foo", @1)->bar);
+  printf("@var(\"foo@at_var.c\", @1)->bar: %d\n",
+         @var("foo@at_var.c", @1)->bar);
+  printf("@var(\"foo@at_var.c\", @2)->bar: %d\n",
+         @var("foo@at_var.c", @2)->bar);
+  printf("@var(\"foo\", @1)$: %s\n", @var("foo", @1)$);
+  printf("@var(\"foo\", @1)$$: %s\n", @var("foo", @1)$$);
+  printf("@defined(@var(\"foo\", \"badmodle\")->bar): %s\n",
+         @defined(@var("foo", "badmodule")->bar) ? "YES" : "NO")
+  printf("@defined(@var(\"foo\", @3)->bar): %s\n",
+         @defined(@var("foo", @3)->bar) ? "YES" : "NO")
+  printf("@defined(@var(\"foo@blah.c\", @1)->bar): %s\n",
+         @defined(@var("foo@blah.c", @1)->bar) ? "YES" : "NO")
+}
+
+probe process.function("sub")
+{
+  f()
+  printf("@var(\"foo\")->bar: %d\n", @var("foo")->bar);
+}

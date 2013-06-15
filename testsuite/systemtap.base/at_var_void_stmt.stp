@@ -1,0 +1,13 @@
+global count = 1
+
+function foo() {
+  count += 2
+  return 0
+}
+
+probe process.function("sub")
+{
+  @var("foo", @1)->bar[foo()]
+  printf("count = %d\n", count)
+  exit()
+}

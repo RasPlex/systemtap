@@ -32,3 +32,6 @@ if { $res != "" } {
 }
 
 stap_run3 $test $srcdir/$subdir/$test.stp -c ./${test}
+
+# Cleanup
+if { $verbose == 0 } { catch { exec rm -f $test } }

@@ -4,8 +4,8 @@ set testpath "$srcdir/$subdir"
 set stap_path $env(SYSTEMTAP_PATH)/stap
 
 # Check @var, even when var doesn't exist, works in process.mark probes.
-set output_string "pass:yes:0\r\n"
-set invoke "$stap_path -p4 -e 'probe begin \{ log(\"start\")\}'"
+set output_string "s = \\d+\r\n.*pass:yes:0\r\n"
+set invoke "$stap_path -e 'probe begin \{ exit() \}'"
 
 # Only run on make installcheck and uprobes present.
 if {! [installtest_p]} { untested "$test"; return }
@@ -17,7 +17,8 @@ foreach runtime [get_runtime_list] {
 
     } elseif {[uprobes_p]} {
 	stap_run ${test} wait_5_secs $output_string \
-	    ${testpath}/${test}.stp -c $invoke 
+	    ${testpath}/${test}.stp -c $invoke
+
     } else {
 	untested "$test"
     }

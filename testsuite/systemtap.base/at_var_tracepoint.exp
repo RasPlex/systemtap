@@ -1,0 +1,10 @@
+set test "at_var_tracepoint"
+set testpath "$srcdir/$subdir"
+
+# Check @var() is usable in the kernel tracepoint probes.
+set output_string "sys_tz = {.tz_minuteswest=-?\\d+, .tz_dsttime=\\d+}"
+
+# Only run on make installcheck
+if {! [installtest_p]} { untested "$test"; return }
+
+stap_run ${test} no_load $output_string ${testpath}/${test}.stp

@@ -1,8 +1,11 @@
 #include "sys/sdt.h"
 
+int my_global_var = 56;
+
 static void call0(void)
 {
   STAP_PROBE(test, mark_z);
+  my_global_var++;
 }
 
 static void call1(int a)

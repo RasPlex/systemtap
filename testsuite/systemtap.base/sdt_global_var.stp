@@ -1,0 +1,17 @@
+probe process(@1).mark("mark_z")
+{
+  printf("z: @(\"my_global_var\") = %d\n", @var("my_global_var"));
+  printf("z: $my_global_var = %d\n", $my_global_var);
+}
+
+probe process(@1).mark("mark_j")
+{
+  printf("j: @(\"my_global_var\") = %d\n", @var("my_global_var"));
+  printf("j: $my_global_var = %d\n", $my_global_var);
+}
+
+probe process(@1).mark("mark_l") ?
+{
+  printf("l: @(\"my_global_var\") = %d\n", @var("my_global_var"));
+  printf("l: $my_global_var = %d\n", $my_global_var);
+}

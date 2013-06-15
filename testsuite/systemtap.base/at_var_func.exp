@@ -1,0 +1,49 @@
+set test "at_var_func"
+set testpath "$srcdir/$subdir"
+set exefile "[pwd]/$test"
+set stap_path $env(SYSTEMTAP_PATH)/stap
+set staprun_path $env(SYSTEMTAP_PATH)/staprun
+
+# Test that @var("var@cu", "module") work in contextless stap functions.
+# Also ensure that the module argument can be multiple module names
+# separated by colon, e.g., "module1:module2:module3".
+# Also test that unresolved @var() can be properly caught by @defined().
+
+set ::result_string {@var("foo", @1)->bar: 42
+@var("foo@at_var.c", @1)->bar: 42
+@var("foo@at_var.c", @2)->bar: 42
+@var("foo", @1)$: {.bar=42}
+@var("foo", @1)$$: {.bar=42}
+@defined(@var("foo", "badmodle")->bar): NO
+@defined(@var("foo", @3)->bar): NO
+@defined(@var("foo@blah.c", @1)->bar): NO
+@var("foo")->bar: 42}
+
+# Only run on make installcheck and uprobes present.
+if {! [installtest_p]} { untested "$test"; return }
+
+set res [target_compile ${testpath}/at_var.c $exefile executable \
+    "additional_flags=-O2 additional_flags=-g"]
+
+if { $res != "" } {
+    verbose "target_compile failed: $res" 2
+    fail "unable to compile ${test}.c"
+}
+
+foreach runtime [get_runtime_list] {
+    if {$runtime != ""} {
+        stap_run3 "$test ($runtime)" $srcdir/$subdir/$test.stp -c ./$test \
+            $exefile "$stap_path:$exefile:$staprun_path" \
+            "$stap_path:$staprun_path" --runtime=$runtime
+
+    } elseif {[uprobes_p]} {
+        stap_run3 $test $srcdir/$subdir/$test.stp -c ./$test $exefile \
+            "$stap_path:$exefile:$staprun_path" "$stap_path:$staprun_path"
+
+    } else {
+        untested "$test"
+    }
+}
+
+# Cleanup
+if { $verbose == 0 } { catch { exec rm -f $test } }

@@ -2280,11 +2280,11 @@ struct dwarf_var_expanding_visitor: public var_expanding_visitor
   void visit_target_symbol_saved_return (target_symbol* e);
   void visit_target_symbol_context (target_symbol* e);
   void visit_target_symbol (target_symbol* e);
+  void visit_atvar_op (atvar_op* e);
   void visit_cast_op (cast_op* e);
   void visit_entry_op (entry_op* e);
   void visit_perf_op (perf_op* e);
 private:
-  vector<Dwarf_Die>& getcuscope(target_symbol *e);
   vector<Dwarf_Die>& getscopes(target_symbol *e);
 };
 
@@ -3686,11 +3686,28 @@ dwarf_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
 
 
 void
+dwarf_var_expanding_visitor::visit_atvar_op (atvar_op *e)
+{
+  // Fill in our current module context if needed
+  if (e->module.empty())
+    e->module = q.dw.module_name;
+
+  if (e->module == q.dw.module_name && e->cu_name.empty())
+    {
+      // process like any other local
+      // e->sym_name() will do the right thing
+      visit_target_symbol(e);
+      return;
+    }
+
+  var_expanding_visitor::visit_atvar_op(e);
+}
+
+
+void
 dwarf_var_expanding_visitor::visit_target_symbol (target_symbol *e)
 {
-  assert(e->name.size() > 0
-	 && ((e->name[0] == '$' && e->target_name == "")
-	      || (e->name == "@var" && e->target_name != "")));
+  assert(e->name.size() > 0 && (e->name[0] == '$' || e->name == "@var"));
   visited = true;
   bool defined_being_checked = (defined_ops.size() > 0 && (defined_ops.top()->operand == e));
   // In this mode, we avoid hiding errors or generating extra code such as for .return saved $vars
@@ -3864,65 +3881,10 @@ dwarf_var_expanding_visitor::visit_perf_op (perf_op *e)
     throw semantic_error(_F("perf counter '%s' not defined", e_lit_val.c_str()));
 }
 
-vector<Dwarf_Die>&
-dwarf_var_expanding_visitor::getcuscope(target_symbol *e)
-{
-  Dwarf_Off cu_off = 0;
-  const char *cu_name = NULL;
-
-  string prefixed_srcfile = string("*/") + e->cu_name;
-
-  Dwarf_Off off = 0;
-  size_t cuhl;
-  Dwarf_Off noff;
-  Dwarf_Off module_bias;
-  Dwarf *dw = dwfl_module_getdwarf(q.dw.module, &module_bias);
-  while (dwarf_nextcu (dw, off, &noff, &cuhl, NULL, NULL, NULL) == 0)
-    {
-      Dwarf_Die die_mem;
-      Dwarf_Die *die;
-      die = dwarf_offdie (dw, off + cuhl, &die_mem);
-
-      /* We are not interested in partial units. */
-      if (dwarf_tag (die) == DW_TAG_compile_unit)
-	{
-	  const char *die_name = dwarf_diename (die);
-	  if (strcmp (die_name, e->cu_name.c_str()) == 0) // Perfect match.
-	    {
-	      cu_name = die_name;
-	      cu_off = off + cuhl;
-	      break;
-	    }
-
-	  if (fnmatch(prefixed_srcfile.c_str(), die_name, 0) == 0)
-	    if (cu_name == NULL || strlen (die_name) < strlen (cu_name))
-	      {
-		cu_name = die_name;
-		cu_off = off + cuhl;
-	      }
-	}
-      off = noff;
-    }
-
-  if (cu_name == NULL)
-    throw semantic_error ("unable to find CU '" + e->cu_name + "'"
-			  + " while searching for '" + e->target_name + "'",
-			  e->tok);
-
-  vector<Dwarf_Die> *cu_scope = new vector<Dwarf_Die>;
-  Dwarf_Die cu_die;
-  dwarf_offdie (dw, cu_off, &cu_die);
-  cu_scope->push_back(cu_die);
-  return *cu_scope;
-}
 
 vector<Dwarf_Die>&
 dwarf_var_expanding_visitor::getscopes(target_symbol *e)
 {
-  // "static globals" can only be found in the top-level CU.
-  if (e->name == "@var" && e->cu_name != "")
-    return this->getcuscope(e);
-
   if (scopes.empty())
     {
       if(scope_die != NULL)
@@ -4159,6 +4121,187 @@ void dwarf_cast_expanding_visitor::visit_cast_op (cast_op* e)
     }
 
   result->visit (this);
+}
+
+
+struct dwarf_atvar_expanding_visitor: public var_expanding_visitor
+{
+  systemtap_session& s;
+  dwarf_builder& db;
+
+  dwarf_atvar_expanding_visitor(systemtap_session& s, dwarf_builder& db):
+    s(s), db(db) {}
+  void visit_atvar_op (atvar_op* e);
+};
+
+
+struct dwarf_atvar_query: public base_query
+{
+  atvar_op& e;
+  const bool userspace_p, lvalue;
+  functioncall*& result;
+  unsigned& tick;
+  const string cu_name_pattern;
+
+  dwarf_atvar_query(dwflpp& dw, const string& module, atvar_op& e,
+                    const bool userspace_p, const bool lvalue,
+                    functioncall*& result,
+                    unsigned& tick):
+    base_query(dw, module), e(e),
+    userspace_p(userspace_p), lvalue(lvalue), result(result),
+    tick(tick), cu_name_pattern(string("*/") + e.cu_name) {}
+
+  void handle_query_module ();
+  void query_library (const char *) {}
+  void query_plt (const char *entry, size_t addr) {}
+  static int atvar_query_cu (Dwarf_Die *cudie, void *data);
+};
+
+
+int
+dwarf_atvar_query::atvar_query_cu (Dwarf_Die * cudie, void * data)
+{
+  dwarf_atvar_query * q = static_cast<dwarf_atvar_query *>(data);
+
+  if (! q->e.cu_name.empty())
+    {
+      const char *die_name = dwarf_diename(cudie);
+
+      if (strcmp(die_name, q->e.cu_name.c_str()) != 0 // Perfect match
+          && fnmatch(q->cu_name_pattern.c_str(), die_name, 0) != 0)
+        {
+          return DWARF_CB_OK;
+        }
+    }
+
+  try
+    {
+      vector<Dwarf_Die>  scopes(1, *cudie);
+
+      q->dw.focus_on_cu (cudie);
+
+      if (! q->e.components.empty() &&
+          q->e.components.back().type == target_symbol::comp_pretty_print)
+        {
+          dwarf_pretty_print dpp (q->dw, scopes, 0, q->e.sym_name(),
+                                  q->userspace_p, q->e);
+          q->result = dpp.expand();
+          return DWARF_CB_ABORT;
+        }
+
+      exp_type type = pe_long;
+      string code = q->dw.literal_stmt_for_local (scopes, 0, q->e.sym_name(),
+                                                  &q->e, q->lvalue, type);
+
+      if (code.empty())
+        return DWARF_CB_OK;
+
+      string fname = (string(q->lvalue ? "_dwarf_tvar_set"
+                                       : "_dwarf_tvar_get")
+                      + "_" + q->e.sym_name()
+                      + "_" + lex_cast(q->tick++));
+
+      q->result = synthetic_embedded_deref_call (q->sess, fname, code, type,
+                                                 q->userspace_p, q->lvalue,
+                                                 &q->e);
+    }
+  catch (const semantic_error& er)
+    {
+      // Here we suppress the error because we often just have too many
+      // when scanning all the CUs.
+      return DWARF_CB_OK;
+    }
+
+  if (q->result) {
+      return DWARF_CB_ABORT;
+  }
+
+  return DWARF_CB_OK;
+}
+
+
+void
+dwarf_atvar_query::handle_query_module ()
+{
+
+  dw.iterate_over_cus(atvar_query_cu, this, false);
+}
+
+
+void
+dwarf_atvar_expanding_visitor::visit_atvar_op (atvar_op* e)
+{
+  const bool lvalue = is_active_lvalue(e);
+  if (lvalue && !s.guru_mode)
+    throw semantic_error(_("write to @var variable not permitted; "
+                           "need stap -g"), e->tok);
+
+  if (e->module.empty())
+    e->module = "kernel";
+
+  functioncall* result = NULL;
+
+  // split the module string by ':' for alternatives
+  vector<string> modules;
+  tokenize(e->module, modules, ":");
+  bool userspace_p = false;
+  for (unsigned i = 0; !result && i < modules.size(); ++i)
+    {
+      string& module = modules[i];
+
+      dwflpp* dw;
+      try
+        {
+          userspace_p = is_user_module(module);
+          if (!userspace_p)
+            {
+              // kernel or kernel module target
+              dw = db.get_kern_dw(s, module);
+            }
+          else
+            {
+              module = find_executable(module, "", s.sysenv);
+              dw = db.get_user_dw(s, module);
+            }
+        }
+      catch (const semantic_error& er)
+        {
+          /* ignore and go to the next module */
+          continue;
+        }
+
+      dwarf_atvar_query q (*dw, module, *e, userspace_p, lvalue, result, tick);
+      dw->iterate_over_modules(&query_module, &q);
+
+      if (result)
+        {
+          s.unwindsym_modules.insert(module);
+          if (userspace_p && !s.runtime_usermode_p())
+            enable_vma_tracker(s);
+
+          if (lvalue)
+            {
+              // Provide the functioncall to our parent, so that it can be
+              // used to substitute for the assignment node immediately above
+              // us.
+              assert(!target_symbol_setter_functioncalls.empty());
+              *(target_symbol_setter_functioncalls.top()) = result;
+            }
+
+          result->visit(this);
+          return;
+        }
+
+      /* Unable to find the variable in the current module, so we chain
+       * an error in atvar_op */
+      semantic_error  er(_F("unable to find global '%s' in %s%s%s",
+                            e->sym_name().c_str(), module.c_str(),
+                            e->cu_name.empty() ? "" : _(", in "),
+                            e->cu_name.c_str()));
+      e->chain (er);
+    }
+
+  provide(e);
 }
 
 
@@ -4720,6 +4863,9 @@ dwarf_derived_probe::register_patterns(systemtap_session& s)
   dwarf_builder *dw = new dwarf_builder();
 
   update_visitor *filter = new dwarf_cast_expanding_visitor(s, *dw);
+  s.code_filters.push_back(filter);
+
+  filter = new dwarf_atvar_expanding_visitor(s, *dw);
   s.code_filters.push_back(filter);
 
   register_function_and_statement_variants(s, root->bind(TOK_KERNEL), dw, pr_privileged);
@@ -5475,6 +5621,7 @@ struct sdt_uprobe_var_expanding_visitor: public var_expanding_visitor
   void visit_target_symbol (target_symbol* e);
   void visit_target_symbol_arg (target_symbol* e);
   void visit_target_symbol_context (target_symbol* e);
+  void visit_atvar_op (atvar_op* e);
   void visit_cast_op (cast_op* e);
 };
 
@@ -5959,8 +6106,7 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol (target_symbol* e)
   try
     {
       assert(e->name.size() > 0
-	     && ((e->name[0] == '$' && e->target_name == "")
-		 || (e->name == "@var" && e->target_name != "")));
+             && (e->name[0] == '$' || e->name == "@var"));
 
       if (e->name == "$$name" || e->name == "$$provider" || e->name == "$$parms" || e->name == "$$vars")
         visit_target_symbol_context (e);
@@ -5972,6 +6118,19 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol (target_symbol* e)
       e->chain (er);
       provide (e);
     }
+}
+
+
+void
+sdt_uprobe_var_expanding_visitor::visit_atvar_op (atvar_op* e)
+{
+  need_debug_info = true;
+
+  // Fill in our current module context if needed
+  if (e->module.empty())
+    e->module = process_name;
+
+  var_expanding_visitor::visit_atvar_op(e);
 }
 
 
@@ -9226,14 +9385,11 @@ tracepoint_var_expanding_visitor::visit_target_symbol (target_symbol* e)
 {
   try
     {
-      assert(e->name.size() > 0
-	     && ((e->name[0] == '$' && e->target_name == "")
-		 || (e->name == "@var" && e->target_name != "")));
+      assert(e->name.size() > 0 && e->name[0] == '$');
 
       if (e->name == "$$name" || e->name == "$$parms" || e->name == "$$vars")
         visit_target_symbol_context (e);
-      else if (e->name == "@var")
-	throw semantic_error(_("cannot use @var DWARF variables in tracepoints"), e->tok);
+
       else
         visit_target_symbol_arg (e);
     }
@@ -9243,7 +9399,6 @@ tracepoint_var_expanding_visitor::visit_target_symbol (target_symbol* e)
       provide (e);
     }
 }
-
 
 
 tracepoint_derived_probe::tracepoint_derived_probe (systemtap_session& s,

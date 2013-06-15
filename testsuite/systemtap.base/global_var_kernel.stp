@@ -1,8 +1,15 @@
 # Test the correct kernel/time.c CU is selected.
+
+function f()
+{
+  printf("f: %s\n", @var("sys_tz@kernel/time.c")$$);
+}
+
 probe syscall.open
 {
   log("systemtap starting probe");
   log("systemtap ending probe");
   printf("sys_tz = %s\n", @var("sys_tz@kernel/time.c")$$);
+  f()
   exit();
 }
