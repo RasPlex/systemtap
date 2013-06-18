@@ -110,7 +110,7 @@ proc globbing_test { mssg script } {
 		-re {^WARNING:.*No DWARF information found.*\r\n} {
 		    exp_continue }
 		-re {^Missing separate debuginfos.*\r\n} { exp_continue }
-		timeout { fail "$test (timeout)" }
+		timeout { fail "$test_name (timeout)" }
 		eof { }
 	    }
 
