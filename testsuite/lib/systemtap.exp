@@ -504,16 +504,15 @@ proc as_non_root { command } {
     set effective_uid [exec /usr/bin/id -u]
 
     if {$effective_uid == 0} {
-	# If we're logged in as root (real and effective uid of 0) or
-	# if logname fails (which it can if we're not in a login
-	# shell), use user 'nobody'.
+	# If logname fails (which it can if we're not in a login
+	# shell) or if we're root, use user 'nobody'.
 	#
 	# Note that user 'nobody' can't use systemtap to load kernel
 	# modules, since he isn't a member of the stapusr/stapdev
 	# groups. But, 'nobody' can use systemtap to compile a kernel
 	# module.
-	if {[exec /usr/bin/id -ur] == 0 \
-	    || [catch {exec /usr/bin/logname} logname]} {
+	set logname "root"
+	if {[catch {exec /usr/bin/logname} logname] || $logname == "root"} {
 	    set logname "nobody"
 	}
 	set command "su -s /bin/sh $logname -c \"$command\""
