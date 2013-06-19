@@ -1,0 +1,150 @@
+# This test has two purposes:
+# 1. To verify that uprobes is correctly filtering unwanted processes,
+#    allowing stap scripts to run at full speed
+# 2. To verify that stapiu_probe_prehandler() is correctly filtering
+#    unwanted processes
+# This is done by comparing the number of calls to
+# stapiu_probe_prehandler() and stapiu_probe_handler() using the
+# -DUPROBES_HITCOUNT define.added in commit 68561b3.
+
+# Note that this test relies on the basic assumption that there are no
+# other stap sessions or uprobes inserted in the benchmark inode of
+# stap. Otherwise, all hitcounts will be thrown off.
+
+# We need to actually run things
+if {! [installtest_p]} { return }
+
+# So that sudo stap works in case we're not running the test as root
+set installed_stap "$env(SYSTEMTAP_PATH)/stap"
+
+set test "uprobes_filtering"
+
+# Testing steps:
+# 1. check if we're root or user using id -u
+# 2. run mark("benchmark") w/ --privilege=stapusr
+# 3. run benchmark as user
+# 4. run benchmark as root
+# 5. stop process in 2.
+# 6. Check that the handler was called only for the right process
+# 7. Check that the wrong process was filtered out
+#    7a. First check if kernel prefiltering is supported
+#    7b. Verify hitcount results depending on prefiltering support
+
+# 1. Check if we're root or user
+set am_root [expr 0 == [exec id -u]]
+
+# 2. Start the background benchmark hitcounter
+spawn stap -DUPROBES_HITCOUNT --privilege=stapusr --vp 00003 \
+	-e "probe process(\"stap\").mark(\"benchmark\") \{ next \}"
+set stap_id $spawn_id
+set failed 1
+expect {
+	-timeout 30
+	-re {systemtap_module_init\(\)\ returned\ 0} { set failed 0 }
+	timeout {exec kill -s KILL -[exp_pid -i $stap_id]}
+}
+if {$failed} {
+	fail "$test (timeout: can't start benchmark monitor)"
+	return
+}
+
+# 3. Run benchmark as user
+set non_root_loops 11111111
+if {[as_non_root "$installed_stap \
+		--benchmark-sdt-loops=$non_root_loops"]} {
+	fail "$test (can't start non-root benchmark)"
+	return
+}
+
+# 4. Run benchmark as root
+set root_loops 10101010
+if {[as_root "$installed_stap --benchmark-sdt-loops=$root_loops"]} {
+	fail "$test (can't start root benchmark)"
+	return
+}
+
+# 5. Stop process from step 2
+exec kill -s TERM [exp_pid -i $stap_id]
+set prehandler_hitcount -1
+set handler_hitcount -1
+expect {
+	-timeout 30
+	-i $stap_id
+	-re {stapiu_probe_prehandler\(\)\ called\ ([0-9]+)\ times} {
+		set prehandler_hitcount $expect_out(1,string)
+		exp_continue
+	}
+	-re {stapiu_probe_handler\(\)\ called\ ([0-9]+)\ times} {
+		set handler_hitcount $expect_out(1,string)
+	}
+	timeout {
+		fail "$test (timeout: can't stop benchmark monitor)"
+		exec kill -s KILL -[exp_pid -i $stap_id]
+		return
+	}
+}
+
+if {$prehandler_hitcount == -1 || $handler_hitcount == -1} {
+	fail "$test (could not get prehandler/handler hitcount)"
+	verbose -log "this happens if stap doesn't support UPROBES_HITCOUNT"
+	return
+}
+
+# 6. Check that the handler was called only for the right process
+#    This means that if we're root, then handler() should have been
+#    called $root_loops times only, and vice-versa for not root
+if {(!$am_root && $handler_hitcount != $non_root_loops)
+		|| ($am_root && $handler_hitcount != $root_loops)} {
+	fail "$test (handler was not called the right number of times)"
+	if {$am_root} {set n $root_loops} else {set n $non_root_loops}
+	verbose -log "expected number of calls: $n"
+	verbose -log "actual number of calls: $handler_hitcount"
+	return
+}
+
+# 7. Check that the wrong process was filtered out
+
+# 7a. First check if kernel prefiltering is supported
+
+# Relies on the fact that stap won't pass compilation if not supported
+# The ignorestderr is not strictly necessary since stap doesn't output
+# anything to stderr, but the intent is to only care about the exit code
+set prefilter_support [expr ![catch {exec stap -p4 -g \
+		-e "probe begin \{%\{UPROBE_HANDLER_REMOVE%\}\}" 2> /dev/null}]]
+verbose -log "kernel prefiltering support = $prefilter_support"
+
+# 7b. Verify hitcount results depending on prefiltering support
+
+# If prefiltering is not supported, then we expect the prehandler to
+# be called $root_loops + $non_root_loops times
+if {!$prefilter_support} {
+	set total [expr {$root_loops + $non_root_loops}]
+	if {$prehandler_hitcount != $total} {
+		fail "$test (prehandler was not called the right number of times)"
+		verbose -log "expected number of calls: $total"
+		verbose -log "actual number of calls: $prehandler_hitcount"
+		return
+	}
+} else {
+# Prefiltering is supported, so we expect the prehandler to be called
+# only one time more than handler.
+
+# TODO: Verify that it will always be only 1 greater. From a look at
+# kernel/events/uprobes.c, it seems that in the handler_chain() func,
+# after handler() returns, the next call is unapply_uprobe() (assuming
+# we are the only consumers for this probe), which will remove the
+# uprobe. Since the handler() call is wrapped in semaphores, we should
+# get no other calls before the first handler_chain() finishes.
+	set total [expr {$handler_hitcount + 1}]
+	if {$prehandler_hitcount != $total} {
+		fail "$test (prehandler was not called the right number of times)"
+		verbose -log "expected number of calls: $total"
+		verbose -log "actual number of calls: $prehandler_hitcount"
+		verbose -log "this can happen if other uprobes are inserted at\
+			the same location"
+		return
+	}
+}
+
+pass $test
+
