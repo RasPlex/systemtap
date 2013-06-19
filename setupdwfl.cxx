@@ -1,5 +1,5 @@
 // Setup routines for creating fully populated DWFLs. Used in pass 2 and 3.
-// Copyright (C) 2009-2011 Red Hat, Inc.
+// Copyright (C) 2009-2013 Red Hat, Inc.
 //
 // This file is part of systemtap, and is free software.  You can
 // redistribute it and/or modify it under the terms of the GNU General
@@ -241,8 +241,16 @@ static int
 setup_dwfl_report_kernel_p(const char* modname, const char* filename)
 {
   assert_no_interrupts();
+
   if (setup_dwfl_done)
     return -1;
+
+  assert (current_session_for_find_debuginfo);
+  if (current_session_for_find_debuginfo->verbose > 4)
+    clog << _F("checking pattern '%s' vs. module '%s' file '%s'\n",
+               offline_search_modname ?: "",
+               modname ?: "",
+               filename ?: "");
 
   // elfutils sends us NULL filenames sometimes if it can't find dwarf
   if (filename == NULL)
@@ -272,6 +280,7 @@ setup_dwfl_report_kernel_p(const char* modname, const char* filename)
     {
       if (dwflpp::name_has_wildcard (offline_search_modname))
 	{
+          // XXX: see also dwflpp::module_name_matches()
 	  int match_p = !fnmatch(offline_search_modname, modname, 0);
 	  // In the wildcard case, we don't short-circuit (return -1)
 	  // analogously to dwflpp::module_name_final_match().

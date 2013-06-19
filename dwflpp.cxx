@@ -242,6 +242,10 @@ dwflpp::module_name_matches(const string& pattern)
   if (t && sess.verbose>3)
     clog << _F("pattern '%s' matches module '%s'\n",
                pattern.c_str(), module_name.c_str());
+  if (!t && sess.verbose>4)
+    clog << _F("pattern '%s' does not match module '%s'\n",
+               pattern.c_str(), module_name.c_str());
+
   return t;
 }
 
