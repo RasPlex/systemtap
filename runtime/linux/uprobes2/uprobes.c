@@ -611,7 +611,8 @@ static void uprobe_free_process(struct uprobe_process *uproc, int in_callback)
 
 	if (area->slots)
 		kfree(area->slots);
-	hlist_del(&uproc->hlist);
+	if (!hlist_unhashed(&uproc->hlist))
+		hlist_del(&uproc->hlist);
 	list_for_each_entry_safe(utask, tmp, &uproc->thread_list, list)
 		uprobe_free_task(utask, in_callback);
 	put_pid(uproc->tg_leader);

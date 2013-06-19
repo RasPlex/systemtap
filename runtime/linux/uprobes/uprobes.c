@@ -519,7 +519,8 @@ static void uprobe_free_process(struct uprobe_process *uproc)
 		uprobe_release_ssol_vma(uproc);
 	if (area->slots)
 		kfree(area->slots);
-	hlist_del(&uproc->hlist);
+	if (!hlist_unhashed(&uproc->hlist))
+		hlist_del(&uproc->hlist);
 	list_for_each_entry_safe(utask, tmp, &uproc->thread_list, list) {
 		/*
 		 * utrace_detach() is OK here (required, it seems) even if
