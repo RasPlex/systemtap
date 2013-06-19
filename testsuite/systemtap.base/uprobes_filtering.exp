@@ -11,13 +11,21 @@
 # other stap sessions or uprobes inserted in the benchmark inode of
 # stap. Otherwise, all hitcounts will be thrown off.
 
+set test "uprobes_filtering"
+
 # We need to actually run things
-if {! [installtest_p]} { return }
+if {! [installtest_p]} { untested $test; return }
 
 # So that sudo stap works in case we're not running the test as root
 set installed_stap "$env(SYSTEMTAP_PATH)/stap"
 
-set test "uprobes_filtering"
+# Check for inode-uprobes (adapted from uprobes_p())
+set path "/proc/kallsyms"
+if {[catch {exec grep -q "register_uprobe" $path}]
+		&& [catch {exec grep -q " uprobe_register" $path}]} {
+	untested $test
+	return
+}
 
 # Testing steps:
 # 1. check if we're root or user using id -u
@@ -107,8 +115,6 @@ if {(!$am_root && $handler_hitcount != $non_root_loops)
 # 7a. First check if kernel prefiltering is supported
 
 # Relies on the fact that stap won't pass compilation if not supported
-# The ignorestderr is not strictly necessary since stap doesn't output
-# anything to stderr, but the intent is to only care about the exit code
 set prefilter_support [expr ![catch {exec stap -p4 -g \
 		-e "probe begin \{%\{UPROBE_HANDLER_REMOVE%\}\}" 2> /dev/null}]]
 verbose -log "kernel prefiltering support = $prefilter_support"
