@@ -20,16 +20,16 @@ int main()
   //staptest// mount ("mount_source", "mount_target", "ext2", MS_BIND|MS_NOATIME|MS_NODIRATIME|MS_NOSUID, "some arguments") = -NNNN (ENOENT)
 
   umount("umount_target");
-  //staptest// umount ("umount_target", 0) = -NNNN (ENOENT)
+  //staptest// umount ("umount_target", 0) = -NNNN (ENOENT!!!!EPERM)
 
   umount2("umount2_target", MNT_FORCE);
-  //staptest// umount ("umount2_target", MNT_FORCE) = -NNNN (ENOENT)
+  //staptest// umount ("umount2_target", MNT_FORCE) = -NNNN (ENOENT!!!!EPERM)
 
   umount2("umount2_target", MNT_DETACH);
-  //staptest// umount ("umount2_target", MNT_DETACH) = -NNNN (ENOENT)
+  //staptest// umount ("umount2_target", MNT_DETACH) = -NNNN (ENOENT!!!!EPERM)
 
   umount2("umount2_target", MNT_EXPIRE);
-  //staptest// umount ("umount2_target", MNT_EXPIRE) = -NNNN (ENOENT)
+  //staptest// umount ("umount2_target", MNT_EXPIRE) = -NNNN (ENOENT!!!!EPERM)
 
   return 0;
 }
