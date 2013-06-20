@@ -94,7 +94,7 @@ check_dyninst_rt(void)
 
 // Check that SELinux settings are ok for Dyninst operation.
 bool
-check_dyninst_sebools(void)
+check_dyninst_sebools(bool attach)
 {
 #ifdef HAVE_SELINUX
   // For all these checks, we could examine errno on failure to act differently
@@ -114,6 +114,14 @@ check_dyninst_sebools(void)
   if (security_get_boolean_active("allow_execstack") == 0)
     {
       warnx("SELinux boolean 'allow_execstack' is disabled, which blocks Dyninst");
+      return false;
+    }
+
+  // In process-attach mode, SELinux will trigger "avc:  denied  { execmod }"
+  // on ld.so, when the mutator is injecting the dlopen for libdyninstAPI_RT.so.
+  if (attach && security_get_boolean_active("allow_execmod") == 0)
+    {
+      warnx("SELinux boolean 'allow_execmod' is disabled, which blocks Dyninst");
       return false;
     }
 #endif

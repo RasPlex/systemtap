@@ -119,7 +119,7 @@ main(int argc, char * const argv[])
   // Make sure that environment variables and selinux are set ok.
   if (!check_dyninst_rt())
     return 1;
-  if (!check_dyninst_sebools())
+  if (!check_dyninst_sebools(pid != 0))
     return 1;
 
   auto_ptr<mutator> session(new mutator(module, modoptions));

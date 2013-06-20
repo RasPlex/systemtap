@@ -20,7 +20,7 @@
 bool check_dyninst_rt(void);
 
 // Check that SELinux settings are ok for Dyninst operation.
-bool check_dyninst_sebools(void);
+bool check_dyninst_sebools(bool attach=false);
 
 // Check whether a process exited cleanly
 bool check_dyninst_exit(BPatch_process *process);
