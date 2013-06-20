@@ -26,9 +26,9 @@ tool.
 .PP
 Splitting the systemtap tool into a front-end and a back-end allows a
 user to compile a systemtap script on a development machine that has
-the kernel debugging information (need to compile the script) and then
+the kernel development tools (needed to compile the script) and then
 transfer the resulting kernel module to a production machine that
-doesn't have any development tools or kernel debugging information installed.
+doesn't have any development tools installed.
 .PP
 Please refer to stappaths (7) for the version number, or run
 rpm \-q systemtap (fedora/red hat)
@@ -218,30 +218,52 @@ again, it switches to
 file.
 
 .SH SAFETY AND SECURITY
-Systemtap is an administrative tool.  It exposes kernel internal data
-structures and potentially private user information.  See the 
+Systemtap, in the default kernel-module runtime mode, is an
+administrative tool.  It exposes kernel internal data structures and
+potentially private user information.  See the
 .IR stap (1)
 manual page for additional information on safety and security.
 .PP
-To increase system security, only the root user and members of both
-.I stapdev " and " staprun
-groups can use
+To increase system security, users of systemtap must be root, or in the
 .I staprun
-to insert systemtap modules (or attach to existing ones).
+group in order to execute this setuid 
+.I staprun
+program.
+A user may select a particular privilege level with the stap
+.I \-\-privilege=
+option, which 
+.I staprun
+will later enforce.
+.TP
+stapdev
 Members of the
+.I stapdev
+group can write and load script modules with root-equivalent
+privileges, without particular security constraints.  (Many safety
+constraints remain.)
+.TP
+stapsys
+Members of the
+.I stapsys
+group have almost all the privileges of 
+.IR stapdev ,
+except for guru mode constructs.
+.TP
+staprun
+Members only of the
 .I stapusr
-group only can use
-.I staprun
-to insert or remove systemtap modules (or attach to existing systemtap modules)
-under the following conditions:
-.IP \(bu 4
-The module is located in
-the /lib/modules/VERSION/systemtap directory.  This directory
-must be owned by root and not be world writable.
-.IP \(bu 4
-The module has been signed by a trusted signer. Trusted signers are normally
-systemtap compile servers which sign modules when the \-\-unprivileged option is
-specified by the client. See the
+group may any-privileged modules placed into the /lib/modules/VERSION/systemtap 
+by the system administrator.
+.TP
+staprun
+Members only of the
+.I stapusr
+group may also write and load low-privilege script modules, which are normally
+limited to manipulating their own processes (and not the kernel nor other users'
+processes).
+.PP
+Part of the privilege enforcement mechanism may require using a 
+stap-server and administrative trust in its cryptographic signer; see the
 .IR stap\-server (8)
 manual page for a for more information.
 .SH FILES
@@ -257,6 +279,7 @@ user and not be world writable.
 .IR stap (1),
 .IR stapprobes (3stap),
 .IR stap\-server (8),
+.IR stapdyn (8),
 .IR stapex (3stap)
 
 .SH BUGS

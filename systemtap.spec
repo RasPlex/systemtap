@@ -708,6 +708,9 @@ done
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
 %{_mandir}/man8/staprun.8*
+%if %{with_dyninst}
+%{_mandir}/man8/stapdyn.8*
+%endif
 %doc README README.security AUTHORS NEWS COPYING
 
 

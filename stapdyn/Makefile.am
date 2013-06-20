@@ -24,6 +24,8 @@ if HAVE_DYNINST
 bin_PROGRAMS += stapdyn
 noinst_PROGRAMS += dynsdt
 
+man_MANS = stapdyn.8
+
 stapdyn_SOURCES = stapdyn.cxx mutator.cxx mutatee.cxx \
 				  dynprobe.cxx dynutil.cxx ../util.cxx
 stapdyn_CXXFLAGS = $(AM_CXXFLAGS) @DYNINST_CXXFLAGS@

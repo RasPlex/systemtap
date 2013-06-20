@@ -1,0 +1,143 @@
+.\" -*- nroff -*-
+.TH STAPDYN 8 
+.SH NAME
+stapdyn \- systemtap dyninst runtime
+
+.SH SYNOPSIS
+
+.br
+.B stapdyn
+[
+.I OPTIONS
+]
+.I MODULE
+[
+.I MODULE-OPTIONS
+]
+
+.SH DESCRIPTION
+
+The
+.I stapdyn
+program is the dyninst back-end of the Systemtap tool.  It expects a 
+shared library produced by the front-end
+.I stap
+tool, when run with
+.IR \-\-dyninst .
+
+.PP
+Splitting the systemtap tool into a front-end and a back-end allows a
+user to compile a systemtap script on a development machine that has
+the debugging information (need to compile the script) and then
+transfer the resulting shared objevct to a production machine that
+doesn't have any development tools or debugging information installed.
+.PP
+Please refer to stappaths (7) for the version number, or run
+rpm \-q systemtap (fedora/red hat)
+apt\-get \-v systemtap (ubuntu)
+
+.SH OPTIONS
+The
+.I stapdyn
+program supports the following options.  Any other option
+prints a list of supported options.
+.TP
+.B \-v
+Verbose mode.
+.TP
+.B \-V
+Print version number and exit.
+.TP
+.B \-w
+Suppress warnings from the script.
+.TP
+.B \-c CMD
+Command CMD will be run and the
+.I stapdyn
+program will exit when CMD
+does.  The '_stp_target' variable will contain the pid for CMD.
+.TP
+.B \-x PID
+The '_stp_target' variable will be set to PID.
+.TP
+.B \-o FILE
+Send output to FILE. If the module uses bulk mode, the output will
+be in percpu files FILE_x(FILE_cpux in background and bulk mode)
+where 'x' is the cpu number. This supports strftime(3) formats
+for FILE.
+.TP
+.B var1=val
+Sets the value of global variable var1 to val. Global variables contained 
+within a script are treated as options and can be set from the 
+stapdyn command line.
+
+.SH ARGUMENTS
+.B MODULE
+is either a module path or a module name.  If it is a module name,
+the module will be looked for in the following directory
+(where 'VERSION' is the output of "uname \-r"):
+.IP
+/lib/modules/VERSION/systemtap
+.PP
+
+\& $ stap \-\-dyninst \-p4 \-m mod1 \-e\ \[aq]global var1="foo"; probe begin{printf("%s\\n", var1); exit()}\[aq]
+.br
+.PP
+Running this with an additional module argument:
+.PP
+
+\& $ stapdyn mod1.so var1="HelloWorld"
+.br
+\& HelloWorld
+.PP
+Spaces and exclamation marks currently cannot be passed into global variables 
+this way.
+
+.SH EXAMPLES
+See the 
+.IR stapex (3stap)
+manual page for a collection of sample scripts.
+.PP
+Here is a very basic example of how to use
+.I stapdyn.
+First, use
+.I stap
+to compile a script.  The
+.I stap
+program will report the pathname to the resulting module.
+.PP
+\& $ stap \-\-dyninst \-p4 \-e \[aq]probe begin { printf("Hello World!\\n"); exit() }\[aq]
+.br
+\& /home/user/.systemtap/cache/85/stap_8553d83f78c_265.so
+.PP
+Run
+.I stapdyn
+with the pathname to the module as an argument.
+.PP
+\& $ stapdyn /home/user/.systemtap/cache/85/stap_8553d83f78c_265.so
+.br
+\& Hello World!
+
+.SH SAFETY AND SECURITY
+Systemtap, in DynInst mode, is a developer tool, and runs completely
+unprivileged.  The Linux kernel will only permit one's own processes
+to be accessed, which is enforced by the
+.IR ptrace (2)
+system call.
+See the 
+.IR stap (1)
+manual page for additional information on safety and security.
+
+.SH SEE ALSO
+.IR stap (1),
+.IR stapprobes (3stap),
+.IR stap\-server (8),
+.IR staprun (8),
+.IR stapex (3stap)
+
+.SH BUGS
+Use the Bugzilla link of the project web page or our mailing list.
+.nh
+.BR http://sourceware.org/systemtap/ ", " <systemtap@sourceware.org> .
+.hy
+
