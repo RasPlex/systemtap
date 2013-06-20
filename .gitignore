@@ -9,7 +9,6 @@ gmon.out
 config.h
 config.log
 config.status
-*.[18]
 .deps
 loc2c-test
 run-stap

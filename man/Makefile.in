@@ -285,8 +285,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dist foreign
 man_MANS = stapprobes.3stap stapfuncs.3stap stapvars.3stap \
-	stapex.3stap dtrace.1 stap-merge.1 stappaths.7 $(am__append_1) \
-	$(am__append_2)
+	stapex.3stap dtrace.1 stap-merge.1 stappaths.7 stapsh.8 \
+	$(am__append_1) $(am__append_2)
 all: all-am
 
 .SUFFIXES:

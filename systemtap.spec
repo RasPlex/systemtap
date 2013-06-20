@@ -707,6 +707,7 @@ done
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
+%{_mandir}/man8/stapsh.8*
 %{_mandir}/man8/staprun.8*
 %if %{with_dyninst}
 %{_mandir}/man8/stapdyn.8*
