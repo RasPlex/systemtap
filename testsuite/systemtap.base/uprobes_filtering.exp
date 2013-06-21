@@ -53,7 +53,10 @@ expect {
 }
 if {$failed} {
 	fail "$test (timeout: can't start benchmark monitor)"
+	catch { close -i $stap_id } ; catch { wait -i $stap_id }
 	return
+} else {
+	pass "$test (started benchmark monitor)"
 }
 
 # 3. Run benchmark as user
@@ -61,14 +64,16 @@ set non_root_loops 11111111
 if {[as_non_root "$installed_stap \
 		--benchmark-sdt-loops=$non_root_loops"]} {
 	fail "$test (can't start non-root benchmark)"
-	return
+} else {
+	pass "$test (started non-root benchmark)"
 }
 
 # 4. Run benchmark as root
 set root_loops 10101010
 if {[as_root "$installed_stap --benchmark-sdt-loops=$root_loops"]} {
 	fail "$test (can't start root benchmark)"
-	return
+} else {
+	pass "$test (started root benchmark)"
 }
 
 # 5. Stop process from step 2
@@ -88,9 +93,9 @@ expect {
 	timeout {
 		fail "$test (timeout: can't stop benchmark monitor)"
 		exec kill -s KILL -[exp_pid -i $stap_id]
-		return
 	}
 }
+catch { close -i $stap_id } ; catch { wait -i $stap_id }
 
 if {$prehandler_hitcount == -1 || $handler_hitcount == -1} {
 	fail "$test (could not get prehandler/handler hitcount)"
