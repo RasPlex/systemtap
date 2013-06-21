@@ -124,6 +124,8 @@ check_dyninst_sebools(bool attach)
       warnx("SELinux boolean 'allow_execmod' is disabled, which blocks Dyninst");
       return false;
     }
+#else
+  (void)attach; // unused
 #endif
 
   return true;
