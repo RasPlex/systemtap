@@ -213,6 +213,7 @@ public:
   int download_dbinfo;
   bool suppress_handler_errors;
   bool suppress_time_limits;
+  bool color_errors;
 
   enum { kernel_runtime, dyninst_runtime } runtime_mode;
   bool runtime_usermode_p() const { return runtime_mode == dyninst_runtime; }

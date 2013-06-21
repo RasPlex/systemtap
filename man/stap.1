@@ -294,6 +294,12 @@ cleanup manually and then exit.  See the CACHING section for more details about
 cache limits.
 
 .TP
+\fB\-\-color\fR[=\fIWHEN\fR], \fB\-\-colour\fR[=\fIWHEN\fR]
+This option enables colored error messages, which is turned off by default.
+WHEN can be either 'never', 'always', or 'auto' (i.e. enable only if at a
+terminal). Defaults to 'auto' if not specified.
+
+.TP
 .BI \-\-disable\-cache
 This option disables all use of the cache directory.  No files will be either
 read from or written to the cache.

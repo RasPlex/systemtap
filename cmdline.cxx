@@ -56,5 +56,7 @@ struct option stap_long_options[] = {
   { "dyninst", 0, NULL, LONG_OPT_RUNTIME_DYNINST },
   { "benchmark-sdt-loops", 1, NULL, LONG_OPT_BENCHMARK_SDT_LOOPS },
   { "benchmark-sdt-threads", 1, NULL, LONG_OPT_BENCHMARK_SDT_THREADS },
+  { "color", 2, NULL, LONG_OPT_COLOR_ERRS },
+  { "colour", 2, NULL, LONG_OPT_COLOR_ERRS },
   { NULL, 0, NULL, 0 }
 };

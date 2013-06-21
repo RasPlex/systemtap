@@ -55,6 +55,7 @@ enum {
   LONG_OPT_RUNTIME_DYNINST,
   LONG_OPT_BENCHMARK_SDT_LOOPS,
   LONG_OPT_BENCHMARK_SDT_THREADS,
+  LONG_OPT_COLOR_ERRS,
 };
 
 // NB: when adding new options, consider very carefully whether they

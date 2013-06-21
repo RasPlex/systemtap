@@ -161,6 +161,7 @@ systemtap_session::systemtap_session ():
   sysroot = "";
   update_release_sysroot = false;
   suppress_time_limits = false;
+  color_errors = false;
 
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
@@ -334,6 +335,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   update_release_sysroot = other.update_release_sysroot;
   sysenv = other.sysenv;
   suppress_time_limits = other.suppress_time_limits;
+  color_errors = other.color_errors;
 
   include_path = other.include_path;
   runtime_path = other.runtime_path;
@@ -1272,6 +1274,18 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
         case LONG_OPT_BENCHMARK_SDT_THREADS:
           // XXX This option is secret, not supported, subject to change at our whim
           benchmark_sdt_threads = strtoul(optarg, NULL, 10);
+          break;
+
+        case LONG_OPT_COLOR_ERRS:
+          if (optarg && strcmp(optarg, "auto")
+                     && strcmp(optarg, "never")
+                     && strcmp(optarg, "always")) {
+            cerr << _F("Invalid argument '%s' for --color.", optarg) << endl;
+            return 1;
+          }
+          // --color without arg is equivalent to auto
+          color_errors = ((optarg && !strcmp(optarg, "always"))
+                || ((!optarg || !strcmp(optarg, "auto")) && isatty(STDERR_FILENO)));
           break;
 
 	case '?':
