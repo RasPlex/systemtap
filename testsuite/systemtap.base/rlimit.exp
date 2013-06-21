@@ -87,7 +87,7 @@ if {[as_non_root "$installed_stap --rlimit-nproc=1 --rlimit-nproc=999999999999 -
 }
 
 # Increase NPROC limit (as root)
-set test "rlimit NPROC increase (as non root)"
+set test "rlimit NPROC increase (as root)"
 if {[as_root "$installed_stap --rlimit-nproc=1 --rlimit-nproc=999999999999 -p4 $srcdir/$subdir/rlimit.stp" ]} {
      fail $test
 } else {
