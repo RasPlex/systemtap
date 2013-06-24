@@ -94,21 +94,18 @@ probe syscall.futex.return
     mutex_contention[$uaddr] <<< elapsed
     stack = sprint_ubacktrace()
     mutex_last_cont_stack[$uaddr] = stack
+    mutex_cont_stack[stack] <<< elapsed
     if ($uaddr in mutex_init_stack) {
       if (verbose) {
         printf("contention time %d on mutex %p initialized at\n%s\n",
 	       elapsed, $uaddr, mutex_init_stack[$uaddr])
       }
-      stack = mutex_init_stack[$uaddr]
-      mutex_cont_stack[stack] <<< elapsed
     }
     else if ($uaddr in mutex_uninit) {
       if (verbose) {
         printf("contention time %d on popup mutex %p at\n%s\n",
 	       elapsed, $uaddr, stack)
       }
-      stack = mutex_uninit[$uaddr]
-      mutex_cont_stack[stack] <<< elapsed
     }
     else {
       if (verbose) {
@@ -117,7 +114,6 @@ probe syscall.futex.return
       }
       mutex_uninit[$uaddr] = stack
       mutex_names[$uaddr] = usymdata ($uaddr)
-      mutex_cont_stack[stack] <<< elapsed
     }
   }
   else {
