@@ -20,8 +20,7 @@
 #include "task_finder.h"
 #include "runtime/k_syms.h"
 #include "dwflpp.h"
-
-#include "re2c-migrate/stapregex.h"
+#include "stapregex.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -915,60 +914,7 @@ ostream & operator<<(ostream & o, itervar const & v)
 
 // ------------------------------------------------------------------------
 
-
-translator_output::translator_output (ostream& f):
-  buf(0), o2 (0), o (f), tablevel (0)
-{
-}
-
-
-translator_output::translator_output (const string& filename, size_t bufsize):
-  buf (new char[bufsize]),
-  o2 (new ofstream (filename.c_str ())),
-  o (*o2),
-  tablevel (0),
-  filename (filename)
-{
-  o2->rdbuf()->pubsetbuf(buf, bufsize);
-}
-
-
-translator_output::~translator_output ()
-{
-  delete o2;
-  delete [] buf;
-}
-
-
-ostream&
-translator_output::newline (int indent)
-{
-  if (!  (indent > 0 || tablevel >= (unsigned)-indent)) o.flush ();
-  assert (indent > 0 || tablevel >= (unsigned)-indent);
-
-  tablevel += indent;
-  o << "\n";
-  for (unsigned i=0; i<tablevel; i++)
-    o << "  ";
-  return o;
-}
-
-
-void
-translator_output::indent (int indent)
-{
-  if (!  (indent > 0 || tablevel >= (unsigned)-indent)) o.flush ();
-  assert (indent > 0 || tablevel >= (unsigned)-indent);
-  tablevel += indent;
-}
-
-
-ostream&
-translator_output::line ()
-{
-  return o;
-}
-
+// translator_output moved to translator-output.cxx
 
 // ------------------------------------------------------------------------
 
@@ -6870,7 +6816,7 @@ translate_pass (systemtap_session& s)
             }
           catch (const semantic_error &e)
             {
-              s.print_error(e); // TODOXXX need to report the token
+              s.print_error(e);
             }
         }
       s.op->assert_0_indent();

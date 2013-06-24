@@ -9,7 +9,7 @@
 #include "config.h"
 #include "session.h"
 #include "cache.h"
-#include "re2c-migrate/stapregex.h"
+#include "stapregex.h"
 #include "elaborate.h"
 #include "translate.h"
 #include "buildrun.h"
@@ -65,6 +65,8 @@ systemtap_session::systemtap_session ():
   pattern_root(new match_node),
   user_file (0),
   dfa_counter (0),
+  dfa_maxstate (0),
+  dfa_maxtag (0),
   be_derived_probes(0),
   dwarf_derived_probes(0),
   kprobe_derived_probes(0),

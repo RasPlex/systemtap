@@ -313,13 +313,17 @@ public:
   std::vector<derived_probe*> probes; // see also *_probes groups below
   std::vector<embeddedcode*> embeds;
   std::map<std::string, statistic_decl> stat_decls;
-  std::map<std::string, stapdfa*> dfas;
-  unsigned dfa_counter; // used to give unique names
   // track things that are removed
   std::vector<vardecl*> unused_globals;
   std::vector<derived_probe*> unused_probes; // see also *_probes groups below
   std::vector<functiondecl*> unused_functions;
   // XXX: vector<*> instead please?
+
+  // resolved/compiled regular expressions for the run
+  std::map<std::string, stapdfa*> dfas;
+  unsigned dfa_counter;  // used to give unique names
+  unsigned dfa_maxstate; // used for subexpression-tracking data structure
+  unsigned dfa_maxtag;   // ditto
 
   // Every probe in these groups must also appear in the
   // session.probes vector.

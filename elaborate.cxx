@@ -15,8 +15,7 @@
 #include "session.h"
 #include "util.h"
 #include "task_finder.h"
-
-#include "re2c-migrate/stapregex.h"
+#include "stapregex.h"
 
 extern "C" {
 #include <sys/utsname.h>
@@ -1516,15 +1515,8 @@ public:
   void visit_regex_query (regex_query *q) {
     functioncall_traversing_visitor::visit_regex_query (q);
 
-    try
-      {
-        string re = q->right->value;
-        regex_to_stapdfa (&session, re, session.dfa_counter);
-      }
-    catch (const semantic_error &e)
-      {
-        throw semantic_error(e.what(), q->right->tok);
-      }
+    string re = q->right->value;
+    regex_to_stapdfa (&session, re, q->right->tok);
   }
 };
 

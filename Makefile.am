@@ -47,10 +47,7 @@ stap_SOURCES = main.cxx session.cxx \
 	tapset-perfmon.cxx tapset-mark.cxx tapset-itrace.cxx \
 	tapset-utrace.cxx task_finder.cxx dwflpp.cxx rpm_finder.cxx \
 	setupdwfl.cxx remote.cxx privilege.cxx cmdline.cxx \
-	tapset-dynprobe.cxx tapset-method.cxx
-stap_SOURCES += re2c-migrate/stapregex.cxx \
-	re2c-migrate/re2c-regex.cxx re2c-migrate/re2c-emit.cxx \
-	re2c-migrate/re2c-dfa.cxx re2c-migrate/re2c-globals.cxx
+	tapset-dynprobe.cxx tapset-method.cxx translator-output.cxx
 noinst_HEADERS = sdt_types.h
 stap_LDADD = @stap_LIBS@ @sqlite3_LIBS@ @LIBINTL@ -lpthread
 stap_DEPENDENCIES =
