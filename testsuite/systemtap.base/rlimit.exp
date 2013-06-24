@@ -72,7 +72,7 @@ if {[catch { exec $installed_stap --rlimit-cpu=60 -p4 $srcdir/$subdir/rlimit.stp
 
 # Small CPU limit
 set test "rlimit CPU small"
-if {[catch { exec $installed_stap --rlimit-cpu=1 -p4 $srcdir/$subdir/rlimit.stp} res ]} {
+if {[catch { exec $installed_stap --disable-cache --rlimit-cpu=1 -p4 $srcdir/$subdir/rlimit.stp} res ]} {
      pass $test
 } else {
      fail $test
@@ -129,12 +129,8 @@ if {[catch { exec $installed_stap --rlimit-stack=1024000 -p4 $srcdir/$subdir/rli
 }
 
 # Small STACK limit
-set test "rlimit STACK small"
-if {[catch { exec $installed_stap --rlimit-stack=1 -p4 $srcdir/$subdir/rlimit.stp} res ]} {
-     pass $test
-} else {
-     fail $test
-}
+# PR13977. The setrlimit() call in stap succeeds, but some kernels ignore
+# the small limit.
 
 # Increase FSIZE limit (as non root)
 set test "rlimit FSIZE increase (as non root)"
