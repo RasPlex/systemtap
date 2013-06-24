@@ -458,6 +458,7 @@ setup_dwfl_kernel(const std::set<std::string> &names,
 		  unsigned *found,
 		  systemtap_session &s)
 {
+  current_session_for_find_debuginfo = &s;
   if (kernel_dwfl != NULL
       && offline_search_modname == NULL
       && offline_search_names == names)
