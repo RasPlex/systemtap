@@ -90,6 +90,19 @@ struct statistic_decl
 
 struct macrodecl; // defined in parse.h
 
+struct parse_error: public std::runtime_error
+{
+  const token* tok;
+  bool skip_some;
+  parse_error (const std::string& msg):
+    runtime_error (msg), tok (0), skip_some (true) {}
+  parse_error (const std::string& msg, const token* t):
+    runtime_error (msg), tok (t), skip_some (true) {}
+  parse_error (const std::string& msg, bool skip):
+    runtime_error (msg), tok (0), skip_some (skip) {}
+};
+
+
 struct systemtap_session
 {
 private:
@@ -362,11 +375,13 @@ public:
 
   translator_output* op_create_auxiliary();
 
-  // void print_error (const parse_error& e);
   const token* last_token;
   void print_token (std::ostream& o, const token* tok);
   void print_error (const semantic_error& e);
   void print_error_source (std::ostream&, std::string&, const token* tok);
+  void print_error (const parse_error &pe,
+                       const token* tok,
+                       const std::string &input_name);
   void print_warning (const std::string& w, const token* tok = 0);
   void printscript(std::ostream& o);
 

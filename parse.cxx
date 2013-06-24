@@ -315,48 +315,8 @@ operator << (ostream& o, const token& t)
 void
 parser::print_error  (const parse_error &pe)
 {
-  string align_parse_error ("     ");
-
   const token *tok = pe.tok ? pe.tok : last_t;
-
-  // print either pe.what() or a deferred error from the lexer
-  bool found_junk = false;
-  if (tok && tok->type == tok_junk && tok->msg != "")
-    {
-      found_junk = true;
-      cerr << _("parse error: ") << tok->msg << endl;
-    }
-  else
-    {
-      cerr << _("parse error: ") << pe.what() << endl;      
-    }
-
-  // NB: It makes sense for lexer errors to always override parser
-  // errors, since the original obvious scheme was for the lexer to
-  // throw an exception before the token reached the parser.
-
-  if (pe.tok || found_junk)
-    {
-      cerr << _("\tat: ") << *tok << endl;
-      session.print_error_source (cerr, align_parse_error, tok);
-    }
-  else if (tok) // "expected" type error
-    {
-      cerr << _("\tsaw: ") << *tok << endl;
-      session.print_error_source (cerr, align_parse_error, tok);
-    }
-  else
-    {
-      cerr << _("\tsaw: ") << input_name << " EOF" << endl;
-    }
-
-  // print chained macro invocations
-  while (tok && tok->chain) {
-    tok = tok->chain;
-    cerr << _("\tin expansion of macro: ") << *tok << endl;
-    session.print_error_source (cerr, align_parse_error, tok);
-  }
-
+  session.print_error(pe, tok, input_name);
   num_errors ++;
 }
 
