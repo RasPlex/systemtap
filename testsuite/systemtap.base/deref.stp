@@ -7,6 +7,8 @@
 probe begin {  println("systemtap starting probe")  }
 probe end   {  println("systemtap ending probe")    }
 
+global error_count = 0
+
 probe end(1) {
   log_test("kread u8", kread_u8())
   log_test("kread u16", kread_u16())
@@ -25,13 +27,16 @@ probe end(1) {
   log_test("kwrite u32", kwrite_u32())
   log_test("kwrite u64", kwrite_u64())
   log_test("kwrite ptr", kwrite_ptr())
+
+  if (!error_count)
+    println("systemtap test success")
 }
 
 function log_test(test:string, result:long) {
-  if (result)
-    println("systemtap test success")
-  else
+  if (!result) {
     printf("systemtap test failure - %s\n", test)
+    error_count += 1
+  }
 }
 
 function kread_u8:long() %{
@@ -59,7 +64,7 @@ function kread_u64:long() %{
 %}
 
 function kread_ptr:long() %{
-  struct task_struct *local = current;
+  void *local = &systemtap_module_init;
   STAP_RETVALUE = (local == kread(&local));
   CATCH_DEREF_FAULT();
 %}
@@ -89,7 +94,7 @@ function kread_const_u64:long() %{
 %}
 
 function kread_const_ptr:long() %{
-  const struct task_struct *local = current;
+  const void *local = &systemtap_module_init;
   STAP_RETVALUE = (local == kread(&local));
   CATCH_DEREF_FAULT();
 %}
@@ -131,8 +136,8 @@ function kwrite_u64:long() %{
 %}
 
 function kwrite_ptr:long() %{
-  struct task_struct * volatile local = NULL;
-  kwrite(&local, current);
-  STAP_RETVALUE = (local == current);
+  const void *local = NULL;
+  kwrite(&local, &systemtap_module_init);
+  STAP_RETVALUE = (local == &systemtap_module_init);
   CATCH_DEREF_FAULT();
 %}

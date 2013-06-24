@@ -881,10 +881,5 @@ extern void __store_deref_bad(void);
     store_kderef(1, _addr, '\0');					      \
   })
 
-#define CATCH_DEREF_FAULT()				\
-  if (0) {						\
-deref_fault: ;						\
-  }
-
 
 #endif /* _LINUX_LOC2C_RUNTIME_H_ */
