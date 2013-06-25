@@ -1,0 +1,24 @@
+/*
+ * kprobe_module.stp
+ *
+ * Simple function to test that systemtap can generate instrumentation
+ * for a module function, install it, and get some output.
+ */
+
+global count
+
+probe begin
+{
+	printf("systemtap starting probe\n")
+}
+
+probe kprobe.module("stap_kmodule").function("stm_write_cmd")
+{
+	++count;
+}
+
+probe end
+{
+	printf("systemtap ending probe\n")
+	printf("count = %d\n", count)
+}

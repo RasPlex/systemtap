@@ -76,6 +76,10 @@ if {[build_and_install_module] == 0} {
     pass "$test (built and installed module)"
 }
 
+# Test 'module("foo").function("bar")
 stap_run $srcdir/$subdir/$test.stp kmodule_load $output_string
+
+# Test 'kprobe.module("foo").function("bar")
+stap_run $srcdir/$subdir/kprobe_module.stp kmodule_load $output_string
 
 cleanup_module
