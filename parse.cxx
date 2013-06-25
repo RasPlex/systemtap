@@ -1619,6 +1619,9 @@ skip:
 	      c = input_get ();
 	      switch (c)
 		{
+                case 'x':
+                  if (strverscmp(session.compatible.c_str(), "2.3") < 0)
+                    goto the_default;
 		case 'a':
 		case 'b':
 		case 't':
@@ -1634,9 +1637,9 @@ skip:
 		  n->content.push_back('\\');
 
                   // fall through
-		default:
-		  n->content.push_back(c);
-		  break;
+		default: the_default:
+                    n->content.push_back(c);
+                    break;
 		}
 	    }
 	  else
