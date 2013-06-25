@@ -2,19 +2,80 @@
 # function, install it, and get some output.
 
 set test "kmodule"
+if {![installtest_p]} {
+    untested $test
+    return
+}
+
+set build_dir ""
+set uname [exec /bin/uname -r]
+
+proc build_and_install_module {} {
+    global build_dir
+    global srcdir subdir
+
+    # Create the build directory and populate it
+    if {[catch {exec mktemp -d staptestXXXXXX} build_dir]} {
+	verbose -log "Failed to create temporary directory: $build_dir"
+	return 0
+    }
+    exec cp $srcdir/$subdir/stap_kmodule.c $build_dir/
+    exec cp -p $srcdir/$subdir/stap_kmodule.Makefile $build_dir/Makefile
+
+    # Build the module
+    if {[catch {exec make -C $build_dir clean} res]} {
+	verbose -log "$res"
+	return 0
+    }
+    catch {exec make -C $build_dir} res
+    if {![file exists $build_dir/stap_kmodule.ko]} {
+	verbose -log "$res"
+	return 0
+    }
+    set res [as_root [list cp $build_dir/stap_kmodule.ko /lib/modules/$::uname/kernel/]]
+    if { $res != 0 } {
+	verbose -log "$res"
+	return 0
+    }
+
+    # Install the module
+    set res [as_root [list /sbin/insmod $build_dir/stap_kmodule.ko]]
+    if {$res != 0} {
+	verbose -log "$res"
+	return 0
+    }
+    return 1
+}
+
+proc cleanup_module {} {
+    global build_dir
+    as_root [list /bin/rm -f /lib/modules/$::uname/kernel/stap_kmodule.ko]
+    as_root [list /sbin/rmmod stap_kmodule]
+    if {$build_dir != ""} {
+	catch { exec rm -rf $build_dir }
+    }
+}
 
 proc kmodule_load {} {
-    # force the filesystem to be synced
-    if {[lindex [local_exec "sync" "" "" 100] 0] == 0} {
+    # Trigger the test module
+    if {[file exists /proc/stap_kmodule_cmd]} {
+	exec echo 0 > /proc/stap_kmodule_cmd
 	return 0
     } else {
 	return 1
     }
 }
 
-# better have a count other than zero to show that probe fired
-set output_string "count = \[0-9\]\[0-9\]*\r\n"
+set output_string "count = 1\r\n"
 
-#make sure have ext3 module loaded before trying this
+if {[build_and_install_module] == 0} {
+    verbose -log "BUILD FAILED"
+    fail "$test (could not build/install module)"
+    return
+} else {
+    pass "$test (built and installed module)"
+}
 
 stap_run $srcdir/$subdir/$test.stp kmodule_load $output_string
+
+cleanup_module

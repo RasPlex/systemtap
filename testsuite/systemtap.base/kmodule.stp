@@ -1,27 +1,24 @@
 /*
  * kmodule.stp
  *
- * Simple function to test that systemtap can generate instument a module
- * function, install it, and get some output.
+ * Simple function to test that systemtap can generate instrumentation
+ * for a module function, install it, and get some output.
  */
 
 global count
 
 probe begin
 {
-	println("systemtap starting probe")
+	printf("systemtap starting probe\n")
 }
 
-probe module("ext3").function("ext3_sync_file") ?,
-      module("sd_mod").function("sd_rw_intr") ? ,
-      module("ide").function("ide_intr") ?,
-      never /* in case the above probes all miss */
+probe module("stap_kmodule").function("stm_write_cmd")
 {
 	++count;
 }
 
 probe end
 {
-	println("systemtap ending probe")
-	println("count = " . sprint(count));
+	printf("systemtap ending probe\n")
+	printf("count = %d\n", count)
 }
