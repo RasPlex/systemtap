@@ -45,8 +45,11 @@ if {! [installtest_p]} { untested "$test"; return }
 proc dyninst_kfails {index} {
   # The dyninst runtime isn't multi-arch, it only works on the
   # native architecture. PR14490.
+  # It also doesn't do vma tracking anyway. PR15052.
   if {! [all_compile_flag_native_p $index]} {
     setup_kfail 14490 "*-*-*"
+  } else {
+    setup_kfail 15052 "*-*-*"
   }
 }
 
