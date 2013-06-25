@@ -2577,7 +2577,7 @@ dead_assignment_remover::visit_assignment (assignment* e)
               else
               */
               if (e->left->tok->location.file->name == session.user_file->name) // !tapset
-                session.print_warning(_F("Eliding assignment to %s at %s", leftvar->name.c_str(), lex_cast(*e->tok).c_str()));
+                session.print_warning(_F("Eliding assignment to '%s'", leftvar->name.c_str()), e->tok);
               provide (e->right); // goodbye assignment*
               relaxed_p = false;
               return;
