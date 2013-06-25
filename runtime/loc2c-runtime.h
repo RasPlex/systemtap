@@ -193,12 +193,11 @@
     c->last_error = c->error_buffer;					    \
     goto deref_fault;							    \
     })
-#endif
 
 #define CATCH_DEREF_FAULT()				\
   if (0) {						\
 deref_fault: ;						\
   }
-
+#endif
 
 #endif /* _LOC2C_RUNTIME_H_ */
