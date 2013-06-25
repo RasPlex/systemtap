@@ -1633,7 +1633,8 @@ skip:
 		case '\\':
 		  // Pass these escapes through to the string value
 		  // being parsed; it will be emitted into a C literal.
-
+                  // XXX: PR13371: perhaps we should evaluate them here
+                  // (and re-quote them during translate.cxx emission).
 		  n->content.push_back('\\');
 
                   // fall through
