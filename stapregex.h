@@ -16,14 +16,13 @@
 
 #include <string>
 #include <iostream>
-#include <stdexcept>
 
 struct systemtap_session; /* from session.h */
 struct token; /* from parse.h */
-struct translator_output; /* from translate.h */
+struct translator_output; /* from translator-output.h */
 
 namespace stapregex {
-  class regexp; /* from stapregex-tree.h */
+  struct regexp; /* from stapregex-tree.h */
   class dfa; /* from stapregex-dfa.h */
 };
 
@@ -31,7 +30,7 @@ struct stapdfa {
   std::string orig_input;
   const token *tok;
   stapdfa (const std::string& func_name, const std::string& re,
-           const token *tok = NULL, bool do_escape = true);
+           const token *tok = NULL, bool do_unescape = true, bool do_tag = true);
   ~stapdfa ();
   unsigned num_states();
   unsigned num_tags();
