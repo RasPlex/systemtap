@@ -8312,12 +8312,26 @@ kprobe_derived_probe_group::emit_module_decls (systemtap_session& s)
   s.op->newline() << "for (i=0; i<" << probes_by_module.size()
 		  << " && *p > 0; i++) {";
   s.op->newline(1) << "struct stap_dwarfless_probe *sdp = & stap_dwarfless_probes[i];";
-  s.op->newline() << "if (! sdp->address)";
+  s.op->newline() << "if (! sdp->address) {";
+  s.op->indent(1);
+  s.op->newline() << "const char *colon;";
+  s.op->newline() << "if (owner && (colon = strchr(sdp->symbol_string, ':'))) {";
+  s.op->indent(1);
+  s.op->newline() << "if ((strlen(owner->name) == (colon - sdp->symbol_string))";
+  s.op->newline() << "    && (strncmp(sdp->symbol_string, owner->name, colon - sdp->symbol_string) == 0)";
+  s.op->newline() << "    && (strcmp(colon + 1, name) == 0)) {";
+  s.op->newline(1) << "sdp->address = val;";
+  s.op->newline() << "(*p)--;";
+  s.op->newline(-1) << "}";
+  s.op->newline(-1) << "}";
+  s.op->newline() << "else {";
   s.op->newline(1) << "if (strcmp(sdp->symbol_string, name) == 0) {";
   s.op->newline(1) << "sdp->address = val;";
   s.op->newline() << "(*p)--;";
   s.op->newline(-1) << "}";
-  s.op->newline(-2) << "}";
+  s.op->newline(-1) << "}";
+  s.op->newline(-1) << "}";
+  s.op->newline(-1) << "}";
   s.op->newline() << "return (p > 0) ? 0 : -1;";
   s.op->newline(-1) << "}";
   s.op->newline() << "#endif";
