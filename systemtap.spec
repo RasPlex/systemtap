@@ -255,6 +255,9 @@ Requires: avahi
 # testsuite/systemtap.base/crash.exp needs crash
 Requires: crash
 %endif
+%if %{with_java}
+Requires: systemtap-runtime-java = %{version}-%{release}
+%endif
 %ifarch x86_64
 Requires: /usr/lib/libc.so
 # ... and /usr/lib/libgcc_s.so.*
