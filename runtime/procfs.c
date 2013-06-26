@@ -84,7 +84,7 @@ static void _stp_rmdir_proc_module(void)
 static int _stp_mkdir_proc_module(void)
 {	
 	int found = 0;
-	char proc_root_name[STP_MODULE_NAME_LEN + sizeof("systemtap/")];
+	static char proc_root_name[STP_MODULE_NAME_LEN + sizeof("systemtap/")];
 #if defined(STAPCONF_PATH_LOOKUP) || defined(STAPCONF_KERN_PATH_PARENT)
 	struct nameidata nd;
 #else  /* STAPCONF_VFS_PATH_LOOKUP */
