@@ -4276,8 +4276,6 @@ dwarf_atvar_expanding_visitor::visit_atvar_op (atvar_op* e)
       if (result)
         {
           s.unwindsym_modules.insert(module);
-          if (userspace_p && !s.runtime_usermode_p())
-            enable_vma_tracker(s);
 
           if (lvalue)
             {

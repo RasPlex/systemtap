@@ -691,14 +691,8 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
             if (mpath == NULL) // Must be a kernel module name
               mpath = optarg;
             unwindsym_modules.insert (string (mpath));
-            // PR10228: trigger vma tracker logic early if -d /USER-MODULE/
-            // given. XXX This is actually too early. Having a user module
-            // is a good indicator that something will need vma tracking.
-            // But it is not 100%, this really should only trigger through
-            // a user mode tapset /* pragma:vma */ or a probe doing a
-            // variable lookup through a dynamic module.
-            if (mpath[0] == '/')
-              enable_vma_tracker (*this);
+            // NB: we used to enable_vma_tracker() here for PR10228, but now
+            // we'll leave that to pragma:vma functions which actually use it.
             break;
           }
 

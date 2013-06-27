@@ -2186,7 +2186,7 @@ dwflpp::emit_address (struct obstack *pool, Dwarf_Addr address)
         }
       else
         {
-          enable_task_finder (sess);
+          obstack_printf (pool, "/* pragma:vma */");
           obstack_printf (pool, "({ unsigned long addr = 0; ");
           obstack_printf (pool, "addr = _stp_umodule_relocate (\"%s\",%#" PRIx64 ", current); ",
                           canonicalize_file_name(module_name.c_str()), address);

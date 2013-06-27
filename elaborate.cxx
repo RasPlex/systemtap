@@ -1461,10 +1461,15 @@ public:
     if (! vma_tracker_enabled(session)
 	&& c->code.find("/* pragma:vma */") != string::npos)
       {
-	enable_vma_tracker(session);
 	if (session.verbose > 2)
           clog << _F("Turning on task_finder vma_tracker, pragma:vma found in %s",
                      current_function->name.c_str()) << endl;
+
+	// PR15052: stapdyn doesn't have VMA-tracking yet.
+	if (session.runtime_usermode_p())
+	  throw semantic_error(_("VMA-tracking is only supported by the kernel runtime (PR15052)"), c->tok);
+
+	enable_vma_tracker(session);
       }
 
     if (! session.need_unwind
