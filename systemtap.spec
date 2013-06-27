@@ -439,8 +439,8 @@ install -m 644 initscript/config.systemtap $RPM_BUILD_ROOT%{_sysconfdir}/systemt
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 touch $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
 install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
-mkdir -p $RPM_BUILD_ROOT/usr/lib/tmpfiles.d
-install -m 644 stap-server.conf $RPM_BUILD_ROOT/usr/lib/tmpfiles.d/stap-server.conf
+mkdir -p $RPM_BUILD_ROOT%{_tmpfilesdir}
+install -m 644 stap-server.conf $RPM_BUILD_ROOT%{_tmpfilesdir}/stap-server.conf
 %else
 install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
@@ -644,7 +644,7 @@ done
 %{_mandir}/man8/stap-server.8*
 %if %{with_systemd}
 %{_unitdir}/stap-server.service
-/usr/lib/tmpfiles.d/stap-server.conf
+%{_tmpfilesdir}/stap-server.conf
 %else
 %{_sysconfdir}/rc.d/init.d/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
