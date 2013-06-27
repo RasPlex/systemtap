@@ -25,7 +25,7 @@ using namespace std;
 namespace stapregex {
 
 cursor::cursor(std::string *input, bool do_unescape)
-  : input(input), pos(0), do_unescape
+  : input(input), pos(0), do_unescape(do_unescape)
 {
   next_c = 0; last_c = 0;
   finished = ( pos >= input->length() );
@@ -58,6 +58,12 @@ cursor::peek ()
   return next_c;
 }
 
+bool
+cursor::has (unsigned n)
+{
+  return ( pos <= input.length() - n );
+}
+
 /* Systemtap doesn't unescape string literals for us, presuming to
    pass the backslashes intact to a C compiler; hence we need to do
    our own unescaping here.
@@ -81,10 +87,16 @@ cursor::get_unescaped ()
       return;
     }
 
+  pos++;
+
+  /* Check for improper string end: */
+  if (pos >= input->length())
+    throw regex_error(_("unexpected end of regex"), pos);
+
   /* The logic is based on re2c's Scanner::unescape() method;
      the set of accepted escape codes should correspond to
      lexer::scan() in parse.cxx. */
-  pos++; c = (*input)[pos];
+  c = (*input)[pos];
   switch (c)
     {
     case 'a': c = '\a'; break;
@@ -212,7 +224,7 @@ regex_parser::parse_expr ()
   char c = cur.peek ();
   while (c && c == '|')
     {
-      next ();
+      cur.next ();
       regexp *alt = parse_term ();
       result = make_alt (result, alt);
       c = cur.peek ();
@@ -402,12 +414,12 @@ regex_parser::parse_factor ()
   return result;
 }
 
-// TODOXXX rewrite below
 regexp *
 regex_parser::parse_char_range ()
 {
-  string accumulate;
+  range *ran = NULL;
 
+  // check for inversion
   bool inv = false;
   char c = cur.peek ();
   if (c == '^')
@@ -417,76 +429,28 @@ regex_parser::parse_char_range ()
       c = cur.peek ();
     }
 
-  // grab ']' only if it is at the very start of the class
-  if (c == ']')
-    {
-      accumulate.push_back (c);
-      cur.next ();
-      c = cur.peek ();
-    }
-
-  // TODOXXX rewrite below to integrate with range builder inside re2c!!
-  // we need to respect balanced [: :] chr class parens in the range expr;
-  // this requires some regrettably ugly logic to cover all the cases
-  unsigned depth = 0;
   for (;;)
     {
-      if (c == '\\')
-        {
-          accumulate.push_back(c);
-          cur.next ();
-          c = cur.peek ();
+      // break on string end whenever we encounter it
+      if (finished) parse_error(_("unclosed character class")); // TODOXXX doublecheck that this is triggered correctly
 
-          // grab escaped char regardless of what it is!
-          accumulate.push_back(c);
-          cur.next ();
-          c = cur.peek ();
-        }
-      else if (c == '[')
-        {
-          accumulate.push_back(c);
-          cur.next ();
-          c = cur.peek ();
+      range *add = stapregex_getrange (cursor);
+      ran = ( ran == NULL ? range_union(ran, add) : add );
+      if (ran != add) delete add;
 
-          if (c == ':')
-            {
-              // XXX: allowing multiple-nesting is a bit overkill
-              depth ++;
-              accumulate.push_back(c);
-              cur.next ();
-              c = cur.peek ();
-            }
-        }
-      else if (c == ']')
+      // break on ']' (except at the start of the class)
+      if (c == ']')
         {
-          // non-':]' always ends the class, regardless of [: :] nesting 
+          cur.next ();
           break;
         }
-      else if (c == ':')
-        {
-          accumulate.push_back(c);
-          cur.next ();
-          c = cur.peek ();
 
-          if (c == ']')
-            {
-              if (depth == 0) break;
-
-              depth --;
-              accumulate.push_back(c);
-              cur.next ();
-              c = cur.peek ();
-            }
-        }
-      else
-        {
-          accumulate.push_back(c);
-          cur.next ();
-          c = cur.peek ();
-        }
     }
 
-  return chrclass_to_re (accumulate, inv);
+  if (ran == NULL)
+    return new null_op;
+
+  return new match_op(ran);
 }
 
 unsigned
@@ -516,34 +480,103 @@ regex_parser::parse_number ()
   return atoi (digits.c_str ());
 }
 
-};
-
 // ------------------------------------------------------------------------
 
-// Systemtap string literals are stored without substituting any
-// escape codes (on the assumption that the literal will be emitted
-// into C source code). For our purposes, though, we need unescaping
-// as provided by the below routine:
-string
-stapregex_unescape (string& str)
+std::map<std::string, Range *> named_char_classes;
+
+range *
+named_char_class (const string& name)
 {
-  string result;
-
-  // The following is based on the logic of re2c's Scanner::unescape().
-  for (unsigned i = 0; i < str.length(); i++)
+  // static initialization of table
+  if (named_char_classes.empty())
     {
-      char c = str[i];
+      // original source for these is http://www.regular-expressions.info/posixbrackets.html
+      // also checked against (intended to match) the c stdlib isFOO() chr class functions
+      named_char_classes["alpha"] = new range("A-Za-z");
+      named_char_classes["alnum"] = new range("A-Za-z0-9");
+      named_char_classes["blank"] = new range(" \t");
+      named_char_classes["cntrl"] = new range("\x01-\x1F\x7F"); // XXX: include \x00 in range? -- probably not!
+      named_char_classes["d"] = named_char_classes["digit"] = new range("0-9");
+      named_char_classes["xdigit"] = new range("0-9a-fA-F");
+      named_char_classes["graph"] = new range("\x21-\x7E");
+      named_char_classes["l"] = named_char_classes["lower"] = new range("a-z");
+      named_char_classes["print"] = new range("\x20-\x7E");
+      named_char_classes["punct"] = new range("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
+      named_char_classes["s"] = named_char_classes["space"] = new range(" \t\r\n\v\f");
+      named_char_classes["u"] = named_char_classes["upper"] = new range("A-Z");
+    }
 
-      if (c == '\\')
+  if (named_char_classes.find(name) == named_char_classes.end())
+    {
+      fatalf("unknown character class '%s'", name.c_str());
+    }
+
+  return new range(*named_char_classes[name]);
+}
+
+range *
+stapregex_getrange (cursor& cur)
+{
+  char c = cur.peek ();
+  bool have_next = false;
+
+  if (c == '\\')
+    {
+      // Grab escaped char regardless of what it is.
+      cur.next (); c = cur.peek (); cur.next ();
+    }
+  else if (c == '[')
+    {
+      // Check for '[:' digraph.
+      char old_c = c; cur.next (); c = cur.peek ();
+
+      if (c == ':')
         {
-          i++;
+          string charclass;
 
-          if (i >= str.length()) // XXX: should already be caught by stap parser
-            throw
+          for (;;)
+            {
+              if (cur.finished)
+                throw regex_error (_F("unclosed character class '[:%s'", charclass.c_str()), cur.pos);
 
-          c = str[i];
+              if (cur.has(2) && c == ':' && cur.input[cur.pos] == ']')
+                {
+                  cur.next (); cur.next (); // skip ':]'
+                  return named_char_class(charclass);
+                }
+
+              charclass.push_back(c); cur.next(); c = cur.peek();
+            }
+        }
+      else
+        {
+          // Backtrack; fall through to processing c.
+          c = old_c;
         }
     }
+  else
+    cur.next ();
+
+  char lb = c, ub;
+
+  if (!cur.has(2) || !cur.input[cur.pos] == '-')
+    {
+      ub = lb;
+    }
+  else
+    {
+      cur.next (); // skip '-'
+      ub = cur.peek ();
+
+      if (ub < lb)
+        throw regex_error (_F("Inverted character range %c-%c", lb, ub), cur.pos);
+
+      cur.next ();
+    }
+
+  return new range(lb, ub);
 }
+
+};
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */

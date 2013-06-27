@@ -26,7 +26,9 @@ struct cursor {
 
   unsigned pos;      // pos of next char to be returned by next
   unsigned last_pos; // pos of last returned char
+
   bool finished;
+  bool has(unsigned n); // n characters remaining?
 
   cursor(std::string *input, bool do_unescape = false);
   char peek();
@@ -68,8 +70,9 @@ private: // nonterminals
   unsigned parse_number ();
 };
 
-/* Process regexp escape codes, octals, etcetera... */
-std::string stapregex_unescape(std::string& str);
+/* Methods for parsing character classes: */
+range *named_char_class (const std::string& name);
+range *stapregex_getrange (cursor& cur);
 
 };
 

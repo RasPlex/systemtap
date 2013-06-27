@@ -41,6 +41,11 @@ struct tag_op : public regexp {
   const std::string type_of() { return "tag_op"; }
 };
 
+struct match_op : public regexp {
+  match_op (range *ran);
+  const std::string type_of() { return "match_op"; }
+};
+
 struct cat_op : public regexp {
   cat_op (regexp *a, regexp *b);
   const std::string type_of() { return "cat_op"; }
@@ -57,6 +62,13 @@ struct closev_op : public regexp {
 };
 
 // ------------------------------------------------------------------------
+
+struct range {
+  range (char lb, char ub);
+  range (const std::string& str);
+};
+
+range *range_union(range *a, range *b);
 
 regexp *str_to_re(const std::string& str);
 
