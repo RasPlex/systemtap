@@ -21,14 +21,22 @@ set testscript {
       if (pid() == target() && execname() == "%s") {
 	// Note user address.
 	handler = user_long(&@cast(act_uaddr, "struct sigaction")->sa_handler);
-	printf("handler: %%s (%%s)\n", usymname(handler), umodname(handler));
+	try {
+		printf("handler: %%s (%%s)\n", usymname(handler), umodname(handler));
+	} catch {
+		printf("handler: %%s (%%s)\n", usymname(handler), "<unknown>");
+	}
       }
     }
     probe syscall.rt_sigaction32 ? {
       if (pid() == target() && execname() == "%s") {
 	// Note user address.
 	handler = user_long(&@cast(act_uaddr, "struct sigaction32")->sa_handler);
-	printf("handler: %%s (%%s)\n", usymname(handler), umodname(handler));
+	try {
+		printf("handler: %%s (%%s)\n", usymname(handler), umodname(handler));
+	} catch {
+		printf("handler: %%s (%%s)\n", usymname(handler), "<unknown>");
+	}
       }
     }
 }

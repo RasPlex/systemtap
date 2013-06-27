@@ -6,9 +6,19 @@ probe timer.profile {
   # NB: we resolve to a function name here (rather than recording only
   # the PC), because during a later pc->name lookup, the process context
   # may be different.
-  fn = user_mode() ?
-      ("u:".umodname(uaddr()).":".usymname(uaddr()))  :
-      ("k:".modname(addr()).":".symname(addr()));
+  if (!user_mode())
+    try { // modname() can throw
+      fn = "k:".modname(addr()).":".symname(addr())
+    } catch {
+      fn = "k:<unknown>:".symname(addr())
+    }
+  else {
+    try { // umodname() can throw
+      fn = "u:".umodname(uaddr()).":".usymname(uaddr())
+    } catch {
+      fn = "u:<unknown>:".usymname(uaddr())
+    }
+  }
   profile[fn] <<< 1
 }
 probe timer.ms(5000) {

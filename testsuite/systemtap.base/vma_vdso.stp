@@ -6,8 +6,12 @@ probe syscall.clock_gettime, syscall.getuid
    {
       try
       {
-         umodname(uaddr())
-         log(name)
+         // Bogus if-statement so that there is no elision
+         // (This happens because umodname() is marked as /* pure */)
+         if (umodname(uaddr()) == "<unknown>")
+           log(name)
+         else
+           log(name)
       }
       catch
       {
