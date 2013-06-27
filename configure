@@ -10802,6 +10802,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 				--libdir="${here}/lib-elfutils" \
 				--exec-prefix="$exec_prefix" \
 				--prefix="$prefix" \
+				--enable-dwz \
 				${need_maintainer_option} \
 				CFLAGS="${CFLAGS/-Wall/} $gnu89_inline_flag -fexceptions" \
 				LDFLAGS="$LDFLAGS $elfutils_rpath" &&
