@@ -1361,33 +1361,61 @@ probe nd_syscall.rt_sigpending.return = kprobe.function("sys_rt_sigpending").ret
 }
 
 # rt_sigprocmask _____________________________________________
-# long sys32_rt_sigprocmask(u32 how, compat_sigset_t __user *set, compat_sigset_t __user *oset, size_t sigsetsize)
-# long compat_sys_rt_sigprocmask(int how, compat_sigset_t __user *set, compat_sigset_t __user *oset, compat_size_t sigsetsize)
-# long sys_rt_sigprocmask(int how, sigset_t __user *set, sigset_t __user *oset, size_t sigsetsize)
+# long sys_rt_sigprocmask(int how, sigset_t __user *set, sigset_t __user *oset,
+#			  size_t sigsetsize)
+# long sys32_rt_sigprocmask(u32 how, compat_sigset_t __user *set,
+#			    compat_sigset_t __user *oset, size_t sigsetsize)
+# long compat_sys_rt_sigprocmask(int how, compat_sigset_t __user *set,
+#				 compat_sigset_t __user *oset,
+#				 compat_size_t sigsetsize)
 #
-probe nd_syscall.rt_sigprocmask = kprobe.function("sys32_rt_sigprocmask") ?,
-                                  kprobe.function("compat_sys_rt_sigprocmask") ?,
-                                  kprobe.function("sys_rt_sigprocmask") ?
+probe nd_syscall.rt_sigprocmask = kprobe.function("sys_rt_sigprocmask") ?
 {
 	name = "rt_sigprocmask"
-	// how  = $how
+	// how = $how
 	// how_str = _sigprocmask_how_str($how)
-	// set_uaddr    = $set
+	// set_uaddr = $set
 	// oldset_uaddr = $oset
 	// argstr = sprintf("%s, [%s], %p, %d", how_str, _stp_sigset_u($set),
 	//			$oset, $sigsetsize)
+	asmlinkage()
+	how = int_arg(1)
+	how_str = _sigprocmask_how_str(how)
+	set_uaddr = pointer_arg(2)
+	oldset_uaddr = pointer_arg(3)
+	argstr = sprintf("%s, [%s], %p, %d", how_str,
+			 _stp_sigset_u(set_uaddr), oldset_uaddr, uint_arg(4))
+}
+probe nd_syscall.rt_sigprocmask.return =
+	kprobe.function("sys_rt_sigprocmask").return ?
+{
+	name = "rt_sigprocmask"
+	retstr = returnstr(1)
+}
+probe nd_syscall.compat_rt_sigprocmask =
+	kprobe.function("compat_sys_rt_sigprocmask") ?,
+	kprobe.function("sys32_rt_sigprocmask") ?
+{
+	name = "rt_sigprocmask"
+	// how = $how
+	// how_str = _sigprocmask_how_str($how)
+	// set_uaddr = @choose_defined($set, $nset)
+	// oldset_uaddr = $oset
+	// argstr = sprintf("%s, [%s], %p, %d", how_str,
+	//		 _stp_compat_sigset_u(set_uaddr), $oset, $sigsetsize)
 	if (symname(addr()) != "compat_sys_rt_sigprocmask")
 		asmlinkage()
-	how  = int_arg(1)
+	how = int_arg(1)
 	how_str = _sigprocmask_how_str(how)
-	set_uaddr    = pointer_arg(2)
+	set_uaddr = pointer_arg(2)
 	oldset_uaddr = pointer_arg(3)
-	argstr = sprintf("%s, [%s], %p, %d", how_str, _stp_sigset_u(set_uaddr),
-				oldset_uaddr, uint_arg(4))
+	argstr = sprintf("%s, [%s], %p, %d", how_str,
+			 _stp_compat_sigset_u(set_uaddr), oldset_uaddr,
+			 uint_arg(4))
 }
-probe nd_syscall.rt_sigprocmask.return = kprobe.function("sys32_rt_sigprocmask").return ?,
-                                         kprobe.function("compat_sys_rt_sigprocmask").return ?,
-                                         kprobe.function("sys_rt_sigprocmask").return ?
+probe nd_syscall.compat_rt_sigprocmask.return =
+	kprobe.function("compat_sys_rt_sigprocmask").return ?,
+	kprobe.function("sys32_rt_sigprocmask").return ?
 {
 	name = "rt_sigprocmask"
 	retstr = returnstr(1)

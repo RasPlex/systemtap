@@ -1,3 +1,23 @@
+%{
+#ifdef CONFIG_COMPAT
+#include <linux/compat.h>
+
+#ifndef STAPCONF_SIGSET_FROM_COMPAT_EXPORTED
+void
+sigset_from_compat(sigset_t *set, compat_sigset_t *compat)
+{
+	switch (_NSIG_WORDS) {
+	case 4: set->sig[3] = compat->sig[6] | (((long)compat->sig[7]) << 32 );
+	case 3: set->sig[2] = compat->sig[4] | (((long)compat->sig[5]) << 32 );
+	case 2: set->sig[1] = compat->sig[2] | (((long)compat->sig[3]) << 32 );
+	case 1: set->sig[0] = compat->sig[0] | (((long)compat->sig[1]) << 32 );
+	}
+}
+#endif /* STAPCONF_SIGSET_FROM_COMPAT_EXPORTED */
+#endif /* CONFIG_COMPAT */
+
+%}
+
 #
 # Given a userspace pointer to a timeval,
 # copy and decode it and return a string.
@@ -1759,6 +1779,28 @@ function _stp_sigset_u:string(setptr:long)
 		else
 			strlcpy (STAP_RETVALUE, "UNKNOWN", MAXSTRINGLEN);
 	}
+%}
+
+function _stp_compat_sigset_u:string(setptr:long)
+%{ /* pure */
+#ifdef CONFIG_COMPAT
+	char *ptr = (char *)(unsigned long)STAP_ARG_setptr;
+
+	if (ptr == NULL)
+		strlcpy (STAP_RETVALUE, "NULL", MAXSTRINGLEN);
+	else {
+		compat_sigset_t set;
+
+		if (_stp_copy_from_user((char*)&set, ptr,
+					sizeof(compat_sigset_t)) == 0) {
+			sigset_t new_set;
+			sigset_from_compat(&new_set, &set);
+			_stp_sigset_str(&new_set, STAP_RETVALUE, MAXSTRINGLEN);
+		}
+		else
+			strlcpy (STAP_RETVALUE, "UNKNOWN", MAXSTRINGLEN);
+	}
+#endif
 %}
 
 %{
