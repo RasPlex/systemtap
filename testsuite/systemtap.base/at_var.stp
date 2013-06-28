@@ -13,7 +13,10 @@ probe process.function("sub")
   printf("@var(\"foo\")->bar: %d\n", @var("foo")->bar);
 }
 
-probe syscall.utimes
+/* NB: can't just use syscall.utimes, because with HAVE_SYSCALL_WRAPPERS the
+ * primary sys_utimes function has all long types.  Also, all architectures
+ * effectively HAVE_SYSCALL_WRAPPERS starting in 3.10!  */
+probe kernel.function("SYSC_utimes")!, kernel.function("sys_utimes")
 {
   printf("$utimes$$: %s\n", $utimes$$);
   printf("$utimes[1]$$: %s\n", $utimes[1]$$);
