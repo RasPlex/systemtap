@@ -102,7 +102,6 @@ struct parse_error: public std::runtime_error
     runtime_error (msg), tok (0), skip_some (skip) {}
 };
 
-
 struct systemtap_session
 {
 private:
@@ -388,8 +387,12 @@ public:
 
   // NB: It is very important for all of the above (and below) fields
   // to be cleared in the systemtap_session ctor (session.cxx).
-};
 
+  std::map<std::string, std::string> colors;
+  std::string colorize(std::string str, std::string type);
+  std::string colorize(const token& tok);
+  void init_colors();
+};
 
 struct exit_exception: public std::runtime_error
 {

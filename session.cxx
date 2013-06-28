@@ -163,6 +163,8 @@ systemtap_session::systemtap_session ():
   suppress_time_limits = false;
   color_errors = false;
 
+  init_colors();
+
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
   const char* s_p = getenv ("SYSTEMTAP_TAPSET");
@@ -268,7 +270,8 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   module_cache (0),
   benchmark_sdt_loops(other.benchmark_sdt_loops),
   benchmark_sdt_threads(other.benchmark_sdt_threads),
-  last_token (0)
+  last_token (0),
+  colors(other.colors)
 {
   release = kernel_release = kern;
   kernel_build_tree = "/lib/modules/" + kernel_release + "/build";
@@ -1804,13 +1807,19 @@ systemtap_session::print_token (ostream& o, const token* tok)
       string ts = tmpo.str();
       // search & replace the file name with nothing
       size_t idx = ts.find (tok->location.file->name);
-      if (idx != string::npos)
-          ts.replace (idx, tok->location.file->name.size(), "");
+      if (idx != string::npos) {
+          ts.erase(idx, tok->location.file->name.size()); // remove path
+          if (color_errors) {
+            string src = ts.substr(idx); // keep line & col
+            ts.erase(idx);               // remove from output string
+            ts += colorize(src, "source");        // re-add it colorized
+          }
+      }
 
       o << ts;
     }
   else
-    o << *tok;
+    o << colorize(*tok);
 
   last_token = tok;
 }
@@ -1832,7 +1841,7 @@ systemtap_session::print_error (const semantic_error& e)
     {
       stringstream message;
 
-      message << _F("semantic error: %s", e.what ());
+      message << colorize(_("semantic error:"), "error") << ' ' << e.what ();
       if (e.tok1 || e.tok2)
         message << ": ";
       if (e.tok1)
@@ -1900,8 +1909,16 @@ systemtap_session::print_error_source (std::ostream& message,
       end_pos = file_contents.find ('\n', start_pos) + 1;
       i++;
     }
-  //TRANSLATORS:  Here were are printing the source string of the error
-  message << align << _("source: ") << file_contents.substr (start_pos, end_pos-start_pos-1) << endl;
+  //TRANSLATORS: Here we are printing the source string of the error
+  message << align << _("source: ");
+  string srcline = file_contents.substr(start_pos, end_pos-start_pos-1);
+  if (color_errors) {
+    // Split into before token, token, and after token
+    message << srcline.substr(0, col-1);
+    message << colorize(tok->content, "token");
+    message << srcline.substr(col+tok->content.size()-1) << endl;
+  } else
+    message << srcline << endl;
   message << align << "        ";
   //Navigate to the appropriate column
   for (i=start_pos; i<start_pos+col-1; i++)
@@ -1911,7 +1928,7 @@ systemtap_session::print_error_source (std::ostream& message,
       else
 	message << ' ';
     }
-  message << "^" << endl;
+  message << colorize("^", "caret") << endl;
 }
 
 void
@@ -1925,12 +1942,13 @@ systemtap_session::print_warning (const string& message_str, const token* tok)
   if (seen_warnings.find (message_str) == seen_warnings.end())
     {
       seen_warnings.insert (message_str);
-      clog << _("WARNING: ") << message_str;
+      clog << colorize(_("WARNING:"), "warning") << ' ' << message_str;
       if (tok) { clog << ": "; print_token (clog, tok); }
       clog << endl;
       if (tok) { print_error_source (clog, align_warning, tok); }
     }
 }
+
 
 void
 systemtap_session::print_error (const parse_error &pe,
@@ -1944,11 +1962,11 @@ systemtap_session::print_error (const parse_error &pe,
   if (tok && tok->type == tok_junk && tok->msg != "")
     {
       found_junk = true;
-      cerr << _("parse error: ") << tok->msg << endl;
+      cerr << colorize(_("parse error:"), "error") << ' ' << tok->msg << endl;
     }
   else
     {
-      cerr << _("parse error: ") << pe.what() << endl;
+      cerr << colorize(_("parse error:"), "error") << ' ' << pe.what() << endl;
     }
 
   // NB: It makes sense for lexer errors to always override parser
@@ -1957,12 +1975,12 @@ systemtap_session::print_error (const parse_error &pe,
 
   if (pe.tok || found_junk)
     {
-      cerr << _("\tat: ") << *tok << endl;
+      cerr << _("\tat: ") << colorize(*tok) << endl;
       print_error_source (cerr, align_parse_error, tok);
     }
   else if (tok) // "expected" type error
     {
-      cerr << _("\tsaw: ") << *tok << endl;
+      cerr << _("\tsaw: ") << colorize(*tok) << endl;
       print_error_source (cerr, align_parse_error, tok);
     }
   else
@@ -1973,7 +1991,7 @@ systemtap_session::print_error (const parse_error &pe,
   // print chained macro invocations
   while (tok && tok->chain) {
     tok = tok->chain;
-    cerr << _("\tin expansion of macro: ") << *tok << endl;
+    cerr << _("\tin expansion of macro: ") << colorize(*tok) << endl;
     print_error_source (cerr, align_parse_error, tok);
   }
 }
@@ -2053,6 +2071,49 @@ assert_no_interrupts()
   if (pending_interrupts)
     throw interrupt_exception();
 }
+
+std::string
+systemtap_session::colorize(std::string str, std::string type)
+{
+  if (str.empty() || !color_errors)
+    return str;
+  else
+    return "\033[" + colors[type] + "m\033[K" + str + "\033[m\033[K";
+}
+
+// Colorizes the path:row:col part of the token
+std::string
+systemtap_session::colorize(const token& tok)
+{
+  stringstream tmp;
+  tmp << tok;
+
+  if (!color_errors)
+    return tmp.str(); // Might as well stop now to save time
+  else {
+    string ts = tmp.str();
+
+    // Print token location, which is also the tail of ts
+    stringstream loc;
+    loc << tok.location;
+
+    // Remove token location and re-add it colorized
+    ts.erase(ts.size()-loc.str().size());
+    return ts + colorize(loc.str(), "source");
+  }
+}
+
+/* Set the colors to their default values */
+void
+systemtap_session::init_colors()
+{
+  colors["error"]   = "01;31"; // RED
+  colors["warning"] = "00;33"; // YELLOW
+  colors["source"]  = "00;34"; // BLUE
+  colors["caret"]   = "01";    // BOLD
+  colors["token"]   = "01";    // BOLD
+}
+
 
 // --------------------------------------------------------------------------
 
