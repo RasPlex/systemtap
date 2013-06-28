@@ -1352,7 +1352,7 @@ probe nd_syscall.ustat, nd_syscall.ustat32 ?
 	printf("%s, %s\n", name, argstr)
 	printf("%d, %p\n", dev, ubuf_uaddr)
 }
-probe nd_syscall.ustat.return, nd_syscall.ustat32.return
+probe nd_syscall.ustat.return, nd_syscall.ustat32.return ?
 {
 	printf("%s, %s\n", name, retstr)
 }

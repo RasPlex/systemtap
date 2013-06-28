@@ -877,13 +877,13 @@ probe nd_syscall.io_destroy.return
 	printf("%s, %s\n", name, retstr)
 }
 
-probe nd_syscall.io_getevents, nd_syscall.compat_io_getevents
+probe nd_syscall.io_getevents, nd_syscall.compat_io_getevents ?
 {
 	printf("%s, %s\n", name, argstr)
 	printf("%d, %d, %d, %p, %p, %s\n", ctx_id, min_nr, nr, events_uaddr,
 	       timeout_uaddr, timestr)
 }
-probe nd_syscall.io_getevents.return, nd_syscall.compat_io_getevents.return
+probe nd_syscall.io_getevents.return, nd_syscall.compat_io_getevents.return ?
 {
 	printf("%s, %s\n", name, retstr)
 }
