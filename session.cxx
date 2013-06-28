@@ -163,8 +163,6 @@ systemtap_session::systemtap_session ():
   suppress_time_limits = false;
   color_errors = false;
 
-  init_colors();
-
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
   const char* s_p = getenv ("SYSTEMTAP_TAPSET");
@@ -270,8 +268,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   module_cache (0),
   benchmark_sdt_loops(other.benchmark_sdt_loops),
   benchmark_sdt_threads(other.benchmark_sdt_threads),
-  last_token (0),
-  colors(other.colors)
+  last_token (0)
 {
   release = kernel_release = kern;
   kernel_build_tree = "/lib/modules/" + kernel_release + "/build";
@@ -1289,8 +1286,6 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
           // --color without arg is equivalent to auto
           color_errors = ((optarg && !strcmp(optarg, "always"))
                 || ((!optarg || !strcmp(optarg, "auto")) && isatty(STDERR_FILENO)));
-          if (color_errors)
-            parse_stap_colors();
           break;
 
 	case '?':
@@ -2079,8 +2074,25 @@ systemtap_session::colorize(std::string str, std::string type)
 {
   if (str.empty() || !color_errors)
     return str;
-  else
-    return "\033[" + colors[type] + "m\033[K" + str + "\033[m\033[K";
+  else {
+    // Check if this type is defined in SYSTEMTAP_COLORS
+    std::string color = parse_stap_color(type);
+    if (color.empty()) { // Resort to defaults
+      if (!type.compare("error"))
+        color = "01;31";
+      else if (!type.compare("warning"))
+        color = "00;33";
+      else if (!type.compare("source"))
+        color = "00;34";
+      else if (!type.compare("caret"))
+        color = "01";
+      else if (!type.compare("token"))
+        color = "01";
+      else // To appease the compiler gods
+        color = ""; // Should never happen
+    }
+    return "\033[" + color + "m\033[K" + str + "\033[m\033[K";
+  }
 }
 
 // Colorizes the path:row:col part of the token
@@ -2105,35 +2117,25 @@ systemtap_session::colorize(const token& tok)
   }
 }
 
-/* Set the colors to their default values */
-void
-systemtap_session::init_colors()
-{
-  colors["error"]   = "01;31"; // RED
-  colors["warning"] = "00;33"; // YELLOW
-  colors["source"]  = "00;34"; // BLUE
-  colors["caret"]   = "01";    // BOLD
-  colors["token"]   = "01";    // BOLD
-}
-
-/* Parse SYSTEMTAP_COLORS and update currently used colors. Must be in
-the following format: 'key1=val1:key2=val2:' etc... where valid keys are
-'error', 'warning', 'source', 'caret', 'token' and valid values
-consitute SGR parameter(s). For example, the default setting would be:
+/* Parse SYSTEMTAP_COLORS and returns the SGR parameter(s) for the given
+type. The env var SYSTEMTAP_COLORS must be in the following format:
+'key1=val1:key2=val2:' etc... where valid keys are 'error', 'warning',
+'source', 'caret', 'token' and valid values constitute SGR parameter(s).
+For example, the default setting would be:
 'error=01;31:warning=00;33:source=00;34:caret=01:token=01'
 This algorithm is loosely based on parse_grep_colors() in grep's main.c,
 written by Mike Haertel and others (for the complete list, see
 <http://git.sv.gnu.org/cgit/grep.git/tree/AUTHORS>)
 */
-void
-systemtap_session::parse_stap_colors()
+std::string
+systemtap_session::parse_stap_color(std::string type)
 {
   char *p, *name, *key, *val;
   bool done = false;
 
   p = getenv("SYSTEMTAP_COLORS");
   if (p == NULL || *p == '\0')
-    return;
+    return "";
 
   key = val = name = NULL;
   while (!done) {
@@ -2152,22 +2154,24 @@ systemtap_session::parse_stap_colors()
         val = name;
         name = NULL;
         if (!key || !val)
-          return; // Invalid syntax
-        // check if key exists
-        if (colors.count(key))
-          colors[key] = val;
+          return ""; // Invalid syntax
+        if (!type.compare(key))
+          return val;
         key = val = NULL;
         break;
       default: // part of key or val
         if (!name) name = p;
         // make sure it's a valid val char to protect the terminal
         if (key && *p != ';' && !('0' <= *p && *p <= '9'))
-          return; // Invalid char
+          return ""; // Invalid char
         break;
       }
     if (!done)
       p++;
   }
+
+  // Could not find the key
+  return "";
 }
 
 // --------------------------------------------------------------------------
