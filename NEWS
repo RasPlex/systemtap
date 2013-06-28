@@ -8,6 +8,9 @@
 
 - The udp.stp tapset adds some ip-address/port variables.
 
+- A new guru-mode-only tapset function raise() is available to send signals
+  to the current task.
+
 - The following tapset functions are deprecated in release 2.3:
   'stap_NFS_CLIENT', '__getfh_inode', '_success_check',
   '_sock_prot_num', '_sock_fam_num', '_sock_state_num',
