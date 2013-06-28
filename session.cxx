@@ -1289,6 +1289,8 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
           // --color without arg is equivalent to auto
           color_errors = ((optarg && !strcmp(optarg, "always"))
                 || ((!optarg || !strcmp(optarg, "auto")) && isatty(STDERR_FILENO)));
+          if (color_errors)
+            parse_stap_colors();
           break;
 
 	case '?':
@@ -2114,6 +2116,59 @@ systemtap_session::init_colors()
   colors["token"]   = "01";    // BOLD
 }
 
+/* Parse SYSTEMTAP_COLORS and update currently used colors. Must be in
+the following format: 'key1=val1:key2=val2:' etc... where valid keys are
+'error', 'warning', 'source', 'caret', 'token' and valid values
+consitute SGR parameter(s). For example, the default setting would be:
+'error=01;31:warning=00;33:source=00;34:caret=01:token=01'
+This algorithm is loosely based on parse_grep_colors() in grep's main.c,
+written by Mike Haertel and others (for the complete list, see
+<http://git.sv.gnu.org/cgit/grep.git/tree/AUTHORS>)
+*/
+void
+systemtap_session::parse_stap_colors()
+{
+  char *p, *name, *key, *val;
+  bool done = false;
+
+  p = getenv("SYSTEMTAP_COLORS");
+  if (p == NULL || *p == '\0')
+    return;
+
+  key = val = name = NULL;
+  while (!done) {
+    switch(*p)
+      {
+      case '=': // end of key
+        *p = '\0';
+        key = name;
+        name = NULL;
+        break;
+      case '\0':
+        done = true;
+        // no breaks so we treat the last val
+      case ':': // end of val
+        *p = '\0';
+        val = name;
+        name = NULL;
+        if (!key || !val)
+          return; // Invalid syntax
+        // check if key exists
+        if (colors.count(key))
+          colors[key] = val;
+        key = val = NULL;
+        break;
+      default: // part of key or val
+        if (!name) name = p;
+        // make sure it's a valid val char to protect the terminal
+        if (key && *p != ';' && !('0' <= *p && *p <= '9'))
+          return; // Invalid char
+        break;
+      }
+    if (!done)
+      p++;
+  }
+}
 
 // --------------------------------------------------------------------------
 

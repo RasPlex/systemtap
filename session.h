@@ -392,6 +392,7 @@ public:
   std::string colorize(std::string str, std::string type);
   std::string colorize(const token& tok);
   void init_colors();
+  void parse_stap_colors();
 };
 
 struct exit_exception: public std::runtime_error

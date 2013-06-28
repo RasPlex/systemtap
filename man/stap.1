@@ -296,8 +296,21 @@ cache limits.
 .TP
 \fB\-\-color\fR[=\fIWHEN\fR], \fB\-\-colour\fR[=\fIWHEN\fR]
 This option enables colored error messages, which is turned off by default.
-WHEN can be either 'never', 'always', or 'auto' (i.e. enable only if at a
-terminal). Defaults to 'auto' if not specified.
+WHEN can be either "never", "always", or "auto" (i.e. enable only if at a
+terminal). Defaults to "auto" if not specified. Colors can be modified using
+the SYSTEMTAP_COLORS environment variable. The format must be of the form
+.nh
+\fBkey1=val1:key2=val2:key3=val3\fR ...etc.
+.hy
+Valid keys are "error", "warning",
+"source", "caret", and "token". Values constitute Select Graphic Rendition (SGR)
+parameter(s). Consult the documentation of your terminal for the SGRs it
+supports. As an example, the default colors would be expressed as
+.nh
+\fBerror=01;31:warning=00;33:source=00;34:caret=01:token=01\fR.
+.hy
+If SYSTEMTAP_COLORS is absent, empty, or invalid, the default colors will be
+used.
 
 .TP
 .BI \-\-disable\-cache
