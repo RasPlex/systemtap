@@ -2077,20 +2077,6 @@ systemtap_session::colorize(std::string str, std::string type)
   else {
     // Check if this type is defined in SYSTEMTAP_COLORS
     std::string color = parse_stap_color(type);
-    if (color.empty()) { // Resort to defaults
-      if (!type.compare("error"))
-        color = "01;31";
-      else if (!type.compare("warning"))
-        color = "00;33";
-      else if (!type.compare("source"))
-        color = "00;34";
-      else if (!type.compare("caret"))
-        color = "01";
-      else if (!type.compare("token"))
-        color = "01";
-      else // To appease the compiler gods
-        color = ""; // Should never happen
-    }
     return "\033[" + color + "m\033[K" + str + "\033[m\033[K";
   }
 }
@@ -2130,46 +2116,19 @@ written by Mike Haertel and others (for the complete list, see
 std::string
 systemtap_session::parse_stap_color(std::string type)
 {
-  char *p, *name, *key, *val;
-  bool done = false;
-
-  p = getenv("SYSTEMTAP_COLORS");
+  const char *p = getenv("SYSTEMTAP_COLORS");
   if (p == NULL || *p == '\0')
-    return "";
+    p = "error=01;31:warning=00;33:source=00;34:caret=01:token=01";
 
-  key = val = name = NULL;
-  while (!done) {
-    switch(*p)
-      {
-      case '=': // end of key
-        *p = '\0';
-        key = name;
-        name = NULL;
-        break;
-      case '\0':
-        done = true;
-        // no breaks so we treat the last val
-      case ':': // end of val
-        *p = '\0';
-        val = name;
-        name = NULL;
-        if (!key || !val)
-          return ""; // Invalid syntax
-        if (!type.compare(key))
-          return val;
-        key = val = NULL;
-        break;
-      default: // part of key or val
-        if (!name) name = p;
-        // make sure it's a valid val char to protect the terminal
-        if (key && *p != ';' && !('0' <= *p && *p <= '9'))
-          return ""; // Invalid char
-        break;
-      }
-    if (!done)
-      p++;
-  }
-
+  vector<string> bits;
+  tokenize(string(p), bits, ":");
+  for (unsigned i=0; i<bits.size(); i++)
+    {
+      const string& bit = bits[i];
+      if ((bit.substr(0,type.size()+1)) == (type+"="))
+        return bit.substr(type.size()+1);
+    }
+  
   // Could not find the key
   return "";
 }
