@@ -71,19 +71,34 @@
 
 extern void eprintf(const char *fmt, ...);
 extern void switch_syslog(const char *name);
+extern void print_color(const char *type);
+extern char *parse_stap_color(const char *type);
 
 #define dbug(level, args...) do {if (verbose>=level) {eprintf("%s:%s:%d ",__name__,__FUNCTION__, __LINE__); eprintf(args);}} while (0)
 
 extern char *__name__;
 
 /* print to stderr */
-#define err(args...) eprintf(args)
+#define err(args...) do {	\
+		print_color("error");	\
+		eprintf(_("ERROR:"));	\
+		print_color(NULL); \
+		eprintf(" ");	\
+		eprintf(args);	\
+	} while (0)
+
+#define warn(args...) do {	\
+		print_color("warning");	\
+		eprintf(_("WARNING:"));	\
+		print_color(NULL); \
+		eprintf(" ");	\
+		eprintf(args);	\
+	} while (0)
 
 /* better perror() */
 #define perr(args...) do {					\
 		int _errno = errno;				\
-		eprintf("ERROR: ");				\
-		eprintf(args);					\
+		err(args);					\
 		eprintf(": %s\n", strerror(_errno));		\
 	} while (0)
 

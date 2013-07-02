@@ -2115,9 +2115,6 @@ type. The env var SYSTEMTAP_COLORS must be in the following format:
 'source', 'caret', 'token' and valid values constitute SGR parameter(s).
 For example, the default setting would be:
 'error=01;31:warning=00;33:source=00;34:caret=01:token=01'
-This algorithm is loosely based on parse_grep_colors() in grep's main.c,
-written by Mike Haertel and others (for the complete list, see
-<http://git.sv.gnu.org/cgit/grep.git/tree/AUTHORS>)
 */
 std::string
 systemtap_session::parse_stap_color(std::string type)

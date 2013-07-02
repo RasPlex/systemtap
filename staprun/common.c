@@ -602,3 +602,57 @@ void switch_syslog(const char *name)
 	use_syslog = 1;
 	color_errors = 0;
 }
+
+void print_color(const char *type)
+{
+	if (!color_errors)
+		return;
+
+	if (type == NULL) // Reset
+		eprintf("\033[m\033[K");
+	else {
+		char *seq = parse_stap_color(type);
+		if (seq != NULL) {
+			eprintf("\033[");
+			eprintf(seq);
+			eprintf("m\033[K");
+			free(seq);
+		}
+	}
+}
+
+/* Parse SYSTEMTAP_COLORS and returns the SGR parameter(s) for the given
+type. The env var SYSTEMTAP_COLORS must be in the following format:
+'key1=val1:key2=val2:' etc... where valid keys are 'error', 'warning',
+'source', 'caret', 'token' and valid values constitute SGR parameter(s).
+For example, the default setting would be:
+'error=01;31:warning=00;33:source=00;34:caret=01:token=01'
+*/
+char *parse_stap_color(const char *type)
+{
+	const char *key, *col, *eq;
+	int n = strlen(type);
+	int done = 0;
+
+	key = getenv("SYSTEMTAP_COLORS");
+	if (key == NULL || *key == '\0')
+		key = "error=01;31:warning=00;33:source=00;34:caret=01:token=01";
+
+	while (!done) {
+		if (!(col = strchr(key, ':'))) {
+			col = strchr(key, '\0');
+			done = 1;
+		}
+		if (!((eq = strchr(key, '=')) && eq < col))
+			return NULL; /* invalid syntax: no = in range */
+		if (!(key < eq && eq < col-1))
+			return NULL; /* invalid syntax: key or val empty */
+		if (strspn(eq+1, "0123456789;") < (size_t)(col-eq-1))
+			return NULL; /* invalid syntax: invalid char in val */
+		if (eq-key == n && !strncmp(key, type, n))
+			return strndup(eq+1, col-eq-1);
+		if (!done) key = col+1; /* advance to next key */
+	}
+
+	return NULL; /* key not found */
+}
