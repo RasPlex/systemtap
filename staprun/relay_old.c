@@ -470,7 +470,7 @@ int init_oldrelayfs(void)
 		if (ret == 0)
 			break;
 		if (ret < 0) {
-			err("ERROR: couldn't open relayfs files, cpu = %d\n", i);
+			err("Couldn't open relayfs files, cpu = %d\n", i);
 			goto err;
 		}
 	}
@@ -479,7 +479,7 @@ int init_oldrelayfs(void)
 	dbug(2, "ncpus=%d\n", ncpus);
 
 	if (ncpus == 0) {
-		err("couldn't open relayfs files.\n");
+		err("Couldn't open relayfs files.\n");
 		return -1;
 	}
 
@@ -490,7 +490,7 @@ int init_oldrelayfs(void)
 			if (pthread_create(&reader[i], NULL, reader_thread, (void *)(long)i) < 0) {
 				int saved_errno = errno;
 				close_relayfs_files(i);
-				err("ERROR: Couldn't create reader thread, cpu = %d: %s\n",
+				err("Couldn't create reader thread, cpu = %d: %s\n",
 				    i, strerror(saved_errno));
 				goto err;
 			}

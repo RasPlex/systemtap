@@ -218,7 +218,7 @@ void parse_args(int argc, char **argv)
                         }
 			break;
 		case 'V':
-                        err(_("Systemtap module loader/runner (version %s, %s)\n"
+                        eprintf(_("Systemtap module loader/runner (version %s, %s)\n"
                               "Copyright (C) 2005-2013 Red Hat, Inc. and others\n"
                               "This is free software; see the source for copying conditions.\n"),
                             VERSION, STAP_EXTENDED_VERSION);
@@ -317,9 +317,9 @@ void parse_args(int argc, char **argv)
 
 void usage(char *prog)
 {
-	err(_("\n%s [-v] [-w] [-V] [-u] [-c cmd ] [-x pid] [-u user] [-A|-L|-d] [-C WHEN]\n"
+	eprintf(_("\n%s [-v] [-w] [-V] [-u] [-c cmd ] [-x pid] [-u user] [-A|-L|-d] [-C WHEN]\n"
                 "\t[-b bufsize] [-R] [-r N:URI] [-o FILE [-D] [-S size[,N]]] MODULE [module-options]\n"), prog);
-	err(_("-v              Increase verbosity.\n"
+	eprintf(_("-v              Increase verbosity.\n"
 	"-V              Print version number and exit.\n"
 	"-w              Suppress warnings.\n"
 	"-u              Load uprobes.ko\n"
@@ -370,9 +370,9 @@ void usage(char *prog)
                 struct utsname utsbuf;
                 int rc = uname (& utsbuf);
                 if (! rc)
-                        err("/lib/modules/%s/systemtap\n", utsbuf.release);
+                        eprintf("/lib/modules/%s/systemtap\n", utsbuf.release);
                 else
-                        err("/lib/modules/`uname -r`/systemtap\n");
+                        eprintf("/lib/modules/`uname -r`/systemtap\n");
         }
 	exit(1);
 }
@@ -475,7 +475,7 @@ void parse_modpath(const char *inpath)
 	 * work, but the module can't be removed (because you end up
 	 * with control characters in the module name). */
 	if (strlen(modname) > MODULE_NAME_LEN) {
-		err(_("ERROR: Module name ('%s') is too long.\n"), modname);
+		err(_("Module name ('%s') is too long.\n"), modname);
 		exit(1);
 	}
 }

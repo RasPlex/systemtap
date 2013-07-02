@@ -96,7 +96,7 @@ int init_ctl_channel(const char *name, int verb)
 
 out:
 	if (control_channel < 0) {
-                err(_("ERROR: Cannot attach to module %s control channel; not running?\n"), 
+                err(_("Cannot attach to module %s control channel; not running?\n"),
                     name);
 		return -3;
 	}

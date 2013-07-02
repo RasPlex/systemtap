@@ -77,12 +77,12 @@ static void chld_proc(int signum)
   if (chld_stat) {
     // our child exited with a non-zero status
     if (WIFSIGNALED(chld_stat)) {
-      err(_("Warning: child process exited with signal %d (%s)\n"),
+      warn(_("Child process exited with signal %d (%s)\n"),
           WTERMSIG(chld_stat), strsignal(WTERMSIG(chld_stat)));
       target_pid_failed_p = 1;
     }
     if (WIFEXITED(chld_stat) && WEXITSTATUS(chld_stat)) {
-      err(_("Warning: child process exited with status %d\n"),
+      warn(_("Child process exited with status %d\n"),
           WEXITSTATUS(chld_stat));
       target_pid_failed_p = 1;
     }
@@ -472,7 +472,7 @@ void cleanup_and_exit(int detach, int rc)
   close_ctl_channel();
 
   if (detach) {
-    err(_("\nDisconnecting from systemtap module.\n" "To reconnect, type \"staprun -A %s\"\n"), modname);
+    eprintf(_("\nDisconnecting from systemtap module.\n" "To reconnect, type \"staprun -A %s\"\n"), modname);
     _exit(0);
   }
   else if (rename_mod)
@@ -790,7 +790,7 @@ int stp_main_loop(void)
         break;
       }
     default:
-      err(_("WARNING: ignored message of type %d\n"), recvbuf.type);
+      warn(_("Ignored message of type %d\n"), recvbuf.type);
     }
   }
   fclose(ofp);

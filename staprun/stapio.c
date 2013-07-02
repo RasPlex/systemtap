@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
 	if (optind < argc) {
 		if (attach_mod) {
-			err(_("ERROR: Cannot have module options with attach (-A).\n"));
+			err(_("Cannot have module options with attach (-A).\n"));
 			usage(argv[0]);
 		} else {
 			unsigned start_idx = 3;	/* reserve three slots in modoptions[] */
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 	}
 
 	if (modpath == NULL || *modpath == '\0') {
-		err(_("ERROR: Need a module name or path to load.\n"));
+		err(_("Need a module name or path to load.\n"));
 		usage(argv[0]);
 	}
 
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 		exit(1);
 
 	if (stp_main_loop()) {
-		err(_("ERROR: Couldn't enter main loop. Exiting.\n"));
+		err(_("Couldn't enter main loop. Exiting.\n"));
 		exit(1);
 	}
 
