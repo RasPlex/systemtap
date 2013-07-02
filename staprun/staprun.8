@@ -82,6 +82,14 @@ option.
 .B \-A
 Attach to loaded systemtap module.
 .TP
+.B \-C WHEN
+Enable colored error messages, which is turned off by default.
+WHEN must be either "never", "always", or "auto" (i.e. enable only if at a
+terminal). Colors can be modified using the SYSTEMTAP_COLORS environment
+variable. See the
+.IR stap (1)
+manual page for more information on syntax and behaviour.
+.TP
 .B \-d
 Delete a module.  Only detached or unused modules
 the user has permission to access will be deleted. Use "*"
@@ -93,7 +101,7 @@ Run staprun in background as a daemon and show it's pid.
 .B \-R
 Rename the module to a unique name before inserting it.
 .TP
-.B \-r " N:URI"
+.B \-r N:URI
 Pass the given number and URI data to the tapset functions
 remote_id() and remote_uri().
 .TP
@@ -186,11 +194,11 @@ To reattach to a kernel module, the
 option would be used.
 
 .SH FILE SWITCHING BY SIGNAL
-After the
+After
 .I staprun
 launched the
 .I stapio
-, users can command it to switch output file to next file when it
+program, users can command it to switch output file to next file when it
 outputs to file(s) (running staprun with
 .B \-o
 option) by sending a

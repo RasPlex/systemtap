@@ -749,6 +749,12 @@ make_run_command (systemtap_session& s, const string& remotedir,
       staprun_cmd.push_back(s.size_option);
     }
 
+  if (s.color_errors)
+    {
+      staprun_cmd.push_back("-C");
+      staprun_cmd.push_back("auto");
+    }
+
   staprun_cmd.push_back((remotedir.empty() ? s.tmpdir : remotedir)
                         + "/" + s.module_filename());
 

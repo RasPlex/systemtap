@@ -39,6 +39,7 @@ int fnum_max;
 int remote_id;
 const char *remote_uri;
 int relay_basedir_fd;
+int color_errors;
 
 /* module variables */
 char *modname = NULL;
@@ -134,8 +135,9 @@ void parse_args(int argc, char **argv)
         remote_id = -1;
         remote_uri = NULL;
         relay_basedir_fd = -1;
+        color_errors = 0;
 
-	while ((c = getopt(argc, argv, "ALu::vb:t:dc:o:x:S:DwRr:VT:"
+	while ((c = getopt(argc, argv, "ALu::vb:t:dc:o:x:S:DwRr:VT:C:"
 #ifdef HAVE_OPENAT
                            "F:"
 #endif
@@ -227,6 +229,16 @@ void parse_args(int argc, char **argv)
                                 usage(argv[0]);
                         }
                         break;
+		case 'C':
+			if (strcmp(optarg, "auto")
+					&& strcmp(optarg, "never")
+					&& strcmp(optarg, "always")) {
+				err(_("Invalid option '%s' for -C."), optarg);
+				usage(argv[0]);
+			}
+			color_errors = (!strcmp(optarg, "always")
+				|| (!strcmp(optarg, "auto") && isatty(STDERR_FILENO)));
+			break;
 		default:
 			usage(argv[0]);
 		}
@@ -299,7 +311,7 @@ void parse_args(int argc, char **argv)
 
 void usage(char *prog)
 {
-	err(_("\n%s [-v] [-w] [-V] [-u] [-c cmd ] [-x pid] [-u user] [-A|-L|-d]\n"
+	err(_("\n%s [-v] [-w] [-V] [-u] [-c cmd ] [-x pid] [-u user] [-A|-L|-d] [-C WHEN]\n"
                 "\t[-b bufsize] [-R] [-r N:URI] [-o FILE [-D] [-S size[,N]]] MODULE [module-options]\n"), prog);
 	err(_("-v              Increase verbosity.\n"
 	"-V              Print version number and exit.\n"
@@ -318,6 +330,8 @@ void usage(char *prog)
 	"                That value will be per-cpu in bulk mode.\n"
 	"-L              Load module and start probes, then detach.\n"
 	"-A              Attach to loaded systemtap module.\n"
+	"-C WHEN         Enable colored errors. WHEN must be either 'auto',\n"
+	"                'never', or 'always'.\n"
 	"-d              Delete a module.  Only detached or unused modules\n"
 	"                the user has permission to access will be deleted. Use \"*\"\n"
 	"                (quoted) to delete all unused modules.\n"
@@ -580,4 +594,5 @@ void switch_syslog(const char *name)
 {
 	openlog(name, LOG_PID, LOG_DAEMON);
 	use_syslog = 1;
+	color_errors = 0;
 }

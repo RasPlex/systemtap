@@ -502,9 +502,10 @@ void cleanup_and_exit(int detach, int rc)
   if (pid == 0) {			/* child process */
           /* Run the command. */
           char *cmd;
-          int rc = asprintf(&cmd, "%s %s %s -d '%s'", staprun,
+          int rc = asprintf(&cmd, "%s %s %s -d -C %s '%s'", staprun,
                             (verbose >= 1) ? "-v" : "",
                             (verbose >= 2) ? "-v" : "",
+                            color_errors ? "auto" : "never",
                             modname);
           if (rc >= 1) {
                   execlp("sh", "sh", "-c", cmd, NULL);

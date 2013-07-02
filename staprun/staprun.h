@@ -236,6 +236,7 @@ extern int fnum_max;
 extern int remote_id;
 extern const char *remote_uri;
 extern int relay_basedir_fd;
+extern int color_errors;
 
 /* getopt variables */
 extern char *optarg;
