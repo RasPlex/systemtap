@@ -162,6 +162,7 @@ systemtap_session::systemtap_session ():
   update_release_sysroot = false;
   suppress_time_limits = false;
   color_errors = false;
+  color_mode = color_never;
 
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
@@ -336,6 +337,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   sysenv = other.sysenv;
   suppress_time_limits = other.suppress_time_limits;
   color_errors = other.color_errors;
+  color_mode = other.color_mode;
 
   include_path = other.include_path;
   runtime_path = other.runtime_path;
@@ -1277,15 +1279,19 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
           break;
 
         case LONG_OPT_COLOR_ERRS:
-          if (optarg && strcmp(optarg, "auto")
-                     && strcmp(optarg, "never")
-                     && strcmp(optarg, "always")) {
+          // --color without arg is equivalent to auto
+          if (!optarg || !strcmp(optarg, "auto"))
+            color_mode = color_auto;
+          else if (!strcmp(optarg, "always"))
+            color_mode = color_always;
+          else if (!strcmp(optarg, "always"))
+            color_mode = color_never;
+          else {
             cerr << _F("Invalid argument '%s' for --color.", optarg) << endl;
             return 1;
           }
-          // --color without arg is equivalent to auto
-          color_errors = ((optarg && !strcmp(optarg, "always"))
-                || ((!optarg || !strcmp(optarg, "auto")) && isatty(STDERR_FILENO)));
+          color_errors = color_mode == color_always
+              || (color_mode == color_auto && isatty(STDERR_FILENO));
           break;
 
 	case '?':

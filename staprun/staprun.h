@@ -238,6 +238,9 @@ extern const char *remote_uri;
 extern int relay_basedir_fd;
 extern int color_errors;
 
+typedef enum {color_never, color_auto, color_always} color_modes;
+extern color_modes color_mode;
+
 /* getopt variables */
 extern char *optarg;
 extern int optopt;

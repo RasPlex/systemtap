@@ -505,7 +505,8 @@ void cleanup_and_exit(int detach, int rc)
           int rc = asprintf(&cmd, "%s %s %s -d -C %s '%s'", staprun,
                             (verbose >= 1) ? "-v" : "",
                             (verbose >= 2) ? "-v" : "",
-                            color_errors ? "auto" : "never",
+                            color_mode == color_always ? "always"
+                              : color_mode == color_auto ? "auto" : "never",
                             modname);
           if (rc >= 1) {
                   execlp("sh", "sh", "-c", cmd, NULL);

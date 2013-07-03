@@ -214,6 +214,8 @@ public:
   bool suppress_time_limits;
   bool color_errors;
 
+  enum { color_never, color_auto, color_always } color_mode;
+
   enum { kernel_runtime, dyninst_runtime } runtime_mode;
   bool runtime_usermode_p() const { return runtime_mode == dyninst_runtime; }
 

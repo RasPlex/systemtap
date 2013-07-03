@@ -40,6 +40,7 @@ int remote_id;
 const char *remote_uri;
 int relay_basedir_fd;
 int color_errors;
+color_modes color_mode;
 
 /* module variables */
 char *modname = NULL;
@@ -136,6 +137,7 @@ void parse_args(int argc, char **argv)
         remote_uri = NULL;
         relay_basedir_fd = -1;
         color_errors = 0;
+        color_mode = color_never;
 
 	while ((c = getopt(argc, argv, "ALu::vb:t:dc:o:x:S:DwRr:VT:C:"
 #ifdef HAVE_OPENAT
@@ -230,14 +232,18 @@ void parse_args(int argc, char **argv)
                         }
                         break;
 		case 'C':
-			if (strcmp(optarg, "auto")
-					&& strcmp(optarg, "never")
-					&& strcmp(optarg, "always")) {
+			if (!strcmp(optarg, "never"))
+				color_mode = color_never;
+			else if (!strcmp(optarg, "auto"))
+				color_mode = color_auto;
+			else if (!strcmp(optarg, "always"))
+				color_mode = color_always;
+			else {
 				err(_("Invalid option '%s' for -C."), optarg);
 				usage(argv[0]);
 			}
-			color_errors = (!strcmp(optarg, "always")
-				|| (!strcmp(optarg, "auto") && isatty(STDERR_FILENO)));
+			color_errors = color_mode == color_always
+				|| (color_mode == color_auto && isatty(STDERR_FILENO));
 			break;
 		default:
 			usage(argv[0]);
