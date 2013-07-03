@@ -48,7 +48,7 @@ stap_SOURCES = main.cxx session.cxx \
 	tapset-utrace.cxx task_finder.cxx dwflpp.cxx rpm_finder.cxx \
 	setupdwfl.cxx remote.cxx privilege.cxx cmdline.cxx \
 	tapset-dynprobe.cxx tapset-method.cxx translator-output.cxx
-stap_SOURCES += stapregex-parse.cxx
+stap_SOURCES += stapregex.cxx stapregex-parse.cxx
 noinst_HEADERS = sdt_types.h
 stap_LDADD = @stap_LIBS@ @sqlite3_LIBS@ @LIBINTL@ -lpthread
 stap_DEPENDENCIES =

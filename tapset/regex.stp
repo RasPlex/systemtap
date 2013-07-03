@@ -1,0 +1,77 @@
+// Regular expression subexpression tapset
+// Copyright (C) 2013 Red Hat, Inc.
+//
+// This file is part of systemtap, and is free software.  You can
+// redistribute it and/or modify it under the terms of the GNU General
+// Public License (GPL); either version 2, or (at your option) any
+// later version.
+
+%{
+#define STAP_NEED_CONTEXT_SUBEXPRESSION 1
+%}
+
+// TODOXXX add pragma:tagged_dfa to these tapset functions
+// that way, we can avoid the overhead of tagging in scripts
+// that don't need the information
+
+/**
+ * sfunction matched_str - Return the last 
+ *
+ * Description: returns the string matched by the last successful
+ * use of the =~ regexp matching operator. Returns an error if the
+ * last use of =~ led to a failed match. 
+ */
+function matched_str:string() { return matched(0) }
+
+/**
+ * sfunction matched - Return a given matched subexpression.
+ *
+ * @n: index to the subexpression to return. 0 corresponds to the
+ * entire regular expression.
+ *
+ * Description: returns the content of the n'th subexpression of the
+ * last successful use of the =~ regex matching operator. Throws an
+ * error if the n'th subexpression was not matched (e.g. due to
+ * alternation), or if the last use of =~ was a failed match, or if
+ * fewer than n subexpressions are present in the original regexp.
+ */
+function matched:string(n:long)
+%{ /* pure */ /* unprivileged */
+  if (!CONTEXT->last_match.result) {
+    snprintf(CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+             "Attempted to get subexpression %d from failed match", STAP_ARG_n);
+    CONTEXT->last_error = CONTEXT->error_buffer;
+  }
+
+  int start_ix = 2 * STAP_ARG_n, end_ix = start_ix + 1;
+
+  if (end_ix >= CONTEXT->last_match.num_final_tags) {
+    snprintf(CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+             "Attempted to get nonexistent subexpression %d", STAP_ARG_n);
+    CONTEXT->last_error = CONTEXT->error_buffer;
+  }
+
+  int start = CONTEXT->last_match.tag_vals[start_ix];
+  int end = CONTEXT->last_match.tag_vals[end_ix];
+
+  if (start < 0 || end < 0) {
+    snprintf(CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+             "Unknown coordinates for subexpression %d", STAP_ARG_n);
+    CONTEXT->last_error = CONTEXT->error_buffer;
+  }
+
+  if (start > end) {
+    // This should not happen.
+    snprintf(CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+             "BUG: inverted coordinates for subexpression %d", STAP_ARG_n);
+    CONTEXT->last_error = CONTEXT->error_buffer;
+  }
+
+  int length = end - start;
+
+  strlcpy(STAP_RETVALUE, CONTEX->last_match.matched_str + start, length);
+%}
+
+// XXX: perhaps implement matched_start, matched_end to get indices?
+// XXX: some kind of find-replace functionality?
+// XXX: some kind of splitting / multiple-match functionality?

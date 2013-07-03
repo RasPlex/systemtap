@@ -27,21 +27,26 @@ namespace stapregex {
 };
 
 struct stapdfa {
+  std::string func_name;
   std::string orig_input;
   const token *tok;
+
   stapdfa (const std::string& func_name, const std::string& re,
            const token *tok = NULL, bool do_unescape = true, bool do_tag = true);
   ~stapdfa ();
-  unsigned num_states();
-  unsigned num_tags();
-  void emit_declaration (translator_output *o);
-  void emit_matchop_start (translator_output *o);
-  void emit_matchop_end (translator_output *o);
-  void print (std::ostream& o) const;
+  unsigned num_states() const;
+  unsigned num_tags() const;
+
+  void emit_declaration (translator_output *o) const;
+  void emit_matchop_start (translator_output *o) const;
+  void emit_matchop_end (translator_output *o) const;
+
+  void print(translator_output *o) const;
+  void print(std::ostream& o) const;
 private:
-  std::string func_name;
   stapregex::regexp *ast;
   stapregex::dfa *content;
+  bool do_tag;
 };
 
 std::ostream& operator << (std::ostream &o, const stapdfa& d);

@@ -24,8 +24,10 @@ using namespace std;
 
 namespace stapregex {
 
+cursor::cursor() : input(NULL), pos(-1) {}
+
 cursor::cursor(std::string *input, bool do_unescape)
-  : input(input), pos(0), do_unescape(do_unescape)
+  : input(input), do_unescape(do_unescape), pos(0)
 {
   next_c = 0; last_c = 0;
   finished = ( pos >= input->length() );
@@ -35,9 +37,9 @@ char
 cursor::next ()
 {
   if (! next_c && finished)
-    parse_error(_("unexpected end of regex"), pos);
+    throw regex_error(_("unexpected end of regex"), pos);
   if (! next_c)
-      get_unescaped();
+    get_unescaped();
 
   last_c = next_c;
   // advance by zeroing next_c
@@ -61,7 +63,7 @@ cursor::peek ()
 bool
 cursor::has (unsigned n)
 {
-  return ( pos <= input.length() - n );
+  return ( pos <= input->length() - n );
 }
 
 /* Systemtap doesn't unescape string literals for us, presuming to
@@ -108,6 +110,7 @@ cursor::get_unescaped ()
     case 'r': c = '\r'; break;
 
     case 'x':
+      {
       if (pos >= input->length() - 2)
         throw regex_error(_("two hex digits required in escape sequence"), pos);
 
@@ -117,15 +120,16 @@ cursor::get_unescaped ()
       if (!d1 || !d2)
         throw regex_error(_("two hex digits required in escape sequence"), pos + (d1 ? 1 : 2));
 
-      c = (char)((d0-hex) << 4) + (char)(d1-hex);
+      c = (char)((d1-hex) << 4) + (char)(d2-hex);
       pos += 2; // skip two chars more than usual
       break;
-
+      }
     case '4' ... '7':
       // XXX: perhaps perform error recovery (slurp 3 octal chars)?
       throw regex_error(_("octal escape sequence out of range"), pos);
 
     case '0' ... '3':
+      {
       if (pos >= input->length() - 2)
         throw regex_error(_("three octal digits required in escape sequence"), pos);
 
@@ -139,9 +143,10 @@ cursor::get_unescaped ()
       c = (char)((d0-oct) << 6) + (char)((d1-oct) << 3) + (char)(d2-oct);
       pos += 2; // skip two chars more than usual
       break;
-
+      }
     default:
       // do nothing; this removes the backslash from c
+      ;
     }
 
   next_c = c;
@@ -155,9 +160,9 @@ regexp *
 regex_parser::parse (bool do_tag)
 {
   cur = cursor(&input);
-  num_tags = 0;
+  num_tags = 0; this->do_tag = do_tag;
 
-  regexp *result = parse.expr ();
+  regexp *result = parse_expr ();
 
   // PR15065 glom appropriate tag_ops onto the expr (subexpression 0)
   if (do_tag) {
@@ -169,14 +174,14 @@ regex_parser::parse (bool do_tag)
     {
       char c = cur.peek ();
       if (c == ')')
-        parse_error (_("unbalanced ')'"), cur.next_pos);
+        parse_error (_("unbalanced ')'"), cur.pos);
       else
         // This should not be possible:
-        parse_error ("BUG -- regex parse failed to finish for unknown reasons", cur.next_pos);
+        parse_error ("BUG -- regex parse failed to finish for unknown reasons", cur.pos);
     }
 
   // PR15065 store num_tags in result
-  result.num_tags = num_tags;
+  result->num_tags = num_tags;
   return result;
 }
 
@@ -326,7 +331,7 @@ regex_parser::parse_factor ()
       /* separately deal with the last character before a closure */
       if (d != 0) {
         old_result = result; /* will add it back outside closure at the end */
-        result = str_to_re (string(d));
+        result = str_to_re (string(1,d));
       }
     }
 
@@ -384,10 +389,10 @@ regex_parser::parse_factor ()
             parse_error(_("expected ',' or '}'"));
 
           /* optimize {0,0}, {0,} and {1,} */
-          if (minsize == 0 && maxsize == 0)
+          if (!do_tag && minsize == 0 && maxsize == 0)
             {
-              // TODOXXX: this optimization will need to be removed
-              // after subexpression-extraction is implemented
+              // XXX: this optimization is only used when
+              // subexpression-extraction is disabled
               delete result;
               result = new null_op;
             }
@@ -432,9 +437,9 @@ regex_parser::parse_char_range ()
   for (;;)
     {
       // break on string end whenever we encounter it
-      if (finished) parse_error(_("unclosed character class")); // TODOXXX doublecheck that this is triggered correctly
+      if (cur.finished) parse_error(_("unclosed character class")); // TODOXXX doublecheck that this is triggered correctly
 
-      range *add = stapregex_getrange (cursor);
+      range *add = stapregex_getrange (cur);
       ran = ( ran == NULL ? range_union(ran, add) : add );
       if (ran != add) delete add;
 
@@ -445,6 +450,13 @@ regex_parser::parse_char_range ()
           break;
         }
 
+    }
+
+  if (inv)
+    {
+      range *old_ran = ran;
+      ran = range_invert(old_ran);
+      delete old_ran;
     }
 
   if (ran == NULL)
@@ -482,7 +494,7 @@ regex_parser::parse_number ()
 
 // ------------------------------------------------------------------------
 
-std::map<std::string, Range *> named_char_classes;
+std::map<std::string, range *> named_char_classes;
 
 range *
 named_char_class (const string& name)
@@ -508,7 +520,7 @@ named_char_class (const string& name)
 
   if (named_char_classes.find(name) == named_char_classes.end())
     {
-      fatalf("unknown character class '%s'", name.c_str());
+      throw regex_error (_F("unknown character class '%s'", name.c_str())); // XXX: position unknown
     }
 
   return new range(*named_char_classes[name]);
@@ -518,7 +530,6 @@ range *
 stapregex_getrange (cursor& cur)
 {
   char c = cur.peek ();
-  bool have_next = false;
 
   if (c == '\\')
     {
@@ -539,7 +550,7 @@ stapregex_getrange (cursor& cur)
               if (cur.finished)
                 throw regex_error (_F("unclosed character class '[:%s'", charclass.c_str()), cur.pos);
 
-              if (cur.has(2) && c == ':' && cur.input[cur.pos] == ']')
+              if (cur.has(2) && c == ':' && (*cur.input)[cur.pos] == ']')
                 {
                   cur.next (); cur.next (); // skip ':]'
                   return named_char_class(charclass);
@@ -559,7 +570,7 @@ stapregex_getrange (cursor& cur)
 
   char lb = c, ub;
 
-  if (!cur.has(2) || !cur.input[cur.pos] == '-')
+  if (!cur.has(2) || !(*cur.input)[cur.pos] == '-')
     {
       ub = lb;
     }

@@ -6727,6 +6727,11 @@ translate_pass (systemtap_session& s)
       s.op->newline() << "#define MAXNESTING " << nesting;
       s.op->newline() << "#endif";
 
+      // Generated macros specifying how much storage is required for
+      // regexp subexpressions:
+      s.op->newline() << "#define STAPREGEX_MAX_STATE" << s.dfa_maxstate;
+      s.op->newline() << "#define STAPREGEX_MAX_TAG" << s.dfa_maxtag;
+
       s.op->newline() << "#define STP_SKIP_BADVARS " << (s.skip_badvars ? 1 : 0);
 
       if (s.bulk_mode)

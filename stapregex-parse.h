@@ -18,6 +18,7 @@
 
 namespace stapregex {
 
+struct range; /* from stapregex-tree.h */
 struct regexp; /* from stapregex-tree.h */
 
 struct cursor {
@@ -30,6 +31,7 @@ struct cursor {
   bool finished;
   bool has(unsigned n); // n characters remaining?
 
+  cursor();
   cursor(std::string *input, bool do_unescape = false);
   char peek();
   char next();
@@ -51,6 +53,7 @@ private:
   bool do_unescape;
 
   cursor cur;
+  bool do_tag;
   unsigned num_tags;
 
   void parse_error (const std::string& msg, unsigned pos);

@@ -17,13 +17,21 @@
 #include <string>
 #include <iostream>
 
+struct translator_output; /* from translator-output.h */
+
 namespace stapregex {
 
 struct regexp; /* from stapregex-tree.h */
 
-class dfa {
+struct dfa {
   unsigned nstates;
   unsigned ntags;
+
+  void emit (translator_output *o) const;
+  void emit_tagsave (translator_output *o, std::string tag_states,
+                     std::string tag_vals, std::string tag_count) const;
+
+  void print (translator_output *o) const;
   void print (std::ostream& o) const;
 };
 

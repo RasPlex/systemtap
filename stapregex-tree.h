@@ -19,8 +19,19 @@
 
 namespace stapregex {
 
+struct range {
+  range (char lb, char ub);
+  range (const std::string& str);
+};
+
+range *range_union(range *a, range *b);
+range *range_invert(range *ran);
+
+// ------------------------------------------------------------------------
+
 struct regexp {
-  regexp () : num_tags(-1);
+  regexp () : num_tags(-1) {}
+  virtual ~regexp ();
   int num_tags; // number of tag_op id's used in expression, -1 if unknown
   virtual const std::string type_of() = 0;
 };
@@ -62,13 +73,6 @@ struct closev_op : public regexp {
 };
 
 // ------------------------------------------------------------------------
-
-struct range {
-  range (char lb, char ub);
-  range (const std::string& str);
-};
-
-range *range_union(range *a, range *b);
 
 regexp *str_to_re(const std::string& str);
 

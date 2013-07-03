@@ -74,6 +74,17 @@ char *tok_start;
 char *tok_end;
 #endif
 
+/* Only used when stap script needs regexp subexpressions. */
+#ifdef STAP_NEED_CONTEXT_SUBEXPRESSION
+struct stapregex_match {
+  string_t matched_str;
+  unsigned result:1;
+  unsigned num_final_tags;
+  int tag_states[STAPREGEX_MAX_TAG][STAPREGEX_MAX_STATE];
+  int tag_vals[STAPREGEX_MAX_TAG];
+} last_match;
+#endif
+
 /* NB: last_error is used as a health flag within a probe.
    While it's 0, execution continues
    When it's "something", probe code unwinds, _stp_error's, sets error state */
