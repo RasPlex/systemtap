@@ -15,7 +15,7 @@ proc stap_run_error { TEST_NAME EXPECT_ERROR ERROR_STRING OUTPUT_CHECK_STRING ar
 	-re {^Pass\ [1234]: [^\r]+real\ ms\.\r\n} {exp_continue}
 	-re {^Pass\ ([34]): using cached [^\r]+\r\n} {exp_continue}
 	-re {^Pass 5: starting run.\r\n} {exp_continue}
-	-re {^Error inserting module[^\r]+\r\n} {
+	-re {^ERROR: Couldn't insert module[^\r]+\r\n} {
 	    if {$EXPECT_ERROR} {
 		pass "$TEST_NAME expected insert module error"
 	    } else {
