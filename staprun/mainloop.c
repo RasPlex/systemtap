@@ -658,10 +658,11 @@ int stp_main_loop(void)
     case STP_OOB_DATA:
       /* Note that "WARNING:" should not be translated, since it is
        * part of the module cmd protocol. */
-      if (strncmp(recvbuf.payload.data, "WARNING:", 7) == 0) {
+      if (strncmp(recvbuf.payload.data, "WARNING: ", 9) == 0) {
               if (suppress_warnings) break;
               if (verbose) { /* don't eliminate duplicates */
-                      eprintf("%.*s", (int) nb, recvbuf.payload.data);
+                      /* trim "WARNING: " */
+                      warn("%.*s", (int) nb-9, recvbuf.payload.data+9);
                       break;
               } else { /* eliminate duplicates */
                       static void *seen = 0;
@@ -671,13 +672,15 @@ int stp_main_loop(void)
 
                       if (! dupstr) {
                               /* OOM, should not happen. */
-                              eprintf("%.*s", (int) nb, recvbuf.payload.data);
+                              /* trim "WARNING: " */
+                              warn("%.*s", (int) nb-9, recvbuf.payload.data+9);
                               break;
                       }
 
                       retval = tfind (dupstr, & seen, (int (*)(const void*, const void*))strcmp);
                       if (! retval) { /* new message */
-                              eprintf("%s", dupstr);
+                              /* trim "WARNING: " */
+                              warn("%.*s", strlen(dupstr)-9, dupstr+9);
 
                               /* We set a maximum for stored warning messages,
                                  to prevent a misbehaving script/environment
@@ -711,8 +714,9 @@ int stp_main_loop(void)
               } /* duplicate elimination */
       /* Note that "ERROR:" should not be translated, since it is
        * part of the module cmd protocol. */
-      } else if (strncmp(recvbuf.payload.data, "ERROR:", 5) == 0) {
-              eprintf("%.*s", (int) nb, recvbuf.payload.data);
+      } else if (strncmp(recvbuf.payload.data, "ERROR: ", 7) == 0) {
+              /* trim "ERROR: " */
+              err("%.*s", (int) nb-7, recvbuf.payload.data+7);
               error_detected = 1;
       } else { /* neither warning nor error */
               eprintf("%.*s", (int) nb, recvbuf.payload.data);

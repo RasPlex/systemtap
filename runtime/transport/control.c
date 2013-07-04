@@ -337,14 +337,14 @@ static struct _stp_buffer *_stp_ctl_get_buffer(int type, void *data,
 			/* Note that "WARNING:" should not be
 			 * translated, since it is part of the module
 			 * cmd protocol. */
-			if (data && len >= 7
-			    && strncmp(data, "WARNING:", 7) == 0)
+			if (data && len >= 9
+			    && strncmp(data, "WARNING: ", 9) == 0)
 				bptr = _stp_ctl_oob_warn;
 			/* Note that "ERROR:" should not be
 			 * translated, since it is part of the module
 			 * cmd protocol. */
-			else if (data && len >= 5
-				 && strncmp(data, "ERROR:", 5) == 0)
+			else if (data && len >= 7
+				 && strncmp(data, "ERROR: ", 7) == 0)
 				bptr = _stp_ctl_oob_err;
 			else
 				printk(KERN_WARNING "_stp_ctl_get_buffer unexpected STP_OOB_DATA\n");
