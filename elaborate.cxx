@@ -4828,11 +4828,24 @@ typeresolution_info::visit_embeddedcode (embeddedcode* s)
   // to a separate 'optimization' pass, or c_unparser::visit_embeddedcode
   // over yonder in pass 3.  However, we want to do it during pass 2 so
   // that cached sessions also get the uprobes treatment.
-  if (!session.need_uprobes && s->code.find("/* pragma:uprobes */") != string::npos)
+  if (! session.need_uprobes
+      && s->code.find("/* pragma:uprobes */") != string::npos)
     {
       if (session.verbose > 2)
         clog << _("Activating uprobes support because /* pragma:uprobes */ seen.") << endl;
       session.need_uprobes = true;
+    }
+
+  // PR15065. Likewise, we need to detect /* pragma:tagged_dfa */
+  // before the gen_dfa_table pass. Again, the typechecking part of
+  // pass 2 is a good place for this.
+  if (! session.need_tagged_dfa
+      && s->code.find("/* pragma:tagged_dfa */") != string::npos)
+    {
+      if (session.verbose > 2)
+        clog << _F("Turning on DFA subexpressions, pragma:tagged_dfa found in %s",
+		    current_function->name.c_str()) << endl;
+        session.need_tagged_dfa = true;
     }
 }
 

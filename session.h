@@ -324,6 +324,7 @@ public:
   unsigned dfa_counter;  // used to give unique names
   unsigned dfa_maxstate; // used for subexpression-tracking data structure
   unsigned dfa_maxtag;   // ditto
+  bool need_tagged_dfa;  // triggered by /* pragma:tagged_dfa */
 
   // Every probe in these groups must also appear in the
   // session.probes vector.

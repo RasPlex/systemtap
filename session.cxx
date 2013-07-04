@@ -67,6 +67,7 @@ systemtap_session::systemtap_session ():
   dfa_counter (0),
   dfa_maxstate (0),
   dfa_maxtag (0),
+  need_tagged_dfa (false),
   be_derived_probes(0),
   dwarf_derived_probes(0),
   kprobe_derived_probes(0),

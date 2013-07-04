@@ -6,13 +6,11 @@
 // Public License (GPL); either version 2, or (at your option) any
 // later version.
 
+// XXX: maybe automatically add the below #define whenever
+// pragma:tagged_dfa is detected?
 %{
 #define STAP_NEED_CONTEXT_SUBEXPRESSION 1
 %}
-
-// TODOXXX add pragma:tagged_dfa to these tapset functions
-// that way, we can avoid the overhead of tagging in scripts
-// that don't need the information
 
 /**
  * sfunction matched_str - Return the last 
@@ -36,7 +34,7 @@ function matched_str:string() { return matched(0) }
  * fewer than n subexpressions are present in the original regexp.
  */
 function matched:string(n:long)
-%{ /* pure */ /* unprivileged */
+%{ /* pure */ /* unprivileged */ /* pragma:tagged_dfa */
   if (!CONTEXT->last_match.result) {
     snprintf(CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
              "Attempted to get subexpression %d from failed match", STAP_ARG_n);
