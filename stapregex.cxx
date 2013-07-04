@@ -118,7 +118,10 @@ stapdfa::emit_declaration (translator_output *o) const
   o->newline() << "const char *cur = str;";
   o->newline() << "const char *mar;";
 
-  o->newline() << "#define YYTAG(t,s,n) {c->last_match.tag_states[(t)][(s)] = (n);}";
+#ifndef STAPREGEX_STANDALONE
+  if (do_tag)
+    o->newline() << "#define YYTAG(t,s,n) {c->last_match.tag_states[(t)][(s)] = (n);}";
+#endif
   o->newline() << "#define YYCTYPE char";
   o->newline() << "#define YYCURSOR cur";
   o->newline() << "#define YYLIMIT cur";
@@ -149,14 +152,19 @@ stapdfa::emit_declaration (translator_output *o) const
   o->newline() << "#undef YYMARKER";
 
   o->newline() << "match_success:";
+#ifndef STAPREGEX_STANDALONE
   o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
   o->newline() << "c->last_match.result = 1";
-  content->emit_tagsave(o, "c->last_match.tag_states", "c->last_match.tag_vals", "c->last_match.num_final_tags");
+  if (do_tag)
+    content->emit_tagsave(o, "c->last_match.tag_states", "c->last_match.tag_vals", "c->last_match.num_final_tags");
+#endif
   o->newline() << "return 1;";
 
   o->newline() << "match_fail:";
+#ifndef STAPREGEX_STANDALONE
   o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
   o->newline() << "c->last_match.result = 0;";
+#endif
   o->newline() << "return 0;";
 
   o->newline(-1) << "}";
@@ -165,7 +173,11 @@ stapdfa::emit_declaration (translator_output *o) const
 void
 stapdfa::emit_matchop_start (translator_output *o) const
 {
+#ifdef STAPREGEX_STANDALONE
+  o->line() << "(" << func_name << "((";
+#else
   o->line() << "(" << func_name << "(CONTEXT, (";
+#endif
 }
 
 void
