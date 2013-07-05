@@ -1,0 +1,128 @@
+set test "color_parsing"
+
+# checker runs stap/staprun and looks for the SGR parameters inside the
+# ANSI escape code before a specific string known to be colored. It then
+# checks if the SGR param matches what was expected.
+# TEST: name of the test
+# EXE:  set to "stap" to test stap, or "staprun" for staprun
+# EXP:  expected SGR parameter, such as "01;31"
+proc checker { TEST EXE EXP } {
+	global test
+
+	if {[string equal $EXE "stap"]} {
+		set cmd "stap --color -e junk"
+		set STR "parse error:"
+	} else {
+		set cmd "staprun -C always"
+		set STR "ERROR:"
+	}
+
+	set failed 1
+	set str {^\e\[([;0-9]*)m\e\[K}
+	append str "$STR"
+
+	# The expect statements below rely on the fact that both stap and
+	# staprun only output ANSI codes when the color code is nonempty.
+	# so e.g. {parse error:} will go through iff the parse() func
+	# returned an empty string.
+
+	eval spawn $cmd
+	set stap_id $spawn_id
+	expect {
+		-timeout 30
+		-re "$str" {
+			set stap_seq $expect_out(1,string)
+			set failed 0
+			exp_continue
+		}
+		-re "^$STR" {
+			set stap_seq ""
+			set failed 0
+			exp_continue
+		}
+		timeout {
+			fail "$test ($TEST - $EXE: timeout)"
+			exec kill -s KILL -[exp_pid -i $stap_id]
+		}
+		eof { if {$failed} {fail "$test ($TEST - $EXE: unexpected EOF)"} }
+	}
+	catch { close -i $stap_id } ; catch { wait -i $stap_id }
+	if {$failed} { return }
+
+	if {![string equal $stap_seq $EXP]} {
+		fail "$test ($TEST - $EXE: output didn't match)"
+		verbose -log "expected: $EXP"
+		verbose -log "received: $stap_seq"
+		return
+	}
+
+	pass "$test ($TEST - $EXE: output matched)"
+}
+
+# stap_check_parse initializes SYSTEMTAP_COLORS to a specified value and
+# runs the checker for stap and staprun
+# TEST: name of the test
+# ENV:  value of SYSTEMTAP_COLORS to test
+# EXP:  output expected
+proc stap_check_parse { TEST ENV EXP } {
+	global test env
+
+	set env(SYSTEMTAP_COLORS) "$ENV"
+	verbose -log "SYSTEMTAP_COLORS set to \"$env(SYSTEMTAP_COLORS)\""
+
+	# Test stap and staprun
+	checker "$TEST" "stap"    "$EXP"
+	checker "$TEST" "staprun" "$EXP"
+}
+
+stap_check_parse "empty"	"" "01;31"
+stap_check_parse "short_key1"	"a" ""
+stap_check_parse "short_key2"	"a:" ""
+stap_check_parse "short_key3"	"a:error=41" ""
+stap_check_parse "short_key4"	":a" ""
+stap_check_parse "short_key5"	":a:" ""
+stap_check_parse "short_key6"	":a:error=41" ""
+stap_check_parse "short_key7"	"error=32:a:" "32"
+stap_check_parse "short_key8"	"error=32:a=:" "32"
+stap_check_parse "short_key9"	"error=32:a=val:" "32"
+stap_check_parse "no_eq1"	"asd:dsa:error=41" ""
+stap_check_parse "no_eq2"	"asd41" ""
+stap_check_parse "no_eq3"	"asd41:" ""
+stap_check_parse "no_eq4"	"asd41:error=41" ""
+stap_check_parse "no_eq5"	"asd41:hfd" ""
+stap_check_parse "no_eq6"	"asd41:hfd:" ""
+stap_check_parse "no_eq7"	"asd41:hfd:error=41" ""
+stap_check_parse "no_eq8"	"asd=41:hfd" ""
+stap_check_parse "no_eq9"	"asd=41:hfd:" ""
+stap_check_parse "no_eq10"	"asd=41:hfd:error=41" ""
+stap_check_parse "no_key1"	":" ""
+stap_check_parse "no_key2"	":error=41" ""
+stap_check_parse "no_key3"	"=" ""
+stap_check_parse "no_key4"	"=:error=41" ""
+stap_check_parse "no_key5"	"=1" ""
+stap_check_parse "no_key6"	"=1:error=41" ""
+stap_check_parse "no_key7"	"=31" ""
+stap_check_parse "no_key8"	"=31:error=41" ""
+stap_check_parse "no_key9"	":=31" ""
+stap_check_parse "no_key10"	":=31:error=41" ""
+stap_check_parse "no_key11"	"=:31" ""
+stap_check_parse "no_key12"	"=:31:error=41" ""
+stap_check_parse "no_key13"	"error=41:31" "41"
+stap_check_parse "no_val1"	"asd=" ""
+stap_check_parse "no_val2"	"asd=:error=41" ""
+stap_check_parse "no_val3"	"asd=:" ""
+stap_check_parse "no_val4"	"asd=:error=41" ""
+stap_check_parse "no_val5"	"error=41:asd=:" "41"
+stap_check_parse "bad_val1"	"asd=x" ""
+stap_check_parse "bad_val2"	"asd=x:" ""
+stap_check_parse "bad_val3"	"asd=x:error=41" ""
+stap_check_parse "bad_val4"	"asd=x1:error=41" ""
+stap_check_parse "bad_val5"	"asd=1x:error=41" ""
+stap_check_parse "valid1"	"error=41" "41"
+stap_check_parse "valid2"	"error=41:" "41"
+stap_check_parse "valid3"	"error=41:asd" "41"
+stap_check_parse "valid4"	"error=41:asd=dsa" "41"
+stap_check_parse "valid5"	"asd=;:dsa=12;3;;22;4;2:error=41" "41"
+
+pass $test
+
