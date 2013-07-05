@@ -2085,7 +2085,10 @@ systemtap_session::colorize(std::string str, std::string type)
   else {
     // Check if this type is defined in SYSTEMTAP_COLORS
     std::string color = parse_stap_color(type);
-    return "\033[" + color + "m\033[K" + str + "\033[m\033[K";
+    if (!color.empty()) // no need to pollute terminal if not necessary
+      return "\033[" + color + "m\033[K" + str + "\033[m\033[K";
+    else
+      return str;
   }
 }
 
@@ -2130,8 +2133,13 @@ systemtap_session::parse_stap_color(std::string type)
   for (unsigned i=0; i<bits.size(); i++)
     {
       const string& bit = bits[i];
-      if ((bit.substr(0,type.size()+1)) == (type+"="))
-        return bit.substr(type.size()+1);
+      if ((bit.substr(0,type.size()+1)) == (type+"=")) {
+        string val = bit.substr(type.size()+1);
+        if (val.find_first_not_of("0123456789;") != string::npos)
+          return ""; // invalid char in val
+        else
+          return val;
+      }
     }
   
   // Could not find the key
