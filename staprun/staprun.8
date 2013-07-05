@@ -83,9 +83,12 @@ option.
 Attach to loaded systemtap module.
 .TP
 .B \-C WHEN
-Enable colored error messages, which is turned off by default.
-WHEN must be either "never", "always", or "auto" (i.e. enable only if at a
-terminal). Colors can be modified using the SYSTEMTAP_COLORS environment
+Control coloring of error messages. WHEN must be either
+.nh
+"never", "always", or "auto"
+.hy
+(i.e. enable only if at a terminal). If the option is missing, then "auto"
+is assumed. Colors can be modified using the SYSTEMTAP_COLORS environment
 variable. See the
 .IR stap (1)
 manual page for more information on syntax and behaviour.

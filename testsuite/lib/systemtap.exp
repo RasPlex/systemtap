@@ -136,6 +136,10 @@ proc setup_systemtap_environment {} {
     # XXX: or, we could change nearby uses of ${SRCDIR}/testsuite to ${SRCDIR}
     set env(SRCDIR) [fullpath $srcdir/..]
 
+    # pretend to be a dumb terminal so that coloring is always turned off
+    # otherwise, we will have problems with expect
+    set env(TERM) dumb
+
     # Use a local systemtap directory and cache.  Add user name so
     # make check and sudo make check don't clobber each other.
     set env(SYSTEMTAP_DIR) [exec pwd]/.systemtap-[exec whoami]

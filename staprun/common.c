@@ -136,8 +136,9 @@ void parse_args(int argc, char **argv)
         remote_id = -1;
         remote_uri = NULL;
         relay_basedir_fd = -1;
-        color_errors = 0;
-        color_mode = color_never;
+        color_mode = color_auto;
+        color_errors = isatty(STDERR_FILENO)
+                && strcmp(getenv("TERM") ?: "notdumb", "dumb");
 
 	while ((c = getopt(argc, argv, "ALu::vb:t:dc:o:x:S:DwRr:VT:C:"
 #ifdef HAVE_OPENAT
@@ -243,7 +244,8 @@ void parse_args(int argc, char **argv)
 				usage(argv[0]);
 			}
 			color_errors = color_mode == color_always
-				|| (color_mode == color_auto && isatty(STDERR_FILENO));
+				|| (color_mode == color_auto && isatty(STDERR_FILENO)
+						&& strcmp(getenv("TERM") ?: "notdumb", "dumb"));
 			break;
 		default:
 			usage(argv[0]);

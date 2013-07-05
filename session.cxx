@@ -161,8 +161,9 @@ systemtap_session::systemtap_session ():
   sysroot = "";
   update_release_sysroot = false;
   suppress_time_limits = false;
-  color_errors = false;
-  color_mode = color_never;
+  color_mode = color_auto;
+  color_errors = isatty(STDERR_FILENO) // conditions for coloring when
+    && strcmp(getenv("TERM") ?: "notdumb", "dumb"); // on auto
 
   // PR12443: put compiled-in / -I paths in front, to be preferred during 
   // tapset duplicate-file elimination
@@ -1279,19 +1280,20 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
           break;
 
         case LONG_OPT_COLOR_ERRS:
-          // --color without arg is equivalent to auto
-          if (!optarg || !strcmp(optarg, "auto"))
-            color_mode = color_auto;
-          else if (!strcmp(optarg, "always"))
+          // --color without arg is equivalent to always
+          if (!optarg || !strcmp(optarg, "always"))
             color_mode = color_always;
-          else if (!strcmp(optarg, "always"))
+          else if (!strcmp(optarg, "auto"))
+            color_mode = color_auto;
+          else if (!strcmp(optarg, "never"))
             color_mode = color_never;
           else {
             cerr << _F("Invalid argument '%s' for --color.", optarg) << endl;
             return 1;
           }
           color_errors = color_mode == color_always
-              || (color_mode == color_auto && isatty(STDERR_FILENO));
+              || (color_mode == color_auto && isatty(STDERR_FILENO) &&
+                    strcmp(getenv("TERM") ?: "notdumb", "dumb"));
           break;
 
 	case '?':
