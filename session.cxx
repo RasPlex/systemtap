@@ -2133,7 +2133,7 @@ systemtap_session::parse_stap_color(std::string type)
     key = "error=01;31:warning=00;33:source=00;34:caret=01:token=01";
 
   while (!done) {
-  if (!(col = strchr(key, ':'))) {
+    if (!(col = strchr(key, ':'))) {
       col = strchr(key, '\0');
       done = 1;
     }
@@ -2143,7 +2143,7 @@ systemtap_session::parse_stap_color(std::string type)
       return ""; /* invalid syntax: key or val empty */
     if (strspn(eq+1, "0123456789;") < (size_t)(col-eq-1))
       return ""; /* invalid syntax: invalid char in val */
-    if (eq-key == n && type.compare(0, n, key))
+    if (eq-key == n && type.compare(0, n, key, n) == 0)
       return string(eq+1, col-eq-1);
     if (!done) key = col+1; /* advance to next key */
   }
