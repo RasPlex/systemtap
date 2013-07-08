@@ -2124,24 +2124,30 @@ For example, the default setting would be:
 std::string
 systemtap_session::parse_stap_color(std::string type)
 {
-  const char *p = getenv("SYSTEMTAP_COLORS");
-  if (p == NULL || *p == '\0')
-    p = "error=01;31:warning=00;33:source=00;34:caret=01:token=01";
+  const char *key, *col, *eq;
+  int n = type.size();
+  int done = 0;
 
-  vector<string> bits;
-  tokenize(string(p), bits, ":");
-  for (unsigned i=0; i<bits.size(); i++)
-    {
-      const string& bit = bits[i];
-      if ((bit.substr(0,type.size()+1)) == (type+"=")) {
-        string val = bit.substr(type.size()+1);
-        if (val.find_first_not_of("0123456789;") != string::npos)
-          return ""; // invalid char in val
-        else
-          return val;
-      }
+  key = getenv("SYSTEMTAP_COLORS");
+  if (key == NULL || *key == '\0')
+    key = "error=01;31:warning=00;33:source=00;34:caret=01:token=01";
+
+  while (!done) {
+  if (!(col = strchr(key, ':'))) {
+      col = strchr(key, '\0');
+      done = 1;
     }
-  
+    if (!((eq = strchr(key, '=')) && eq < col))
+      return ""; /* invalid syntax: no = in range */
+    if (!(key < eq && eq < col-1))
+      return ""; /* invalid syntax: key or val empty */
+    if (strspn(eq+1, "0123456789;") < (size_t)(col-eq-1))
+      return ""; /* invalid syntax: invalid char in val */
+    if (eq-key == n && type.compare(0, n, key))
+      return string(eq+1, col-eq-1);
+    if (!done) key = col+1; /* advance to next key */
+  }
+
   // Could not find the key
   return "";
 }
