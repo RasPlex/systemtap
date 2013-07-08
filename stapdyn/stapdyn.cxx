@@ -43,14 +43,16 @@ static void __attribute__ ((noreturn))
 usage (int rc)
 {
   clog << "Usage: " << program_invocation_short_name
-       << " MODULE [-v] [-c CMD | -x PID] [-o FILE] [globalname=value ...]" << endl
+       << " MODULE [-v] [-c CMD | -x PID] [-o FILE] [-C WHEN] [globalname=value ...]" << endl
        << "-v              Increase verbosity." << endl
        << "-c cmd          Command \'cmd\' will be run and " << program_invocation_short_name << " will" << endl
        << "                exit when it does.  The '_stp_target' variable" << endl
        << "                will contain the pid for the command." << endl
        << "-x pid          Sets the '_stp_target' variable to pid." << endl
        << "-o FILE         Send output to FILE. This supports strftime(3)" << endl
-       << "                formats for FILE." << endl;
+       << "                formats for FILE." << endl
+       << "-C WHEN         Enable colored errors. WHEN must be either 'auto'," << endl
+       << "                'never', or 'always'. Set to 'auto' by default." << endl;
 
   exit (rc);
 }
@@ -64,9 +66,13 @@ main(int argc, char * const argv[])
   const char* command = NULL;
   const char* module = NULL;
 
+  // Check if error/warning msgs should be colored
+  color_errors = isatty(STDERR_FILENO)
+    && strcmp(getenv("TERM") ?: "notdumb", "dumb");
+
   // First, option parsing.
   int opt;
-  while ((opt = getopt (argc, argv, "c:x:vwo:V")) != -1)
+  while ((opt = getopt (argc, argv, "c:x:vwo:VC:")) != -1)
     {
       switch (opt)
         {
@@ -97,6 +103,19 @@ main(int argc, char * const argv[])
                   VERSION, DYNINST_FULL_VERSION, STAP_EXTENDED_VERSION);
           return 0;
 
+        case 'C':
+          if (!strcmp(optarg, "never"))
+            color_errors = false;
+          else if (!strcmp(optarg, "auto"))
+            color_errors = isatty(STDERR_FILENO)
+              && strcmp(getenv("TERM") ?: "notdumb", "dumb");
+          else if (!strcmp(optarg, "always"))
+            color_errors = true;
+          else {
+            staperror() << "Invalid option '" << optarg << "' for -C." << endl;
+            usage (1);
+          }
+          break;
         default:
           usage (1);
         }

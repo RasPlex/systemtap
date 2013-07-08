@@ -225,5 +225,7 @@ staperror(void)
   return clog << program_invocation_short_name << ": ERROR: ";
 }
 
+// Whether to color error and warning messages
+bool color_errors; // Initialized in main()
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */

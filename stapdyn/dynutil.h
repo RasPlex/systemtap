@@ -61,6 +61,8 @@ std::ostream& stapwarn(void);
 // Return a stream for error messages.
 std::ostream& staperror(void);
 
+// Whether to color error and warning messages
+extern bool color_errors;
 
 #endif // DYNUTIL_H
 

@@ -339,7 +339,7 @@ void usage(char *prog)
 	"-L              Load module and start probes, then detach.\n"
 	"-A              Attach to loaded systemtap module.\n"
 	"-C WHEN         Enable colored errors. WHEN must be either 'auto',\n"
-	"                'never', or 'always'.\n"
+	"                'never', or 'always'. Set to 'auto' by default.\n"
 	"-d              Delete a module.  Only detached or unused modules\n"
 	"                the user has permission to access will be deleted. Use \"*\"\n"
 	"                (quoted) to delete all unused modules.\n"
