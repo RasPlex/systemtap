@@ -1917,11 +1917,18 @@ systemtap_session::print_error_source (std::ostream& message,
   //TRANSLATORS: Here we are printing the source string of the error
   message << align << _("source: ");
   string srcline = file_contents.substr(start_pos, end_pos-start_pos-1);
-  if (color_errors) {
+  if (color_errors &&
+      // Only colorize tokens whose content is known to match the source
+      // content.  e.g. tok_string doesn't qualify because of the double-quotes.
+      // tok_embedded lacks the %{ %}. tok_junk is just junky.
+      (tok->type == tok_number ||
+       tok->type == tok_identifier || 
+       tok->type == tok_operator)) {
     // Split into before token, token, and after token
+    string tok_content = tok->content;
     message << srcline.substr(0, col-1);
-    message << colorize(tok->content, "token");
-    message << srcline.substr(col+tok->content.size()-1) << endl;
+    message << colorize(tok_content, "token");
+    message << srcline.substr(col+tok_content.size()-1) << endl;
   } else
     message << srcline << endl;
   message << align << "        ";
