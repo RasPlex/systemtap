@@ -215,17 +215,73 @@ stapwarn(void)
 {
   if (stapdyn_suppress_warnings)
     return nullstream;
-  return clog << program_invocation_short_name << ": WARNING: ";
+  return clog << program_invocation_short_name << ": "
+                   << colorize("WARNING:", "warning") << " ";
 }
 
 // Return a stream for error messages.
 ostream&
 staperror(void)
 {
-  return clog << program_invocation_short_name << ": ERROR: ";
+  return clog << program_invocation_short_name << ": "
+                   << colorize("ERROR:", "error") << " ";
 }
 
 // Whether to color error and warning messages
 bool color_errors; // Initialized in main()
+
+// Adds coloring to strings
+std::string
+colorize(std::string str, std::string type)
+{
+  if (str.empty() || !color_errors)
+    return str;
+  else {
+    // Check if this type is defined in SYSTEMTAP_COLORS
+    std::string color = parse_stap_color(type);
+    if (!color.empty()) // no need to pollute terminal if not necessary
+      return "\033[" + color + "m\033[K" + str + "\033[m\033[K";
+    else
+      return str;
+  }
+}
+
+/* Parse SYSTEMTAP_COLORS and returns the SGR parameter(s) for the given
+type. The env var SYSTEMTAP_COLORS must be in the following format:
+'key1=val1:key2=val2:' etc... where valid keys are 'error', 'warning',
+'source', 'caret', 'token' and valid values constitute SGR parameter(s).
+For example, the default setting would be:
+'error=01;31:warning=00;33:source=00;34:caret=01:token=01'
+*/
+std::string
+parse_stap_color(std::string type)
+{
+  const char *key, *col, *eq;
+  int n = type.size();
+  int done = 0;
+
+  key = getenv("SYSTEMTAP_COLORS");
+  if (key == NULL || *key == '\0')
+    key = "error=01;31:warning=00;33:source=00;34:caret=01:token=01";
+
+  while (!done) {
+    if (!(col = strchr(key, ':'))) {
+      col = strchr(key, '\0');
+      done = 1;
+    }
+    if (!((eq = strchr(key, '=')) && eq < col))
+      return ""; /* invalid syntax: no = in range */
+    if (!(key < eq && eq < col-1))
+      return ""; /* invalid syntax: key or val empty */
+    if (strspn(eq+1, "0123456789;") < (size_t)(col-eq-1))
+      return ""; /* invalid syntax: invalid char in val */
+    if (eq-key == n && type.compare(0, n, key, n) == 0)
+      return string(eq+1, col-eq-1);
+    if (!done) key = col+1; /* advance to next key */
+  }
+
+  // Could not find the key
+  return "";
+}
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */

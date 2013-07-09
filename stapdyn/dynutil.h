@@ -64,6 +64,12 @@ std::ostream& staperror(void);
 // Whether to color error and warning messages
 extern bool color_errors;
 
+// Adds coloring to strings
+std::string colorize(std::string str, std::string type);
+
+// Parse SYSTEMTAP_COLORS
+std::string parse_stap_color(std::string type);
+
 #endif // DYNUTIL_H
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */
