@@ -144,7 +144,7 @@ main(int argc, char * const argv[])
   auto_ptr<mutator> session(new mutator(module, modoptions));
   if (!session.get() || !session->load())
     {
-      staperror() << "failed to create the mutator!" << endl;
+      staperror() << "Failed to create the mutator!" << endl;
       return 1;
     }
 

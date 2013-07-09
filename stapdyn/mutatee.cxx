@@ -315,7 +315,7 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
       Dyninst::Address address = object->fileOffsetToAddr(probe.offset);
       if (address == BPatch_object::E_OUT_OF_BOUNDS)
         {
-          stapwarn() << "couldn't convert " << target.path << "+"
+          stapwarn() << "Couldn't convert " << target.path << "+"
                      << lex_cast_hex(probe.offset) << " to an address" << endl;
           continue;
         }
@@ -327,7 +327,7 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
       object->findPoints(address, points);
       if (points.empty())
         {
-          stapwarn() << "couldn't find an instrumentation point at "
+          stapwarn() << "Couldn't find an instrumentation point at "
                      << lex_cast_hex(address) << ", " << target.path
                      << "+" << lex_cast_hex(probe.offset) << endl;
           continue;
@@ -345,7 +345,7 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
                 points[i]->getFunction()->findPoint(BPatch_locExit);
               if (!exits || exits->empty())
                 {
-                  stapwarn() << "couldn't find a return point from "
+                  stapwarn() << "Couldn't find a return point from "
                              << lex_cast_hex(address) << ", " << target.path
                              << "+" << lex_cast_hex(probe.offset) << endl;
                   continue;
@@ -379,7 +379,7 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
         {
           Dyninst::Address sem_address = object->fileOffsetToAddr(probe.semaphore);
           if (sem_address == BPatch_object::E_OUT_OF_BOUNDS)
-            stapwarn() << "couldn't convert semaphore " << target.path << "+"
+            stapwarn() << "Couldn't convert semaphore " << target.path << "+"
                        << lex_cast_hex(probe.offset) << " to an address" << endl;
           else
             {

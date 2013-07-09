@@ -313,7 +313,7 @@ mutator::init_modoptions()
   if (global_setter == NULL)
     {
       // Hypothetical backwards compatibility with older stapdyn:
-      stapwarn() << "compiled module does not support -G globals" << endl;
+      stapwarn() << "Compiled module does not support -G globals" << endl;
       return false;
     }
 
@@ -327,7 +327,7 @@ mutator::init_modoptions()
       string::size_type separator = modoption.find('=');
       if (separator == string::npos)
         {
-          stapwarn() << "could not parse module option '" << modoption << "'" << endl;
+          stapwarn() << "Could not parse module option '" << modoption << "'" << endl;
           return false; // XXX: perhaps ignore the option instead?
         }
       string name = modoption.substr(0, separator);
@@ -336,7 +336,7 @@ mutator::init_modoptions()
       int rc = global_setter(name.c_str(), value.c_str());
       if (rc != 0)
         {
-          stapwarn() << "incorrect module option '" << modoption << "'" << endl;
+          stapwarn() << "Incorrect module option '" << modoption << "'" << endl;
           return false; // XXX: perhaps ignore the option instead?
         }
     }
@@ -362,22 +362,22 @@ mutator::init_session_attributes()
 
   int rc = global_setter("@log_level", lex_cast(stapdyn_log_level).c_str());
   if (rc != 0)
-    stapwarn() << "couldn't set 'log_level' global" << endl;
+    stapwarn() << "Couldn't set 'log_level' global" << endl;
 
   rc = global_setter("@suppress_warnings",
 		     lex_cast(stapdyn_suppress_warnings).c_str());
   if (rc != 0)
-    stapwarn() << "couldn't set 'suppress_warnings' global" << endl;
+    stapwarn() << "Couldn't set 'suppress_warnings' global" << endl;
 
   rc = global_setter("@stp_pid", lex_cast(getpid()).c_str());
   if (rc != 0)
-    stapwarn() << "couldn't set 'stp_pid' global" << endl;
+    stapwarn() << "Couldn't set 'stp_pid' global" << endl;
 
   if (target_mutatee)
     {
       rc = global_setter("@target", lex_cast(target_mutatee->process_id()).c_str());
       if (rc != 0)
-        stapwarn() << "couldn't set 'target' global" << endl;
+        stapwarn() << "Couldn't set 'target' global" << endl;
     }
 
   size_t module_endpath = module_name.rfind('/');
@@ -388,7 +388,7 @@ mutator::init_session_attributes()
   string module_basename(module_name, module_basename_start, module_basename_len);
   rc = global_setter("@module_name", module_basename.c_str());
   if (rc != 0)
-    stapwarn() << "couldn't set 'module_name' global" << endl;
+    stapwarn() << "Couldn't set 'module_name' global" << endl;
 
   time_t now_t = time(NULL);
   struct tm* now = localtime(&now_t);
@@ -396,20 +396,20 @@ mutator::init_session_attributes()
     {
       rc = global_setter("@tz_gmtoff", lex_cast(-now->tm_gmtoff).c_str());
       if (rc != 0)
-        stapwarn() << "couldn't set 'tz_gmtoff' global" << endl;
+        stapwarn() << "Couldn't set 'tz_gmtoff' global" << endl;
       rc = global_setter("@tz_name", now->tm_zone);
       if (rc != 0)
-        stapwarn() << "couldn't set 'tz_name' global" << endl;
+        stapwarn() << "Couldn't set 'tz_name' global" << endl;
     }
   else
-    stapwarn() << "couldn't discover local timezone info" << endl;
+    stapwarn() << "Couldn't discover local timezone info" << endl;
 
   if (stapdyn_outfile_name)
     {
       rc = global_setter("@outfile_name",
 			 lex_cast(stapdyn_outfile_name).c_str());
       if (rc != 0)
-	stapwarn() << "couldn't set 'outfile_name' global" << endl;
+	stapwarn() << "Couldn't set 'outfile_name' global" << endl;
     }
 
   return;
