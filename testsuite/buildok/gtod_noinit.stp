@@ -1,5 +1,7 @@
 #! stap -gp4
 
+%( runtime == "kernel" %?
+
 # check that STAP_NEED_GETTIMEOFDAY is NOT defined without a gettimeofday
 function check() %{
 #ifdef STAP_NEED_GETTIMEOFDAY
@@ -7,7 +9,11 @@ function check() %{
 #endif
 %}
 
+%)
+
 probe begin {
+%( runtime == "kernel" %?
     check()
+%)
     println(get_cycles())
 }
