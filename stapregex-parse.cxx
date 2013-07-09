@@ -26,7 +26,7 @@ namespace stapregex {
 
 cursor::cursor() : input(NULL), pos(-1) {}
 
-cursor::cursor(std::string *input, bool do_unescape)
+cursor::cursor(const std::string *input, bool do_unescape)
   : input(input), do_unescape(do_unescape), pos(0)
 {
   next_c = 0; last_c = 0;
@@ -440,8 +440,9 @@ regex_parser::parse_char_range ()
       if (cur.finished) parse_error(_("unclosed character class")); // TODOXXX doublecheck that this is triggered correctly
 
       range *add = stapregex_getrange (cur);
-      ran = ( ran == NULL ? range_union(ran, add) : add );
-      if (ran != add) delete add;
+      range *new_ran = ( ran != NULL ? range_union(ran, add) : add );
+      delete ran; if (new_ran != add) delete add;
+      ran = new_ran;
 
       // break on ']' (except at the start of the class)
       if (c == ']')
@@ -454,9 +455,9 @@ regex_parser::parse_char_range ()
 
   if (inv)
     {
-      range *old_ran = ran;
-      ran = range_invert(old_ran);
-      delete old_ran;
+      range *new_ran = range_invert(ran);
+      delete ran;
+      ran = new_ran;
     }
 
   if (ran == NULL)

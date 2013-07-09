@@ -15,15 +15,26 @@
 #define STAPREGEX_TREE_H
 
 #include <string>
+#include <deque>
+#include <utility>
 #include <stdexcept>
+
+// XXX: currently we only support ASCII
+#define NUM_REAL_CHARS 256
 
 namespace stapregex {
 
+typedef std::pair<unsigned, unsigned> segment;
+
 struct range {
-  range (char lb, char ub);
-  range (const std::string& str);
+  std::deque<segment> segments;        // -- [lb, ub), sorted ascending
+
+  range () {}                     // -- empty range
+  range (char lb, char u);        // -- a segment [lb, u]
+  range (const std::string& str); // -- character class (no named entities)
 };
 
+// NB: be sure to deallocate the old ranges if they are no longer used
 range *range_union(range *a, range *b);
 range *range_invert(range *ran);
 
@@ -43,32 +54,45 @@ struct null_op : public regexp {
 };
 
 struct anchor_op : public regexp {
+  char type;
   anchor_op (char type);
   const std::string type_of() { return "anchor_op"; }
 };
 
 struct tag_op : public regexp {
+  unsigned id;
   tag_op (unsigned id);
   const std::string type_of() { return "tag_op"; }
 };
 
 struct match_op : public regexp {
+  range *ran;
   match_op (range *ran);
   const std::string type_of() { return "match_op"; }
 };
 
+struct alt_op : public regexp {
+  regexp *a, *b;
+  alt_op (regexp *a, regexp *b);
+  const std::string type_of() { return "alt_op"; }
+};
+
 struct cat_op : public regexp {
+  regexp *a, *b;
   cat_op (regexp *a, regexp *b);
   const std::string type_of() { return "cat_op"; }
 };
 
 struct close_op : public regexp {
+  regexp *re;
   close_op (regexp *re);
   const std::string type_of() { return "close_op"; }
 };
 
 struct closev_op : public regexp {
-  closev_op (regexp *re, int lb, int ub);
+  regexp *re;
+  int min, max; // -- use -1 to denote unboundedness in that direction
+  closev_op (regexp *re, int min, int max);
   const std::string type_of() { return "closev_op"; }
 };
 

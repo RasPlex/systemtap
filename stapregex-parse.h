@@ -22,7 +22,7 @@ struct range; /* from stapregex-tree.h */
 struct regexp; /* from stapregex-tree.h */
 
 struct cursor {
-  std::string *input;
+  const std::string *input;
   bool do_unescape;
 
   unsigned pos;      // pos of next char to be returned by next
@@ -32,7 +32,7 @@ struct cursor {
   bool has(unsigned n); // n characters remaining?
 
   cursor();
-  cursor(std::string *input, bool do_unescape = false);
+  cursor(const std::string *input, bool do_unescape = false);
   char peek();
   char next();
 
