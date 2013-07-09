@@ -1662,6 +1662,8 @@ skip:
             {
               if (c == '%' && c2 == '}')
                 return n;
+              if (c == '}' && c2 == '%') // possible typo
+                session.print_warning (_("possible erroneous closing '}%', use '%}'?"), n);
               n->content += c;
               c = c2;
               c2 = input_get ();
