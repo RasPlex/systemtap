@@ -72,19 +72,20 @@ check_dyninst_rt(void)
     {
       if (file_exists(rt_env))
         return true;
-      warnx("Invalid %s: \"%s\"", rt_env_name, rt_env);
+      staperror() << "Invalid " << rt_env_name << ": \"" << rt_env << "\"" << endl;
     }
 
   const string rt = guess_dyninst_rt();
   if (rt.empty() || !file_exists(rt))
     {
-      warnx("Can't find libdyninstAPI_RT.so; try setting %s", rt_env_name);
+      staperror() << "Can't find libdyninstAPI_RT.so; try setting " << rt_env_name << endl;
       return false;
     }
 
   if (setenv(rt_env_name, rt.c_str(), 1) != 0)
     {
-      warn("Can't set %s", rt_env_name);
+      int olderrno = errno;
+      staperror() << "Can't set " << rt_env_name << ": " << strerror(olderrno);
       return false;
     }
 
@@ -104,7 +105,8 @@ check_dyninst_sebools(bool attach)
   // deny_ptrace is definitely a blocker for us to attach at all
   if (security_get_boolean_active("deny_ptrace") > 0)
     {
-      warnx("SELinux boolean 'deny_ptrace' is active, which blocks Dyninst");
+      staperror() << "SELinux boolean 'deny_ptrace' is active, "
+                       "which blocks Dyninst" << endl;
       return false;
     }
 
@@ -113,7 +115,8 @@ check_dyninst_sebools(bool attach)
   // this is also a blocker.
   if (security_get_boolean_active("allow_execstack") == 0)
     {
-      warnx("SELinux boolean 'allow_execstack' is disabled, which blocks Dyninst");
+      staperror() << "SELinux boolean 'allow_execstack' is disabled, "
+                       "which blocks Dyninst" << endl;
       return false;
     }
 
@@ -121,7 +124,8 @@ check_dyninst_sebools(bool attach)
   // on ld.so, when the mutator is injecting the dlopen for libdyninstAPI_RT.so.
   if (attach && security_get_boolean_active("allow_execmod") == 0)
     {
-      warnx("SELinux boolean 'allow_execmod' is disabled, which blocks Dyninst");
+      staperror() << "SELinux boolean 'allow_execmod' is disabled, "
+                       "which blocks Dyninst" << endl;
       return false;
     }
 #else
