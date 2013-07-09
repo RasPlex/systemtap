@@ -143,20 +143,20 @@ check_dyninst_exit(BPatch_process *process)
       code = process->getExitCode();
       if (code == EXIT_SUCCESS)
         return true;
-      warnx("Warning: child process exited with status %d", code);
+      stapwarn() << "Child process exited with status " << code << endl;
       return false;
 
     case ExitedViaSignal:
       code = process->getExitSignal();
-      warnx("Warning: child process exited with signal %d (%s)",
-            code, strsignal(code));
+      stapwarn() << "Child process exited with signal " << code
+            << " (" << strsignal(code) << ")" << endl;
       return false;
 
     case NoExit:
       if (process->isTerminated())
-        warnx("Warning: child process exited in an unknown manner");
+        stapwarn() << "Child process exited in an unknown manner" << endl;
       else
-        warnx("Warning: child process has not exited");
+        stapwarn() << "Child process has not exited" << endl;
       return false;
 
     default:

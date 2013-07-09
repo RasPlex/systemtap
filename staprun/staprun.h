@@ -88,6 +88,8 @@ extern char *__name__;
 	} while (0)
 
 #define warn(args...) do {	\
+		if (suppress_warnings)	\
+			break;		\
 		print_color("warning");	\
 		eprintf(_("WARNING:"));	\
 		print_color(NULL); \
