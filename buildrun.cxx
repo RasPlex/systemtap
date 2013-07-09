@@ -673,6 +673,15 @@ make_dyninst_run_command (systemtap_session& s, const string& remotedir,
       cmd.push_back(s.output_file);
     }
 
+  if (s.color_mode != s.color_auto)
+    {
+      cmd.push_back("-C");
+      if (s.color_mode == s.color_always)
+        cmd.push_back("always");
+      else
+        cmd.push_back("never");
+    }
+
   cmd.push_back((remotedir.empty() ? s.tmpdir : remotedir)
 		+ "/" + s.module_filename());
 
@@ -749,13 +758,13 @@ make_run_command (systemtap_session& s, const string& remotedir,
       staprun_cmd.push_back(s.size_option);
     }
 
-  if (s.color_errors)
+  if (s.color_mode != s.color_auto)
     {
       staprun_cmd.push_back("-C");
       if (s.color_mode == s.color_always)
         staprun_cmd.push_back("always");
       else
-        staprun_cmd.push_back("auto");
+        staprun_cmd.push_back("never");
     }
 
   staprun_cmd.push_back((remotedir.empty() ? s.tmpdir : remotedir)
