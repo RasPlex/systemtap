@@ -1,6 +1,6 @@
 /* -*- linux-c -*-
  * kernel stack unwinding
- * Copyright (C) 2008-2011 Red Hat Inc.
+ * Copyright (C) 2008-2011, 2013 Red Hat Inc.
  *
  * Based on old kernel code that is
  * Copyright (C) 2002-2006 Novell, Inc.
@@ -243,13 +243,13 @@ static unsigned long read_pointer(const u8 **pLoc, const void *end, signed ptrTy
    been done start/end/version/id (done by is_fde and cie_for_fde).
    Returns -1 if FDE or CIE cannot be parsed.*/
 static int parse_fde_cie(const u32 *fde, const u32 *cie,
-			       void *unwind_data, uint32_t table_len,
-			       unsigned *ptrType, int user,
-			       unsigned long *startLoc, unsigned long *locRange,
-			       const u8 **fdeStart, const u8 **fdeEnd,
-			       const u8 **cieStart, const u8 **cieEnd,
-			       uleb128_t *codeAlign, sleb128_t *dataAlign,
-			       uleb128_t *retAddrReg, unsigned *call_frame)
+			 void *unwind_data, uint32_t table_len,
+			 unsigned *ptrType, int user,
+			 unsigned long *startLoc, unsigned long *locRange,
+			 const u8 **fdeStart, const u8 **fdeEnd,
+			 const u8 **cieStart, const u8 **cieEnd,
+			 uleb128_t *codeAlign, sleb128_t *dataAlign,
+			 uleb128_t *retAddrReg, unsigned *call_frame, int compat_task)
 {
 	const u8 *ciePtr = (const u8 *)(cie + 2);
 	const u8 *fdePtr = (const u8 *)(fde + 2);
@@ -278,10 +278,16 @@ static int parse_fde_cie(const u32 *fde, const u32 *cie,
 
 	*retAddrReg = ((version <= 1)
 		       ? *ciePtr++ : get_uleb128(&ciePtr, *cieEnd));
-	dbug_unwind(1, "map retAddrReg value %ld to reg_info idx %ld\n",
-		    *retAddrReg, DWARF_REG_MAP(*retAddrReg));
-	*retAddrReg = DWARF_REG_MAP(*retAddrReg);
-
+	if(compat_task){
+		dbug_unwind(1, "map retAddrReg value %ld to reg_info idx %ld\n",
+			    *retAddrReg, COMPAT_REG_MAP(DWARF_REG_MAP(*retAddrReg)));
+		*retAddrReg = COMPAT_REG_MAP(DWARF_REG_MAP(*retAddrReg));
+	} else {
+		dbug_unwind(1, "map retAddrReg value %ld to reg_info idx %ld\n",
+			    *retAddrReg, DWARF_REG_MAP(*retAddrReg));
+		*retAddrReg = DWARF_REG_MAP(*retAddrReg);
+	}
+	  
 	if (*aug == 'z') {
 		augLen = get_uleb128(&ciePtr, *cieEnd);
 		if (augLen > (const u8 *)cie - *cieEnd
@@ -422,7 +428,7 @@ static void set_expr_rule(uleb128_t reg, enum item_location where,
 #define MAX_CFI 512
 
 static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
-		      signed ptrType, int user, struct unwind_state *state)
+		      signed ptrType, int user, struct unwind_state *state, int compat_task)
 {
 	union {
 		const u8 *p8;
@@ -467,8 +473,15 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 			case DW_CFA_offset_extended:
 				value = get_uleb128(&ptr.p8, end);
 				value2 = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_offset_extended value %ld to reg_info idx %ld, with offset %ld\n", value, DWARF_REG_MAP(value), value2);
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_offset_extended value %ld to reg_info idx %ld, with offset %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)), value2);
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_offset_extended value %ld to reg_info idx %ld, with offset %ld\n",
+						    value, DWARF_REG_MAP(value), value2);
+					value = DWARF_REG_MAP(value);
+				}
 				set_offset_rule(value, Memory,
                                                 value2 * state->dataAlign,
                                                 state);
@@ -476,8 +489,15 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 			case DW_CFA_val_offset:
 				value = get_uleb128(&ptr.p8, end);
 				value2 = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_val_offset value %ld to reg_info idx %ld\n, with offset: %ld", value, DWARF_REG_MAP(value), value2);
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_val_offset value %ld to reg_info idx %ld\n, with offset: %ld",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)), value2);
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_val_offset value %ld to reg_info idx %ld\n, with offset: %ld",
+						    value, DWARF_REG_MAP(value), value2);
+					value = DWARF_REG_MAP(value);
+				}
 				set_offset_rule(value, Value,
                                                 value2 * state->dataAlign,
                                                 state);
@@ -485,8 +505,15 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 			case DW_CFA_offset_extended_sf:
 				value = get_uleb128(&ptr.p8, end);
 				svalue = get_sleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_offset_extended_sf value %ld to reg_info idx %ld, with offset: %ld\n", value, DWARF_REG_MAP(value), svalue);
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_offset_extended_sf value %ld to reg_info idx %ld, with offset: %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)), svalue);
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_offset_extended_sf value %ld to reg_info idx %ld, with offset: %ld\n",
+						    value, DWARF_REG_MAP(value), svalue);
+					value = DWARF_REG_MAP(value);
+				}
 				set_offset_rule(value, Memory,
 						svalue * state->dataAlign,
 						state);
@@ -494,50 +521,100 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 			case DW_CFA_val_offset_sf:
 				value = get_uleb128(&ptr.p8, end);
 				svalue = get_sleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_val_offset_sf value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_val_offset_sf value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_val_offset_sf value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					value = DWARF_REG_MAP(value);
+				}
 				set_offset_rule(value, Value,
 						svalue * state->dataAlign,
 						state);
 				break;
 			case DW_CFA_same_value:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_same_value value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_same_value value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_same_value value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					value = DWARF_REG_MAP(value);
+				}
 				set_no_state_rule(value, Same, state);
 				break;
 			case DW_CFA_restore_extended:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_restore_extended value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_restore_extended value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_restore_extended value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					value = DWARF_REG_MAP(value);
+				}
 				memcpy(&REG_STATE.regs[value], &state->cie_regs[value], sizeof(struct unwind_item));
 				break;
 			case DW_CFA_undefined:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_undefined value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_undefined value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_undefined value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					value = DWARF_REG_MAP(value);
+				}
 				set_no_state_rule(value, Nowhere, state);
 				break;
 			case DW_CFA_register: {
 				uleb128_t reg_value;
 				value = get_uleb128(&ptr.p8, end);
 				reg_value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_register value %ld to reg_info idx %ld (reg_value %ld to reg_info idx %ld)\n", value, DWARF_REG_MAP(value), reg_value, DWARF_REG_MAP(reg_value));
-				value = DWARF_REG_MAP(value);
-				reg_value = DWARF_REG_MAP(reg_value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_register value %ld to reg_info idx %ld (reg_value %ld to reg_info idx %ld)\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)), reg_value, COMPAT_REG_MAP(DWARF_REG_MAP(reg_value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+					reg_value = DWARF_REG_MAP(reg_value);
+				} else {
+					dbug_unwind(1, "map DW_CFA_register value %ld to reg_info idx %ld (reg_value %ld to reg_info idx %ld)\n",
+						    value, DWARF_REG_MAP(value), reg_value, DWARF_REG_MAP(reg_value));
+					value = DWARF_REG_MAP(value);
+					reg_value = DWARF_REG_MAP(reg_value);
+				}
 				set_register_rule(value, reg_value, state);
 				break;
 			}
 			case DW_CFA_expression:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_expression value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_expression value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_expression value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					value = DWARF_REG_MAP(value);
+				}
 				set_expr_rule(value, Expr, &ptr.p8, end, state);
 				break;
 			case DW_CFA_val_expression:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_val_expression value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_val_expression value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_val_expression value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					value = DWARF_REG_MAP(value);
+				}
 				set_expr_rule(value, ValExpr, &ptr.p8, end,
 					      state);
 				break;
@@ -562,10 +639,18 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 				break;
 			case DW_CFA_def_cfa:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_def_cfa value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
 				REG_STATE.cfa_is_expr = 0;
-				REG_STATE.cfa.reg = value;
-				dbug_unwind(1, "DW_CFA_def_cfa reg=%ld\n", REG_STATE.cfa.reg);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_def_cfa value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					REG_STATE.cfa.reg = COMPAT_REG_MAP(value);
+					dbug_unwind(1, "DW_CFA_def_cfa reg=%ld\n", COMPAT_REG_MAP(REG_STATE.cfa.reg));
+				} else {
+					dbug_unwind(1, "map DW_CFA_def_cfa value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					REG_STATE.cfa.reg = value;
+					dbug_unwind(1, "DW_CFA_def_cfa reg=%ld\n", REG_STATE.cfa.reg);
+				}
 				/*nobreak */
 			case DW_CFA_def_cfa_offset:
 				if (REG_STATE.cfa_is_expr != 0) {
@@ -578,9 +663,16 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 				break;
 			case DW_CFA_def_cfa_sf:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_def_cfa_sf value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
 				REG_STATE.cfa_is_expr = 0;
-				REG_STATE.cfa.reg = value;
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_def_cfa_sf value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					REG_STATE.cfa.reg = COMPAT_REG_MAP(value);
+				} else {
+					dbug_unwind(1, "map DW_CFA_def_cfa_sf value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					REG_STATE.cfa.reg = value;
+				}
 				/*nobreak */
 			case DW_CFA_def_cfa_offset_sf:
 				if (REG_STATE.cfa_is_expr != 0) {
@@ -596,8 +688,15 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 					_stp_warn("Unexpected DW_CFA_def_cfa_register\n");
 				} else {
 					value = get_uleb128(&ptr.p8, end);
-					dbug_unwind(1, "map DW_CFA_def_cfa_register value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-					REG_STATE.cfa.reg = value;
+					if (compat_task) {
+						dbug_unwind(1, "map DW_CFA_def_cfa_register value %ld to reg_info idx %ld (%ld)\n",
+							    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)), DWARF_REG_MAP(value));
+						REG_STATE.cfa.reg = COMPAT_REG_MAP(value);
+					} else {
+						dbug_unwind(1, "map DW_CFA_def_cfa_register value %ld to reg_info idx %ld (%ld)\n",
+							    value, DWARF_REG_MAP(value), DWARF_REG_MAP(value));
+						REG_STATE.cfa.reg = value;
+					}
 				}
 				break;
 			case DW_CFA_def_cfa_expression: {
@@ -625,8 +724,15 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 			   uleb128 that is subtracted from CFA.  */
 			case DW_CFA_GNU_negative_offset_extended:
 				value = get_uleb128(&ptr.p8, end);
-				dbug_unwind(1, "map DW_CFA_GNU_negative_offset_extended value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-				value = DWARF_REG_MAP(value);
+				if (compat_task) {
+					dbug_unwind(1, "map DW_CFA_GNU_negative_offset_extended value %ld to reg_info idx %ld\n",
+						    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+					value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+				} else {
+					dbug_unwind(1, "map DW_CFA_GNU_negative_offset_extended value %ld to reg_info idx %ld\n",
+						    value, DWARF_REG_MAP(value));
+					value = DWARF_REG_MAP(value);
+				}
 				set_offset_rule(value, Memory,
 						(uleb128_t)0 - get_uleb128(&ptr.p8, end), state);
 				break;
@@ -643,20 +749,35 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 			break;
 		case 2:
 			value = *ptr.p8++ & 0x3f;
-			dbug_unwind(1, "map DW_CFA_offset value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-			value = DWARF_REG_MAP(value);
+			if (compat_task) {
+				dbug_unwind(1, "map DW_CFA_offset value %ld to reg_info idx %ld\n",
+					    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+				value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+			} else {
+				dbug_unwind(1, "map DW_CFA_offset value %ld to reg_info idx %ld\n",
+					    value, DWARF_REG_MAP(value));
+				value = DWARF_REG_MAP(value);
+			}
 			value2 = get_uleb128(&ptr.p8, end);
 			set_offset_rule(value, Memory,
 					value2 * state->dataAlign, state);
 			break;
 		case 3:
 			value = *ptr.p8++ & 0x3f;
-			dbug_unwind(1, "map DW_CFA_restore value %ld to reg_info idx %ld\n", value, DWARF_REG_MAP(value));
-			value = DWARF_REG_MAP(value);
+			if (compat_task) {
+				dbug_unwind(1, "map DW_CFA_restore value %ld to reg_info idx %ld\n",
+					    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+				value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+			} else {
+				dbug_unwind(1, "map DW_CFA_restore value %ld to reg_info idx %ld\n",
+					    value, DWARF_REG_MAP(value));
+				value = DWARF_REG_MAP(value);
+			}
 			memcpy(&REG_STATE.regs[value], &state->cie_regs[value], sizeof(struct unwind_item));
 			break;
 		}
 		dbug_unwind(1, "targetLoc=%lx state->loc=%lx\n", targetLoc, state->loc);
+		dbug_unwind(1, "result: %d\n", result);
 		if (ptr.p8 > end)
 			result = 0;
 		if (result && targetLoc != 0 && targetLoc < state->loc)
@@ -861,7 +982,7 @@ static u32 *_stp_search_unwind_hdr(unsigned long pc,
 #define MAX_EXPR_STACK	8	/* arbitrary */
 
 static int compute_expr(const u8 *expr, struct unwind_frame_info *frame,
-			unsigned long *result, int user)
+			unsigned long *result, int user, int compat_task)
 {
 	/*
 	 * We previously validated the length, so we won't read off the end.
@@ -1069,9 +1190,15 @@ static int compute_expr(const u8 *expr, struct unwind_frame_info *frame,
 		case DW_OP_breg0 ... DW_OP_breg31:
 			value = op - DW_OP_breg0;
 		breg:
-			dbug_unwind(1, "map DW_OP_breg value %ld to reg_info idx %ld\n",
-				    value, DWARF_REG_MAP(value));
-			value = DWARF_REG_MAP(value);
+			if (compat_task) {
+				dbug_unwind(1, "map DW_OP_breg value %ld to reg_info idx %ld\n",
+					    value, COMPAT_REG_MAP(DWARF_REG_MAP(value)));
+				value = COMPAT_REG_MAP(DWARF_REG_MAP(value));
+			} else {
+				dbug_unwind(1, "map DW_OP_breg value %ld to reg_info idx %ld\n",
+					    value, DWARF_REG_MAP(value));
+				value = DWARF_REG_MAP(value);
+			}
 			if (unlikely(value >= ARRAY_SIZE(reg_info))) {
 				_stp_warn("invalid register number %lu in CFI expression\n", value);
 				return 1;
@@ -1146,7 +1273,7 @@ divzero:
 static int unwind_frame(struct unwind_context *context,
 			struct _stp_module *m, struct _stp_section *s,
 			void *table, uint32_t table_len, int is_ehframe,
-			int user)
+			int user, int compat_task)
 {
 	const u32 *fde = NULL, *cie = NULL;
 	/* The start and end of the CIE CFI instructions. */
@@ -1196,13 +1323,14 @@ static int unwind_frame(struct unwind_context *context,
 					  &state->codeAlign,
 					  &state->dataAlign,
 					  &retAddrReg,
-					  &call_frame) < 0)
+					  &call_frame,
+					  compat_task) < 0)
 				goto err;
 			startLoc = adjustStartLoc(startLoc, m, s, ptrType, is_ehframe, user);
 			endLoc = startLoc + locRange;
 			dbug_unwind(1, "startLoc: %lx, endLoc: %lx\n", startLoc, endLoc);
 			if (pc > endLoc) {
-                                dbug_unwind(1, "pc (%lx) > endLoc(%lx)\n", pc, endLoc);
+				dbug_unwind(1, "pc (%lx) > endLoc(%lx)\n", pc, endLoc);
 				goto done;
 			}
 		} else {
@@ -1231,7 +1359,7 @@ static int unwind_frame(struct unwind_context *context,
 					     &state->codeAlign,
 					     &state->dataAlign,
 					     &retAddrReg,
-					     &call_frame) < 0)
+					     &call_frame, compat_task) < 0)
 				break;
 			startLoc = adjustStartLoc(startLoc, m, s, ptrType, is_ehframe, user);
 			if (!startLoc)
@@ -1269,7 +1397,7 @@ static int unwind_frame(struct unwind_context *context,
 
 	/* Common Information Entry (CIE) instructions. */
 	dbug_unwind (1, "processCFI for CIE\n");
-	if (!processCFI(cieStart, cieEnd, 0, ptrType, user, state))
+	if (!processCFI(cieStart, cieEnd, 0, ptrType, user, state, compat_task))
 		goto err;
 
 	/* Store initial state registers for use with DW_CFA_restore... */
@@ -1277,20 +1405,23 @@ static int unwind_frame(struct unwind_context *context,
 
 	/* Process Frame Description Entry (FDE) instructions. */
 	dbug_unwind (1, "processCFI for FDE\n");
-	if (!processCFI(fdeStart, fdeEnd, pc, ptrType, user, state)
+	if (!processCFI(fdeStart, fdeEnd, pc, ptrType, user, state, compat_task)
 	    || state->loc > endLoc
-	    || REG_STATE.regs[retAddrReg].where == Nowhere
-	    || REG_STATE.cfa.reg >= ARRAY_SIZE(reg_info)
-	    || reg_info[REG_STATE.cfa.reg].width != sizeof(unsigned long)
-	    || REG_STATE.cfa.off % sizeof(unsigned long))
+	    || REG_STATE.regs[retAddrReg].where == Nowhere)
 		goto err;
 
 	/* update frame */
 	if (REG_STATE.cfa_is_expr) {
-		if (compute_expr(REG_STATE.cfa_expr, frame, &cfa, user))
+		if (compute_expr(REG_STATE.cfa_expr, frame, &cfa, user, compat_task))
 			goto err;
 	}
 	else {
+		// We expect the offset to be a multiple of the address size
+		if(REG_STATE.cfa.reg >= ARRAY_SIZE(reg_info)
+		   || reg_info[REG_STATE.cfa.reg].width != sizeof(unsigned long)
+		   || REG_STATE.cfa.off % (sizeof(unsigned long)/2))
+			goto err;
+
 		dbug_unwind(1, "cfa reg=%ld, off=%lx\n",
 			    REG_STATE.cfa.reg, REG_STATE.cfa.off);
 		cfa = FRAME_REG(REG_STATE.cfa.reg, unsigned long) + REG_STATE.cfa.off;
@@ -1387,11 +1518,11 @@ static int unwind_frame(struct unwind_context *context,
 			}
 			break;
 		case Expr:
-			if (compute_expr(REG_STATE.regs[i].state.expr, frame, &addr, user))
+			if (compute_expr(REG_STATE.regs[i].state.expr, frame, &addr, user, compat_task))
 				goto err;
 			goto memory;
 		case ValExpr:
-			if (compute_expr(REG_STATE.regs[i].state.expr, frame, &addr, user))
+			if (compute_expr(REG_STATE.regs[i].state.expr, frame, &addr, user, compat_task))
 				goto err;
 			goto value;
 		case Value:
@@ -1407,12 +1538,16 @@ static int unwind_frame(struct unwind_context *context,
 			addr = cfa + REG_STATE.regs[i].state.off;
 		memory:
 			dbug_unwind(2, "addr=%lx width=%d\n", addr, reg_info[i].width);
+			/* We only want the lower half of the address defined, however
+			   _stp_read_address will sometimes return garbage in the top half.
+			   for 32-on-64 bit unwinding we need to ensure this is 0xFFFFFFFF */
 			switch (reg_info[i].width) {
 #define CASE(n)     case sizeof(u##n):					\
 				if (unlikely(_stp_read_address(FRAME_REG(i, u##n), (u##n *)addr, \
 							       (user ? USER_DS : KERNEL_DS)))) \
 					goto copy_failed;		\
-				dbug_unwind(1, "set register %d to %lx\n", i, (long)FRAME_REG(i,u##n));	\
+				if (compat_task) FRAME_REG(i, u##n) &= 0xFFFFFFFF; \
+				dbug_unwind(1, "set register %d to %lx\n", i, (long)FRAME_REG(i,u##n)); \
 				break
 				CASES;
 #undef CASE
@@ -1448,6 +1583,11 @@ static int unwind(struct unwind_context *context, int user)
 	unsigned long pc = UNW_PC(frame) - frame->call_frame;
 	int res;
         const char *module_name = 0;
+	/* compat_task is a flag for 32bit process unwinding on a 64-bit 
+	   architecture.  If this flag is set, it means a mapping of
+	   register numbers is required, as well as being aware of 32-bit
+	   values on 64-bit registers. */
+	int compat_task = _stp_is_compat_task();
 
 	dbug_unwind(1, "pc=%lx, %lx", pc, UNW_PC(frame));
 
@@ -1491,11 +1631,11 @@ static int unwind(struct unwind_context *context, int user)
 
 	dbug_unwind(1, "trying debug_frame\n");
 	res = unwind_frame (context, m, s, m->debug_frame,
-			    m->debug_frame_len, 0, user);
+			    m->debug_frame_len, 0, user, compat_task);
 	if (res != 0) {
 	  dbug_unwind(1, "debug_frame failed: %d, trying eh_frame\n", res);
 	  res = unwind_frame (context, m, s, m->eh_frame,
-			      m->eh_frame_len, 1, user);
+			      m->eh_frame_len, 1, user, compat_task);
 	}
 
         /* This situation occurs where some unwind data was found, but

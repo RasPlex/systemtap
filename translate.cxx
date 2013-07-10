@@ -5576,28 +5576,9 @@ static void get_unwind_data (Dwfl_Module *m,
   Elf *elf;
 
   // fetch .eh_frame info preferably from main elf file.
-  const char *modname = dwfl_module_info (m, NULL, &start,
-                                          NULL, NULL, NULL, NULL, NULL);
+  dwfl_module_info (m, NULL, &start, NULL, NULL, NULL, NULL, NULL);
   elf = dwfl_module_getelf(m, &bias);
   ehdr = gelf_getehdr(elf, &ehdr_mem);
-
-  // This is a little unelegant, since at this point we only have the
-  // kernel normalized machine architecture as string, but we can deduce
-  // the ELF class from that and warn if it is different from the module
-  // ELF class. See PR10272.
-  int kelf_class = elf_class_from_normalized_machine (session.architecture);
-  int melf_class = (int) ehdr->e_ident[EI_CLASS];
-  if (kelf_class != melf_class)
-    {
-      // Don't warn about 32bit VDSO, the user didn't explicitly add those.
-      if (vdso_paths.find (string(modname)) == vdso_paths.end ())
-        session.print_warning ("Kernel ELF class (" + lex_cast (kelf_class)
-                               + ") doesn't match module '" + modname
-                               + "' ELF class (" + lex_cast (melf_class)
-                               + "), backtraces for 32bit programs on 64bit"
-                               + " kernels don't work.");
-      return;
-    }
 
   scn = NULL;
   bool eh_frame_seen = false;

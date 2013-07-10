@@ -1,7 +1,7 @@
 /* -*- linux-c -*-
  *
  * dwarf unwinder header file
- * Copyright (C) 2008-2010 Red Hat Inc.
+ * Copyright (C) 2008-2010, 2013 Red Hat Inc.
  * Copyright (C) 2002-2006 Novell, Inc.
  *
  * This file is part of systemtap, and is free software.  You can
@@ -70,6 +70,13 @@ static const struct {
    reg_info index.  */
 #ifndef DWARF_REG_MAP
 #define DWARF_REG_MAP(r) r
+#endif
+
+/* COMPAT_REG_MAP is the mapping from 32bit to 64bit DWARF registers.  In
+   the case where they're not the same (e.g. x86_64 and i386) the alternate
+   mapping will be located in the 64bit header file */
+#ifndef COMPAT_REG_MAP
+#define COMPAT_REG_MAP(r) r
 #endif
 
 /* The number of real registers in the register map. These are all assumed

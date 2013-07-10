@@ -1,7 +1,7 @@
 /* -*- linux-c -*-
  *
  * x86_64 dwarf unwinder header file
- * Copyright (C) 2008, 2010, 2011 Red Hat Inc.
+ * Copyright (C) 2008, 2010, 2011, 2013 Red Hat Inc.
  * Copyright (C) 2002-2006 Novell, Inc.
  * 
  * This file is part of systemtap, and is free software.  You can
@@ -80,6 +80,20 @@
 	PTREGS_INFO(r15), \
 	PTREGS_INFO(rip) /* Note, placeholder for "fake" dwarf ret reg. */
 #endif /* STAPCONF_X86_UNIREGS */
+
+/* DWARF registers are ordered differently on 32-bit architectures*/
+#define COMPAT_REG_MAP(r)					\
+        ((r >= 9 && r <= 16) ? r /* r9 - r15  && ip/rip  */	\
+         : (r == 0) ? r /* ax/rax */				\
+         : (r == 1) ? 2 /* dx/rdx */				\
+         : (r == 2) ? 1 /* cx/rcx */				\
+         : (r == 3) ? r /* bx/rbx */				\
+         : (r == 4) ? 7 /* sp/rsp */				\
+         : (r == 5) ? 6 /* bp/rpp */				\
+         : (r == 6) ? 4 /* si/rsi */				\
+         : (r == 7) ? 5 /* di/rdi */				\
+         : (r == 8) ? 16 /* ip/rip */				\
+         : 9999)
 
 #define UNW_PC_IDX 16
 #define UNW_SP_IDX 7
