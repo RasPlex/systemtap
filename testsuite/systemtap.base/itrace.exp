@@ -164,7 +164,7 @@ proc run_ls_1_sec {} {
 # utrace and we're doing install testing)
 set TEST_NAME "itrace single step check"
 set single_step_p 0
-if {![utrace_p]} {
+if {![utrace_orig_p]} {
     untested "$TEST_NAME : no kernel utrace support found"
 } elseif {![installtest_p]} {
     untested $TEST_NAME
@@ -177,7 +177,7 @@ if {![utrace_p]} {
 # utrace and we're doing install testing)
 set TEST_NAME "itrace block step check"
 set block_step_p 0
-if {![utrace_p]} {
+if {![utrace_orig_p]} {
     untested "$TEST_NAME : no kernel utrace support found"
 } elseif {![installtest_p]} {
     untested $TEST_NAME
@@ -188,7 +188,7 @@ if {![utrace_p]} {
 
 # Run the single step tests
 set TEST_NAME "itrace_single1"
-if {![utrace_p]} {
+if {![utrace_orig_p]} {
     untested "$TEST_NAME : no kernel utrace support found"
 } elseif {![installtest_p]} {
     untested $TEST_NAME
@@ -200,7 +200,7 @@ if {![utrace_p]} {
 }
 
 set TEST_NAME "itrace_single2"
-if {![utrace_p]} {
+if {![utrace_orig_p]} {
     untested "$TEST_NAME : no kernel utrace support found"
 } elseif {![installtest_p]} {
     untested $TEST_NAME
@@ -213,7 +213,7 @@ if {![utrace_p]} {
 
 # Run the block step tests
 set TEST_NAME "itrace_block1"
-if {![utrace_p]} {
+if {![utrace_orig_p]} {
     untested "$TEST_NAME : no kernel utrace support found"
 } elseif {![installtest_p]} {
     untested $TEST_NAME
@@ -225,7 +225,7 @@ if {![utrace_p]} {
 }
 
 set TEST_NAME "itrace_block2"
-if {![utrace_p]} {
+if {![utrace_orig_p]} {
     untested "$TEST_NAME : no kernel utrace support found"
 } elseif {![installtest_p]} {
     untested $TEST_NAME
