@@ -48,10 +48,28 @@ static long _stp_perf_init (struct stap_perf_probe *stp, struct task_struct* tas
 #endif
 								     );
 	    if (IS_ERR(stp->e.t.per_thread_event)) {
-		long rc = PTR_ERR(stp->e.t.per_thread_event);
-		stp->e.t.per_thread_event = NULL;
-		return rc;
+	      long rc = PTR_ERR(stp->e.t.per_thread_event);
+	      stp->e.t.per_thread_event = NULL;
+
+	      /*
+	       * PPC returns ENXIO for HW counters until 2.6.37
+	       * (behavior changed with commit b0a873e).
+	       */
+	      if (rc == -EINVAL || rc == -ENOSYS || rc == -ENOENT
+		  || rc == -EOPNOTSUPP || rc == -ENXIO) {
+	        _stp_warn("perf probe '%s' is not supported by this kernel (%ld).",
+#ifdef STP_NEED_PROBE_NAME
+			  stp->probe->pn,
+#else
+			  stp->probe->pp,
+#endif
+			  rc);
+		/* Lie and return 0. This way the more generic
+		 * task_finder warning won't be printed. */
+		rc = 0;
 	      }
+	      return rc;
+	    }
 	  }
 	}
 	else {

@@ -24,12 +24,12 @@ spawn $stap_path -c $exepath -e "
 global towers_n
 global XXX_n
 
-probe perf.hw.cpu_cycles.process(\"$exepath\")
+probe perf.sw.task_clock.process(\"$exepath\")
 {
  towers_n += 1
 }
 
-probe perf.hw.cpu_cycles.process(\"XXX\") 
+probe perf.sw.task_clock.process(\"XXX\") 
 { 
  XXX_n += 1
 }
@@ -58,7 +58,7 @@ set subtest "process"
 spawn $stap_path -c $exepath -e "
 global towers_n
 
-probe perf.hw.cpu_cycles.process
+probe perf.sw.task_clock.process
 {
  towers_n += 1
 }
@@ -125,6 +125,10 @@ expect {
     -re {min towers=[0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
     -re {max main=[0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
     -re {max towers=[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
+    -re {not supported by this kernel} {
+	# If this type of perf probe isn't supported by this kernel,
+	# kfail the test.
+	setup_kfail 15727 *-*-*; exp_continue }
     timeout { fail "$test (timeout)" }
     eof { }
 }
