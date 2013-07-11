@@ -3,6 +3,7 @@
 proc test_list { test input output_re } {
     spawn stap -l $input
     expect {
+	-timeout 180
         -re $output_re { pass $test }
         -re {^[^\r\n]*\r\n} { exp_continue }
         timeout { fail $test }
