@@ -1091,6 +1091,11 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 
 	case LONG_OPT_COMPATIBLE:
 	  server_args.push_back ("--compatible=" + string(optarg));
+          if (strverscmp(optarg, VERSION) > 0) {
+            cerr << _F("ERROR: systemtap version %s cannot be compatible with future version %s", VERSION, optarg)
+                 << endl;
+            return 1;
+          }
 	  compatible = optarg;
 	  break;
 
