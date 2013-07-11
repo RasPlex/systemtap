@@ -12,6 +12,10 @@ if {! [installtest_p]} { untested "$test"; return }
 
 foreach runtime [get_runtime_list] {
     if {$runtime != ""} {
+        if {$runtime == "dyninst"} {
+            # dyninst lacks support for VMA-tracking
+            setup_kfail 15052 "*-*-*"
+        }
 	stap_run "${test} ($runtime)" wait_5_secs $output_string \
 	    --runtime=$runtime ${testpath}/${test}.stp -c $invoke
 
