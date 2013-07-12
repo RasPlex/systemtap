@@ -1,6 +1,6 @@
-#! stap -up4
+#! stap -p4
 
-probe syscall.execve
+probe kernel.function("do_execve")
 {
   print(@defined($__argv) ? $__argv[0] : $argv[0])
 }

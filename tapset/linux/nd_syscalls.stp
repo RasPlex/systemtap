@@ -958,44 +958,54 @@ probe __nd_syscall.eventfd.return = kprobe.function("sys_eventfd").return
 }
 
 # execve _____________________________________________________
-# int sys_execve(struct pt_regs regs)
-#   which breaks out the args and immediately calls
-# int do_execve(char * filename,
-#	char __user *__user *argv,
-#	char __user *__user *envp,
-#	struct pt_regs * regs)
-probe nd_syscall.execve = kprobe.function("do_execve")
+# SYSCALL_DEFINE3(execve,
+#		const char __user *, filename,
+#		const char __user *const __user *, argv,
+#		const char __user *const __user *, envp)
+probe nd_syscall.execve = kprobe.function("sys_execve")
 {
 	name = "execve"
 	// filename = kernel_string($filename)
 	// args = __get_argv($argv, 0)
 	// argstr = sprintf("%s %s", filename, __get_argv($argv, 1))
-	filename = kernel_string(pointer_arg(1))
+	filename = user_string(pointer_arg(1))
 	args = __get_argv(pointer_arg(2), 0)
 	argstr = sprintf("%s %s", filename, __get_argv(pointer_arg(2), 1))
 }
-# v2.6.15-rc2 or earlier has problems with sys_execve return probes
-# another reason to probe on do_execve
-probe nd_syscall.execve.return = kprobe.function("do_execve").return
+probe nd_syscall.execve.return = kprobe.function("sys_execve").return
 {
 	name = "execve"
 	retstr = returnstr(1)
 }
-# int compat_do_execve(char * filename,
-#	compat_uptr_t __user *argv,
-#	compat_uptr_t __user *envp,
-#	struct pt_regs * regs)
-probe nd_syscall.compat_execve = kprobe.function("compat_do_execve") ?
+
+# asmlinkage long compat_sys_execve(const char __user * filename,
+#	const compat_uptr_t __user * argv,
+#	const compat_uptr_t __user * envp)
+# static int compat_do_execve(const char *filename,
+#	const compat_uptr_t __user *__argv,
+#	const compat_uptr_t __user *__envp)
+probe nd_syscall.compat_execve = _nd_syscall.compat_sys_execve !,
+	_nd_syscall.compat_do_execve ?
 {
 	name = "compat_execve"
-	// filename = kernel_string($filename)
 	// args = __get_compat_argv($argv, 0)
 	// argstr = sprintf("%s %s", filename, __get_compat_argv($argv, 1))
-	filename = kernel_string(pointer_arg(1))
 	args = __get_compat_argv(pointer_arg(2), 0)
-	argstr = sprintf("%s %s", filename, __get_compat_argv(pointer_arg(2), 1))
+	argstr = sprintf("%s %s", filename,
+			 __get_compat_argv(pointer_arg(2), 1))
 }
-probe nd_syscall.compat_execve.return = kprobe.function("compat_do_execve").return  ?
+probe _nd_syscall.compat_sys_execve = kprobe.function("compat_sys_execve").call
+{
+	asmlinkage()
+	filename = user_string(pointer_arg(1))
+}
+probe _nd_syscall.compat_do_execve = kprobe.function("compat_do_execve").call
+{
+	filename = kernel_string(pointer_arg(1))
+}
+probe nd_syscall.compat_execve.return =
+	kprobe.function("compat_sys_execve").return !,
+	kprobe.function("compat_do_execve").return ?
 {
 	name = "compat_execve"
 	retstr = returnstr(1)

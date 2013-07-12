@@ -1,0 +1,6 @@
+probe syscall.execve
+{
+    if (pid() == target()) {
+        println(filename)
+    }
+}

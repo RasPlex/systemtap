@@ -1,4 +1,4 @@
-probe syscall.execve
+probe kernel.function("do_execve")
 {
     if (pid() == target()) {
         println(user_string(@defined($__argv) ? $__argv[0] : $argv[0]))

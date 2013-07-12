@@ -705,42 +705,51 @@ probe syscall.eventfd.return = kernel.function("sys_eventfd2").return !,
 }
 
 # execve _____________________________________________________
-# int sys_execve(struct pt_regs regs)
-#   which breaks out the args and immediately calls
-# int do_execve(char * filename,
-#	char __user *__user *argv,
-#	char __user *__user *envp,
-#	struct pt_regs * regs)
-probe syscall.execve = kernel.function("do_execve").call
+# SYSCALL_DEFINE3(execve,
+#		const char __user *, filename,
+#		const char __user *const __user *, argv,
+#		const char __user *const __user *, envp)
+probe syscall.execve = kernel.function("sys_execve").call
 {
 	name = "execve"
-	filename = kernel_string($filename)
+	filename = user_string(@choose_defined($filename, $name))
 	# kernel 3.0 changed the pointer's name to __argv
 	__argv = @choose_defined($__argv, $argv)
 	args = __get_argv(__argv, 0)
 	argstr = sprintf("%s %s", filename, __get_argv(__argv, 1))
 }
-# v2.6.15-rc2 or earlier has problems with sys_execve return probes
-# another reason to probe on do_execve
-probe syscall.execve.return = kernel.function("do_execve").return
+probe syscall.execve.return = kernel.function("sys_execve").return
 {
 	name = "execve"
 	retstr = return_str(1, $return)
 }
-# int compat_do_execve(char * filename,
-#	compat_uptr_t __user *argv,
-#	compat_uptr_t __user *envp,
-#	struct pt_regs * regs)
-probe syscall.compat_execve = kernel.function("compat_do_execve").call ?
+
+# asmlinkage long compat_sys_execve(const char __user * filename,
+#	const compat_uptr_t __user * argv,
+#	const compat_uptr_t __user * envp)
+# static int compat_do_execve(const char *filename,
+#	const compat_uptr_t __user *__argv,
+#	const compat_uptr_t __user *__envp)
+probe syscall.compat_execve = _syscall.compat_sys_execve !,
+	_syscall.compat_do_execve ?
 {
 	name = "compat_execve"
-	filename = kernel_string($filename)
 	# kernel 3.0 changed the pointer's name to __argv
 	__argv = @choose_defined($__argv, $argv)
 	args = __get_compat_argv(__argv, 0)
 	argstr = sprintf("%s %s", filename, __get_compat_argv(__argv, 1))
 }
-probe syscall.compat_execve.return = kernel.function("compat_do_execve").return  ?
+probe _syscall.compat_sys_execve = kernel.function("compat_sys_execve").call
+{
+	filename = user_string($filename)
+}
+probe _syscall.compat_do_execve = kernel.function("compat_do_execve").call
+{
+	filename = kernel_string($filename)
+}
+probe syscall.compat_execve.return =
+	kernel.function("compat_sys_execve").return !,
+	kernel.function("compat_do_execve").return ?
 {
 	name = "compat_execve"
 	retstr = return_str(1, $return)
