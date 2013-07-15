@@ -2,14 +2,14 @@ set test "setjmp"
 set ::result_string {hit longjmp_target}
 
 foreach variant [list "" "-DSIGJMP" "-DUNDERJMP"] {
-    foreach flags [list "" "-O -D_FORTIFY_SOURCE=2"] {
+    foreach flags [list "" "-O" "-O -D_FORTIFY_SOURCE=2"] {
 
 	set this_test "$test $variant $flags"
 
-	set testprog "setjmp.exe${variant}${flags}"
-	set test_flags ""
-	foreach arg [list "-g" "$flags"] {
-	    set test_flags "$test_flags additional_flags=$arg "
+	set testprog [regsub { } "setjmp.exe${variant}${flags}" ""]
+	set test_flags "additional_flags=-g"
+	foreach arg "$variant $flags" {
+	    set test_flags "$test_flags additional_flags=$arg"
 	}
 
 	set res [target_compile $srcdir/$subdir/$test.c $testprog executable \
