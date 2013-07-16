@@ -277,24 +277,6 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
   BPatch_function* enter_function = NULL;
   bool use_pt_regs = false;
 
-  // XXX Until we know how to build pt_regs from here, we'll try the entry
-  // function for individual registers first.
-  if (!registers.empty())
-    stap_dso->findFunction("enter_dyninst_uprobe_regs", functions);
-  if (!functions.empty())
-    enter_function = functions[0];
-
-  // If the other entry wasn't found, or we don't have registers for it anyway,
-  // try the form that takes pt_regs* and we'll just pass NULL.
-  if (!enter_function)
-    {
-      stap_dso->findFunction("enter_dyninst_uprobe", functions);
-      if (functions.empty())
-        return;
-      use_pt_regs = true;
-      enter_function = functions[0];
-    }
-
   staplog(1) << "found target \"" << target.path << "\", inserting "
              << target.probes.size() << " probes" << endl;
 
@@ -309,6 +291,28 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
         {
 	  instrument_utrace_dynprobe(probe);
 	  continue;
+	}
+
+      if (! enter_function)
+        {
+	  // XXX Until we know how to build pt_regs from here, we'll
+	  // try the entry function for individual registers first.
+	  if (!registers.empty())
+	    stap_dso->findFunction("enter_dyninst_uprobe_regs", functions);
+	  if (!functions.empty())
+	    enter_function = functions[0];
+
+	  // If the other entry wasn't found, or we don't have
+	  // registers for it anyway, try the form that takes pt_regs*
+	  // and we'll just pass NULL.
+	  if (!enter_function)
+	    {
+	      stap_dso->findFunction("enter_dyninst_uprobe", functions);
+	      if (functions.empty())
+		return;
+	      use_pt_regs = true;
+	      enter_function = functions[0];
+	    }
 	}
 
       // Convert the file offset to a memory address.
