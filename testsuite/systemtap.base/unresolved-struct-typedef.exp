@@ -31,7 +31,7 @@ for {set i 0} {$i < [all_compile_flags]} {incr i} {
   foreach runtime [get_runtime_list] {
     if {$runtime != ""} {
       stap_compile "$test-$extra_name-$runtime" 1 "$script" \
-	"$test.exe --runtime=$runtime"
+	--runtime=$runtime "$test.exe"
     } else {
       stap_compile "$test-$extra_name" 1 "$script" "$test.exe"
     }
