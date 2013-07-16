@@ -298,7 +298,8 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
 	  // XXX Until we know how to build pt_regs from here, we'll
 	  // try the entry function for individual registers first.
 	  if (!registers.empty())
-	    stap_dso->findFunction("enter_dyninst_uprobe_regs", functions);
+	    stap_dso->findFunction("enter_dyninst_uprobe_regs", functions,
+				   false);
 	  if (!functions.empty())
 	    enter_function = functions[0];
 
@@ -307,9 +308,15 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
 	  // and we'll just pass NULL.
 	  if (!enter_function)
 	    {
-	      stap_dso->findFunction("enter_dyninst_uprobe", functions);
+	      stap_dso->findFunction("enter_dyninst_uprobe", functions,
+				     false);
 	      if (functions.empty())
-		return;
+	        {
+		  stapwarn() << "Couldn't find the uprobe entry function (either " << endl
+			     << "\"enter_dyninst_uprobe_regs\" or \"enter_dyninst_uprobe\"). Uprobe probes"
+			     << endl << "disabled." << endl;
+		  return;
+		}
 	      use_pt_regs = true;
 	      enter_function = functions[0];
 	    }
