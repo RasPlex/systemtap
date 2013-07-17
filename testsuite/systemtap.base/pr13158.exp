@@ -23,10 +23,10 @@ set secondid $spawn_id
 
 # Make sure it fails
 expect {
-	-re {^Error inserting module .*: File exists\r\n} {
+	-re {^ERROR: Couldn't insert module .*: File exists\r\n} {
 		exp_continue
 	}
-	-re {^Rerun with staprun option '\-R' to rename this module.\r\n} {
+	-re {^ERROR: Rerun with staprun option '\-R' to rename this module.\r\n} {
 		exp_continue
 	}
 	-re {^[^\r\n]*\r\n} {
