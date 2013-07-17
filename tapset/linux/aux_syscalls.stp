@@ -2135,6 +2135,9 @@ function _struct_sigaction32_u:string(uaddr:long)
 #ifdef CONFIG_COMPAT
 #include <linux/compat.h>
   
+#ifdef AUTOCONF_COMPAT_SIGACTION
+  struct compat_sigaction act32;
+#else
   // There seems to be no public cross arch header that defines this.
   // For x86, you can find it in asm/ia32.h.  For s390x, it is defined
   // in a private header.
@@ -2146,6 +2149,8 @@ function _struct_sigaction32_u:string(uaddr:long)
   };
   
   struct sigaction32 act32;
+#endif
+
   char *ptr = (char *)(unsigned long)STAP_ARG_uaddr;
   
   if (ptr == NULL)
@@ -2153,7 +2158,7 @@ function _struct_sigaction32_u:string(uaddr:long)
   else
     {
       if(_stp_copy_from_user((char*)&act32, ptr,
-			     sizeof(struct sigaction32)) == 0)
+			     sizeof(act32)) == 0)
 	{
 	  struct sigaction act;
 
@@ -2187,6 +2192,9 @@ function _struct_old_sigaction32_u:string(uaddr:long)
 #ifdef CONFIG_COMPAT
 #include <linux/compat.h>
 
+#ifdef CONFIG_COMPAT_OLD_SIGACTION
+  struct compat_old_sigaction act32;
+#else
   // There seems to be no public cross arch header that defines this.
   // For x86, you can find it in asm/ia32.h.  For s390x, it is defined
   // in a private header.
@@ -2198,14 +2206,14 @@ function _struct_old_sigaction32_u:string(uaddr:long)
   };
 
   struct old_sigaction32 act32;
+#endif
   char *ptr = (char *)(unsigned long)STAP_ARG_uaddr;
   
   if (ptr == NULL)
     strlcpy (STAP_RETVALUE, "NULL", MAXSTRINGLEN);
   else
     {
-      if(_stp_copy_from_user((char*)&act32, ptr,
-			     sizeof(struct old_sigaction32)) == 0)
+      if(_stp_copy_from_user((char*)&act32, ptr, sizeof(act32)) == 0)
 	{
 	  struct sigaction act;
 

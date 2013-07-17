@@ -31,7 +31,9 @@ set testscript {
     probe syscall.rt_sigaction32 ? {
       if (pid() == target() && execname() == "%s") {
 	// Note user address.
-	handler = user_long(&@cast(act_uaddr, "struct sigaction32")->sa_handler);
+	handler = user_long(@defined(@cast(0, "compat_sigaction")->sa_handler)
+			    ? &@cast(act_uaddr, "compat_sigaction")->sa_handler
+			    : &@cast(act_uaddr, "sigaction32")->sa_handler);
 	try {
 		printf("handler: %%s (%%s)\n", usymname(handler), umodname(handler));
 	} catch {
