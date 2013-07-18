@@ -51,8 +51,8 @@ set test_script {
 	output .= sprintf("sleep(%%d) begin\n", tid())
     }
     probe process("%2$s").end {
-	sleep_end = gettimeofday_s()
 	output .= sprintf("sleep(%%d) end\n", tid())
+	sleep_end = gettimeofday_s()
     }
     probe end {
 	printf("systemtap ending probe\n%%s", output)
@@ -82,7 +82,10 @@ set fork_exec_flags ""
 #	sleep(CHILD_PID) end
 #	exe(PARENT_PID) end
 #	time slept: OK
-set fork_exec_script_output "exe\\((\\d+)\\) begin\r\nexe\\((\\d+)\\) begin\r\nexe\\(\\2\\) end\r\nsleep\\(\\2\\) begin\r\nsleep\\(\\2\\) end\r\nexe\\(\\1\\) end\r\ntime slept: OK\r\n"
+#
+# Accept the 'sleep(CHILD_PID)' end and 'exe(PARENT_PID) end' lines in
+# any order.
+set fork_exec_script_output "exe\\((\\d+)\\) begin\r\nexe\\((\\d+)\\) begin\r\nexe\\(\\2\\) end\r\nsleep\\(\\2\\) begin\r\n(sleep\\(\\2\\)|exe\\(\\1\\)) end\r\n(sleep\\(\\2\\)|exe\\(\\1\\)) end\r\ntime slept: OK\r\n"
 
 # Compile our program that forks/exec's /bin/sleep.
 set test_exepath $fork_exec_exepath
