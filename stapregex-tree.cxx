@@ -48,6 +48,51 @@ range::range (const string& str)
   delete ran;
 }
 
+void
+range::print (std::ostream& o) const
+{
+  if (segments.empty())
+    {
+      o << "{none}"; // XXX: pick a better pseudo-notation?
+      return;
+    }
+
+  if (segments.size() == 1 && segments[0].first + 1 == segments[0].second)
+    {
+      o << segments[0].first;
+      return;
+    }
+
+  o << "[";
+  for (deque<segment>::const_iterator it = segments.begin();
+       it != segments.end(); it++)
+    {
+      char lb = it->first; char ub = it->second;
+      if (lb + 1 == ub) o << lb;
+      else o << lb << "-" << ub - 1;
+    }
+  o << "]";
+}
+
+std::ostream&
+operator << (std::ostream& o, const range& ran)
+{
+  ran.print(o);
+  return o;
+}
+
+std::ostream&
+operator << (std::ostream& o, const range* ran)
+{
+  if (ran)
+    o << *ran;
+  else
+    o << "{none}"; // XXX: pick a better pseudo-notation?
+  return o;
+}
+
+// ------------------------------------------------------------------------
+
 range *
 range_union(range *old_a, range *old_b)
 {
@@ -118,19 +163,274 @@ range_invert(range *old_ran)
 
 // ------------------------------------------------------------------------
 
+const ins*
+show_ins (std::ostream &o, const ins *i, const ins *base)
+{
+  o.width(3); o << (i - base) << ": ";
+
+  const ins *ret = &i[1];
+
+  switch (i->i.tag)
+    {
+    case CHAR:
+      o << "match ";
+      for (; ret < (ins *) i->i.link; ++ret) print_escaped(o, ret->c.value);
+      break;
+
+    case GOTO:
+      o << "goto " << ((ins *) i->i.link - base);
+      break;
+
+    case FORK:
+      o << "fork(" << ( i->i.param ? "prefer" : "avoid" ) << ") "
+        << ((ins *) i->i.link - base);
+      break;
+
+    case ACCEPT:
+      o << "accept(" << i->i.param << ")";
+      break;
+
+    case TAG:
+      o << "tag(" << i->i.param << ")";
+      break;
+
+    case INIT:
+      o << "init";
+      break;
+    }
+
+  return ret;
+}
+
+// ------------------------------------------------------------------------
+
+ins *
+regexp::compile()
+{
+  ins *i = new ins[ins_size()];
+  compile(i);
+  return i;
+}
+
+std::ostream&
+operator << (std::ostream &o, const regexp& re)
+{
+  re.print (o);
+  return o;
+}
+
+std::ostream&
+operator << (std::ostream &o, const regexp* re)
+{
+  o << *re;
+  return o;
+}
+
+// ------------------------------------------------------------------------
+
+void
+null_op::calc_size()
+{
+  size = 0;
+}
+
+void
+null_op::compile(ins *i)
+{
+  ;
+}
+
 anchor_op::anchor_op(char type) : type(type) {}
+
+void
+anchor_op::calc_size()
+{
+  size = ( type == '^' ? 1 : 2 );
+}
+
+void
+anchor_op::compile(ins *i)
+{
+  if (type == '^')
+    {
+      i->i.tag = INIT;
+      i->i.link = &i[1];
+    }
+  else // type == '$'
+    {
+      i->i.tag = CHAR;
+      i->i.link = &i[2];
+      ins *j = &i[1];
+      j->c.value = '\0';
+      j->c.bump = 1;
+    }
+}
 
 tag_op::tag_op(unsigned id) : id(id) {}
 
+void
+tag_op::calc_size()
+{
+  size = 1;
+}
+
+void
+tag_op::compile(ins *i)
+{
+  i->i.tag = TAG;
+  i->i.param = id;
+}
+
 match_op::match_op(range *ran) : ran(ran) {}
+
+void
+match_op::calc_size()
+{
+  size = 1;
+
+  for (deque<segment>::iterator it = ran->segments.begin();
+       it != ran->segments.end(); it++)
+    {
+      size += it->second - it->first;
+    }
+}
+
+void
+match_op::compile(ins *i)
+{
+  unsigned bump = ins_size();
+  i->i.tag = CHAR;
+  i->i.link = &i[bump]; // mark end of table
+
+  ins *j = &i[1];
+  for (deque<segment>::iterator it = ran->segments.begin();
+       it != ran->segments.end(); it++)
+    {
+      for (char c = it->first; c < it->second; c++)
+        {
+          j->c.value = c;
+          j->c.bump = --bump; // mark end of table
+          j++;
+        }
+    }
+}
 
 alt_op::alt_op(regexp *a, regexp *b) : a(a), b(b) {}
 
+void
+alt_op::calc_size()
+{
+  size = a->ins_size() + b->ins_size() + 2;
+}
+
+void
+alt_op::compile(ins *i)
+{
+  i->i.tag = FORK;
+  i->i.param = 0; // prefer to match the first alternative
+  ins *j = &i[a->ins_size() + 1];
+  i->i.link = &j[1];
+  a->compile(&i[1]);
+  j->i.tag = GOTO;
+  j->i.link = &j[b->ins_size() + 1];
+  b->compile(&j[1]);
+}
+
 cat_op::cat_op(regexp *a, regexp *b) : a(a), b(b) {}
+
+void
+cat_op::calc_size()
+{
+  size = a->ins_size() + b->ins_size();
+}
+
+void
+cat_op::compile(ins *i)
+{
+  a->compile(&i[0]);
+  b->compile(&i[a->ins_size()]);
+}
 
 close_op::close_op(regexp *re) : re(re) {}
 
-closev_op::closev_op(regexp *re, int min, int max) : re(re), min(min), max(max) {}
+void
+close_op::calc_size()
+{
+  size = re->ins_size() + 1;
+}
+
+void
+close_op::compile(ins *i)
+{
+  re->compile(&i[0]);
+  i += re->ins_size();
+  i->i.tag = FORK;
+  i->i.param = 1; // XXX: this matches greedily
+  i->i.link = i - re->ins_size();
+}
+
+closev_op::closev_op(regexp *re, int nmin, int nmax)
+  : re(re), nmin(nmin), nmax(nmax) {}
+
+void
+closev_op::calc_size()
+{
+  unsigned k = re->ins_size();
+
+  if (nmax >= 0)
+    size = k * nmin + (nmax - nmin) * (1 + k);
+  else
+    size = k * nmin + 1;
+}
+
+void
+closev_op::compile(ins *i)
+{
+  unsigned k = re->ins_size();
+
+  ins *jumppoint = i + ((nmax - nmin) * (1 + k));
+
+  for (int st = nmin; st < nmax; st++)
+    {
+      i->i.tag = FORK;
+      i->i.param = 0; // XXX: this matches greedily
+      i->i.link = jumppoint;
+      i++;
+      re->compile(&i[0]);
+      i += k;
+    }
+
+  for (int st = 0; st < nmin; st++)
+    {
+      re->compile(&i[0]);
+      i += k;
+
+      if (nmax < 0 && st == 0)
+        {
+          i->i.tag = FORK;
+          i->i.param = 1; // XXX: this matches greedily
+          i->i.link = i - k;
+          i++;
+        }
+    }
+}
+
+rule_op::rule_op(regexp *re, unsigned outcome) : re(re), outcome(outcome) {}
+
+void
+rule_op::calc_size()
+{
+  size = re->ins_size() + 1;
+}
+
+void
+rule_op::compile(ins *i)
+{
+  re->compile(&i[0]);
+  i += re->ins_size();
+  i->i.tag = ACCEPT;
+  i->i.param = outcome;
+}
 
 // ------------------------------------------------------------------------
 

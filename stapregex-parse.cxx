@@ -24,6 +24,127 @@ using namespace std;
 
 namespace stapregex {
 
+// TODOXXX compress / eliminate / move to util
+
+// void prtChOrHex(std::ostream& o, unsigned c)
+// {
+// 	if (eFlag)
+// 	{
+// 		prtHex(o, c);
+// 	}
+// 	else if ((c < 256u) && (isprint(c) || isspace(c)))
+// 	{
+// 		prtCh(o, c);
+// 	}
+// 	else
+// 	{
+// 		prtHex(o, c);
+// 	}
+// }
+
+// void prtHex(std::ostream& o, unsigned c)
+// {
+// 	int oc = (int)(c);
+
+// 	if (re2c::uFlag)
+// 	{
+// 		o << "0x"
+// 		  << hexCh(oc >> 28)
+// 		  << hexCh(oc >> 24)
+// 		  << hexCh(oc >> 20)
+// 		  << hexCh(oc >> 16)
+// 		  << hexCh(oc >> 12)
+// 		  << hexCh(oc >>  8)
+// 		  << hexCh(oc >>  4)
+// 		  << hexCh(oc);
+// 	}
+// 	else if (re2c::wFlag)
+// 	{
+// 		o << "0x"
+// 		  << hexCh(oc >> 12)
+// 		  << hexCh(oc >>  8)
+// 		  << hexCh(oc >>  4)
+// 		  << hexCh(oc);
+// 	}
+// 	else
+// 	{
+// 		o << "0x"
+// 		  << hexCh(oc >>  4) 
+// 		  << hexCh(oc);
+// 	}
+// }
+
+char octCh(unsigned c)
+{
+	return '0' + c % 8;
+}
+
+void prtCh(std::ostream& o, unsigned c)
+{
+	int oc = (int)(c);
+
+	switch (oc)
+	{
+		case '\'':
+		o << "\\'";
+		break;
+
+		case '"':
+		o << "\\\"";
+		break;
+
+		case '\n':
+		o << "\\n";
+		break;
+
+		case '\t':
+		o << "\\t";
+		break;
+
+		case '\v':
+		o << "\\v";
+		break;
+
+		case '\b':
+		o << "\\b";
+		break;
+
+		case '\r':
+		o << "\\r";
+		break;
+
+		case '\f':
+		o << "\\f";
+		break;
+
+		case '\a':
+		o << "\\a";
+		break;
+
+		case '\\':
+		o << "\\\\";
+		break;
+
+		default:
+
+		if ((oc < 256) && isprint(oc))
+		{
+			o << (char) oc;
+		}
+		else
+		{
+			o << '\\' << octCh(oc / 64) << octCh(oc / 8) << octCh(oc);
+		}
+	}
+}
+
+void print_escaped(std::ostream& o, char c)
+{
+  prtCh(o, c);
+}
+
+// ------------------------------------------------------------------------
+
 cursor::cursor() : input(NULL), pos(-1) {}
 
 cursor::cursor(const std::string *input, bool do_unescape)

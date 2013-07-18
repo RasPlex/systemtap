@@ -14,12 +14,15 @@
 #ifndef STAPREGEX_PARSE_H
 #define STAPREGEX_PARSE_H
 
+#include <iostream>
 #include <string>
 
 namespace stapregex {
 
 struct range; /* from stapregex-tree.h */
 struct regexp; /* from stapregex-tree.h */
+
+void print_escaped(std::ostream& o, char c);
 
 struct cursor {
   const std::string *input;

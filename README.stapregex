@@ -6,6 +6,7 @@ The following files in this directory incorporate code from the re2c project:
 - stapregex-parse.h
 - stapregex-parse.cxx
 - stapregex-dfa.h
+- stapregex-dfa.cxx
 
 The codebase these files are based on was originally released into the
 public domain. Many thanks to the developers of re2c for their work.
