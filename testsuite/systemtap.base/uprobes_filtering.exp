@@ -21,8 +21,7 @@ set installed_stap "$env(SYSTEMTAP_PATH)/stap"
 
 # Check for inode-uprobes (adapted from uprobes_p())
 set path "/proc/kallsyms"
-if {[catch {exec grep -q "register_uprobe" $path}]
-		&& [catch {exec grep -q " uprobe_register" $path}]} {
+if {[catch {exec grep -q " uprobe_register" $path}]} {
 	untested $test
 	return
 }
