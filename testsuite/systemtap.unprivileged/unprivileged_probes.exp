@@ -336,6 +336,13 @@ proc test_unrestricted_probes { privilege } {
 	    continue
 	}
 
+	# java support is optional
+	if {[regexp "^java" $probe_type] && ! [java_p]} {
+	    untested "$test: $option $probe_type"
+	    set tested($probe_type) 1
+	    continue
+	}
+
 	# There are currently some known and expected failures
 	switch $probe_type {
 	    process.library(string).function(number).inline -

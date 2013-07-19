@@ -91,6 +91,11 @@ proc nss_p {} {
     return $systemtap_nss_p
 }
 
+proc java_p {} {
+    global systemtap_java_p
+    return $systemtap_java_p
+}
+
 
 proc get_runtime_list {} {
     # Always return the default runtime.
@@ -130,7 +135,8 @@ proc print_systemtap_version {} {
 
 
 proc setup_systemtap_environment {} {
-    global srcdir env server_pid logfile systemtap_dyninst_p systemtap_nss_p
+    global srcdir env server_pid logfile systemtap_dyninst_p
+    global systemtap_nss_p systemtap_java_p
 
     # need an absolute SRCDIR for the top-level src/ tree
     # XXX: or, we could change nearby uses of ${SRCDIR}/testsuite to ${SRCDIR}
@@ -194,6 +200,12 @@ proc setup_systemtap_environment {} {
         set systemtap_nss_p 0
     }
 
+    # Remember if this selfsame version of systemtap compiled with java support
+    if {! [catch {exec sh -c "stap -V 2>&1 | grep -q JAVA"} dummy]} {
+        set systemtap_java_p 1
+    } else {
+        set systemtap_java_p 0
+    }
     return 1
 }
 
