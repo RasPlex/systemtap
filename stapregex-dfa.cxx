@@ -296,14 +296,12 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
         {
           int result = arc_compare(it->priority, next.priority);
           if (result > 0) {
-            cerr << "SHIFT PRIORITY " << (unsigned long) next.i << "AS " << it->priority << " --> " << next.priority << endl;
             // obnoxious shuffle to avoid iterator invalidation
             list<kernel_point>::iterator old_it = it;
             it++;
             closure_map[next.i].erase(old_it);
             continue;
           } else if (result == 0) {
-            cerr << "ALREADY FOUND " << (unsigned long) next.i << endl;
             already_found = true;
           }
           it++;
@@ -321,8 +319,6 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
         // Store the element in closure:
         closure->push_back(next);
         worklist.push(next);
-        cerr << "PUSHING NEW CLOSURE POINT " << (unsigned long) next.i << " " << (unsigned long) next.i->i.tag << " " << (unsigned long) next.i->i.link;
-        cerr << " (" << worklist.size() << " in list now)" << endl;
       }
 
       // Now move to dealing with the second e-transition, if any.
@@ -415,7 +411,7 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
             }
         }
 
-      for (unsigned c = 0; c < NUM_REAL_CHARS; c++)
+      for (unsigned c = 0; c < NUM_REAL_CHARS; )
         {
           list <ins *> e = edges[c];
           assert (!e.empty()); // XXX: ensured by fail_re in stapregex_compile
@@ -427,6 +423,12 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
           while (++c < NUM_REAL_CHARS && edges[c] == e) ;
 
           s.ub = c - 1;
+
+          cerr << "NEW SPAN ['";
+          print_escaped(cerr, (char) s.lb);
+          cerr << "' .. '";
+          print_escaped(cerr, (char) s.ub);
+          cerr << "']" << endl;
 
           s.reach_pairs = new state_kernel;
 
