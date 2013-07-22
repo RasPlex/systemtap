@@ -44,11 +44,14 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
     pad_re = new alt_op (pad_re, new null_op, true); // -- prefer second match
   }
   if (fail_re == NULL) {
-    // build regexp for ".*", but allow '\0' and support fail outcome
+    // build regexp for ".*$", but allow '\0' and support fail outcome
     fail_re = make_dot (true); // -- allow '\0'
     fail_re = new close_op (fail_re, true); // -- prefer shorter match
     fail_re = new alt_op (fail_re, new null_op, true); // -- prefer second match
+    fail_re = new cat_op (fail_re, new anchor_op('$'));
     fail_re = new rule_op(fail_re, 0);
+    // XXX: this approach creates one extra spurious-but-safe state
+    // (safe because the matching procedure stops after encountering '\0')
   }
 
   vector<string> outcomes(2);
@@ -183,6 +186,7 @@ make_kernel (ins *i)
 state_kernel *
 te_closure (state_kernel *start, int ntags, bool is_initial = false)
 {
+  if (is_initial) cerr << "THE INITIAL THING DOES HAPPEN" << endl;
   state_kernel *closure = new state_kernel(*start);
   queue<kernel_point> worklist;
 
@@ -251,6 +255,7 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
         }
       else if (point.i->i.tag == INIT && is_initial)
         {
+          cerr << "ADDED INITIAL POINT " << (unsigned long) &point.i[1] << endl;
           target = &point.i[1];
         }
 
@@ -380,7 +385,7 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
   first = last = NULL;
 
   ins *start = &i[0];
-  state_kernel *initial_kernel = te_closure(make_kernel(start), true);
+  state_kernel *initial_kernel = te_closure(make_kernel(start), ntags, true);
   state *initial = add_state(new state(initial_kernel));
   queue<state *> worklist; worklist.push(initial);
   cerr << "PUSHING NEW STATE " << initial->label << endl;
