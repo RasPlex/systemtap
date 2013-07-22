@@ -2,6 +2,8 @@
 
 AUTOMAKE_OPTIONS=dejagnu
 
+AM_CPPFLAGS = -I$(srcdir)/../includes -I$(builddir)/../includes/sys
+
 clean-local:
 	-rm -f tmp_regtest*
 
@@ -9,11 +11,12 @@ check_PROGRAMS =
 
 check_PROGRAMS += regtest
 
-# check_SCRIPTS = regcomp.base/regtest.in.0 regcomp.base/regtest.in.1
+check_SCRIPTS = regcomp.base/regtest.in.0 regcomp.base/regtest.in.1
 
-regtest_SOURCES = stapregex.cxx regtest.cxx
-regtest_SOURCES += re2c-regex.cxx re2c-emit.cxx re2c-dfa.cxx re2c-globals.cxx
-regtest_CXXFLAGS = $(AM_CXXFLAGS) -DREGCOMP_STANDALONE
+regtest_SOURCES = regtest.cxx ../stapregex.cxx ../stapregex-tree.cxx \
+	../stapregex-parse.cxx ../stapregex-dfa.cxx
+regtest_SOURCES += ../translator-output.cxx ../util.cxx
+regtest_CXXFLAGS = $(AM_CXXFLAGS) -DSTAPREGEX_STANDALONE
 
 BUILT_SOURCES =
 

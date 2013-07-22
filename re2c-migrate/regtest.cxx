@@ -9,9 +9,10 @@
 // ---
 //
 // This file incorporates code from the re2c project; please see
-// re2c-migrate/README for details.
+// the file README.stapregex for details.
 
-#include "stapregex.h"
+#include "../stapregex.h"
+#include "../stapregex-tree.h"
 #include "../translate.h"
 #include <iostream>
 #include <cstdio>
@@ -46,7 +47,6 @@ int main(int argc, char *argv [])
     }
 
   int test_type = atoi (argv[1]);
-  try {
     switch (test_type)
       {
       case 0:
@@ -56,7 +56,8 @@ int main(int argc, char *argv [])
         {
           if (argc != 4) { print_usage (argv[0]); exit (1); }
           string s(argv[2]);
-          stapdfa d("do_match", s, false); // no backslash escaping
+          // generate a dfa with no unescaping and no tags
+          stapdfa d("do_match", s, NULL, false, false);
           translator_output o(cout);
 
           string t(argv[3]);
@@ -96,8 +97,4 @@ int main(int argc, char *argv [])
         print_usage (argv[0]);
         exit (1);
       }
-  } catch (const dfa_parse_error &e) {
-    cerr << "ERROR: " << e.what() << endl;
-    exit (1);
-  }
 }
