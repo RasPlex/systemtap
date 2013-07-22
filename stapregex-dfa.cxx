@@ -45,7 +45,7 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
   }
   if (fail_re == NULL) {
     // build regexp for ".*", but allow '\0' and support fail outcome
-    fail_re = make_dot (true); // TODOXXX -- allow '\0'
+    fail_re = make_dot (true); // -- allow '\0'
     fail_re = new close_op (fail_re, true); // -- prefer shorter match
     fail_re = new alt_op (fail_re, new null_op, true); // -- prefer second match
     fail_re = new rule_op(fail_re, 0);
@@ -103,8 +103,6 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
 
    HERE BE DRAGONS (and not the friendly kind) */
 
-// TODOXXX line-by-line proceeds below
-
 /* Functions to deal with relative transition priorities: */
 
 arc_priority
@@ -160,7 +158,8 @@ dfa::add_state (state *s)
 
 /* Operations to build a simple kernel prior to taking closure: */
 
-void add_kernel (state_kernel *kernel, ins *i)
+void
+add_kernel (state_kernel *kernel, ins *i)
 {
   kernel_point point;
   point.i = i;
@@ -220,6 +219,8 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
       ins *target = NULL; int tag = -1;
       ins *other_target = NULL; int other_tag = -1;
 
+      // TODOXXX line-by-line proceeds below
+
       bool do_split = false;
 
       if (point.i->i.tag == TAG)
@@ -259,8 +260,15 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
       next.priority = do_split ? refine_lower(point.priority) : point.priority;
       next.map_items = point.map_items;
 
+      // Date for the endpoint of the second transition:
+      kernel_point other_next;
+      other_next.i = other_target;
+      other_next.priority = do_split ? refine_higher(point.priority) : point.priority;
+      other_next.map_items = point.map_items;
+
     another_transition:
-      if (target == NULL) continue;
+      if (target == NULL)
+        continue;
 
       // Deal with the current e-transition:
 
@@ -286,18 +294,16 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
       for (list<kernel_point>::iterator it = closure_map[next.i].begin();
            it != closure_map[next.i].end(); )
         {
-          cerr << "COMPARE " << (unsigned long) next.i << " " << next.priority;
-          cerr << " TO " << (unsigned long) it->i << " " << it->priority;
-
           int result = arc_compare(it->priority, next.priority);
-          cerr << " --> " << (result < 0 ? "bigger" : result == 0 ? "equal" : "less") << endl;
           if (result > 0) {
+            cerr << "SHIFT PRIORITY " << (unsigned long) next.i << "AS " << it->priority << " --> " << next.priority << endl;
             // obnoxious shuffle to avoid iterator invalidation
             list<kernel_point>::iterator old_it = it;
             it++;
             closure_map[next.i].erase(old_it);
             continue;
           } else if (result == 0) {
+            cerr << "ALREADY FOUND " << (unsigned long) next.i << endl;
             already_found = true;
           }
           it++;
@@ -315,19 +321,14 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
         // Store the element in closure:
         closure->push_back(next);
         worklist.push(next);
-        cerr << "PUSHING NEW CLOSURE POINT " << (unsigned long) next.i << " " << (unsigned long) next.i->i.tag << " " << (unsigned long) next.i->i.link << endl;
+        cerr << "PUSHING NEW CLOSURE POINT " << (unsigned long) next.i << " " << (unsigned long) next.i->i.tag << " " << (unsigned long) next.i->i.link;
+        cerr << " (" << worklist.size() << " in list now)" << endl;
       }
-    skip_identical:
 
       // Now move to dealing with the second e-transition, if any.
-
       target = other_target; other_target = NULL;
       tag = other_tag; other_tag = -1;
-
-      // Data for the endpoint of the second transition:
-      next.priority = refine_higher(point.priority);
-      next.map_items = point.map_items;
-      // keep next.i as before
+      next = other_next;
 
       goto another_transition;
     }
@@ -346,7 +347,7 @@ dfa::find_equivalent (state *s, tdfa_action &r)
 
   for (state_kernel::iterator it = s->kernel->begin();
        it != s->kernel->end(); it++)
-    unmark(it->i);
+    mark(it->i);
   
   /* Check kernels of existing states for size equivalence and for
      unmarked items (similar to re2c's original algorithm): */
@@ -391,6 +392,7 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
   while (!worklist.empty())
     {
       state *curr = worklist.front(); worklist.pop();
+      cerr << "CHECKING STATE " << curr->label << " (" << worklist.size() << " now in list)" << endl;
 
       vector<list<ins *> > edges(NUM_REAL_CHARS);
 
@@ -415,7 +417,6 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
 
       for (unsigned c = 0; c < NUM_REAL_CHARS; c++)
         {
-          cerr << "EXAMINE " << (unsigned) c << endl;
           list <ins *> e = edges[c];
           assert (!e.empty()); // XXX: ensured by fail_re in stapregex_compile
 
@@ -481,7 +482,7 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
              from target, use t_prime as the target state,
              appending the reordering commands to c. */
           state *t_prime = find_equivalent(target, c);
-          if (t_prime)
+          if (t_prime != NULL)
             {
               cerr << "FOUND OLD STATE STATE " << t_prime->label << endl;        
               delete target;
