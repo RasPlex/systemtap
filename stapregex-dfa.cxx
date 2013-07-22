@@ -61,7 +61,8 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
   int num_tags = re->num_tags;
 
   // Pad & wrap re in appropriate rule_ops to control match behaviour:
-  if (!re->anchored()) re = new cat_op(pad_re, re); // -- left-padding
+  bool anchored = re->anchored ();
+  if (!anchored) re = new cat_op(pad_re, re); // -- left-padding
   re = new rule_op(re, 1);
   re = new alt_op(re, fail_re);
 
@@ -84,8 +85,8 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
 
   dfa *d = new dfa(i, num_tags, outcomes);
 
-  // Carefully deallocate the temporary scaffolding:
-  delete ((rule_op*) ((alt_op*) re)->a)->re; // -- new cat_op
+  // Carefully deallocate temporary scaffolding:
+  if (!anchored) delete ((rule_op*) ((alt_op*) re)->a)->re; // -- new cat_op
   delete ((alt_op*) re)->a; // -- new rule_op
   delete re; // -- new alt_op
   // NB: deleting a regular expression DOES NOT deallocate its
@@ -186,7 +187,6 @@ make_kernel (ins *i)
 state_kernel *
 te_closure (state_kernel *start, int ntags, bool is_initial = false)
 {
-  if (is_initial) cerr << "THE INITIAL THING DOES HAPPEN" << endl;
   state_kernel *closure = new state_kernel(*start);
   queue<kernel_point> worklist;
 
@@ -255,7 +255,6 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
         }
       else if (point.i->i.tag == INIT && is_initial)
         {
-          cerr << "ADDED INITIAL POINT " << (unsigned long) &point.i[1] << endl;
           target = &point.i[1];
         }
 
@@ -349,7 +348,7 @@ dfa::find_equivalent (state *s, tdfa_action &r)
   for (state_kernel::iterator it = s->kernel->begin();
        it != s->kernel->end(); it++)
     mark(it->i);
-  
+
   /* Check kernels of existing states for size equivalence and for
      unmarked items (similar to re2c's original algorithm): */
   unsigned n = s->kernel->size();
@@ -359,14 +358,15 @@ dfa::find_equivalent (state *s, tdfa_action &r)
         {
           for (state_kernel::iterator it = t->kernel->begin();
                it != t->kernel->end(); it++)
-            {
-              if (!marked(it->i)) break;
+              if (!marked(it->i)) 
+                goto next_state;
 
-              // TODOXXX check for existence of reordering r
-              answer = t;
-              goto cleanup;
-            }
+          // TODOXXX check for existence of reordering r
+          answer = t;
+          goto cleanup;
         }
+    next_state:
+      ;
     }
 
  cleanup:
@@ -388,12 +388,10 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
   state_kernel *initial_kernel = te_closure(make_kernel(start), ntags, true);
   state *initial = add_state(new state(initial_kernel));
   queue<state *> worklist; worklist.push(initial);
-  cerr << "PUSHING NEW STATE " << initial->label << endl;
 
   while (!worklist.empty())
     {
       state *curr = worklist.front(); worklist.pop();
-      cerr << "CHECKING STATE " << curr->label << " (" << worklist.size() << " now in list)" << endl;
 
       vector<list<ins *> > edges(NUM_REAL_CHARS);
 
@@ -428,12 +426,6 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
           while (++c < NUM_REAL_CHARS && edges[c] == e) ;
 
           s.ub = c - 1;
-
-          cerr << "NEW SPAN ['";
-          print_escaped(cerr, (char) s.lb);
-          cerr << "' .. '";
-          print_escaped(cerr, (char) s.ub);
-          cerr << "']" << endl;
 
           s.reach_pairs = new state_kernel;
 
@@ -491,7 +483,6 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
           state *t_prime = find_equivalent(target, c);
           if (t_prime != NULL)
             {
-              cerr << "FOUND OLD STATE STATE " << t_prime->label << endl;        
               delete target;
             }
           else
@@ -500,7 +491,6 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
               t_prime = target;
               add_state(t_prime);
               worklist.push(t_prime);
-              cerr << "PUSHING NEW STATE " << t_prime->label << endl;
 
               if (t_prime->accepts)
                 {
