@@ -11,12 +11,23 @@
 // This file incorporates code from the re2c project; please see
 // the file README.stapregex for details.
 
-#include "session.h"
 #include "util.h"
 #include "translator-output.h"
 
 #ifndef STAPREGEX_STANDALONE
+#include "session.h"
 #include "staptree.h" // needed to use semantic_error
+#else
+#include <string>
+#include <map>
+struct stapdfa;
+struct systemtap_session { // -- placeholder for testing
+  std::map<std::string, stapdfa *> dfas;
+  unsigned dfa_counter;
+  bool need_tagged_dfa;
+  unsigned dfa_maxstate;
+  unsigned dfa_maxtag;
+};
 #endif
 
 #include <iostream>
@@ -127,6 +138,7 @@ stapdfa::emit_declaration (translator_output *o) const
   o->newline() << "#define YYLIMIT cur";
   o->newline() << "#define YYMARKER mar";
   // XXX: YYFILL is disabled as it doesn't play well with ^
+  o->newline();
 
   try
     {

@@ -40,12 +40,15 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
   if (pad_re == NULL) {
     // build regexp for ".*"
     pad_re = make_dot ();
-    pad_re = new close_op (pad_re);
-    pad_re = new alt_op (pad_re, new null_op);
+    pad_re = new close_op (pad_re, true); // -- prefer shorter match
+    pad_re = new alt_op (pad_re, new null_op, true); // -- prefer second match
   }
   if (fail_re == NULL) {
-    // build regexp for ".*", but with fail outcome
-    fail_re = new rule_op(pad_re, 0);
+    // build regexp for ".*", but allow '\0' and support fail outcome
+    fail_re = make_dot (true); // TODOXXX -- allow '\0'
+    fail_re = new close_op (fail_re, true); // -- prefer shorter match
+    fail_re = new alt_op (fail_re, new null_op, true); // -- prefer second match
+    fail_re = new rule_op(fail_re, 0);
   }
 
   vector<string> outcomes(2);
@@ -59,7 +62,23 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
   re = new rule_op(re, 1);
   re = new alt_op(re, fail_re);
 
+#define STAPREGEX_DEBUG_INS
+#ifdef STAPREGEX_DEBUG_INS
+  cerr << "RESULTING INS FROM REGEX " << re << ":" << endl;
+#endif
+
   ins *i = re->compile();
+
+#ifdef STAPREGEX_DEBUG_INS
+  for (const ins *j = i; (j - i) < re->ins_size() + 1; )
+    {
+      j = show_ins(cerr, j, i); cerr << endl;
+    }
+  cerr << endl;
+#endif
+  
+  // TODOXXX optimize ins as in re2c
+
   dfa *d = new dfa(i, num_tags, outcomes);
 
   // Carefully deallocate the temporary scaffolding:
@@ -265,28 +284,40 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
 
       /* Deal with similar transitions that have a different priority. */
       for (list<kernel_point>::iterator it = closure_map[next.i].begin();
-           it != closure_map[next.i].end(); it++)
+           it != closure_map[next.i].end(); )
         {
+          cerr << "COMPARE " << (unsigned long) next.i << " " << next.priority;
+          cerr << " TO " << (unsigned long) it->i << " " << it->priority;
+
           int result = arc_compare(it->priority, next.priority);
+          cerr << " --> " << (result < 0 ? "bigger" : result == 0 ? "equal" : "less") << endl;
           if (result > 0) {
-            closure_map[next.i].erase(it);
+            // obnoxious shuffle to avoid iterator invalidation
+            list<kernel_point>::iterator old_it = it;
+            it++;
+            closure_map[next.i].erase(old_it);
+            continue;
           } else if (result == 0) {
             already_found = true;
           }
+          it++;
         }
 
       if (!already_found) {
-        closure->push_back(next);
-        worklist.push(next);
-
         // Store the element in relevant caches:
+
+        closure_map[next.i].push_back(next);
 
         for (list<map_item>::iterator jt = next.map_items.begin();
              jt != next.map_items.end(); jt++)
           max_tags[jt->first] = max(jt->second, max_tags[jt->first]);
 
-        closure_map[next.i].push_back(next);
+        // Store the element in closure:
+        closure->push_back(next);
+        worklist.push(next);
+        cerr << "PUSHING NEW CLOSURE POINT " << (unsigned long) next.i << " " << (unsigned long) next.i->i.tag << " " << (unsigned long) next.i->i.link << endl;
       }
+    skip_identical:
 
       // Now move to dealing with the second e-transition, if any.
 
@@ -353,20 +384,21 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
 
   ins *start = &i[0];
   state_kernel *initial_kernel = te_closure(make_kernel(start), true);
-  queue<state_kernel *> worklist; worklist.push(initial_kernel);
+  state *initial = add_state(new state(initial_kernel));
+  queue<state *> worklist; worklist.push(initial);
+  cerr << "PUSHING NEW STATE " << initial->label << endl;
 
   while (!worklist.empty())
     {
-      state_kernel *kernel = worklist.front(); worklist.pop();
-      state *curr = add_state(new state(kernel));
+      state *curr = worklist.front(); worklist.pop();
 
       vector<list<ins *> > edges(NUM_REAL_CHARS);
 
       /* Using the CHAR instructions in kernel, build the initial
          table of spans for curr. Also check for final states. */
 
-      for (list<kernel_point>::iterator it = kernel->begin();
-           it != kernel->end(); it++)
+      for (list<kernel_point>::iterator it = curr->kernel->begin();
+           it != curr->kernel->end(); it++)
         {
           if (it->i->i.tag == CHAR)
             {
@@ -381,8 +413,9 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
             }
         }
 
-      for (char c = 0; c < NUM_REAL_CHARS; c++)
+      for (unsigned c = 0; c < NUM_REAL_CHARS; c++)
         {
+          cerr << "EXAMINE " << (unsigned) c << endl;
           list <ins *> e = edges[c];
           assert (!e.empty()); // XXX: ensured by fail_re in stapregex_compile
 
@@ -392,7 +425,7 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
 
           while (++c < NUM_REAL_CHARS && edges[c] == e) ;
 
-          s.ub = c;
+          s.ub = c - 1;
 
           s.reach_pairs = new state_kernel;
 
@@ -416,11 +449,11 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
           tdfa_action c;
 
           /* Generate position-save commands for any map items
-             that do not appear in kernel: */
+             that do not appear in curr->kernel: */
 
           set<map_item> all_items;
-          for (state_kernel::const_iterator jt = kernel->begin();
-               jt != kernel->end(); jt++)
+          for (state_kernel::const_iterator jt = curr->kernel->begin();
+               jt != curr->kernel->end(); jt++)
             for (list<map_item>::const_iterator kt = jt->map_items.begin();
                  kt != jt->map_items.end(); jt++)
               all_items.insert(*kt);
@@ -449,7 +482,8 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
              appending the reordering commands to c. */
           state *t_prime = find_equivalent(target, c);
           if (t_prime)
-            {        
+            {
+              cerr << "FOUND OLD STATE STATE " << t_prime->label << endl;        
               delete target;
             }
           else
@@ -457,6 +491,8 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
               /* We need to actually add target to the dfa: */
               t_prime = target;
               add_state(t_prime);
+              worklist.push(t_prime);
+              cerr << "PUSHING NEW STATE " << t_prime->label << endl;
 
               if (t_prime->accepts)
                 {
@@ -520,6 +556,13 @@ operator << (std::ostream &o, const tdfa_action& a)
   return o;
 }
 
+std::ostream&
+operator << (std::ostream &o, const arc_priority& p)
+{
+  o << p.first << "/" << (1 << p.second);
+  return o;
+}
+
 void
 state::print (translator_output *o) const
 {
@@ -533,12 +576,20 @@ state::print (translator_output *o) const
   for (list<span>::const_iterator it = spans.begin();
        it != spans.end(); it++)
     {
+      o->newline() << "'";
       if (it->lb == it->ub)
-        o->newline() << it->lb << "  ";
+        {
+          print_escaped (o->line(), it->lb);
+          o->line() << "  ";
+        }
       else
-        o->newline() << it->lb << "-" << it->ub;
+        {
+          print_escaped (o->line(), it->lb);
+          o->line() << "-";
+          print_escaped (o->line(), it->ub);
+        }
 
-      o->line() << " -> " << it->to->label;
+      o->line() << "' -> " << it->to->label;
 
       if (!it->action.empty())
         o->line() << " [" << it->action << "]";
@@ -555,11 +606,13 @@ dfa::print (std::ostream& o) const
 void
 dfa::print (translator_output *o) const
 {
+  o->newline();
   for (state *s = first; s; s = s->next)
     {
       s->print(o);
       o->newline();
     }
+  o->newline();
 }
 
 std::ostream&

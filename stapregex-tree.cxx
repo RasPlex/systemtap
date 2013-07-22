@@ -23,9 +23,9 @@ using namespace std;
 
 namespace stapregex {
 
-range::range (char lb, char u)
+range::range (char lb, char ub)
 {
-  segments.push_back(make_pair(lb,u+1));
+  segments.push_back(make_pair(lb,ub));
 }
 
 range::range (const string& str)
@@ -57,9 +57,9 @@ range::print (std::ostream& o) const
       return;
     }
 
-  if (segments.size() == 1 && segments[0].first + 1 == segments[0].second)
+  if (segments.size() == 1 && segments[0].first == segments[0].second)
     {
-      o << segments[0].first;
+      print_escaped (o, segments[0].first);
       return;
     }
 
@@ -68,8 +68,16 @@ range::print (std::ostream& o) const
        it != segments.end(); it++)
     {
       char lb = it->first; char ub = it->second;
-      if (lb + 1 == ub) o << lb;
-      else o << lb << "-" << ub - 1;
+      if (lb == ub)
+        {
+          print_escaped (o, lb);
+        }
+      else
+        {
+          print_escaped (o, lb);
+          o << "-";
+          print_escaped (o, ub);
+        }
     }
   o << "]";
 }
@@ -125,7 +133,7 @@ range_union(range *old_a, range *old_b)
   while (!s.empty())
     {
       /* Merge adjacent overlapping segments. */
-      while (s.size() >= 2 && s[0].second + 1 >= s[1].first)
+      while (s.size() >= 2 && s[0].second >= s[1].first)
         {
           segment merged = make_pair(min(s[0].first, s[1].first),
                                      max(s[0].second, s[1].second));
@@ -149,9 +157,9 @@ range_invert(range *old_ran)
   char start = 1;
 
   while (!ran.segments.empty()) {
-    char end = ran.segments.front().first - 1;
+    char end = ran.segments.front().first;
     if (start <= end) new_ran->segments.push_back(make_pair(start, end));
-    start = ran.segments.front().second;
+    start = ran.segments.front().second + 1;
     ran.segments.pop_front();
   }
 
@@ -207,8 +215,15 @@ show_ins (std::ostream &o, const ins *i, const ins *base)
 ins *
 regexp::compile()
 {
-  ins *i = new ins[ins_size()];
+  unsigned k = ins_size();
+
+  ins *i = new ins[k + 1];
   compile(i);
+  
+  // Append an infinite-loop GOTO to avoid edges going outside the array:
+  i[k].i.tag = GOTO;
+  i[k].i.link = &i[k];
+
   return i;
 }
 
@@ -291,7 +306,7 @@ match_op::calc_size()
   for (deque<segment>::iterator it = ran->segments.begin();
        it != ran->segments.end(); it++)
     {
-      size += it->second - it->first;
+      size += it->second - it->first + 1;
     }
 }
 
@@ -306,7 +321,7 @@ match_op::compile(ins *i)
   for (deque<segment>::iterator it = ran->segments.begin();
        it != ran->segments.end(); it++)
     {
-      for (char c = it->first; c < it->second; c++)
+      for (unsigned c = it->first; c <= it->second; c++)
         {
           j->c.value = c;
           j->c.bump = --bump; // mark end of table
@@ -315,7 +330,8 @@ match_op::compile(ins *i)
     }
 }
 
-alt_op::alt_op(regexp *a, regexp *b) : a(a), b(b) {}
+alt_op::alt_op(regexp *a, regexp *b, bool prefer_second)
+  : a(a), b(b), prefer_second(prefer_second) {}
 
 void
 alt_op::calc_size()
@@ -327,7 +343,7 @@ void
 alt_op::compile(ins *i)
 {
   i->i.tag = FORK;
-  i->i.param = 0; // prefer to match the first alternative
+  i->i.param = prefer_second ? 1 : 0; // preferred alternative to match
   ins *j = &i[a->ins_size() + 1];
   i->i.link = &j[1];
   a->compile(&i[1]);
@@ -351,7 +367,8 @@ cat_op::compile(ins *i)
   b->compile(&i[a->ins_size()]);
 }
 
-close_op::close_op(regexp *re) : re(re) {}
+close_op::close_op(regexp *re, bool prefer_shorter)
+  : re(re), prefer_shorter(prefer_shorter) {}
 
 void
 close_op::calc_size()
@@ -365,7 +382,7 @@ close_op::compile(ins *i)
   re->compile(&i[0]);
   i += re->ins_size();
   i->i.tag = FORK;
-  i->i.param = 1; // XXX: this matches greedily
+  i->i.param = prefer_shorter ? 0 : 1; // XXX: match greedily by default
   i->i.link = i - re->ins_size();
 }
 
@@ -507,9 +524,9 @@ make_alt(regexp *a, regexp *b)
 }
 
 regexp *
-make_dot()
+make_dot(bool allow_zero)
 {
-  return new match_op(new range(1, NUM_REAL_CHARS-1)); // exclude '\0'
+  return new match_op(new range(allow_zero ? 0 : 1, NUM_REAL_CHARS-1));
 }
 
 };

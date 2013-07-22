@@ -207,6 +207,7 @@ cursor::get_unescaped ()
     {
       next_c = c;
       pos++;
+      finished = ( pos >= input->length() );
       return;
     }
 
@@ -566,12 +567,9 @@ regex_parser::parse_char_range ()
       ran = new_ran;
 
       // break on ']' (except at the start of the class)
+      c = cur.peek ();
       if (c == ']')
-        {
-          cur.next ();
-          break;
-        }
-
+        break;
     }
 
   if (inv)
@@ -665,6 +663,7 @@ stapregex_getrange (cursor& cur)
 
       if (c == ':')
         {
+          cur.next (); c = cur.peek (); // skip ':'
           string charclass;
 
           for (;;)
@@ -692,7 +691,7 @@ stapregex_getrange (cursor& cur)
 
   char lb = c, ub;
 
-  if (!cur.has(2) || !(*cur.input)[cur.pos] == '-')
+  if (!cur.has(2) || cur.peek () != '-')
     {
       ub = lb;
     }

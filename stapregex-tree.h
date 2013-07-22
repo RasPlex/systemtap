@@ -20,17 +20,17 @@
 #include <stdexcept>
 
 // XXX: currently we only support ASCII
-#define NUM_REAL_CHARS 256
+#define NUM_REAL_CHARS 128
 
 namespace stapregex {
 
 typedef std::pair<char, char> segment;
 
 struct range {
-  std::deque<segment> segments;   // -- [lb, ub), sorted ascending
+  std::deque<segment> segments;   // -- [lb, ub], sorted ascending // TODOXXX
 
   range () {}                     // -- empty range
-  range (char lb, char u);        // -- a segment [lb, u]
+  range (char lb, char ub);       // -- a segment [lb, ub]
   range (const std::string& str); // -- character class (no named entities)
 
   void print(std::ostream& o) const;
@@ -170,7 +170,8 @@ struct match_op : public regexp {
 
 struct alt_op : public regexp {
   regexp *a, *b;
-  alt_op (regexp *a, regexp *b);
+  bool prefer_second;
+  alt_op (regexp *a, regexp *b, bool prefer_second = false);
   const std::string type_of() const { return "alt_op"; }
   bool anchored () const { return a->anchored() && b->anchored(); }
   void calc_size();
@@ -197,13 +198,13 @@ struct cat_op : public regexp {
     if (priority >= 2) o << "(";
     a->print(o, 1); b->print(o, 1);
     if (priority >= 2) o << ")";
-    o << a << b;
   }
 };
 
 struct close_op : public regexp {
   regexp *re;
-  close_op (regexp *re);
+  bool prefer_shorter;
+  close_op (regexp *re, bool prefer_shorter = false);
   const std::string type_of() const { return "close_op"; }
   bool anchored () const { return re->anchored(); }
   void calc_size();
@@ -251,7 +252,7 @@ struct rule_op : public regexp {
 regexp *str_to_re(const std::string& str);
 
 regexp *make_alt(regexp* a, regexp* b);
-regexp *make_dot();
+regexp *make_dot(bool allow_zero = false);
 
 // ------------------------------------------------------------------------
 

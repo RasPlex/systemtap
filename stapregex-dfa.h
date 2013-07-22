@@ -70,6 +70,8 @@ arc_priority refine_higher(const arc_priority& a);
 arc_priority refine_lower(const arc_priority& a);
 int arc_compare(const arc_priority& a, const arc_priority& b);
 
+std::ostream& operator << (std::ostream &o, const arc_priority& p);
+
 /* When constructing tagged DFA sets from ins, we need to keep track
    of a set of instructions together with further bookkeeping
    information (relative preference/priority, map items affected). */
@@ -83,7 +85,7 @@ typedef std::list<kernel_point> state_kernel;
 /* Corresponds to a tagged-DFA transition arc, complete with
    subexpression map reordering and such. */
 struct span {
-  char lb, ub; // -- segment [lb, ub)
+  char lb, ub; // -- segment [lb, ub]
   state *to;
   tdfa_action action;
   state_kernel *reach_pairs; // -- for the subset-construction algorithm
