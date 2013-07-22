@@ -8,8 +8,8 @@ probe kernel.trace("*")? { println(@defined($rw)?$rw:0) } # valid and invalid in
 probe kernel.mark("*")? { println(@defined($foo)?$foo:0) } # invalid
 probe kernel.mark("*")? { println(@defined($name)?$name:$nosuchvar) } # valid
 probe kernel.mark("*")? { println(@defined($argJJJ)?$argJJJ:0) }
-probe process("stap").mark("*")? { println(@defined($arg1)?$arg1:$nosuchvar) } # valid
-probe process("stap").mark("*")? { println(@defined($nosuchvar)?$nosuchvar:0) } # invalid
+probe process("stap").mark("pass*__*")? { println(@defined($arg1)?$arg1:$nosuchvar) } # valid
+probe process("stap").mark("pass*__*")? { println(@defined($nosuchvar)?$nosuchvar:0) } # invalid
 probe procfs("file").read { println(@defined($nosuchvar)?$nosuchvar:0) } # invalid
 probe procfs("file").write { println(@defined($value)?$value:$nosuchvar) } # valid
 
