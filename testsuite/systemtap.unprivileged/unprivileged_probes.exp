@@ -356,13 +356,21 @@ proc test_unrestricted_probes { privilege } {
 	    process.function(string).return -
 	    process.library(string).function(number).return -
 	    process.library(string).function(string).return -
-	    process(number).statement(number).absolute.return -
 	    process(string).function(number).return -
 	    process(string).function(string).return -
 	    process(string).library(string).function(number).return -
 	    process(string).library(string).function(string).return
 	    {
 		if {![uretprobes_p]} { setup_kfail URETPROBES *-*-* }
+	    }
+	    process(number).statement(number).absolute.return
+	    {
+		if {![uretprobes_p]} { setup_kfail URETPROBES *-*-* }
+		if {[inode_uprobes_p]} { setup_kfail INODE_UPROBES *-*-* }
+	    }
+	    process(number).statement(number).absolute
+	    {
+		if {[inode_uprobes_p]} { setup_kfail INODE_UPROBES *-*-* }
 	    }
 	}
 
