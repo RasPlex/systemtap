@@ -13,6 +13,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <set>
 #include <list>
 #include <map>
@@ -25,6 +26,11 @@
 #include "stapregex-parse.h"
 #include "stapregex-tree.h"
 #include "stapregex-dfa.h"
+
+// Uncomment to show result of ins (NFA) compilation:
+//#define STAPREGEX_DEBUG_INS
+// Uncomment to display result of DFA compilation in a compact format:
+//#define STAPREGEX_DEBUG_DFA
 
 using namespace std;
 
@@ -66,7 +72,6 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
   re = new rule_op(re, 1);
   re = new alt_op(re, fail_re);
 
-#define STAPREGEX_DEBUG_INS
 #ifdef STAPREGEX_DEBUG_INS
   cerr << "RESULTING INS FROM REGEX " << re << ":" << endl;
 #endif
@@ -519,11 +524,86 @@ dfa::~dfa ()
 
 // ------------------------------------------------------------------------
 
+// TODOXXX add emission instructions for tag_ops
+
+void
+span::emit_jump (translator_output *o, const dfa *d) const
+{
+  o->newline () << "printf(\" --> GOTO yystate%d\\n\", " << to->label << ");";
+
+  // TODOXXX tags feature allows proper longest-match priority
+  if (to->accepts)
+    {
+      emit_final(o, d);
+    }
+  else
+    {
+      o->newline () << "YYCURSOR++;";
+      o->newline () << "goto yystate" << to->label << ";";
+    }
+}
+
+/* Assuming the target DFA of the span is a final state, emit code to
+   (TODOXXX) cleanup tags and exit with a final answer. */
+void
+span::emit_final (translator_output *o, const dfa *d) const
+{
+  assert (to->accepts); // XXX: must guarantee correct usage of emit_final()
+  o->newline() << d->outcome_snippets[to->accept_outcome];
+  o->newline() << "goto yyfinish;";
+}
+
+string c_char(char c)
+{
+  stringstream o;
+  o << "'";
+  print_escaped(o, c);
+  o << "'";
+  return o.str();
+}
+
+void
+state::emit (translator_output *o, const dfa *d) const
+{
+  o->newline() << "yystate" << label << ": ";
+  o->newline () << "printf(\"READ '%s' %c\", cur, *YYCURSOR);";
+  o->newline() << "switch (*YYCURSOR) {";
+  o->indent(1);
+  for (list<span>::const_iterator it = spans.begin();
+       it != spans.end(); it++)
+    {
+      // If we see a '\0', go immediately into an accept state:
+      if (it->lb == '\0')
+        {
+          o->newline() << "case " << c_char('\0') << ":";
+          it->emit_final(o, d); // TODOXXX extra function may be unneeded
+        }
+
+      // Emit labels to handle all the other elements of the span:
+      for (unsigned c = max('\1', it->lb); c <= it->ub; c++) {
+        o->newline() << "case " << c_char((char) c) << ":";
+      }
+      it->emit_jump(o, d);
+
+      // TODOXXX handle a 'default' set of characters for the largest span...
+      // TODOXXX optimize by accepting before end of string whenever possible... (also necessary for proper first-matched-substring selection)
+    }
+  o->newline(-1) << "}";
+}
+
 void
 dfa::emit (translator_output *o) const
 {
-  // TODOXXX implement after testing the preceding algorithms
+#ifdef STAPREGEX_DEBUG_DFA
   print(o);
+#else
+  o->newline() << "{";
+  o->newline(1);
+  for (state *s = first; s; s = s->next)
+    s->emit(o, this);
+  o->newline() << "yyfinish: ;";
+  o->newline(-1) << "}";
+#endif
 }
 
 void

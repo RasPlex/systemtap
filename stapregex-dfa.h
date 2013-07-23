@@ -29,6 +29,7 @@ namespace stapregex {
 struct regexp; /* from stapregex-tree.h */
 union ins; /* from stapregex-tree.h */
 
+struct dfa;
 struct state;
 
 /* Coordinates of a subexpression map item m[t,s]: */
@@ -88,13 +89,20 @@ struct span {
   char lb, ub; // -- segment [lb, ub]
   state *to;
   tdfa_action action;
-  state_kernel *reach_pairs; // -- for the subset-construction algorithm
+  state_kernel *reach_pairs; // -- for the subset-construction
+                             // -- algorithm
+
+  void emit_jump (translator_output *o, const dfa *d) const;
+  void emit_final (translator_output *o, const dfa *d) const;
 };
 
 struct state {
   unsigned label; // -- index of state in dfa
   state *next;    // -- store dfa states as a linked list
   state_kernel *kernel; // -- set of corresponding ins coordinates
+  /* NB: our usage of the term 'kernel' differs from re2c's slightly
+     -- there is no real need to distinguish NFA edges inside the
+     state from outgoing edges, (XXX) as far as I am aware. */
 
   bool accepts;   // -- is this a final state?
   unsigned accept_outcome;
@@ -103,6 +111,8 @@ struct state {
   std::list<span> spans;
 
   state (state_kernel *kernel);
+
+  void emit (translator_output *o, const dfa *d) const;
 
   void print (translator_output *o) const;
 };
