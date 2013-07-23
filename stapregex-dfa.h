@@ -80,6 +80,7 @@ struct kernel_point {
   ins *i;
   arc_priority priority; // -- used in tagged e-closure computation
   std::list<map_item> map_items;
+  std::set<ins *> parents; // -- used for infinite-loop-detection
 };
 typedef std::list<kernel_point> state_kernel;
 

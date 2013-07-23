@@ -237,6 +237,11 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
           target = &point.i[1];
           tag = (int) point.i->i.param;
         }
+      else if (point.i->i.tag == FORK && point.i == (ins *) point.i->i.link)
+        {
+          /* Workaround for a FORK that points to itself: */
+          target = &point.i[1];
+        }
       else if (point.i->i.tag == FORK)
         {
           do_split = true;
@@ -263,6 +268,8 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
           target = &point.i[1];
         }
 
+      bool already_found;
+
       // Data for the endpoint of the first transition:
       kernel_point next;
       next.i = target;
@@ -274,6 +281,24 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
       other_next.i = other_target;
       other_next.priority = do_split ? refine_higher(point.priority) : point.priority;
       other_next.map_items = point.map_items;
+
+      // Do infinite-loop-check:
+      other_next.parents = point.parents;
+      if (point.parents.find(other_next.i) != point.parents.end())
+        {
+          other_target = NULL;
+          other_tag = -1;
+        }
+      other_next.parents.insert(other_next.i);
+
+      next.parents = point.parents;
+      if (point.parents.find(next.i) != point.parents.end())
+        {
+          target = NULL;
+          tag = -1;
+          goto next_target;
+        }
+      next.parents.insert(next.i);
 
     another_transition:
       if (target == NULL)
@@ -297,13 +322,14 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
           max_tags[tag] = x;
         }
 
-      bool already_found = false;
+      already_found = false;
 
       /* Deal with similar transitions that have a different priority. */
       for (list<kernel_point>::iterator it = closure_map[next.i].begin();
            it != closure_map[next.i].end(); )
         {
           int result = arc_compare(it->priority, next.priority);
+
           if (result > 0) {
             // obnoxious shuffle to avoid iterator invalidation
             list<kernel_point>::iterator old_it = it;
@@ -330,6 +356,7 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
         worklist.push(next);
       }
 
+    next_target:
       // Now move to dealing with the second e-transition, if any.
       target = other_target; other_target = NULL;
       tag = other_tag; other_tag = -1;

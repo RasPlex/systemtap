@@ -15,6 +15,7 @@
 #include <deque>
 #include <utility>
 #include <cmath>
+#include <cassert>
 
 #include "stapregex-parse.h"
 #include "stapregex-tree.h"
@@ -104,6 +105,7 @@ operator << (std::ostream& o, const range* ran)
 range *
 range_union(range *old_a, range *old_b)
 {
+  if (old_a == NULL && old_b == NULL) return NULL;
   if (old_a == NULL || old_a->segments.empty()) return new range(*old_b);
   if (old_b == NULL || old_b->segments.empty()) return new range(*old_a);
 
@@ -499,6 +501,8 @@ make_alt(regexp *a, regexp *b)
     {
       r1 = ((match_op *) a)->ran; e1 = NULL;
     }
+  else
+    e1 = a;
 
   if (b->type_of() == "alt_op")
     {
@@ -514,12 +518,15 @@ make_alt(regexp *a, regexp *b)
     {
       r2 = ((match_op *) b)->ran; e2 = NULL;
     }
+  else
+    e2 = b;
 
   range *u = range_union(r1, r2);
   delete r1; delete r2;
 
   match_op *m = u != NULL ? new match_op(u) : NULL;
   regexp *r = do_alt(m, do_alt(e1, e2));
+  assert (r != NULL);
   return r;
 }
 
