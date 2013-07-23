@@ -92,11 +92,10 @@ function get_task_info:string (task:long) %{
 	}
 %}
 
-function translate_mask (mask) {
-	delim = ","
-	str = signal_str(strtol(tokenize(mask, delim), 10))
+function translate_mask:string (mask:string) {
+	str = signal_str(strtol(tokenize(mask, ","), 10))
 	while (1) {
-		sig = signal_str(strtol(tokenize("", delim), 10))
+		sig = signal_str(strtol(tokenize("", ","), 10))
 		if (strlen(sig) == 0)
 			break;
 		str = str . "," . sig
