@@ -31,6 +31,8 @@
 //#define STAPREGEX_DEBUG_INS
 // Uncomment to display result of DFA compilation in a compact format:
 //#define STAPREGEX_DEBUG_DFA
+// Uncomment to have the generated engine do a trace of visited states:
+//#define STAPREGEX_DEBUG_MATCH
 
 using namespace std;
 
@@ -109,6 +111,10 @@ stapregex_compile (regexp *re, const std::string& match_snippet,
    Transitions, their Conversion to Deterministic Automata and
    Application to Regular Expressions"
    (http://laurikari.net/ville/spire2000-tnfa.pdf).
+
+   TODOXXX: The following does not contain a fully working
+   implementation of the tagging support, but only of the regex
+   matching.
 
    HERE BE DRAGONS (and not the friendly kind) */
 
@@ -556,7 +562,9 @@ dfa::~dfa ()
 void
 span::emit_jump (translator_output *o, const dfa *d) const
 {
+#ifdef STAPREGEX_DEBUG_MATCH
   o->newline () << "printf(\" --> GOTO yystate%d\\n\", " << to->label << ");";
+#endif
 
   // TODOXXX tags feature allows proper longest-match priority
   if (to->accepts)
@@ -593,7 +601,9 @@ void
 state::emit (translator_output *o, const dfa *d) const
 {
   o->newline() << "yystate" << label << ": ";
+#ifdef STAPREGEX_DEBUG_MATCH
   o->newline () << "printf(\"READ '%s' %c\", cur, *YYCURSOR);";
+#endif
   o->newline() << "switch (*YYCURSOR) {";
   o->indent(1);
   for (list<span>::const_iterator it = spans.begin();
@@ -607,7 +617,7 @@ state::emit (translator_output *o, const dfa *d) const
         }
 
       // Emit labels to handle all the other elements of the span:
-      for (unsigned c = max('\1', it->lb); c <= it->ub; c++) {
+      for (unsigned c = max('\1', it->lb); c <= (unsigned) it->ub; c++) {
         o->newline() << "case " << c_char((char) c) << ":";
       }
       it->emit_jump(o, d);

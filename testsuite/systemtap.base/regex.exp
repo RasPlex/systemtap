@@ -57,3 +57,5 @@ stap_test_regex 1 {\\((.*),} {(.*)\\)}
 stap_test_regex 1 {\[k\]} {ab}
 stap_test_regex 0 {abcd} {abcd}
 stap_test_regex 0 {a(bc)d} {abcd}
+
+# TODOXXX: add further tests to do specifically with unescaping

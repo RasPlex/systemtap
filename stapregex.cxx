@@ -113,6 +113,7 @@ stapdfa::num_tags () const
 void
 stapdfa::emit_declaration (translator_output *o) const
 {
+  o->newline() << "// DFA for \"" << orig_input << "\"";
 #ifdef STAPREGEX_STANDALONE
   o->newline() << "int " << func_name << " (const char *str) {";
 #else
@@ -165,17 +166,22 @@ stapdfa::emit_declaration (translator_output *o) const
 
   o->newline() << "match_success:";
 #ifndef STAPREGEX_STANDALONE
-  o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
-  o->newline() << "c->last_match.result = 1";
   if (do_tag)
-    content->emit_tagsave(o, "c->last_match.tag_states", "c->last_match.tag_vals", "c->last_match.num_final_tags");
+    {
+      o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
+      o->newline() << "c->last_match.result = 1";
+      content->emit_tagsave(o, "c->last_match.tag_states", "c->last_match.tag_vals", "c->last_match.num_final_tags");
+    }
 #endif
   o->newline() << "return 1;";
 
   o->newline() << "match_fail:";
 #ifndef STAPREGEX_STANDALONE
-  o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
-  o->newline() << "c->last_match.result = 0;";
+  if (do_tag)
+    {  
+      o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
+      o->newline() << "c->last_match.result = 0;";
+    }
 #endif
   o->newline() << "return 0;";
 
@@ -188,7 +194,7 @@ stapdfa::emit_matchop_start (translator_output *o) const
 #ifdef STAPREGEX_STANDALONE
   o->line() << "(" << func_name << "((";
 #else
-  o->line() << "(" << func_name << "(CONTEXT, (";
+  o->line() << "(" << func_name << "(c, ("; // XXX: assumes context is available
 #endif
 }
 

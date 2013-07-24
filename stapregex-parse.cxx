@@ -281,7 +281,7 @@ cursor::get_unescaped ()
 regexp *
 regex_parser::parse (bool do_tag)
 {
-  cur = cursor(&input);
+  cur = cursor(&input, do_unescape);
   num_tags = 0; this->do_tag = do_tag;
 
   regexp *result = parse_expr ();

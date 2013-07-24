@@ -323,7 +323,7 @@ match_op::compile(ins *i)
   for (deque<segment>::iterator it = ran->segments.begin();
        it != ran->segments.end(); it++)
     {
-      for (unsigned c = it->first; c <= it->second; c++)
+      for (unsigned c = it->first; c <= (unsigned) it->second; c++)
         {
           j->c.value = c;
           j->c.bump = --bump; // mark end of table
