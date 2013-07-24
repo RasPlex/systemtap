@@ -23,6 +23,9 @@ foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 	buildok/alias_suffixes06.stp -
 	buildok/atomic.stp -
 	buildok/aux_syscalls-embedded.stp -
+	buildok/context-embedded.stp -
+	buildok/context-symbols-embedded.stp -
+	buildok/context-unwind-embedded.stp -
 	buildok/conversions-embedded.stp -
 	buildok/conversions-guru-embedded.stp -
 	buildok/conversions.stp -
@@ -36,6 +39,7 @@ foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 	buildok/fortytwo.stp -
 	buildok/fourteen-plus.stp -
 	buildok/fourteen.stp -
+	buildok/gtod_noinit.stp -
 	buildok/guru.stp -
 	buildok/histogram_operator_in.stp -
 	buildok/hwbkpt.stp -
@@ -95,6 +99,7 @@ foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 	buildok/process_test.stp -
 	buildok/procfs01.stp -
 	buildok/queue_stats-embedded.stp -
+	buildok/rcu.stp -
 	buildok/rpc-all-probes.stp -
 	buildok/rpc-detailed.stp -
 	buildok/rpc-embedded.stp -
@@ -123,6 +128,9 @@ foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 	buildok/syscalls-detailed.stp -
 	buildok/syscalls2-detailed.stp -
 	buildok/systemtap_privilege.stp -
+	buildok/task-embedded.stp -
+	buildok/task_test.stp -
+	buildok/task_time-embedded.stp -
 	buildok/tcp-all-probes.stp -
 	buildok/tcp-detailed.stp -
 	buildok/tcp-embedded.stp -
@@ -134,16 +142,22 @@ foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 	buildok/thirtyone.stp -
 	buildok/thirtytwo.stp -
 	buildok/three.stp -
+	buildok/timestamp-embedded.stp -
+	buildok/timestamp_monotonic-embedded.stp -
 	buildok/tty-detailed.stp -
 	buildok/tty-resize.stp -
 	buildok/twenty.stp -
 	buildok/twentyeight.stp -
+	buildok/twentyeightprime.stp -
 	buildok/twentyfive.stp -
 	buildok/twentynine.stp -
 	buildok/twentyseven.stp -
 	buildok/twentythree.stp -
 	buildok/twentytwo.stp -
 	buildok/two.stp -
+	buildok/ucontext-embedded.stp -
+	buildok/ucontext-symbols-embedded.stp -
+	buildok/ucontext-unwind-embedded.stp -
 	buildok/udp-all-probes.stp -
 	buildok/udp-detailed.stp -
 	buildok/udp_test.stp -
@@ -159,27 +173,13 @@ foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 
 	buildok/fortyseven.stp {
 	    if {$rc != 0} { setup_kfail 15065 *-*-* } }
+
+	buildok/per-process-syscall.stp {
+	    # Use setup_kfail 14708 <target triplet> for known
+	    # failures when running with the dyninst runtime (scripts
+	    # that use utrace-like probes)
+	    if {$rc != 0} { setup_kfail 14708 *-*-* } }
     }
 
-    # tests that need more investigation/work:
-    # - buildok/context-embedded.stp
-    # - buildok/context-symbols-embedded.stp
-    # - buildok/context-unwind-embedded.stp	
-    # - buildok/per-process-syscall.stp - process.syscall
-    #   probes implementable?
-    # - buildok/string-embedded.stp
-    # - buildok/system-embedded.stp
-    # - buildok/task-embedded.stp - should these functions
-    #   work? task_current, etc.
-    # - buildok/task_test.stp
-    # - buildok/task_time-embedded.stp
-    # - buildok/timestamp-embedded.stp
-    # - buildok/timestamp_monotonic-embedded.stp
-    # - buildok/twentyeightprime.stp - could
-    #   process.statement.absolute probes work?
-    # - buildok/ucontext-embedded.stp
-    # - buildok/ucontext-symbols-embedded.stp
-    # - buildok/ucontext-unwind-embedded.stp
-    # - buildok/utrace.stp
     if {$rc == 0} { pass "$test ($runtime)" } else { fail "$test ($runtime)" }
 }
