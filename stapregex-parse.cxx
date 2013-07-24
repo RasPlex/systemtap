@@ -413,6 +413,11 @@ regex_parser::parse_factor ()
       if (do_tag) {
         result = new cat_op(new tag_op(num_tags++), result);
         result = new cat_op(result, new tag_op(num_tags++));
+      } else {
+        // XXX: workaround for certain error checking test cases which
+        // would otherwise produce divergent behaviour
+        // (e.g. "^*" vs "(^)*").
+        result = new cat_op(result, new null_op);
       }
 
       expect (')');
@@ -633,7 +638,7 @@ named_char_class (const string& name)
       named_char_classes["graph"] = new range("\x21-\x7E");
       named_char_classes["l"] = named_char_classes["lower"] = new range("a-z");
       named_char_classes["print"] = new range("\x20-\x7E");
-      named_char_classes["punct"] = new range("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
+      named_char_classes["punct"] = new range("!\"#$%&'()*+,./:;<=>?@[\\]^_`{|}~-");
       named_char_classes["s"] = named_char_classes["space"] = new range(" \t\r\n\v\f");
       named_char_classes["u"] = named_char_classes["upper"] = new range("A-Z");
     }
@@ -691,7 +696,7 @@ stapregex_getrange (cursor& cur)
 
   char lb = c, ub;
 
-  if (!cur.has(2) || cur.peek () != '-')
+  if (!cur.has(2) || cur.peek () != '-' || (*cur.input)[cur.pos] == ']')
     {
       ub = lb;
     }
