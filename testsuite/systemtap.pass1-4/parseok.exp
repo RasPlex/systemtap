@@ -6,7 +6,14 @@ proc dyninst_kfails {test} {
     # (Note that tcl doesn't like comments directly inside the switch
     # statement, but comments can go in sub-blocks.)
     switch $test {
-	parseok/deprecated01.stp {
+	parseok/deprecated01.stp -
+	parseok/umask01.stp -
+	parseok/umask02.stp -
+	parseok/umask03.stp -
+	parseok/umask04.stp -
+	parseok/umask05.stp -
+	parseok/umask06.stp -
+	parseok/umask07.stp {
 	    # Use setup_kfail DYNINST <target triplet> for known
 	    # failures when running with the dyninst runtime (scripts
 	    # that use kernel features or kernel-only tapset
