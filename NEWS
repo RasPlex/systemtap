@@ -11,6 +11,16 @@
 - A new guru-mode-only tapset function raise() is available to send signals
   to the current task.
 
+- Alternative functions are now suggested when function probes could not be
+  resolved. For example, kernel.function("vfs_reads") will suggest vfs_read.
+  Other probes for which suggestions are made are module.function,
+  process.function, and process.library.function.
+
+- Has life been a bit bland lately? Want to spice things up? Why not write a
+  few faulty probes and feast your eyes upon the myriad of colours adorning
+  your terminal as SystemTap softly whispers in your ear... 'parse error'.
+  Search for '--color' in 'man stap' for more info.
+
 - The following tapset functions are deprecated in release 2.3:
   'stap_NFS_CLIENT', '__getfh_inode', '_success_check',
   '_sock_prot_num', '_sock_fam_num', '_sock_state_num',
