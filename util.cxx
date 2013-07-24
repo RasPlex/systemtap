@@ -1050,7 +1050,7 @@ kernel_release_from_build_tree (const string &kernel_build_tree, int verbose)
   return kernel_release;
 }
 
-std::string autosprintf(const char* format, ...)
+string autosprintf(const char* format, ...)
 {
   va_list args;
   char *str;
@@ -1067,7 +1067,7 @@ std::string autosprintf(const char* format, ...)
   return s; /* by copy */
 }
 
-std::string
+string
 get_self_path()
 {
   char buf[1024]; // This really should be enough for anybody...
@@ -1080,9 +1080,39 @@ get_self_path()
     }
   // otherwise the path is ridiculously large, fall back to /proc/self/exe.
   //
-  return std::string(file);
+  return string(file);
 }
 
+// String sorter using the Levenshtein algorithm
+// TODO: Performance may be improved by adding a maximum distance
+// parameter which would abort the operation if we know the final
+// distance will be larger than the maximum. This may entail maintaining
+// another data structure, and thus the cost might outweigh the benefit
+unsigned levenshtein(const string& a, const string& b)
+{
+  Array2D<unsigned> d(a.size()+1, b.size()+1);
+
+  // border values
+  for (unsigned i = 0; i < d.width; i++)
+    d(i, 0) = i;
+  for (unsigned j = 0; j < d.height; j++)
+    d(0, j) = j;
+
+  // the meat
+  for (unsigned i = 1; i < d.width; i++) {
+    for (unsigned j = 1; j < d.height; j++) {
+      if (a[i] == b[j]) // match
+        d(i,j) = d(i-1, j-1);
+      else // penalties open for adjustments
+        d(i,j) = min(min(
+            d(i-1,j-1) + 1,  // substitution
+            d(i-1,j)   + 1), // deletion
+            d(i,j-1)   + 1); // insertion
+    }
+  }
+
+  return d(d.width-1, d.height-1);
+}
 
 #ifndef HAVE_PPOLL
 // This is a poor-man's ppoll, only used carefully by readers that need to be
