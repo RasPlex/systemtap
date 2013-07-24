@@ -843,6 +843,11 @@ struct dwarf_builder: public derived_probe_builder
   map <string,dwflpp*> user_dw;
   string user_path;
   string user_lib;
+
+  // Holds modules to suggest functions from. NB: aggregates over
+  // recursive calls to build() when deriving globby probes.
+  set <string> modules_seen;
+
   dwarf_builder() {}
 
   dwflpp *get_kern_dw(systemtap_session& sess, const string& module)
@@ -858,6 +863,8 @@ struct dwarf_builder: public derived_probe_builder
       user_dw[module] = new dwflpp(sess, module, false); // might throw
     return user_dw[module];
   }
+
+  string suggest_functions(systemtap_session& sess, string func);
 
   /* NB: not virtual, so can be called from dtor too: */
   void dwarf_build_no_more (bool)
@@ -6764,6 +6771,59 @@ sdt_query::query_library (const char *library)
 }
 
 
+string dwarf_builder::suggest_functions(systemtap_session& sess,
+                                        string func)
+{
+  // Trim any @ component
+  size_t pos = func.find('@');
+  if (pos != string::npos)
+    func.erase(pos);
+
+  if (func.empty() || modules_seen.empty() || sess.module_cache == NULL)
+    return "";
+
+  // We must first aggregate all the functions from the cache
+  set<string> funcs;
+  const map<string, module_info*> &cache = sess.module_cache->cache;
+
+  for (set<string>::iterator itmod = modules_seen.begin();
+      itmod != modules_seen.end(); ++itmod)
+    {
+      map<string, module_info*>::const_iterator itcache;
+      if ((itcache = cache.find(*itmod)) != cache.end())
+        funcs.insert(itcache->second->sym_seen.begin(),
+                     itcache->second->sym_seen.end());
+    }
+
+  if (sess.verbose > 2)
+    clog << "suggesting from " << funcs.size() << " functions" << endl;
+
+  if (funcs.empty())
+    return "";
+
+  // Calculate Levenshtein distance for each symbol
+
+  // Sensitivity parameters (open for tweaking)
+  #define MAXFUNCS 5 // maximum number of funcs to suggest
+
+  multimap<unsigned, string> scores;
+  for (set<string>::iterator it=funcs.begin(); it!=funcs.end(); ++it)
+    {
+      unsigned score = levenshtein(func, *it);
+      scores.insert(make_pair(score, *it));
+    }
+
+  // Print out the top MAXFUNCS funcs
+  string suggestions; unsigned i = 0;
+  for (multimap<unsigned, string>::iterator it = scores.begin();
+      it != scores.end() && i < MAXFUNCS; ++it, i++)
+    suggestions += it->second + ", ";
+  if (!suggestions.empty())
+    suggestions.erase(suggestions.size()-2);
+
+  return suggestions;
+}
+
 void
 dwarf_builder::build(systemtap_session & sess,
 		     probe * base,
@@ -6828,6 +6888,7 @@ dwarf_builder::build(systemtap_session & sess,
           int rc = glob (module_name.c_str(), 0, NULL, & the_blob);
           if (rc)
             throw semantic_error (_F("glob %s error (%s)", module_name.c_str(), lex_cast(rc).c_str() ));
+          unsigned results_pre = finished_results.size();
           for (unsigned i = 0; i < the_blob.gl_pathc; ++i)
             {
               assert_no_interrupts();
@@ -6879,6 +6940,34 @@ dwarf_builder::build(systemtap_session & sess,
             }
 
           globfree (& the_blob);
+
+          unsigned results_post = finished_results.size();
+
+          // Did we fail to find a function by name? Let's suggest
+          // something!
+          string func;
+          if (results_pre == results_post
+              && get_param(filled_parameters, TOK_FUNCTION, func)
+              && !func.empty())
+            {
+              if (sess.verbose > 2)
+                {
+                  clog << "suggesting functions from modules:" << endl;
+                  for (set<string>::const_iterator it = modules_seen.begin();
+                      it != modules_seen.end(); ++it)
+                    {
+                      clog << *it << endl;
+                    }
+                }
+              string sugs = suggest_functions(sess, func);
+              modules_seen.clear();
+              if (!sugs.empty())
+                throw semantic_error (_NF("no match (similar function: %s)",
+                                          "no match (similar functions: %s)",
+                                          sugs.find(',') == string::npos,
+                                          sugs.c_str()));
+            }
+
           return; // avoid falling through
         }
 
@@ -7049,6 +7138,9 @@ dwarf_builder::build(systemtap_session & sess,
 
   dw->iterate_over_modules(&query_module, &q);
 
+  // We need to update modules_seen with the modules we've visited
+  modules_seen.insert(q.visited_modules.begin(),
+                      q.visited_modules.end());
 
   // PR11553 special processing: .return probes requested, but
   // some inlined function instances matched.
@@ -7088,6 +7180,47 @@ dwarf_builder::build(systemtap_session & sess,
           clog << endl;
         }
     } // i_n_r > 0
+
+  // Did we fail to find a function by name? Let's suggest something! We
+  // need to check for optional because otherwise, we will be suggesting
+  // things during intermediate results without including all the
+  // possible functions. For example, process("/usr/bin/*").function
+  // will go through here for each executable found (all labelled as
+  // optionals). Similarly for library(glob) probes. TODO: find a
+  // mechanism to have suggestions for optional probes as well when no
+  // probes could be derived, e.g. probepoint1?, probepoint2 should
+  // suggest for both 1 and 2 if both fail to resolve (maybe print as a
+  // warning?). This may entails detecting the difference between script
+  // optional probes and probes that are optional in recursive calls.
+  string func;
+  if (results_pre == results_post && !location->optional
+      && get_param(filled_parameters, TOK_FUNCTION, func)
+      && !func.empty())
+    {
+      if (sess.verbose > 2)
+        {
+          clog << "suggesting functions from modules:" << endl;
+          for (set<string>::const_iterator it = modules_seen.begin();
+              it != modules_seen.end(); ++it)
+            clog << *it << endl;
+        }
+      string sugs = suggest_functions(sess, func);
+      modules_seen.clear();
+      if (!sugs.empty())
+        // Note that this error will not even be printed out if it is
+        // exactly the same suggestion as a previous throw (since
+        // print_error() filters out identical errors). Which makes
+        // sense since it's possible that the user misspelled the same
+        // function in different probes, in which case the first
+        // suggestion is sufficient.
+        throw semantic_error (_NF("no match (similar function: %s)",
+                                  "no match (similar functions: %s)",
+                                  sugs.find(',') == string::npos,
+                                  sugs.c_str()));
+    }
+  else if (results_pre != results_post)
+    // Something was derived so we won't need to suggest something
+    modules_seen.clear();
 }
 
 symbol_table::~symbol_table()
@@ -7097,7 +7230,7 @@ symbol_table::~symbol_table()
 
 void
 symbol_table::add_symbol(const char *name, bool weak, bool descriptor,
-                         Dwarf_Addr addr, Dwarf_Addr */*high_addr*/)
+                         Dwarf_Addr addr, Dwarf_Addr* /*high_addr*/)
 {
 #ifdef __powerpc__
   // Map ".sys_foo" to "sys_foo".
