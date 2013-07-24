@@ -626,8 +626,17 @@ dfa::emit (translator_output *o) const
 #else
   o->newline() << "{";
   o->newline(1);
+
+  // XXX: workaround for empty regex
+  if (first->accepts)
+    {
+      o->newline() << outcome_snippets[first->accept_outcome];
+      o->newline() << "goto yyfinish;";      
+    }
+
   for (state *s = first; s; s = s->next)
     s->emit(o, this);
+
   o->newline() << "yyfinish: ;";
   o->newline(-1) << "}";
 #endif

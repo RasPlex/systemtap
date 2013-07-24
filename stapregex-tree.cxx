@@ -156,17 +156,17 @@ range_invert(range *old_ran)
   range ran(*old_ran);
   range *new_ran = new range;
 
-  char start = 1;
+  char start = '\1'; // exclude '\0'
 
   while (!ran.segments.empty()) {
-    char end = ran.segments.front().first;
+    char end = ran.segments.front().first - 1;
     if (start <= end) new_ran->segments.push_back(make_pair(start, end));
     start = ran.segments.front().second + 1;
     ran.segments.pop_front();
   }
 
-  if (start <= NUM_REAL_CHARS)
-    new_ran->segments.push_back(make_pair(start, NUM_REAL_CHARS));
+  if (start < NUM_REAL_CHARS)
+    new_ran->segments.push_back(make_pair(start, NUM_REAL_CHARS-1));
 
   return new_ran;
 }
