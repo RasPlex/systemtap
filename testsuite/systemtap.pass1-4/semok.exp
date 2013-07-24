@@ -7,6 +7,10 @@ proc dyninst_kfails {test} {
     # statement, but comments can go in sub-blocks.)
     switch $test {
 	semok/badvar.stp -
+	semok/badvar_undefined.stp -
+	semok/bz10475.stp -
+	semok/context-globals.stp -
+	semok/defined_list_vars.stp -
 	semok/doubleglob.stp -
 	semok/entry01.stp -
 	semok/entry02.stp -
@@ -21,20 +25,40 @@ proc dyninst_kfails {test} {
 	semok/nodwf05.stp -
 	semok/nodwf06.stp -
 	semok/nodwf07.stp -
+	semok/netfilter01.stp -
 	semok/pretty.stp -
 	semok/pretty2.stp -
+	semok/seventeen.stp -
+	semok/target_addr.stp -
+	semok/thirteen.stp -
+	semok/thirtyeight.stp -
+	semok/thirtyfive.stp -
+	semok/thirtyfour.stp -
+	semok/thirtynine.stp -
+	semok/thirtyone.stp -
 	semok/thirtysix.stp -
+	semok/thirtythree.stp -
 	semok/thirtytwo.stp -
+	semok/twelve.stp -
+	semok/twentyeight.stp -
 	semok/twentyfive.stp -
-	semok/twentyfour.stp {
+	semok/twentyfour.stp -
+	semok/twentynine.stp -
+	semok/twentyseven.stp {
 	    # Use setup_kfail DYNINST <target triplet> for known
 	    # failures when running with the dyninst runtime (scripts
 	    # that use kernel features or kernel-only tapset
 	    # functions).
 	    setup_kfail DYNINST *-*-*
 	}
+
+	semok/thirtysix-utrace.stp {
+	    # Use setup_kfail 14708 <target triplet> for known
+	    # failures when running with the dyninst runtime (scripts
+	    # that use utrace-like probes)
+	    setup_kfail 14708 *-*-*
+	}
     }
-    # semok/thirtysix-utrace.stp - could it be made to work
 }
 
 set uprobes_p [uprobes_p]
