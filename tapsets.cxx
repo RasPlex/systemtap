@@ -757,6 +757,10 @@ struct dwarf_query : public base_query
   string user_path;
   string user_lib;
 
+  // Used to keep track of which modules were visited during
+  // iterate_over_modules()
+  set<string> visited_modules;
+
   virtual void handle_query_module();
   void query_module_dwarf();
   void query_module_symtab();
@@ -1084,6 +1088,11 @@ dwarf_query::handle_query_module()
   // asm functions can show up in the symbol table but not in dwarf.
   if (sess.consult_symtab && !query_done)
     query_module_symtab();
+
+  // Add to list of visited modules
+  // Use mod_info->name rather than dw.module_name since the former is
+  // what's actually used in the sess.module_cache->cache map
+  visited_modules.insert(dw.mod_info->name);
 }
 
 
@@ -2136,7 +2145,7 @@ base_query::query_library_callback (void *q, const char *data)
 }
 
 
-void
+string
 query_one_library (const char *library, dwflpp & dw,
     const string user_lib, probe * base_probe, probe_point *base_loc,
     vector<derived_probe *> & results)
@@ -2162,15 +2171,20 @@ query_one_library (const char *library, dwflpp & dw,
       probe *new_base = new probe (new probe (base_probe, specific_loc), derived_loc);
       derive_probes(dw.sess, new_base, results);
       if (dw.sess.verbose > 2)
-        clog << _("module=") << library_path;
+        clog << _("module=") << library_path << endl;
+      return library_path;
     }
+  return "";
 }
 
 
 void
 dwarf_query::query_library (const char *library)
 {
-  query_one_library (library, dw, user_lib, base_probe, base_loc, results);
+  string library_path =
+    query_one_library (library, dw, user_lib, base_probe, base_loc, results);
+  if (!library_path.empty())
+    visited_modules.insert(library_path);
 }
 
 struct plt_expanding_visitor: public var_expanding_visitor
