@@ -11,6 +11,15 @@
 - A new guru-mode-only tapset function raise() is available to send signals
   to the current task.
 
+- Support for the standard Posix ERE named character classes has been
+  added to the regexp engine, e.g. [:digit:], [:alpha:], ...
+
+- A substantial internal overhaul of the regexp engine has resulted in
+  correct behaviour on further obscure edge cases. The regexp engine
+  now implements the ERE standard and correctly passes the testsuite
+  for the glibc regexp engine (minus portions corresponding to
+  unimplemented features -- i.e. subexpression capture and reuse).
+
 - Alternative functions are now suggested when function probes could not be
   resolved. For example, kernel.function("vfs_reads") will suggest vfs_read.
   Other probes for which suggestions are made are module.function,
