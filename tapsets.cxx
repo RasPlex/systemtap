@@ -7377,6 +7377,8 @@ module_info::update_symtab(cu_function_cache_t *funcs)
   for (cu_function_cache_t::iterator func = funcs->begin();
        func != funcs->end(); func++)
     {
+      sym_seen.insert(func->first);
+
       // optimization: inlines will never be in the symbol table
       if (dwarf_func_inline(&func->second) != 0)
         continue;
