@@ -43,6 +43,8 @@ void nssCleanup (const char *db_path);
 void nsscommon_error (const char *msg, INIT(int logit, 1));
 void nssError (void);
 
+PRInt32 PR_Read_Complete (PRFileDesc *fd, void *buf, PRInt32 requestedBytes);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

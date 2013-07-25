@@ -3,7 +3,7 @@
   the data into a temporary file, calls the systemtap translator and
   then transmits the resulting file back to the client.
 
-  Copyright (C) 2011-2012 Red Hat Inc.
+  Copyright (C) 2011-2013 Red Hat Inc.
 
   This file is part of systemtap, and is free software.  You can
   redistribute it and/or modify it under the terms of the GNU General Public
@@ -647,9 +647,10 @@ readDataFromSocket(PRFileDesc *sslSocket, const char *requestFileName)
 #define READ_BUFFER_SIZE 4096
   char        buffer[READ_BUFFER_SIZE];
 
-  /* Read the number of bytes to be received.  */
+  // Read the number of bytes to be received.
   /* XXX: impose a limit to prevent disk space consumption DoS */
-  numBytesRead = PR_Read (sslSocket, & numBytesExpected, sizeof (numBytesExpected));
+  numBytesRead = PR_Read_Complete (sslSocket, & numBytesExpected,
+				   (PRInt32)sizeof (numBytesExpected));
   if (numBytesRead == 0) /* EOF */
     {
       server_error (_("Error reading size of request file"));
@@ -680,10 +681,12 @@ readDataFromSocket(PRFileDesc *sslSocket, const char *requestFileName)
       return -1;
     }
 
-  /* Read until EOF or until the expected number of bytes has been read. */
+  // Read until EOF or until the expected number of bytes has been read.
   for (totalBytes = 0; totalBytes < numBytesExpected; totalBytes += numBytesRead)
     {
-      numBytesRead = PR_Read(sslSocket, buffer, READ_BUFFER_SIZE);
+      // No need for PR_Read_Complete here, since we're already managing multiple
+      // reads to a fixed size buffer.
+      numBytesRead = PR_Read (sslSocket, buffer, READ_BUFFER_SIZE);
       if (numBytesRead == 0)
 	break;	/* EOF */
       if (numBytesRead < 0)

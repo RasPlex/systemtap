@@ -594,7 +594,9 @@ handle_connection (PRFileDesc *sslSocket, connectionState_t *connectionState)
     }
   while (PR_TRUE)
     {
-      numBytes = PR_Read(sslSocket, readBuffer, READ_BUFFER_SIZE);
+      // No need for PR_Read_Complete here, since we're already managing multiple
+      // reads to a fixed size buffer.
+      numBytes = PR_Read (sslSocket, readBuffer, READ_BUFFER_SIZE);
       if (numBytes == 0)
 	break;	/* EOF */
 

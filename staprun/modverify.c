@@ -2,7 +2,7 @@
   This program verifies the given file using the given signature, the named
   certificate and public key in the given certificate database.
 
-  Copyright (C) 2009-2010 Red Hat Inc.
+  Copyright (C) 2009-2013 Red Hat Inc.
 
   This file is part of systemtap, and is free software.  You can
   redistribute it and/or modify it under the terms of the GNU General Public
@@ -319,8 +319,7 @@ int verify_module (const char *signatureName, const char* module_name,
       return MODULE_CHECK_ERROR;
     }
 
-  /* Read the signature.  */
-  numBytes = PR_Read (local_file_fd, signature.data, info.size);
+  numBytes = PR_Read_Complete (local_file_fd, signature.data, info.size);
   if (numBytes == 0) /* EOF */
     {
       fprintf (stderr, "EOF reading signature file %s.\n", signatureName);
