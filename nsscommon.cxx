@@ -1349,9 +1349,9 @@ PRInt32 PR_Read_Complete (PRFileDesc *fd, void *buf, PRInt32 requestedBytes)
   // Read until EOF or until the expected number of bytes has been read.
   // PR_Read wants (void*), but we need (char *) to do address arithmetic.
   char *buffer = (char *)buf;
-  PRInt32 totalBytes;
-  PRInt32 bytesRead;
-  for (totalBytes = 0; totalBytes < requestedBytes; totalBytes += bytesRead)
+  PRInt32 totalBytes = 0;
+  PRInt32 bytesRead = 0;
+  while (1)
     {
       // Now read the data.
       bytesRead = PR_Read (fd, (void *)(buffer + totalBytes), requestedBytes - totalBytes);
@@ -1359,6 +1359,9 @@ PRInt32 PR_Read_Complete (PRFileDesc *fd, void *buf, PRInt32 requestedBytes)
 	break;	// EOF
       if (bytesRead < 0)
 	return bytesRead; // Error
+      totalBytes += bytesRead;
+      if (totalBytes == requestedBytes)
+        break;
     }
 
   // Return the number of bytes we managed to read.
