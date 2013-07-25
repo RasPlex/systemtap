@@ -145,7 +145,7 @@ void print_escaped(std::ostream& o, char c)
 
 // ------------------------------------------------------------------------
 
-cursor::cursor() : input(NULL), pos(-1) {}
+cursor::cursor() : input(NULL), pos(~0) {}
 
 cursor::cursor(const std::string *input, bool do_unescape)
   : input(input), do_unescape(do_unescape), pos(0)

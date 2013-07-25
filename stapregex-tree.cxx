@@ -165,7 +165,7 @@ range_invert(range *old_ran)
     ran.segments.pop_front();
   }
 
-  if (start < NUM_REAL_CHARS)
+  if ((unsigned)start < (unsigned)NUM_REAL_CHARS)
     new_ran->segments.push_back(make_pair(start, NUM_REAL_CHARS-1));
 
   return new_ran;
