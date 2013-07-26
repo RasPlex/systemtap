@@ -429,7 +429,9 @@ dfa::dfa (ins *i, int ntags, vector<string>& outcome_snippets)
   first = last = NULL;
 
   ins *start = &i[0];
-  state_kernel *initial_kernel = te_closure(make_kernel(start), ntags, true);
+  state_kernel *seed_kernel = make_kernel(start);
+  state_kernel *initial_kernel = te_closure(seed_kernel, ntags, true);
+  delete seed_kernel;
   state *initial = add_state(new state(initial_kernel));
   queue<state *> worklist; worklist.push(initial);
 
