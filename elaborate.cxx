@@ -775,6 +775,7 @@ struct alias_derived_probe: public derived_probe
 {
   alias_derived_probe (probe* base, probe_point *l, const probe_alias *a,
                        const vector<probe_point::component *> *suffix = 0);
+  ~alias_derived_probe();
 
   void upchuck () { throw semantic_error (_("inappropriate"), this->tok); }
 
@@ -807,6 +808,11 @@ alias_derived_probe::alias_derived_probe(probe *base, probe_point *l,
     alias_loc->components.insert(alias_loc->components.end(),
                                  suffix->begin(), suffix->end());
   }
+}
+
+alias_derived_probe::~alias_derived_probe ()
+{
+  delete alias_loc;
 }
 
 
