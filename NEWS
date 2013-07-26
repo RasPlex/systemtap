@@ -1,4 +1,7 @@
-* What's new in version 2.3
+* What's new in version 2.4
+
+
+* What's new in version 2.3, 2013-07-25
 
 - java("org.my.MyApp") probes are now restricted to pre-existing jvm pid's with
   a listing in jps -l output to avoid recursive calls
