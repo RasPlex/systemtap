@@ -145,10 +145,11 @@ void print_escaped(std::ostream& o, char c)
 
 // ------------------------------------------------------------------------
 
-cursor::cursor() : input(NULL), pos(~0) {}
+cursor::cursor() : input(NULL), pos(~0),
+                   last_pos(~0), next_c(0), last_c(0) {}
 
 cursor::cursor(const std::string *input, bool do_unescape)
-  : input(input), do_unescape(do_unescape), pos(0)
+  : input(input), do_unescape(do_unescape), pos(0), last_pos(0)
 {
   next_c = 0; last_c = 0;
   finished = ( pos >= input->length() );

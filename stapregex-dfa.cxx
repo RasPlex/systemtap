@@ -149,7 +149,7 @@ arc_compare (const arc_priority& a, const arc_priority& b)
 /* Manage the linked list of states in a DFA: */
 
 state::state (state_kernel *kernel)
-  : next(NULL), kernel(kernel), accepts(false), accept_outcome(0) {}
+  : label(~0), next(NULL), kernel(kernel), accepts(false), accept_outcome(0) {}
 
 state *
 dfa::add_state (state *s)

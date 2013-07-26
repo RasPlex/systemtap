@@ -48,7 +48,8 @@ private:
 class regex_parser {
 public:
   regex_parser (const std::string& input, bool do_unescape = true) 
-    : input(input), do_unescape(do_unescape) {}
+    : input(input), do_unescape(do_unescape),
+      do_tag(false), num_tags(~0) {}
   regexp *parse (bool do_tag = true);
 
 private:
