@@ -316,9 +316,15 @@ te_closure (state_kernel *start, int ntags, bool is_initial = false)
         {
           /* Delete all existing next.map_items of the form m[tag,x]. */
           for (list<map_item>::iterator it = next.map_items.begin();
-               it != next.map_items.end(); it++)
+               it != next.map_items.end(); )
             if (it->first == (unsigned) tag)
-              next.map_items.erase (it);
+              {
+                list<map_item>::iterator next_it = it;
+                next_it++;
+                next.map_items.erase (it);
+                it = next_it;
+              }
+            else it++;
 
           /* Add m[tag,x] to next.map_items, where x is the smallest
              nonnegative integer such that m[tag,x] does not occur
