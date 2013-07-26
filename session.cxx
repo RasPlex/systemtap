@@ -1278,11 +1278,13 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
           break;
 
         case LONG_OPT_BENCHMARK_SDT_LOOPS:
+          assert(optarg != 0); // optarg can't be NULL (or getopt would choke)
           // XXX This option is secret, not supported, subject to change at our whim
           benchmark_sdt_loops = strtoul(optarg, NULL, 10);
           break;
 
         case LONG_OPT_BENCHMARK_SDT_THREADS:
+          assert(optarg != 0); // optarg can't be NULL (or getopt would choke)
           // XXX This option is secret, not supported, subject to change at our whim
           benchmark_sdt_threads = strtoul(optarg, NULL, 10);
           break;
