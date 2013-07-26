@@ -198,6 +198,7 @@ void parse_args(int argc, char **argv)
 			}
 			break;
 		case 'S':
+			assert(optarg != 0); // optarg can't be NULL (or getopt would choke)
 			fsize_max = strtoul(optarg, &s, 10);
 			fsize_max <<= 20;
 			if (s[0] == ',')
@@ -208,6 +209,7 @@ void parse_args(int argc, char **argv)
 			}
 			break;
 		case 'r':
+			assert(optarg != 0); // optarg can't be NULL (or getopt would choke)
 			/* parse ID:URL */
 			remote_id = strtoul(optarg, &s, 10);
 			if (s[0] == ':')
@@ -233,6 +235,7 @@ void parse_args(int argc, char **argv)
                         }
                         break;
 		case 'C':
+			assert(optarg != 0); // optarg can't be NULL (or getopt would choke)
 			if (!strcmp(optarg, "never"))
 				color_mode = color_never;
 			else if (!strcmp(optarg, "auto"))
