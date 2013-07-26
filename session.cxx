@@ -1835,7 +1835,7 @@ systemtap_session::print_token (ostream& o, const token* tok)
       o << ts;
     }
   else
-    o << colorize(*tok);
+    o << colorize(tok);
 
   last_token = tok;
 }
@@ -1998,12 +1998,12 @@ systemtap_session::print_error (const parse_error &pe,
 
   if (pe.tok || found_junk)
     {
-      cerr << _("\tat: ") << colorize(*tok) << endl;
+      cerr << _("\tat: ") << colorize(tok) << endl;
       print_error_source (cerr, align_parse_error, tok);
     }
   else if (tok) // "expected" type error
     {
-      cerr << _("\tsaw: ") << colorize(*tok) << endl;
+      cerr << _("\tsaw: ") << colorize(tok) << endl;
       print_error_source (cerr, align_parse_error, tok);
     }
   else
@@ -2014,7 +2014,7 @@ systemtap_session::print_error (const parse_error &pe,
   // print chained macro invocations
   while (tok && tok->chain) {
     tok = tok->chain;
-    cerr << _("\tin expansion of macro: ") << colorize(*tok) << endl;
+    cerr << _("\tin expansion of macro: ") << colorize(tok) << endl;
     print_error_source (cerr, align_parse_error, tok);
   }
 }
@@ -2096,7 +2096,7 @@ assert_no_interrupts()
 }
 
 std::string
-systemtap_session::colorize(std::string str, std::string type)
+systemtap_session::colorize(const std::string& str, const std::string& type)
 {
   if (str.empty() || !color_errors)
     return str;
@@ -2112,10 +2112,13 @@ systemtap_session::colorize(std::string str, std::string type)
 
 // Colorizes the path:row:col part of the token
 std::string
-systemtap_session::colorize(const token& tok)
+systemtap_session::colorize(const token* tok)
 {
+  if (tok == NULL)
+    return "";
+
   stringstream tmp;
-  tmp << tok;
+  tmp << *tok;
 
   if (!color_errors)
     return tmp.str(); // Might as well stop now to save time
@@ -2124,7 +2127,7 @@ systemtap_session::colorize(const token& tok)
 
     // Print token location, which is also the tail of ts
     stringstream loc;
-    loc << tok.location;
+    loc << tok->location;
 
     // Remove token location and re-add it colorized
     ts.erase(ts.size()-loc.str().size());
@@ -2140,7 +2143,7 @@ For example, the default setting would be:
 'error=01;31:warning=00;33:source=00;34:caret=01:token=01'
 */
 std::string
-systemtap_session::parse_stap_color(std::string type)
+systemtap_session::parse_stap_color(const std::string& type)
 {
   const char *key, *col, *eq;
   int n = type.size();

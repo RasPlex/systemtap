@@ -395,9 +395,9 @@ public:
   // NB: It is very important for all of the above (and below) fields
   // to be cleared in the systemtap_session ctor (session.cxx).
 
-  std::string colorize(std::string str, std::string type);
-  std::string colorize(const token& tok);
-  std::string parse_stap_color(std::string type);
+  std::string colorize(const std::string& str, const std::string& type);
+  std::string colorize(const token* tok);
+  std::string parse_stap_color(const std::string& type);
 };
 
 struct exit_exception: public std::runtime_error
