@@ -100,8 +100,15 @@ probe vm.pagefault.return =
  * node that the given address belongs to in a NUMA system.
  */
 function addr_to_node:long(addr:long) %{ /* pure */ 
-	int pfn = __pa(STAP_ARG_addr) >> PAGE_SHIFT;
 	int nid;
+	int pfn;
+        if (! virt_addr_valid((void*) (uintptr_t) STAP_ARG_addr)) {
+            snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+                      "invalid kernel virtual address 0x%p", (void *) (uintptr_t) STAP_ARG_addr);
+            CONTEXT->last_error = CONTEXT->error_buffer;
+            goto out;
+        }
+        pfn = __pa(STAP_ARG_addr) >> PAGE_SHIFT;
 #ifdef for_each_online_node
 	for_each_online_node(nid)
 #else

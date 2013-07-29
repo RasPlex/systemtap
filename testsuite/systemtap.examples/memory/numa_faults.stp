@@ -3,11 +3,14 @@
 global execnames, page_faults, node_faults, nodes
 
 probe vm.pagefault {
-  p = pid(); n=addr_to_node(address)
+  p = pid();
   execnames[p] = execname()
   page_faults[p, write_access ? 1 : 0] <<< 1
-  node_faults[p, n] <<< 1
-  nodes[n] <<< 1
+  try {
+    n=addr_to_node(address)
+    node_faults[p, n] <<< 1
+    nodes[n] <<< 1
+  } catch { }
 }
 
 function print_pf () {
