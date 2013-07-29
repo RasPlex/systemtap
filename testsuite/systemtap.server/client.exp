@@ -5,6 +5,37 @@ if {! [nss_p]} { return }
 # Let's start with a clean slate in terms of trust.
 exec rm -fr $env(SYSTEMTAP_DIR)/ssl
 
+# Compare two arrays. If equal, return 1, otherwise 0.
+# (Borrowed from http://wiki.tcl.tk/1032.)
+proc array_compare {array1 array2} {
+    upvar 1 $array1 foo $array2 bar
+
+    if {![array exists foo]} {
+        return -code error "$array1 is not an array"
+    }
+    if {![array exists bar]} {
+        return -code error "$array2 is not an array"
+    }
+    if {[array size foo] != [array size bar]} {
+        return 0
+    }
+    if {[array size foo] == 0} {
+        return 1
+    }
+
+    set keys [lsort -unique [concat [array names foo] [array names bar]]]
+    if {[llength $keys] != [array size foo]} {
+       return 0
+    }
+
+    foreach key $keys {
+        if {$foo($key) ne $bar($key)} {
+            return 0
+        }
+    }
+    return 1
+}
+
 # Test the --list-servers option and return an array of the servers found.
 proc list_servers { TEST_NAME SERVER_SPEC args } {
     set failed 0
@@ -45,10 +76,33 @@ proc list_servers { TEST_NAME SERVER_SPEC args } {
     }
 }
 
-# There may be other servers running. Let's keep track of them.
+# There may be other servers running. Let's keep track of
+# them.
+#
+# Sometimes, we'll see a server running from the last test, if it
+# hasn't quite died yet. So, make sure we get the same result twice.
 list_servers "List existing online servers" online
-array unset existing_online_servers
+array unset eos1
 array set existing_online_servers [array get servers]
+set i 0
+while {1} {
+    list_servers "List existing online servers" online
+    array unset eos2
+    array set eos2 [array get servers]
+    set i [expr $i + 1]
+    if {$i > 10} {
+	fail "List existing online servers: never got stable"
+	return
+    }
+    
+    verbose -log "verify existing online servers - attempt $i: [array size existing_online_servers] [array size eos2]"
+    if {[array_compare existing_online_servers eos2]} {
+	# Arrays are equal, we're done
+	break
+    }
+    array unset existing_online_servers
+    array set existing_online_servers [array get eos2]
+}
 
 # There may be existing trusted servers. Keep track of them.
 list_servers "List existing trusted servers" trusted
@@ -67,93 +121,36 @@ array unset all_existing_servers
 array set all_existing_servers [array get servers]
 
 set test "Verify existing online server list"
-set failed 0
-foreach idx1 [array names existing_online_servers] {
-    set found 0
-    foreach idx2 [array names all_existing_servers] {
-	if {"$existing_online_servers($idx1)" == "$all_existing_servers($idx2)"} {
-	    set found 1
-	    break
-	}
-    }
-    if {$found == 0} {
-	set failed 1
-	fail "$test $idx1"
-    }
-}
-if {$failed == 0} {
+if {[array_compare existing_online_servers all_existing_servers]} {
     pass "$test"
+} else {
+    fail "$test"
 }
+
 set test "Verify existing trusted server list"
-set failed 0
-foreach idx1 [array names existing_trusted_servers] {
-    set found 0
-    foreach idx2 [array names all_existing_servers] {
-	if {"$existing_trusted_servers($idx1)" == "$all_existing_servers($idx2)"} {
-	    set found 1
-	    break
-	}
-    }
-    if {$found == 0} {
-	set failed 1
-	fail "$test $idx1"
-    }
-}
-if {$failed == 0} {
+if {[array_compare existing_trusted_servers all_existing_servers]} {
     pass "$test"
+} else {
+    fail "$test"
 }
+
 set test "Verify existing signing server list"
-set failed 0
-foreach idx1 [array names existing_signing_servers] {
-    set found 0
-    foreach idx2 [array names all_existing_servers] {
-	if {"$existing_signing_servers($idx1)" == "$all_existing_servers($idx2)"} {
-	    set found 1
-	    break
-	}
-    }
-    if {$found == 0} {
-	set failed 1
-	fail "$test $idx1"
-    }
-}
-if {$failed == 0} {
+if {[array_compare existing_signing_servers all_existing_servers]} {
     pass "$test"
+} else {
+    fail "$test"
 }
+
 set test "Verify all existing server list"
-set failed 0
-foreach idx1 [array names all_existing_servers] {
-    set found 0
-    foreach idx2 [array names existing_online_servers] {
-	if {"$existing_online_servers($idx2)" == "$all_existing_servers($idx1)"} {
-	    set found 1
-	    break
-	}
-    }
-    if {$found == 0} {
-	foreach idx2 [array names existing_trusted_servers] {
-	    if {"$existing_trusted_servers($idx2)" == "$all_existing_servers($idx1)"} {
-		set found 1
-		break
-	    }
-	}
-	if {$found == 0} {
-	    foreach idx2 [array names existing_signing_servers] {
-		if {"$existing_signing_servers($idx2)" == "$all_existing_servers($idx1)"} {
-		    set found 1
-		    break
-		}
-	    }
-	    if {$found == 0} {
-		set failed 1
-		fail "$test $idx1"
-	    }
-	}
-    }
-}
-if {$failed == 0} {
+if {[array_compare existing_online_servers all_existing_servers]} {
     pass "$test"
+} else {
+    fail "$test"
 }
+
+list_servers "List existing online servers (before start)" online
+array unset existing_online_servers1
+array set existing_online_servers1 [array get servers]
 
 # Now start our own server and make sure we can work with it.
 if {! [setup_server] || $avahi_ok_p != 1} {
@@ -250,22 +247,10 @@ array unset current_signing_servers
 array set current_signing_servers [array get servers]
 
 set test "No new signing servers"
-set failed 0
-foreach idx1 [array names current_signing_servers] {
-    set found 0
-    foreach idx2 [array names existing_signing_servers] {
-	if {"$existing_signing_servers($idx2)" == "$current_signing_servers($idx1)"} {
-	    set found 1
-	    break
-	}
-    }
-    if {$found == 0} {
-	set failed 1
-	fail "$test $idx1"
-    }
-}
-if {$failed == 0} {
+if {[array_compare current_signing_servers existing_signing_servers]} {
     pass "$test"
+} else {
+    fail "$test"
 }
 
 # Revoke trust in our server. Specify the server by host name.
@@ -301,22 +286,10 @@ array unset current_trusted_servers
 array set current_trusted_servers [array get servers]
 
 set test "No longer trusted after revokation by host name"
-set failed 0
-foreach idx1 [array names current_trusted_servers] {
-    set found 0
-    foreach idx2 [array names existing_trusted_servers] {
-	if {"$existing_trusted_servers($idx2)" == "$current_trusted_servers($idx1)"} {
-	    set found 1
-	    break
-	}
-    }
-    if {$found == 0} {
-	set failed 1
-	fail "$test $idx1"
-    }
-}
-if {$failed == 0} {
+if {[array_compare current_trusted_servers existing_trusted_servers]} {
     pass "$test"
+} else {
+    fail "$test"
 }
 
 # Reinstate trust in our server. Specify the server by ip address.
@@ -617,22 +590,10 @@ array unset current_signing_servers
 array set current_signing_servers [array get servers]
 
 set test "No longer trusted as a signer after revokation"
-set failed 0
-foreach idx1 [array names current_signing_servers] {
-    set found 0
-    foreach idx2 [array names existing_signing_servers] {
-	if {"$existing_signing_servers($idx2)" == "$current_signing_servers($idx1)"} {
-	    set found 1
-	    break
-	}
-    }
-    if {$found == 0} {
-	set failed 1
-	fail "$test $idx1"
-    }
-}
-if {$failed == 0} {
+if {[array_compare current_signing_servers existing_signing_servers]} {
     pass "$test"
+} else {
+    fail "$test"
 }
 
 # Since our server is no longer a trusted signer, attempting
