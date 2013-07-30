@@ -317,7 +317,7 @@ netfilter_derived_probe_group::emit_module_decls (systemtap_session& s)
       common_probe_entryfn_epilogue (s, false);
 
       if (np->context_vars.find("__nf_verdict") != np->context_vars.end())
-        s.op->newline() << "nf_verdict = (int) "+c_p+"." + s.up->c_localname("__nf_verdict") + ";";
+        s.op->newline() << "if (c != NULL) nf_verdict = (int) "+c_p+"." + s.up->c_localname("__nf_verdict") + ";";
 
       s.op->newline() << "return nf_verdict;";
       s.op->newline(-1) << "}";
