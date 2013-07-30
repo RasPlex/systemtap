@@ -3,6 +3,12 @@
 
 * What's new in version 2.3, 2013-07-25
 
+- More context-accessing functions throw systemtap exceptions upon a
+  failure, whereas in previous versions they might return non-error
+  sentinel values like "" or "<unknown>".  Use try { } / catch { }
+  around these, or new wrapper functions such as user_string_{n_}quoted()
+  that internally absorb exceptions.
+
 - java("org.my.MyApp") probes are now restricted to pre-existing jvm pid's with
   a listing in jps -l output to avoid recursive calls
 
