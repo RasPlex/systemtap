@@ -337,6 +337,8 @@ do_run()
   char* arg;
   while ((arg = strtok(NULL, STAPSH_TOK_DELIM)))
     {
+      // check if we have space left
+      // note that we have to keep at least one 0 at the end for posix_spawn
       if (nargs + 1 > STAPSH_MAX_ARGS)
         return reply ("ERROR: too many arguments\n");
       if (qpdecode(arg) != 0)
