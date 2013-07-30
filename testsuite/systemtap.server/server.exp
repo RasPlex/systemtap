@@ -30,8 +30,10 @@ if {! [uprobes_p]} then {
     }
     set foo [exec pwd]/foo
 
-    # Make sure that uprobes.ko is not loaded
-    catch {exec /sbin/rmmod uprobes}
+    if {[inode_uprobes_p]} {
+	# Make sure that uprobes.ko is not loaded
+	catch {exec /sbin/rmmod uprobes}
+    }
 
     # Now use the server to compile the uprobes.stp script
     set failed 1
@@ -58,10 +60,9 @@ if {! [uprobes_p]} then {
     }
 
     # Make sure that the uprobes.ko module was returned.
-    if {"$tmpdir" == ""} {
+    if {"$tmpdir" == "" || [inode_uprobes_p]} {
 	untested "$test $subtest uprobes returned"
     } else {
-	setup_kfail UPROBES *-*-*
 	if {[file exists $tmpdir/server/stap000000/uprobes/uprobes.ko]} {
 	    pass "$test $subtest uprobes returned"
 	} else {
@@ -76,8 +77,11 @@ if {! [uprobes_p]} then {
     }
 
     # Now do it again, but follow through to phase 5
-    # Make sure that uprobes.ko is not loaded
-    catch {exec /sbin/rmmod uprobes}
+
+    if {! [inode_uprobes_p]} {
+	# Make sure that uprobes.ko is not loaded
+	catch {exec /sbin/rmmod uprobes}
+    }
 
     # Now use the server to compile and run the uprobes.stp script
     set failed 1
@@ -88,12 +92,12 @@ if {! [uprobes_p]} then {
     expect {
 	-re {^process[^\r\n]+foo[^\r\n]+main[^\r\n]+arg[cv]=0x[0-9a-f]+\ +arg[cv]=0x[0-9a-f]+\r\n} { incr ok; exp_continue }
 	-re {^process[^\r\n]+foo[^\r\n]+main[^\r\n]+return=0x0\r\n} { incr ok; exp_continue }
-	-timeout 30
+	-re {^[^\r\n]*\r\n} { exp_continue }
+	-timeout 60
 	timeout { }
 	eof { }
     }
     catch {close}; catch {wait}
-    setup_kfail UPROBES *-*-*
     if {$ok == 10} {
 	pass "$test $subtest -p5"
     } else {
