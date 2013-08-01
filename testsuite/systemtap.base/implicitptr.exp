@@ -39,7 +39,7 @@ for {set i 0} {$i < [all_compile_flags]} {incr i} {
     verbose -log "target_compile failed: $res" 2
     fail "$test.c compile $extra_name"
     untested "probe listing $test-$extra_name"
-    untested "$test-$extraname"
+    untested "$test-$extra_name"
     continue
   } else {
     pass "$test.c compile $extra_name"
@@ -74,7 +74,7 @@ for {set i 0} {$i < [all_compile_flags]} {incr i} {
       untested "$test-$extra_name"
     }
   } elseif {[exe_uses_implicit_ptr $test.exe]} {
-    verbose -log "$test-$extraname uses implicit_ptr but -L missed it"
+    verbose -log "$test-$extra_name uses implicit_ptr but -L missed it"
     fail "$test-$extra_name"
   } else {
     verbose -log "$test-$extra_name did not use implicit_ptr, skipping"
