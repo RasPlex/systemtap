@@ -57,6 +57,9 @@ typedef struct __stp_time_t {
 } stp_time_t;
 
 static void *stp_time = NULL;
+#ifdef CONFIG_CPU_FREQ
+static int __stp_cpufreq_notifier_registered = 0;
+#endif
 
 /* Try to estimate the number of CPU cycles in a millisecond - i.e. kHz.  This
  * relies heavily on the accuracy of udelay.  By calling udelay twice, we
@@ -215,7 +218,7 @@ _stp_kill_time(void)
             del_timer_sync(&time->timer);
         }
 #ifdef CONFIG_CPU_FREQ
-        if (!__stp_constant_freq()) {
+        if (!__stp_constant_freq() && __stp_cpufreq_notifier_registered) {
             cpufreq_unregister_notifier(&__stp_time_notifier,
                                         CPUFREQ_TRANSITION_NOTIFIER);
         }
@@ -253,10 +256,9 @@ _stp_init_time(void)
 
 #ifdef CONFIG_CPU_FREQ
     if (!ret && !__stp_constant_freq()) {
-        ret = cpufreq_register_notifier(&__stp_time_notifier,
-                CPUFREQ_TRANSITION_NOTIFIER);
-
-        if (!ret) {
+	if (!cpufreq_register_notifier(&__stp_time_notifier,
+				       CPUFREQ_TRANSITION_NOTIFIER)) {
+	    __stp_cpufreq_notifier_registered = 1;
             for_each_online_cpu(cpu) {
                 unsigned long flags;
                 int freq_khz = cpufreq_get(cpu);
