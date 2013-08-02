@@ -155,7 +155,7 @@ static const u32 *cie_for_fde(const u32 *fde, void *unwind_data,
  * data read. */
 static unsigned long read_ptr_sect(const u8 **pLoc, const void *end,
 				   signed ptrType, unsigned long textAddr,
-				   unsigned long dataAddr, int user)
+				   unsigned long dataAddr, int user, int compat_task, int tableSize)
 {
 	unsigned long value = 0;
 	union {
@@ -165,6 +165,7 @@ static unsigned long read_ptr_sect(const u8 **pLoc, const void *end,
 		const u32 *p32u;
 		const s32 *p32s;
 		const unsigned long *pul;
+		const unsigned int *pui;
 	} ptr;
 
 	if (ptrType < 0 || ptrType == DW_EH_PE_omit)
@@ -182,22 +183,39 @@ static unsigned long read_ptr_sect(const u8 **pLoc, const void *end,
 		break;
 	case DW_EH_PE_data4:
 #ifdef CONFIG_64BIT
-		if (end < (const void *)(ptr.p32u + 1))
-			return 0;
-		if (ptrType & DW_EH_PE_signed)
-			value = _stp_get_unaligned(ptr.p32s++);
-		else
-			value = _stp_get_unaligned(ptr.p32u++);
-		break;
+
+		/* If the tableSize matches the length of data we're trying to return
+		 * or if specifically set to 0 in the call it means we actually want a
+		 * DW_EH_PE_data4 and not a DW_EH_PE_absptr.  If this is not the case
+		 * then we want to fall through to DW_EH_PE_absptr */
+		if (!compat_task || (compat_task && (tableSize == 4 || tableSize == 0)))
+		{
+			if (end < (const void *)(ptr.p32u + 1))
+				return 0;
+
+			if (ptrType & DW_EH_PE_signed)
+				value = _stp_get_unaligned(ptr.p32s++);
+			else
+				value = _stp_get_unaligned(ptr.p32u++);
+			break;
+		}
 	case DW_EH_PE_data8:
 		BUILD_BUG_ON(sizeof(u64) != sizeof(value));
 #else
 		BUILD_BUG_ON(sizeof(u32) != sizeof(value));
 #endif
 	case DW_EH_PE_absptr:
-		if (end < (const void *)(ptr.pul + 1))
-			return 0;
-		value = _stp_get_unaligned(ptr.pul++);
+		if (compat_task)
+		{
+			if (end < (const void *)(ptr.pui + 1))
+				return 0;
+			value = _stp_get_unaligned(ptr.pui++);
+		} else {
+			if (end < (const void *)(ptr.pul + 1))
+				return 0;
+			value = _stp_get_unaligned(ptr.pul++);
+		}
+
 		break;
 	case DW_EH_PE_leb128:
 		BUILD_BUG_ON(sizeof(uleb128_t) > sizeof(value));
@@ -234,9 +252,9 @@ static unsigned long read_ptr_sect(const u8 **pLoc, const void *end,
 }
 
 static unsigned long read_pointer(const u8 **pLoc, const void *end, signed ptrType,
-				  int user)
+				  int user, int compat_task)
 {
-	return read_ptr_sect(pLoc, end, ptrType, 0, 0, user);
+	return read_ptr_sect(pLoc, end, ptrType, 0, 0, user, compat_task, 0);
 }
 
 /* Parse FDE and CIE content. Basic sanity checks should already have
@@ -287,7 +305,7 @@ static int parse_fde_cie(const u32 *fde, const u32 *cie,
 			    *retAddrReg, DWARF_REG_MAP(*retAddrReg));
 		*retAddrReg = DWARF_REG_MAP(*retAddrReg);
 	}
-	  
+
 	if (*aug == 'z') {
 		augLen = get_uleb128(&ciePtr, *cieEnd);
 		if (augLen > (const u8 *)cie - *cieEnd
@@ -317,7 +335,7 @@ static int parse_fde_cie(const u32 *fde, const u32 *cie,
 				   the value, so don't try to deref.
 				   Mask off DW_EH_PE_indirect. */
 				signed pType = *ciePtr++ & 0x7F;
-				if (!read_pointer(&ciePtr, *cieStart, pType, user)) {
+				if (!read_pointer(&ciePtr, *cieStart, pType, user, compat_task)) {
 					_stp_warn("couldn't read personality routine handler\n");
 					return -1;
 				}
@@ -335,7 +353,6 @@ static int parse_fde_cie(const u32 *fde, const u32 *cie,
 		}
 		aug++;
 	}
-
 	if (ciePtr != *cieStart) {
 		_stp_warn("Bogus CIE augmentation data\n");
 		return -1;
@@ -344,10 +361,10 @@ static int parse_fde_cie(const u32 *fde, const u32 *cie,
 	/* Now we finally know the type encoding and whether or not the
 	   augmentation string starts with 'z' indicating the FDE might also
 	   have some augmentation data, so we can parse the FDE. */
-	*startLoc = read_pointer(&fdePtr, *fdeEnd, *ptrType, user);
+	*startLoc = read_pointer(&fdePtr, *fdeEnd, *ptrType, user, compat_task);
 	*locRange = read_pointer(&fdePtr, *fdeEnd,
 				 *ptrType & (DW_EH_PE_FORM | DW_EH_PE_signed),
-				 user);
+				 user, compat_task);
 	dbug_unwind(2, "startLoc: %lx, locrange: %lx\n",
 		    *startLoc, *locRange);
 
@@ -454,7 +471,7 @@ static int processCFI(const u8 *start, const u8 *end, unsigned long targetLoc,
 				dbug_unwind(1, "DW_CFA_nop\n");
 				break;
 			case DW_CFA_set_loc:
-				if ((state->loc = read_pointer(&ptr.p8, end, ptrType, user)) == 0)
+				if ((state->loc = read_pointer(&ptr.p8, end, ptrType, user, compat_task)) == 0)
 					result = 0;
 				dbug_unwind(1, "DW_CFA_set_loc %lx (result=%d)\n", state->loc, result);
 				break;
@@ -881,7 +898,7 @@ adjustStartLoc (unsigned long startLoc,
 static u32 *_stp_search_unwind_hdr(unsigned long pc,
 				   struct _stp_module *m,
 				   struct _stp_section *s,
-				   int is_ehframe, int user)
+				   int is_ehframe, int user, int compat_task)
 {
 	const u8 *ptr, *end, *hdr = is_ehframe ? m->unwind_hdr: s->debug_hdr;
 	uint32_t hdr_len = is_ehframe ? m->unwind_hdr_len : s->debug_hdr_len;
@@ -900,7 +917,10 @@ static u32 *_stp_search_unwind_hdr(unsigned long pc,
 	/* table_enc */
 	switch (hdr[3] & DW_EH_PE_FORM) {
 	case DW_EH_PE_absptr:
-		tableSize = sizeof(unsigned long);
+		if (!compat_task)
+			tableSize = sizeof(unsigned long);
+		else
+			tableSize = sizeof(unsigned int);
 		break;
 	case DW_EH_PE_data2:
 		tableSize = 2;
@@ -920,7 +940,7 @@ static u32 *_stp_search_unwind_hdr(unsigned long pc,
 	{
 		// XXX Can the header validity be checked just once?
 		unsigned long eh = read_ptr_sect(&ptr, end, hdr[1], 0,
-						 eh_hdr_addr, user);
+						 eh_hdr_addr, user, compat_task, tableSize);
 		if ((hdr[1] & DW_EH_PE_ADJUST) == DW_EH_PE_pcrel)
 			eh = eh - (unsigned long)hdr + eh_hdr_addr;
 		if ((is_ehframe && eh != (unsigned long)m->eh_frame_addr)) {
@@ -928,7 +948,7 @@ static u32 *_stp_search_unwind_hdr(unsigned long pc,
 			return NULL;
 		}
 	}
-	num = read_ptr_sect(&ptr, end, hdr[2], 0, eh_hdr_addr, user);
+	num = read_ptr_sect(&ptr, end, hdr[2], 0, eh_hdr_addr, user, compat_task, tableSize);
 	if (num == 0 || num != (end - ptr) / (2 * tableSize)
 	    || (end - ptr) % (2 * tableSize)) {
 		_stp_warn("unwind Bad num=%d end-ptr=%ld 2*tableSize=%d",
@@ -939,7 +959,7 @@ static u32 *_stp_search_unwind_hdr(unsigned long pc,
 	do {
 		const u8 *cur = ptr + (num / 2) * (2 * tableSize);
 		startLoc = read_ptr_sect(&cur, cur + tableSize, hdr[3], 0,
-					 eh_hdr_addr, user);
+					 eh_hdr_addr, user, compat_task, tableSize);
 		startLoc = adjustStartLoc(startLoc, m, s, hdr[3],
 					  is_ehframe, user);
 		if (pc < startLoc)
@@ -952,11 +972,11 @@ static u32 *_stp_search_unwind_hdr(unsigned long pc,
 
 	if (num == 1
 	    && (startLoc = adjustStartLoc(read_ptr_sect(&ptr, ptr + tableSize, hdr[3], 0,
-							eh_hdr_addr, user),
+							eh_hdr_addr, user, compat_task, tableSize),
 					  m, s, hdr[3], is_ehframe, user)) != 0 && pc >= startLoc) {
 		unsigned long off;
 		off = read_ptr_sect(&ptr, ptr + tableSize, hdr[3],
-				    0, eh_hdr_addr, user);
+				    0, eh_hdr_addr, user, compat_task, tableSize);
 		dbug_unwind(1, "fde off=%lx\n", off);
 		/* For real eh_frame_hdr the actual fde address is at the
 		   new eh_frame load address. For our own debug_hdr created
@@ -1307,7 +1327,7 @@ static int unwind_frame(struct unwind_context *context,
 	for (i = UNW_NR_REAL_REGS; i < ARRAY_SIZE(REG_STATE.regs); ++i)
 		set_no_state_rule(i, Nowhere, state);
 
-	fde = _stp_search_unwind_hdr(pc, m, s, is_ehframe, user);
+	fde = _stp_search_unwind_hdr(pc, m, s, is_ehframe, user, compat_task);
 	dbug_unwind(1, "%s: fde=%lx\n", m->path, (unsigned long) fde);
 
 	/* found the fde, now set startLoc and endLoc */
@@ -1583,7 +1603,7 @@ static int unwind(struct unwind_context *context, int user)
 	unsigned long pc = UNW_PC(frame) - frame->call_frame;
 	int res;
         const char *module_name = 0;
-	/* compat_task is a flag for 32bit process unwinding on a 64-bit 
+	/* compat_task is a flag for 32bit process unwinding on a 64-bit
 	   architecture.  If this flag is set, it means a mapping of
 	   register numbers is required, as well as being aware of 32-bit
 	   values on 64-bit registers. */
@@ -1609,12 +1629,12 @@ static int unwind(struct unwind_context *context, int user)
                 preempt_disable();
                 ko = __module_text_address (pc);
                 if (ko) { module_name = ko->name; }
-                else { 
+                else {
                   /* Possible heuristic: we could assume we're talking
                      about the kernel.  If __kernel_text_address()
                      were SYMBOL_EXPORT'd, we could call that and be
                      more sure. */
-                } 
+                }
                 preempt_enable_no_resched();
 #endif
             }
@@ -1623,7 +1643,7 @@ static int unwind(struct unwind_context *context, int user)
 	if (unlikely(m == NULL)) {
                 if (module_name)
                         _stp_warn ("Missing unwind data for module, rerun with 'stap -d %s'\n",
-                                   module_name); 
+                                   module_name);
 		// Don't _stp_warn about this, will use fallback unwinder.
 		dbug_unwind(1, "No module found for pc=%lx", pc);
 		return -EINVAL;
