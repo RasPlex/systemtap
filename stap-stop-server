@@ -27,4 +27,16 @@ if test $? != 0; then
 fi
 
 # Try to kill the server
-kill -s SIGTERM $pid
+i=0
+while kill -s SIGTERM $pid > /dev/null 2>&1; do
+   sleep 0.5
+
+   # If we've tried and failed to kill the server for around 10
+   # seconds (20 * 0.5 seconds), quit.
+   i=$((i + 1))
+   if test $i -ge 20; then
+       echo "$pid not shutting down" >&2
+       exit 1
+       break
+   fi
+done
