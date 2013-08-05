@@ -107,6 +107,10 @@ BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %if %{with_publican}
 BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
+
+# A workaround for BZ920216 which requires an X server to build docs
+# with publican.
+BuildRequires: /usr/bin/xvfb-run
 %endif
 %endif
 %if %{with_emacsvim}
@@ -115,8 +119,6 @@ BuildRequires: emacs
 %if %{with_java}
 BuildRequires: jpackage-utils java-devel
 %endif
-# A workaround for BZ920216 which requires an X server to build docs
-BuildRequires: /usr/bin/xvfb-run
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
