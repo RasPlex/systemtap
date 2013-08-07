@@ -359,9 +359,10 @@ bool eval_comparison (const OPERAND& lhs, const token* op, const OPERAND& rhs)
 //   for a parameterless macro is @macro_name,
 //   for a macro with parameters is @macro_name(param_1, param_2, ...).
 //
-// TODOXXX NB: this means that a parameterless macro @foo called as
-// @foo(a, b, c) leaves its 'parameters' alone, rather than consuming
-// them to result in a "too many parameters error".
+// NB: this means that a parameterless macro @foo called as @foo(a, b, c)
+// leaves its 'parameters' alone, rather than consuming them to result
+// in a "too many parameters error". This may be useful in the unusual
+// case of wanting @foo to expand to the name of a function.
 //
 // Invocations of unknown macros are left unexpanded, to allow
 // the continued use of constructs such as @cast, @var, etc.
@@ -440,10 +441,15 @@ parser::scan_pp1 ()
             // TODOXXX use a slightly different chaining hack to also point to
             // pp1_namespace[name]->tok, the site of the original definition?
             throw parse_error (_F("attempt to redefine macro '@%s' in the same file", name.c_str ()), t);
-          // TODOXXX this is only really necessary if we want to leave open the possibility of statically-scoped semantics in the future...?
+          // XXX: this restriction was mostly necessary due to wanting
+          // to leave open the possibility of statically-scoped
+          // semantics in the future.
 
-          // XXX this cascades into further parse errors as the
-          // parser tries to parse the remaining definition...
+          // XXX: this cascades into further parse errors as the
+          // parser tries to parse the remaining definition... (e.g.
+          // it can't tell that the macro body isn't a conditional,
+          // that the uses of parameters aren't nonexistent
+          // macros.....)
           if (name == "define")
             throw parse_error (_("attempt to redefine '@define'"), t);
           if (input.atwords.count("@" + name))
