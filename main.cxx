@@ -562,8 +562,7 @@ passes_0_4 (systemtap_session &s)
 
               stapfile* f = parse_library_macros (s, globbuf.gl_pathv[j]);
               if (f == 0)
-                s.print_warning("macro tapset '" + string(globbuf.gl_pathv[j])
-                                + "' has errors, and will be skipped."); // TODOXXX internationalization?
+                s.print_warning(_F("macro tapset \"%s\" has errors, and will be skipped.", string(globbuf.gl_pathv[j]).c_str()));
               else
                 s.library_files.push_back (f);
             }
@@ -649,8 +648,7 @@ passes_0_4 (systemtap_session &s)
 
               stapfile* f = parse (s, globbuf.gl_pathv[j], true /* privileged */);
               if (f == 0)
-                s.print_warning("tapset '" + string(globbuf.gl_pathv[j])
-                                + "' has errors, and will be skipped."); // TODOXXX internationalization?
+                s.print_warning(_F("tapset \"%s\" has errors, and will be skipped", string(globbuf.gl_pathv[j]).c_str()));
               else
                 s.library_files.push_back (f);
             }
