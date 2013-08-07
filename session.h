@@ -94,12 +94,13 @@ struct parse_error: public std::runtime_error
 {
   const token* tok;
   bool skip_some;
+  const parse_error *chain;
   parse_error (const std::string& msg):
-    runtime_error (msg), tok (0), skip_some (true) {}
+    runtime_error (msg), tok (0), skip_some (true), chain(0) {}
   parse_error (const std::string& msg, const token* t):
-    runtime_error (msg), tok (t), skip_some (true) {}
+    runtime_error (msg), tok (t), skip_some (true), chain(0) {}
   parse_error (const std::string& msg, bool skip):
-    runtime_error (msg), tok (0), skip_some (skip) {}
+    runtime_error (msg), tok (0), skip_some (skip), chain(0) {}
 };
 
 struct systemtap_session

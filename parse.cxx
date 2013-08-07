@@ -438,12 +438,19 @@ parser::scan_pp1 ()
 
           // check for redefinition of existing macro
           if (pp1_namespace.find(name) != pp1_namespace.end())
-            // TODOXXX use a slightly different chaining hack to also point to
-            // pp1_namespace[name]->tok, the site of the original definition?
-            throw parse_error (_F("attempt to redefine macro '@%s' in the same file", name.c_str ()), t);
-          // XXX: this restriction was mostly necessary due to wanting
-          // to leave open the possibility of statically-scoped
-          // semantics in the future.
+            {
+              parse_error er (_F("attempt to redefine macro '@%s' in the same file", name.c_str ()), t);
+
+              // Also point to pp1_namespace[name]->tok, the site of
+              // the original definition:
+              er.chain = new parse_error (_F("macro '@%s' first defined here",
+                                             name.c_str()), pp1_namespace[name]->tok);
+              throw er;
+            }
+
+          // XXX: the above restriction was mostly necessary due to
+          // wanting to leave open the possibility of
+          // statically-scoped semantics in the future.
 
           // XXX: this cascades into further parse errors as the
           // parser tries to parse the remaining definition... (e.g.
@@ -712,13 +719,11 @@ parser::parse_library_macros ()
 
           if (session.library_macros.find(name) != session.library_macros.end())
             {
-              // XXX ugly hack simulates chaining
-              parse_error* er1 = new parse_error (_F("duplicate definition of library macro '%s'", name.c_str()), it->second->tok);
-              parse_error* er2 = new parse_error (_("location of original definition was"), session.library_macros[name]->tok);
-              print_error (*er1);
-              print_error (*er2);
-              delete er1; delete er2;
+              parse_error er(_F("duplicate definition of library macro '@%s'", name.c_str()), it->second->tok);
+              er.chain = new parse_error (_F("macro '@%s' first defined here", name.c_str()), session.library_macros[name]->tok);
+              print_error (er);
 
+              delete er.chain;
               delete f;
               return 0;
             }

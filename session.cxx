@@ -2017,6 +2017,17 @@ systemtap_session::print_error (const parse_error &pe,
     cerr << _("\tin expansion of macro: ") << colorize(tok) << endl;
     print_error_source (cerr, align_parse_error, tok);
   }
+
+  // print other chained errors
+  if (pe.chain)
+    {
+      // NB: input_name is considered to be irrelevant for chained
+      // parse errors, since it is never used so long as pe.tok is
+      // well-defined; and a chained error MUST have a specified
+      // token:
+      assert (pe.tok);
+      print_error (* pe.chain, pe.tok, input_name);
+    }
 }
 
 void
