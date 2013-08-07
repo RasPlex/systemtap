@@ -746,7 +746,6 @@ parser::parse_library_macros ()
       
       session.library_macros[name] = it->second;
       session.library_macros[name]->context = ctx_library;
-      // TODOXXX be sure declaration is retained and not deleted
     }
 
   return f;

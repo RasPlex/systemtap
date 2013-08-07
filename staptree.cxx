@@ -2738,7 +2738,7 @@ void
 update_visitor::visit_regex_query (regex_query* e)
 {
   replace (e->left);
-  replace (e->right); // TODOXXX do we need to replace literal in RHS?
+  replace (e->right); // XXX: do we *need* to replace literal in RHS?
   provide (e);
 }
 
