@@ -84,6 +84,10 @@ struct map_root {
 	/* when more than maxnum elements, wrap or discard? */
 	int wrap;
 
+#ifdef __KERNEL__
+	void *node_mem;
+#endif
+
 	/* linked list of current entries */
 	struct mlist_head head;
 

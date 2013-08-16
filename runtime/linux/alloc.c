@@ -45,7 +45,7 @@ static DEFINE_SPINLOCK(_stp_mem_lock);
 #define MEM_MAGIC 0xc11cf77f
 #define MEM_FENCE_SIZE 32
 
-enum _stp_memtype { MEM_KMALLOC, MEM_PERCPU };
+enum _stp_memtype { MEM_KMALLOC, MEM_VMALLOC, MEM_PERCPU };
 
 typedef struct {
 	char *alloc;
@@ -54,6 +54,7 @@ typedef struct {
 
 static const _stp_malloc_type const _stp_malloc_types[] = {
 	{"kmalloc", "kfree"},
+	{"vmalloc", "vfree"},
 	{"alloc_percpu", "free_percpu"}
 };
 
@@ -166,6 +167,10 @@ static void _stp_mem_debug_free(void *addr, enum _stp_memtype type)
 		free_percpu(addr);
 		kfree(p);
 		break;
+	case MEM_VMALLOC:
+		_stp_check_mem_fence(addr, m->len);
+		vfree(addr - MEM_FENCE_SIZE);		
+		break;
 	default:
 		printk("SYSTEMTAP ERROR: Attempted to free memory at addr %p len=%d with unknown allocation type.\n", addr, (int)m->len);
 	}
@@ -204,6 +209,9 @@ static void _stp_mem_debug_validate(void *addr)
 		break;
 	case MEM_PERCPU:
 		/* do nothing */
+		break;
+	case MEM_VMALLOC:
+		_stp_check_mem_fence(addr, m->len);
 		break;
 	default:
 		printk("SYSTEMTAP ERROR: Attempted to validate memory at addr %p len=%d with unknown allocation type.\n", addr, (int)m->len);
@@ -331,6 +339,55 @@ static void *_stp_kzalloc(size_t size)
   return _stp_kzalloc_gfp(size, STP_ALLOC_FLAGS);
 }
 
+static void *_stp_vzalloc(size_t size)
+{
+	void *ret;
+#ifdef STP_MAXMEMORY
+	if ((_STP_MODULE_CORE_SIZE + _stp_allocated_memory + size)
+	    > (STP_MAXMEMORY * 1024)) {
+		return NULL;
+	}
+#endif
+#ifdef DEBUG_MEM
+	ret = vzalloc(size + MEM_DEBUG_SIZE);
+	if (likely(ret)) {
+	        _stp_allocated_memory += size;
+		ret = _stp_mem_debug_setup(ret, size, MEM_VMALLOC);
+	}
+#else
+	ret = vzalloc(size);
+	if (likely(ret)) {
+	        _stp_allocated_memory += size;
+	}
+#endif
+	return ret;
+}
+
+static void *_stp_vzalloc_node(size_t size, int node)
+{
+	void *ret;
+
+#ifdef STP_MAXMEMORY
+	if ((_STP_MODULE_CORE_SIZE + _stp_allocated_memory + size)
+	    > (STP_MAXMEMORY * 1024)) {
+		return NULL;
+	}
+#endif
+#ifdef DEBUG_MEM
+	ret = vzalloc_node(size + MEM_DEBUG_SIZE, node);
+	if (likely(ret)) {
+	        _stp_allocated_memory += size;
+		ret = _stp_mem_debug_setup(ret, size, MEM_VMALLOC);
+	}
+#else
+	ret = vzalloc_node(size, node);
+	if (likely(ret)) {
+	        _stp_allocated_memory += size;
+	}
+#endif
+	return ret;
+}
+
 #ifdef PCPU_MIN_UNIT_SIZE
 #define _STP_MAX_PERCPU_SIZE PCPU_MIN_UNIT_SIZE
 #else
@@ -442,6 +499,15 @@ static void _stp_kfree(void *addr)
 #endif
 }
 
+static void _stp_vfree(void *addr)
+{
+#ifdef DEBUG_MEM
+	_stp_mem_debug_free(addr, MEM_VMALLOC);
+#else
+	vfree(addr);
+#endif
+}
+
 static void _stp_free_percpu(void *addr)
 {
 #ifdef DEBUG_MEM
@@ -479,6 +545,10 @@ static void _stp_mem_debug_done(void)
 		case MEM_PERCPU:
 			free_percpu(m->addr);
 			kfree(p);
+			break;
+		case MEM_VMALLOC:
+			_stp_check_mem_fence(m->addr, m->len);
+			vfree(m->addr - MEM_FENCE_SIZE);		
 			break;
 		default:
 			printk("SYSTEMTAP ERROR: Attempted to free memory at addr %p len=%d with unknown allocation type.\n", m->addr, (int)m->len);

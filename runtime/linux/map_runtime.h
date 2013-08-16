@@ -82,26 +82,14 @@ static inline void _stp_pmap_set_map(PMAP p, MAP m, unsigned cpu)
 
 static void _stp_map_del(MAP map)
 {
-	struct mlist_head *p, *tmp;
-
 	if (map == NULL)
 		return;
 
-	/* free unused pool */
-	mlist_for_each_safe(p, tmp, &map->pool) {
-		mlist_del(p);
-		_stp_kfree(p);
-	}
-
-	/* free used list */
-	mlist_for_each_safe(p, tmp, &map->head) {
-		mlist_del(p);
-		_stp_kfree(p);
-	}
+	if (map->node_mem)
+		_stp_vfree(map->node_mem);
 
 	_stp_map_destroy_lock(map);
-
-	_stp_kfree(map);
+	_stp_vfree(map);
 }
 
 static void _stp_pmap_del(PMAP pmap)
@@ -118,19 +106,17 @@ static void _stp_pmap_del(PMAP pmap)
 
 	/* free agg map elements */
 	_stp_map_del(_stp_pmap_get_agg(pmap));
-
-	_stp_kfree(pmap);
+	_stp_vfree(pmap);
 }
 
 
 static void*
-_stp_map_kzalloc(size_t size, int cpu)
+_stp_map_vzalloc(size_t size, int cpu)
 {
 	/* Called from module_init, so user context, may sleep alloc. */
 	if (cpu < 0)
-		return _stp_kzalloc_gfp(size, STP_ALLOC_SLEEP_FLAGS);
-	return _stp_kzalloc_node_gfp(size, cpu_to_node(cpu),
-				     STP_ALLOC_SLEEP_FLAGS);
+		return _stp_vzalloc(size);
+	return _stp_vzalloc_node(size, cpu_to_node(cpu));
 }
 
 
@@ -147,14 +133,14 @@ _stp_map_init(MAP m, unsigned max_entries, int wrap, int node_size, int cpu)
 	m->maxnum = max_entries;
 	m->wrap = wrap;
 
-	/* It would be nice to allocate the nodes in one big chunk, but
-	 * sometimes they're big, and there may be a lot of them, so memory
-	 * fragmentation may cause us to fail allocation.  */
-	for (i = 0; i < max_entries; i++) {
-		struct map_node *node = _stp_map_kzalloc(node_size, cpu);
-		if (node == NULL)
-			return -1;
+	/* Since we're using _stp_map_vzalloc(), we can afford to
+	 * allocate the nodes in one big chunk. */
+	m->node_mem = _stp_map_vzalloc(node_size * max_entries, cpu);
+	if (m->node_mem == NULL)
+		return -1;
 
+	for (i = 0; i < max_entries; i++) {
+		struct map_node *node = m->node_mem + i * node_size;
 		mlist_add(&node->lnode, &m->pool);
 		INIT_MHLIST_NODE(&node->hnode);
 	}
@@ -180,7 +166,7 @@ _stp_map_new(unsigned max_entries, int wrap, int node_size, int cpu)
 {
 	MAP m;
 
-	m = _stp_map_kzalloc(sizeof(struct map_root), cpu);
+	m = _stp_map_vzalloc(sizeof(struct map_root), cpu);
 	if (m == NULL)
 		return NULL;
 
@@ -197,8 +183,8 @@ _stp_pmap_new(unsigned max_entries, int wrap, int node_size)
 	int i;
 	MAP m;
 
-	PMAP pmap = _stp_map_kzalloc(sizeof(struct pmap)
-			             + NR_CPUS * sizeof(MAP), -1);
+	PMAP pmap = _stp_map_vzalloc(sizeof(struct pmap)
+				     + NR_CPUS * sizeof(MAP), -1);
 	if (pmap == NULL)
 		return NULL;
 
@@ -223,8 +209,7 @@ err1:
 		m = _stp_pmap_get_map (pmap, i);
 		_stp_map_del(m);
 	}
-err:
-	_stp_kfree(pmap);
+	_stp_vfree(pmap);
 	return NULL;
 }
 
