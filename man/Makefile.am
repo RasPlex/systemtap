@@ -28,3 +28,9 @@ man_MANS += stap-server.8
 endif
 endif
 
+if HAVE_LIBVIRT
+if HAVE_LIBXML2
+man_MANS += stapvirt.1
+endif
+endif
+

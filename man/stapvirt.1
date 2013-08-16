@@ -1,0 +1,84 @@
+.\" -*- nroff -*-
+.TH STAPVIRT 1
+.SH NAME
+stapvirt \- prepare libvirt domains for systemtap probing
+
+.SH SYNOPSIS
+\fBstapvirt\fR
+[\fB-c\fR \fIURI\fR]
+[\fB-d\fR \fIPATH\fR]
+[\fB-v\fR]
+\fICOMMAND\fR
+\fIARGUMENTS\fR
+
+.SH DESCRIPTION
+The \fIstapvirt\fR program can be used to add ports to domains managed by
+libvirt (see
+.nh
+<http://libvirt.org/>).
+.hy
+These ports can then be used by \fIstap\fR to
+run scripts inside the domains (see the '--remote' option in \fIstap\fR(1) for
+more information).
+.PP
+Starting from libvirt v1.1.1 and QEMU v0.10.0, SystemTap
+ports can be hotplugged and thus domains do not require any preparation using
+\fIstapvirt\fR. The 'query' command can be used to determine whether hotplugging
+is supported.
+.PP
+If hotplugging is not supported, then ports must be added to the definition of
+the domain using the 'port-add' command. These ports can later be removed using
+the 'port-remove' command. Note that there can only be as many simultaneous
+\fIstap\fR sessions as there are ports.
+
+.SH OPTIONS
+The following options are supported. Any other option prints a short help
+message.
+
+.IP "\fB-c\fR \fIURI\fR"
+Specify the libvirt driver URI to which to connect (e.g. 'qemu:///system'). The
+default value is NULL, which indicates to libvirt to connect to the default
+driver. See the page at <http://libvirt.org/uri.html> for supported values.
+
+.IP "\fB-d\fR \fIPATH\fR"
+Specify the directory in which UNIX sockets should be created when SystemTap
+ports are added. The default directory is '/var/lib/libvirt/qemu'.
+
+.IP "\fB-v\fR"
+Increase verbosity. This option may be repeated for more verbosity.
+
+.SH COMMANDS
+The following commands are recognized by stapvirt. Any other command prints a
+short help message.
+
+.IP "\fBhelp\fR"
+Display the help message.
+
+.IP "\fBlist\fR"
+List available domains.
+
+.IP "\fBport-add\fR \fIDOMAIN\fR"
+Add a permanent SystemTap port to the domain's definition. If the domain is
+currently running, it must be restarted before changes take effect.
+
+.IP "\fBport-list\fR \fIDOMAIN\fR"
+List the UNIX socket paths of the permanent SystemTap ports in the domain's
+definition.
+
+.IP "\fBport-remove\fR \fIDOMAIN\fR"
+Remove a permanent SystemTap port from the domain's definition. If the domain is
+currently running, it must be restarted before changes take effect.
+
+.IP "\fBquery\fR \fIDOMAIN\fR"
+Display the following information about the domain: its name, its UUID, its
+state, the number of permanent SystemTap ports installed, and whether
+hotplugging is supported.
+
+.SH SEE ALSO
+.IR stap (1)
+
+.SH BUGS
+Use the Bugzilla link of the project web page or our mailing list.
+.nh
+.BR http://sourceware.org/systemtap/ , <systemtap@sourceware.org> .
+.hy

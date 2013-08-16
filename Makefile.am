@@ -53,6 +53,18 @@ stap_SOURCES += stapregex.cxx stapregex-tree.cxx stapregex-parse.cxx \
 noinst_HEADERS = sdt_types.h
 stap_LDADD = @stap_LIBS@ @sqlite3_LIBS@ @LIBINTL@ -lpthread
 stap_DEPENDENCIES =
+
+if HAVE_LIBVIRT
+if HAVE_LIBXML2
+bin_PROGRAMS += stapvirt
+stapvirt_SOURCES = stapvirt.c
+stapvirt_CFLAGS = $(AM_CFLAGS)
+stapvirt_CFLAGS += $(libvirt_CFLAGS) $(libxml2_CFLAGS)
+stapvirt_LDFLAGS = $(AM_LDFLAGS)
+stapvirt_LDADD = $(libvirt_LIBS) $(libxml2_LIBS)
+endif
+endif
+
 endif
 
 install: all
