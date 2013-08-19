@@ -15,10 +15,20 @@
 global size = 0;
 
 probe process("/lib*/libpthread.so.*").function("allocate_stack") {
-    old_size = $__default_stacksize;
+    old_size = @choose_defined($__default_stacksize,
+			       $__default_pthread_attr->stacksize)
     if ((size != 0) && (old_size != size)) {  /* requested but not yet changed */
-        $__default_stacksize = size;          /* change it and report */
-        printf("%s[%d] overwrote __default_stacksize@%p (%d->%d)\n",
-               execname(), tid(), &$__default_stacksize, old_size, size)
+	/* change it and report */
+	if (@defined($__default_stacksize)) {
+            $__default_stacksize = size
+	    printf("%s[%d] overwrote __default_stacksize@%p (%d->%d)\n",
+		   execname(), tid(), &$__default_stacksize, old_size, size)
+	}
+	else {
+	    $__default_pthread_attr->stacksize = size
+	    printf("%s[%d] overwrote __default_stacksize@%p (%d->%d)\n",
+		   execname(), tid(), &$__default_pthread_attr->stacksize,
+		   old_size, size)
+	}
     }
 }
