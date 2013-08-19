@@ -233,9 +233,9 @@ keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-inde
 </li><li><a name="network/tcp_trace.stp"></a><a href="#network/tcp_trace.stp">&para;</a> <a href="network/tcp_trace.stp">network/tcp_trace.stp</a> - TCP Connection Tracing Utility<br>
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TRACE">TRACE</a> <br>
 <p>This scripts traces a given TCP connection based on the filter parameters given by the user. The indexing is done by the 4 tuples local address, remote address, local port, remote port.<p><font size="-2"><pre># stap tcp_trace.stp 127.0.0.1:*-127.0.0.1:* timeout=1</pre></font></p>
-</li><li><a name="network/tcpdumplike.stp"></a><a href="#network/tcpdumplike.stp">&para;</a> <a href="network/tcpdumplike.stp">network/tcpdumplike.stp</a> - Dump of Received TCP Packets<br>
+</li><li><a name="network/tcpdumplike.stp"></a><a href="#network/tcpdumplike.stp">&para;</a> <a href="network/tcpdumplike.stp">network/tcpdumplike.stp</a> - Dump of Received UDP/TCP Packets<br>
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TRAFFIC">TRAFFIC</a> <br>
-<p>The tcpdumplike.stp prints out a line for each TCP packet received. Each line includes the source and destination IP addresses, the source and destination ports, and flags.<p><font size="-2"><pre># stap tcpdumplike.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+<p>The tcpdumplike.stp prints out a line for each TCP &amp; UDP packet received. Each line includes the source and destination IP addresses, the source and destination ports, and flags.<p><font size="-2"><pre># stap tcpdumplike.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a name="network/tcpipstat.stp"></a><a href="#network/tcpipstat.stp">&para;</a> <a href="network/tcpipstat.stp">network/tcpipstat.stp</a> - Display Network Statistics for Individual TCP Sockets<br>
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#STATISTICS">STATISTICS</a> <br>
 <p>The tcpipstat script collects and displays network statistics related to individual TCP sockets or groups of sockets.  The statistics that are collected are simular to that of the command netstat -s, only sorted and grouped by individual sockets.<p><font size="-2"><pre># stap tcpipstat.stp timeout=1</pre></font></p>
@@ -284,6 +284,9 @@ keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-inde
 </li><li><a name="process/schedtimes.stp"></a><a href="#process/schedtimes.stp">&para;</a> <a href="process/schedtimes.stp">process/schedtimes.stp</a> - Track Time Processes Spend in Various States Using Tracepoints<br>
 keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SCHEDULER">SCHEDULER</a> <a href="keyword-index.html#TIME">TIME</a> <a href="keyword-index.html#TRACEPOINT">TRACEPOINT</a> <br>
 <p>The schedtimes.stp script instruments the scheduler to track the amount of time that each process spends in running, sleeping, queuing, and waiting for io. On exit the script prints out the accumulated time for each state of processes observed.  Optionally, this script can be used with the &#39;-c&#39; or &#39;-x&#39; options to focus on a specific PID.<p><font size="-2"><pre># stap schedtimes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a name="process/semop-watch.stp"></a><a href="#process/semop-watch.stp">&para;</a> <a href="process/semop-watch.stp">process/semop-watch.stp</a> - Watch semop(2)/semtimedop(2) operations<br>
+keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#LOCKING">LOCKING</a> <br>
+<p>Prints a timed trace of semop(2)/semtimedop(2) syscalls<p><font size="-2"><pre># stap semop-watch.stp -c &#39;sleep 2&#39;</pre></font></p>
 </li><li><a name="process/sig_by_pid.stp"></a><a href="#process/sig_by_pid.stp">&para;</a> <a href="process/sig_by_pid.stp">process/sig_by_pid.stp</a> -  Signal Counts by Process ID<br>
 keywords: <a href="keyword-index.html#SIGNALS">SIGNALS</a> <br>
 <p>Print signal counts by process ID in descending order.<p><font size="-2"><pre># stap sig_by_pid.stp -c &quot;sleep 0.2&quot;</pre></font></p>
@@ -302,6 +305,9 @@ keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#SCH
 </li><li><a name="process/sleeptime.stp"></a><a href="#process/sleeptime.stp">&para;</a> <a href="process/sleeptime.stp">process/sleeptime.stp</a> - Trace Time Spent in Nanosleep Syscalls<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#NANOSLEEP">NANOSLEEP</a> <br>
 <p>The script watches each nanosleep syscall on the system. At the end of each nanosleep syscall the script prints out a line with a timestamp in microseconds, the pid, the executable name in parentheses, the &quot;nanosleep:&quot; key, and the duration of the sleep in microseconds.<p><font size="-2"><pre># stap sleeptime.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a name="process/strace.stp"></a><a href="#process/strace.stp">&para;</a> <a href="process/strace.stp">process/strace.stp</a> - Trace system calls<br>
+keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#SYSCALLS">SYSCALLS</a> <br>
+<p>The script loosely emulates strace, when applied to individual processes or hierarchies (via -c/-x), or the entire system (without -c/-x).  A few output configuration parameters may be set with -G.<p><font size="-2"><pre># stap strace.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a name="process/syscalls_by_pid.stp"></a><a href="#process/syscalls_by_pid.stp">&para;</a> <a href="process/syscalls_by_pid.stp">process/syscalls_by_pid.stp</a> - System-Wide Count of Syscalls by PID<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <br>
 <p>The script watches all syscall on the system. On exit the script prints a list showing the number of systemcalls executed by each PID ordered from greatest to least number of syscalls.<p><font size="-2"><pre># stap syscalls_by_pid.stp -c &quot;sleep 0.2&quot;</pre></font></p>

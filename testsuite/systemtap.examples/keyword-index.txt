@@ -768,6 +768,14 @@ keywords: locking
   # stap mutex-contention.stp -c "sleep 0.2"
 
 
+process/semop-watch.stp - Watch semop(2)/semtimedop(2) operations
+keywords: process locking
+
+  Prints a timed trace of semop(2)/semtimedop(2) syscalls
+
+  # stap semop-watch.stp -c 'sleep 2'
+
+
 = MEMORY =
 
 general/sizeof.stp - Print the Size of a C Type
@@ -1107,12 +1115,12 @@ keywords: network trace
   # stap tcp_trace.stp 127.0.0.1:*-127.0.0.1:* timeout=1
 
 
-network/tcpdumplike.stp - Dump of Received TCP Packets
+network/tcpdumplike.stp - Dump of Received UDP/TCP Packets
 keywords: network traffic
 
-  The tcpdumplike.stp prints out a line for each TCP packet received.
-  Each line includes the source and destination IP addresses, the
-  source and destination ports, and flags.
+  The tcpdumplike.stp prints out a line for each TCP & UDP packet
+  received. Each line includes the source and destination IP addresses,
+  the source and destination ports, and flags.
 
   # stap tcpdumplike.stp -c "sleep 0.2"
 
@@ -1317,6 +1325,24 @@ keywords: process scheduler time tracepoint
   specific PID.
 
   # stap schedtimes.stp -c "sleep 0.2"
+
+
+process/semop-watch.stp - Watch semop(2)/semtimedop(2) operations
+keywords: process locking
+
+  Prints a timed trace of semop(2)/semtimedop(2) syscalls
+
+  # stap semop-watch.stp -c 'sleep 2'
+
+
+process/strace.stp - Trace system calls
+keywords: process syscalls
+
+  The script loosely emulates strace, when applied to individual
+  processes or hierarchies (via -c/-x), or the entire system (without
+  -c/-x).  A few output configuration parameters may be set with -G.
+
+  # stap strace.stp -c "sleep 0.2"
 
 
 process/thread-business.stp - monitor syscall history
@@ -2090,6 +2116,18 @@ keywords: syscall process
   # stap wait4time.stp -c "sleep 0.2"
 
 
+= SYSCALLS =
+
+process/strace.stp - Trace system calls
+keywords: process syscalls
+
+  The script loosely emulates strace, when applied to individual
+  processes or hierarchies (via -c/-x), or the entire system (without
+  -c/-x).  A few output configuration parameters may be set with -G.
+
+  # stap strace.stp -c "sleep 0.2"
+
+
 = TCP =
 
 network/sk_stream_wait_memory.stp - Track Start and Stop of Processes Due to Network Buffer Space
@@ -2308,12 +2346,12 @@ keywords: network traffic
   # stap nettop.stp -c "sleep 0.2"
 
 
-network/tcpdumplike.stp - Dump of Received TCP Packets
+network/tcpdumplike.stp - Dump of Received UDP/TCP Packets
 keywords: network traffic
 
-  The tcpdumplike.stp prints out a line for each TCP packet received.
-  Each line includes the source and destination IP addresses, the
-  source and destination ports, and flags.
+  The tcpdumplike.stp prints out a line for each TCP & UDP packet
+  received. Each line includes the source and destination IP addresses,
+  the source and destination ports, and flags.
 
   # stap tcpdumplike.stp -c "sleep 0.2"
 
