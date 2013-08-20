@@ -600,10 +600,12 @@ probe signal.send_sig_queue.return =
  * to a specific thread. This normally occurs when the
  * do_sigpending kernel function is executed.
  */
-probe signal.pending = kernel.function("do_sigpending")
+probe signal.pending = kernel.function("do_sigpending").call !,
+		       kernel.function("sys_rt_sigpending").call ?,
+		       kernel.function("compat_sys_rt_sigpending").call ?
 {
     name = "pending"
-    sigset_add=$set
+    sigset_add=@choose_defined($set, $uset)
     sigset_size=$sigsetsize
 }
 
@@ -612,7 +614,9 @@ probe signal.pending = kernel.function("do_sigpending")
  * @name: Name of the probe point
  * @retstr: Return value as a string
  */
-probe signal.pending.return = kernel.function("do_sigpending").return
+probe signal.pending.return = kernel.function("do_sigpending").return !,
+			      kernel.function("sys_rt_sigpending").return ?,
+			      kernel.function("compat_sys_rt_sigpending").return ?
 {
     name = "pending"
     retstr = return_str(1, $return)
