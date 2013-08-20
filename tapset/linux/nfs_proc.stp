@@ -181,17 +181,9 @@ probe nfs.proc.lookup.return = nfs.proc2.lookup.return,
 			       nfs.proc4.lookup.return
 {}
 
-probe nfs.proc2.lookup = kernel.function("nfs_proc_lookup") !,
-			 module("nfs").function("nfs_proc_lookup") ?,
-			 module("nfsv2").function("nfs_proc_lookup") ?
+probe nfs.proc2.lookup = _nfs.proc2.lookup !, _nfs.proc2.missing_lookup
 {
-	client = NFS_CLIENT($dir)
-	server_ip = get_ip_from_client(client)
-	prot = get_prot_from_client(client)
 	version = 2
-
-	name_len = $name->len
-	filename = kernel_string_n($name->name, name_len)
 	bitmask0 = 0
 	bitmask1 = 0
 
@@ -199,14 +191,37 @@ probe nfs.proc2.lookup = kernel.function("nfs_proc_lookup") !,
 	argstr = sprintf("%s", filename) 
 }
 
+probe _nfs.proc2.lookup = kernel.function("nfs_proc_lookup") !,
+			  module("nfs").function("nfs_proc_lookup") ?,
+			  module("nfsv2").function("nfs_proc_lookup") ?
+{
+	client = NFS_CLIENT($dir)
+	server_ip = get_ip_from_client(client)
+	prot = get_prot_from_client(client)
+
+	name_len = $name->len
+	filename = kernel_string_n($name->name, name_len)
+}
+
+probe _nfs.proc2.missing_lookup = never
+{
+	client = 0
+	server_ip = 0
+	prot = 0
+
+	name_len = 0
+	filename = ""
+}
+
 probe nfs.proc2.lookup.return =
 	kernel.function("nfs_proc_lookup").return !,
-	module("nfs").function("nfs_proc_lookup").return ?,
-	module("nfsv2").function("nfs_proc_lookup").return ?
+	module("nfs").function("nfs_proc_lookup").return !,
+	module("nfsv2").function("nfs_proc_lookup").return !,
+	never
 {
 	version = 2
 	name = "nfs.proc2.lookup.return"
-	retstr = sprintf("%d", $return)
+	retstr = (@defined($return) ? sprintf("%d", $return) : "N/A")
 }
 
 probe nfs.proc3.lookup = kernel.function("nfs3_proc_lookup") !,
@@ -293,9 +308,19 @@ probe nfs.proc.read.return = nfs.proc2.read.return ?,
 {
 }
 
-probe nfs.proc2.read = kernel.function("nfs_proc_read") !,
-		       module("nfs").function("nfs_proc_read") ?,
-		       module("nfsv2").function("nfs_proc_read") ?
+probe nfs.proc2.read = _nfs.proc2.read !, _nfs.proc2.missing_read
+{
+	version = 2
+
+	name = "nfs.proc2.read"
+	argstr = sprintf("%d,%d", count, offset)
+
+	size = count
+	units = "bytes"
+}
+probe _nfs.proc2.read = kernel.function("nfs_proc_read") !,
+			module("nfs").function("nfs_proc_read") ?,
+			module("nfsv2").function("nfs_proc_read") ?
 {
 	server_ip = @_nfs_data_server_ip($rdata)
 	prot = @_nfs_data_prot($rdata)
@@ -304,21 +329,25 @@ probe nfs.proc2.read = kernel.function("nfs_proc_read") !,
 	flags = $rdata->flags
 	count = @_nfs_data_args_count($rdata)
 	offset = $rdata->args->offset
+}
+probe _nfs.proc2.missing_read = never
+{
+	server_ip = 0
+	prot = 0
 
-	name = "nfs.proc2.read"
-	argstr = sprintf("%d,%d", count, offset)
-
-	size = count
-	units = "bytes"
+	flags = 0
+	count = 0
+	offset = 0
 }
 
 probe nfs.proc2.read.return = kernel.function("nfs_proc_read").return !,
-			      module("nfs").function("nfs_proc_read").return ?,
-			      module("nfsv2").function("nfs_proc_read").return ?
+			      module("nfs").function("nfs_proc_read").return !,
+			      module("nfsv2").function("nfs_proc_read").return !,
+			      never
 {
 	version = 2
 	name = "nfs.proc2.read.return"
-	retstr = sprintf("%d", $return)
+	retstr = (@defined($return) ? sprintf("%d", $return) : "N/A")
 }
 
 
@@ -412,17 +441,10 @@ probe nfs.proc.write.return = nfs.proc2.write.return ?,
 			      nfs.proc4.write.return ?
 {}
 
-probe nfs.proc2.write = kernel.function("nfs_proc_write") !,
-			module("nfs").function("nfs_proc_write") ?,
-			module("nfsv2").function("nfs_proc_write") ?
+probe nfs.proc2.write = _nfs.proc2.write !, _nfs.proc2.missing_write
 {
-	server_ip = @_nfs_data_server_ip($wdata)
-	prot = @_nfs_data_prot($wdata)
 	version = 2
 
-	flags = $wdata->flags
-	count = @_nfs_data_args_count($wdata)
-	offset = $wdata->args->offset
 	bitmask0 = 0
 	bitmask1 = 0
 
@@ -432,19 +454,46 @@ probe nfs.proc2.write = kernel.function("nfs_proc_write") !,
 	size = count
 	units = "bytes"
 }
+probe _nfs.proc2.write = kernel.function("nfs_proc_write") !,
+			 module("nfs").function("nfs_proc_write") ?,
+			 module("nfsv2").function("nfs_proc_write") ?
+{
+	server_ip = @_nfs_data_server_ip($wdata)
+	prot = @_nfs_data_prot($wdata)
+
+	flags = $wdata->flags
+	count = @_nfs_data_args_count($wdata)
+	offset = $wdata->args->offset
+}
+probe _nfs.proc2.missing_write = never
+{
+	server_ip = 0
+	prot = 0
+
+	flags = 0
+	count = 0
+	offset = 0
+}
 
 probe nfs.proc2.write.return =
 	kernel.function("nfs_proc_write").return !,
-	module("nfs").function("nfs_proc_write").return ?,
-	module("nfsv2").function("nfs_proc_write").return ?
+	module("nfs").function("nfs_proc_write").return !,
+	module("nfsv2").function("nfs_proc_write").return !,
+	never
 {
 	version = 2
 	name = "nfs.proc2.write.return"
-	retstr = sprintf("%d", $return)
-	if ($return >= 0) {
-		size = $return
-		units = "bytes"
+	if (@defined($return)) {
+		retstr = sprintf("%d", $return)
+		if ($return >= 0) {
+			size = $return
+		}
 	}
+	else {
+		retstr = "N/A"
+		size = 0		
+	}
+	units = "bytes"
 }
 
 
@@ -653,18 +702,10 @@ probe nfs.proc.read_setup.return = nfs.proc2.read_setup.return,
 
 
 
-probe nfs.proc2.read_setup = kernel.function("nfs_proc_read_setup") !,
-			     module("nfs").function("nfs_proc_read_setup") ?,
-			     module("nfsv2").function("nfs_proc_read_setup") ?
+probe nfs.proc2.read_setup = _nfs.proc2.read_setup !,
+			     _nfs.proc2.missing_read_setup
 {
-	inode = @defined($data->header) ? $data->header->inode : $data->inode
-	client = NFS_CLIENT(inode)
-	server_ip = get_ip_from_client(client)
-	prot = get_prot_from_client(client)
 	version = 2
-
-	count = @_nfs_data_args_count($data)
-	offset = $data->args->offset
 
 	name = "nfs.proc2.read_setup"
 	argstr = sprintf("%d,%d", count, offset)
@@ -672,11 +713,34 @@ probe nfs.proc2.read_setup = kernel.function("nfs_proc_read_setup") !,
 	size = count
 	units = "bytes"
 }
+probe _nfs.proc2.read_setup = kernel.function("nfs_proc_read_setup") !,
+			      module("nfs").function("nfs_proc_read_setup") ?,
+			      module("nfsv2").function("nfs_proc_read_setup") ?
+{
+	inode = @defined($data->header) ? $data->header->inode : $data->inode
+	client = NFS_CLIENT(inode)
+	server_ip = get_ip_from_client(client)
+	prot = get_prot_from_client(client)
+
+	count = @_nfs_data_args_count($data)
+	offset = $data->args->offset
+}
+probe _nfs.proc2.missing_read_setup = never
+{
+	inode = 0
+	client = 0
+	server_ip = 0
+	prot = 0
+
+	count = 0
+	offset = 0
+}
 
 probe nfs.proc2.read_setup.return =
 	kernel.function("nfs_proc_read_setup").return !,
-	module("nfs").function("nfs_proc_read_setup").return ?,
-	module("nfsv2").function("nfs_proc_read_setup").return ?
+	module("nfs").function("nfs_proc_read_setup").return !,
+	module("nfsv2").function("nfs_proc_read_setup").return !,
+	never
 {
 	version = 2
 	name = "nfs.proc2.read_setup.return"
@@ -767,9 +831,18 @@ probe nfs.proc.read_done.return = nfs.proc2.read_done.return,
 			   nfs.proc4.read_done.return
 {}
 
-probe nfs.proc2.read_done = kernel.function("nfs_read_done") !,
-			    module("nfs").function("nfs_read_done") ?,
-			    module("nfsv2").function("nfs_read_done") ?
+probe nfs.proc2.read_done = _nfs.proc2.read_done !,
+			    _nfs.proc2.missing_read_done
+{
+	timestamp = 0
+	version = 2
+
+	name = "nfs.proc2.read_done"
+	argstr = sprintf("%d", status)
+}
+probe _nfs.proc2.read_done = kernel.function("nfs_read_done") !,
+			     module("nfs").function("nfs_read_done") ?,
+			     module("nfsv2").function("nfs_read_done") ?
 {
 	if (@defined($data)) {		# kernels >= 2.6.10
 		server_ip = @_nfs_data_server_ip($data)
@@ -781,19 +854,21 @@ probe nfs.proc2.read_done = kernel.function("nfs_read_done") !,
 		prot = @_nfs_data_prot($task->tk_calldata)
 		count = @_nfs_data_res_count($task->tk_calldata)
 	}
-	timestamp = 0
-	version = 2
 	status = $task->tk_status
-
-	name = "nfs.proc2.read_done"
-	argstr = sprintf("%d", status)
-
+}
+probe _nfs.proc2.missing_read_done = never
+{
+	server_ip = 0
+	prot = 0
+	count = 0
+	status = 0
 }
 
 probe nfs.proc2.read_done.return =
 	kernel.function("nfs_read_done").return !,
-	module("nfs").function("nfs_read_done").return ?,
-	module("nfsv2").function("nfs_read_done").return ?
+	module("nfs").function("nfs_read_done").return !,
+	module("nfsv2").function("nfs_read_done").return !,
+	never
 {
 	version = 2
 	name = "nfs.proc2.read_done.return"
@@ -900,19 +975,10 @@ probe nfs.proc.write_setup.return = nfs.proc2.write_setup.return,
 {}
 
 
-probe nfs.proc2.write_setup = kernel.function("nfs_proc_write_setup") !,
-			      module("nfs").function("nfs_proc_write_setup") ?,
-			      module("nfsv2").function("nfs_proc_write_setup") ?
+probe nfs.proc2.write_setup = _nfs.proc2.write_setup !,
+			      _nfs.proc2.missing_write_setup
 {
-	inode = @defined($data->header) ? $data->header->inode : $data->inode
-	client = NFS_CLIENT(inode)
-	server_ip = get_ip_from_client(client)
-	prot = get_prot_from_client(client)
 	version = 2
-
-	count = @_nfs_data_args_count($data)
-	offset = $data->args->offset
-	how = @choose_defined($how, $data->args->stable)
 	bitmask0 = 0
 	bitmask1 = 0
 
@@ -922,10 +988,37 @@ probe nfs.proc2.write_setup = kernel.function("nfs_proc_write_setup") !,
 	size = count
 	units = "bytes"
 }
+probe _nfs.proc2.write_setup =
+	kernel.function("nfs_proc_write_setup") !,
+	module("nfs").function("nfs_proc_write_setup") ?,
+	module("nfsv2").function("nfs_proc_write_setup") ?
+{
+	inode = @defined($data->header) ? $data->header->inode : $data->inode
+	client = NFS_CLIENT(inode)
+	server_ip = get_ip_from_client(client)
+	prot = get_prot_from_client(client)
+
+	count = @_nfs_data_args_count($data)
+	offset = $data->args->offset
+	how = @choose_defined($how, $data->args->stable)
+}
+probe _nfs.proc2.missing_write_setup = never
+{
+	inode = 0
+	client = 0
+	server_ip = 0
+	prot = 0
+
+	count = 0
+	offset = 0
+	how = 0
+}
+
 probe nfs.proc2.write_setup.return =
 	kernel.function("nfs_proc_write_setup").return !,
-	module("nfs").function("nfs_proc_write_setup").return ?,
-	module("nfsv2").function("nfs_proc_write_setup").return ?
+	module("nfs").function("nfs_proc_write_setup").return !,
+	module("nfsv2").function("nfs_proc_write_setup").return !,
+	never
 {
 	version = 2
 	name = "nfs.proc2.write_setup.return"
@@ -1025,9 +1118,18 @@ probe nfs.proc.write_done.return = nfs.proc2.write_done.return,
 				   nfs.proc4.write_done.return 
 {}
 
-probe nfs.proc2.write_done = kernel.function("nfs_write_done") !,
-			     module("nfs").function("nfs_write_done") ?,
-			     module("nfsv2").function("nfs_write_done") ?
+probe nfs.proc2.write_done = _nfs.proc2.write_done !,
+			     _nfs.proc2.missing_write_done
+{
+	timestamp = 0
+	version = 2
+
+	name = "nfs.proc2.write_done"
+	argstr = sprintf("%d", status)
+}
+probe _nfs.proc2.write_done = kernel.function("nfs_write_done") !,
+			      module("nfs").function("nfs_write_done") ?,
+			      module("nfsv2").function("nfs_write_done") ?
 {
 	if (@defined($data)) {		# kernels >= 2.6.10
 		server_ip = @_nfs_data_server_ip($data)
@@ -1041,18 +1143,22 @@ probe nfs.proc2.write_done = kernel.function("nfs_write_done") !,
 		count = @_nfs_data_res_count($task->tk_calldata)
 		valid = @_nfs_data_valid($task->tk_calldata)
 	}
-	timestamp = 0
-	version = 2
 	status = $task->tk_status
-
-	name = "nfs.proc2.write_done"
-	argstr = sprintf("%d", status)
+}
+probe _nfs.proc2.missing_write_done = never
+{
+	server_ip = 0
+	prot = 0
+	count = 0
+	valid = 0
+	status = 0
 }
 
 probe nfs.proc2.write_done.return =
 	kernel.function("nfs_write_done").return !,
-	module("nfs").function("nfs_write_done").return ?,
-	module("nfsv2").function("nfs_write_done").return ?
+	module("nfs").function("nfs_write_done").return !,
+	module("nfsv2").function("nfs_write_done").return !,
+	never
 {
 	version = 2
 	name = "nfs.proc2.write_done.return"
@@ -1442,32 +1548,47 @@ probe nfs.proc.create.return = nfs.proc2.create.return,
 			       nfs.proc4.create.return
 {}
 
-probe nfs.proc2.create = kernel.function("nfs_proc_create") !,
-			 module("nfs").function("nfs_proc_create") ?,
-			 module("nfsv2").function("nfs_proc_create") ?
+probe nfs.proc2.create = _nfs.proc2.create !, _nfs.proc2.missing_create
+{
+	version = 2
+
+	name = "nfs.proc2.create"
+	argstr = sprintf("%s", filename)
+}
+probe _nfs.proc2.create = kernel.function("nfs_proc_create") !,
+			  module("nfs").function("nfs_proc_create") ?,
+			  module("nfsv2").function("nfs_proc_create") ?
 {
 	client = NFS_CLIENT($dir)
 	server_ip = get_ip_from_client(client)
 	prot = get_prot_from_client(client)
-	version = 2
 
 	fh = NFS_FH($dir)
 	filelen = $dentry->d_name->len
 	filename = kernel_string_n($dentry->d_name->name, filelen)
 	mode = $sattr->ia_mode
+}
+probe _nfs.proc2.missing_create = never
+{
+	client = 0
+	server_ip = 0
+	prot = 0
 
-	name = "nfs.proc2.create"
-	argstr = sprintf("%s", filename)
+	fh = 0
+	filelen = 0
+	filename = ""
+	mode = 0
 }
 
 probe nfs.proc2.create.return =
 	kernel.function("nfs_proc_create").return !,
-	module("nfs").function("nfs_proc_create").return ?,
-	module("nfsv2").function("nfs_proc_create").return ?
+	module("nfs").function("nfs_proc_create").return !,
+	module("nfsv2").function("nfs_proc_create").return !,
+	never
 {
 	name = "nfs.proc2.create.return"
 	version = 2
-	retstr = sprintf("%d", $return)
+	retstr = (@defined($return) ? sprintf("%d", $return) : "N/A")
 }
 
 probe nfs.proc3.create = kernel.function("nfs3_proc_create") !,
@@ -1548,31 +1669,45 @@ probe nfs.proc.remove.return = nfs.proc2.remove.return,
 			       nfs.proc4.remove.return
 {}
 
-probe nfs.proc2.remove = kernel.function("nfs_proc_remove") !,
-			 module("nfs").function("nfs_proc_remove") ?,
-			 module("nfsv2").function("nfs_proc_remove") ?
+probe nfs.proc2.remove = _nfs.proc2.remove !, _nfs.proc2.missing_remove
 {
-	client = NFS_CLIENT($dir)
-	server_ip = get_ip_from_client(client)
-	prot = get_prot_from_client(client)
 	version = 2
-
-	fh = NFS_FH($dir)
-	filelen = $name->len
-	filename = kernel_string_n($name->name, filelen)
 
 	name = "nfs.proc2.remove"
 	argstr = sprintf("%s", filename)
 }
+probe _nfs.proc2.remove = kernel.function("nfs_proc_remove") !,
+			  module("nfs").function("nfs_proc_remove") ?,
+			  module("nfsv2").function("nfs_proc_remove") ?
+{
+	client = NFS_CLIENT($dir)
+	server_ip = get_ip_from_client(client)
+	prot = get_prot_from_client(client)
+
+	fh = NFS_FH($dir)
+	filelen = $name->len
+	filename = kernel_string_n($name->name, filelen)
+}
+probe _nfs.proc2.missing_remove = never
+{
+	client = 0
+	server_ip = 0
+	prot = 0
+
+	fh = 0
+	filelen = 0
+	filename = ""
+}
 
 probe nfs.proc2.remove.return =
 	kernel.function("nfs_proc_remove").return !,
-	module("nfs").function("nfs_proc_remove").return ?,
-	module("nfsv2").function("nfs_proc_remove").return ?
+	module("nfs").function("nfs_proc_remove").return !,
+	module("nfsv2").function("nfs_proc_remove").return !,
+	never
 {
 	name = "nfs.proc2.remove.return"
 	version = 2
-	retstr = sprintf("%d", $return)
+	retstr = (@defined($return) ? sprintf("%d", $return) : "N/A")
 }
 
 probe nfs.proc3.remove = kernel.function("nfs3_proc_remove") !,
@@ -1652,14 +1787,20 @@ probe nfs.proc.rename.return = nfs.proc2.rename.return,
 			       nfs.proc4.rename.return
 {}
 
-probe nfs.proc2.rename = kernel.function("nfs_proc_rename") !,
-			 module("nfs").function("nfs_proc_rename") ?,
-			 module("nfsv2").function("nfs_proc_rename") ?
+probe nfs.proc2.rename = _nfs.proc2.rename !, _nfs.proc2.missing_rename
+{
+	version = 2
+
+	name = "nfs.proc2.rename"
+	argstr = sprintf("%s,%s", old_name, new_name)
+}
+probe _nfs.proc2.rename = kernel.function("nfs_proc_rename") !,
+			  module("nfs").function("nfs_proc_rename") ?,
+			  module("nfsv2").function("nfs_proc_rename") ?
 {
 	client = NFS_CLIENT($old_dir)
 	server_ip = get_ip_from_client(client)
 	prot = get_prot_from_client(client)
-	version = 2
 
 	old_fh = NFS_FH($old_dir)
 	old_filelen = $old_name->len
@@ -1667,19 +1808,30 @@ probe nfs.proc2.rename = kernel.function("nfs_proc_rename") !,
 	new_fh = NFS_FH($new_dir)
 	new_filelen = $new_name->len
 	new_name = kernel_string_n($new_name->name, new_filelen)
+}
+probe _nfs.proc2.missing_rename = never
+{
+	client = 0
+	server_ip = 0
+	prot = 0
 
-	name = "nfs.proc2.rename"
-	argstr = sprintf("%s,%s", old_name, new_name)
+	old_fh = 0
+	old_filelen = 0
+	old_name = ""
+	new_fh = 0
+	new_filelen = 0
+	new_name = ""
 }
 
 probe nfs.proc2.rename.return =
 	kernel.function("nfs_proc_rename").return !,
-	module("nfs").function("nfs_proc_rename").return ?,
-	module("nfsv2").function("nfs_proc_rename").return ?
+	module("nfs").function("nfs_proc_rename").return !,
+	module("nfsv2").function("nfs_proc_rename").return !,
+	never
 {
 	name = "nfs.proc2.rename.return"
 	version = 2
-	retstr = sprintf("%d", $return)
+	retstr = (@defined($return) ? sprintf("%d", $return) : "N/A")
 }
 
 probe nfs.proc3.rename = kernel.function("nfs3_proc_rename") !,
