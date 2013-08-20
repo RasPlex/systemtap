@@ -1,0 +1,18 @@
+set self runok
+
+foreach runtime [get_runtime_list] {
+    foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
+	set test $self/[file tail $file]
+        if {! [installtest_p]} { untested $test; continue }
+	if {$runtime != ""} {
+	    verbose -log "Running $file ($runtime)"
+	    set rc [stap_run_batch $file --runtime=$runtime]
+	    if {$rc != 0} { ${runtime}_kfails $test }
+	    lappend test "($runtime)"
+	} else {
+	    verbose -log "Running $file"
+	    set rc [stap_run_batch $file]
+	}
+	if {$rc == 0} { pass $test } else { fail $test }
+    }
+}
