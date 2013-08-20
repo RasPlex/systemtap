@@ -16,7 +16,7 @@ AM_MAINTAINER_MODE
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_USE_SYSTEM_EXTENSIONS
-AM_PROG_MKDIR_P
+AC_PROG_MKDIR_P
 AC_SUBST(MKDIR_P)
 AC_PROG_LN_S
 AC_PROG_CC
@@ -681,7 +681,6 @@ AC_CONFIG_FILES(java/Makefile)
 AC_CONFIG_FILES([java/stapbm], [chmod +x java/stapbm])
 AC_CONFIG_FILES(staprun/Makefile)
 AC_CONFIG_FILES([staprun/run-staprun], [chmod +x staprun/run-staprun])
-AC_CONFIG_FILES(re2c-migrate/Makefile)
 
 # Setup "shadow" directory doc/beginners that has everything setup for
 # publican in one directory (through directory links if necessary).
