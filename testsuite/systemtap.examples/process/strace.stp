@@ -32,6 +32,9 @@ function filter_p()
 
 probe nd_syscall.* 
   {
+    # TODO: filter out apparently-nested syscalls (that are implemented
+    # in terms of each other within the kernel); PR6762
+
     if (filter_p()) next;
 
     t=tid()
