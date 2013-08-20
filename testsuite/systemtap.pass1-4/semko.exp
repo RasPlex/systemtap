@@ -3,6 +3,15 @@ foreach runtime [get_runtime_list] {
     foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 	set test $self/[file tail $file]
 	if {$runtime != ""} {
+	    switch $test {
+		semko/utrace.stp {
+		    # These tests require a system without utrace-like
+		    # functionality. Since dyninst supports
+		    # utrace-like functionality, mark this test as
+		    # 'untested'.
+		    untested $test; continue }
+	    }
+
 	    verbose -log "Running $file ($runtime)"
 	    set rc [stap_run_batch $file --runtime=$runtime]
 	    lappend test "($runtime)"
