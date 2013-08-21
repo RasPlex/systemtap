@@ -14,15 +14,14 @@ if { $res != "" } {
 # This test won't work if we don't have glibc's debuginfo
 # installed. So, try to compile threadstacks.stp first to see if we've
 # got glibc debuginfo. Note that on multilib systems like x86_64, you
-# need both architecture's glibc debuginfo installed.
+# only need the "native" glibc debuginfo installed for this test,
+# since we're only compiling for the "native" arch.
 set test "pthread_stacks debuginfo check"
 spawn stap -gp4 $srcdir/systemtap.examples/process/threadstacks.stp \
     -Gsize=65536 -d $exepath
 set compile_errors 0
 expect {
     -timeout 60
-    -re {^WARNING:[^\r\n]*debuginfo[^\r\n]*\r\n} {
-	incr compile_errors 1; exp_continue}
     -re {^parse error[^\r\n]*\r\n} { incr compile_errors 1; exp_continue }
     -re {^[^\r\n]*compilation failed[^\r\n]*\r\n} {
 	incr compile_errors 1; exp_continue }
