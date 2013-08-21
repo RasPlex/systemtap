@@ -23,6 +23,7 @@ for {set i 0} {$i < [all_compile_flags]} {incr i} {
       set ok 0
       spawn stap $srcdir/$subdir/$test.stp -c ./$test.exe -w
       expect {
+	-timeout 60
         -re {failed to retrieve location attribute} {
           # the variables may have no location
           setup_kfail GCC *-*-*
@@ -31,10 +32,14 @@ for {set i 0} {$i < [all_compile_flags]} {incr i} {
             # output from ptridx.exe itself
             exp_continue }
         -re {^[ap] (0x[0-9a-f]+ => )?17, 23\r\n} { incr ok; exp_continue }
-        timeout { fail "$test-$extra_name (timeout)" }
+        timeout {
+	  fail "$test-$extra_name (timeout)"
+	  exec kill -INT -[exp_pid]
+	}
         eof { }
       }
-      wait
+      exec kill -INT -[exp_pid]
+      catch { close }; catch { wait }
 
       if {$ok == 2} {
         pass "$test-$extra_name"
