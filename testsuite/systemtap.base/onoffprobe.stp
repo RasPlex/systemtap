@@ -42,5 +42,8 @@ probe alias.* if (switch) { log(" alias.* probed") }
 
 probe procfs("switch").write {
 	switch = strtol($value, 10)
+	if (switch > 7) {
+		exit()
+	}
 }
 
