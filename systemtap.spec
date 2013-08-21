@@ -248,6 +248,8 @@ Requires: systemtap-sdt-devel = %{version}-%{release}
 Requires: systemtap-server = %{version}-%{release}
 Requires: dejagnu which elfutils grep nc
 Requires: gcc gcc-c++ make glibc-devel
+# testsuite/systemtap.base/ptrace.exp needs strace
+Requires: strace
 %ifnarch ia64
 Requires: prelink
 %endif

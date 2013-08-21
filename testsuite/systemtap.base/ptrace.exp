@@ -9,6 +9,14 @@ if {![uprobes_p]} {
     return
 }
 
+# Does 'strace' exist on this system? If not, not much point in going
+# on further.
+if {[catch { exec which strace } res]} {
+    fail "$TEST_NAME find 'strace'"
+    return
+}
+pass "$TEST_NAME find 'strace'"
+
 # Test process.begin
 set subcmd {strace -e read true}
 set TEST_NAME "ptrace (begin)"
