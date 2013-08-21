@@ -470,7 +470,7 @@ Systemtap allows limited dereferencing of such pointer chains.
 Two functions, \verb+user_string+ and \verb+kernel_string+, can copy
 \verb+char *+ target variables into systemtap strings.
 Figure~\ref{fig:inode-watch} demonstrates one way to monitor a
-particular file (identifed by device number and inode number).
+particular file (identified by device number and inode number).
 The script selects the appropriate variants of \verb+dev_nr+
 and\verb+inode_nr+ based on the kernel version.
 This example also demonstrates passing numeric command-line arguments
@@ -569,7 +569,7 @@ indexed by some tuple of thread numbers, processor ids, names, time,
 and so on.  Systemtap offers associative arrays for this purpose.
 These arrays are implemented as hash tables with a maximum size that
 is fixed at startup.  Because they are too large to be created
-dynamically for inidividual probes handler runs, they must be declared
+dynamically for individual probes handler runs, they must be declared
 as global.  \nomenclature{array}{A global
 \verb+[+$k_1,k_2,\ldots,k_n\verb+]+\rightarrow value$
 associative lookup table, with a string,

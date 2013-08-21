@@ -94,7 +94,7 @@ problem. SystemTap was designed to eliminate the need for a developer to
 go through the tedious instrument, recompile, install, and reboot sequence
 normally required to collect this kind of data. To do this, it provides a
 simple command-line interface and scripting language for writing
-instrumenation for both kernel and user space.
+instrumentation for both kernel and user space.
 With SystemTap, developers, system administrators, and users can easily write
 scripts that gather and manipulate system data that is otherwise unavailable
 from standard Linux tools. Users of SystemTap will find it to be a significant
@@ -989,8 +989,8 @@ General syntax:
 
 \begin{vindent}
 \begin{verbatim}
-kernel.function("func[@file]"
-module("modname").function("func[@file]"
+kernel.function("func[@file]")
+module("modname").function("func[@file]")
 \end{verbatim}
 \end{vindent}
 Examples:
