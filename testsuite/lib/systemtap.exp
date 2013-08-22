@@ -9,88 +9,83 @@ proc installtest_p {} {
 }
 
 
-# only original rhel5/6-era utrace need apply
-proc utrace_orig_p {} {
-    set path "/proc/kallsyms"
-    if {! [catch {exec grep -q utrace_attach $path} dummy]} {
+proc grep_kallsyms { pattern } {
+    if {! [catch {exec grep -q "$pattern" "/proc/kallsyms"} dummy]} {
 	return 1
     }
     return 0
 }
 
 
+# Test for kernel built-in utrace (CONFIG_UTRACE).
+# Only original rhel5/6-era utrace need apply.
+proc utrace_orig_p {} {
+    # We want utrace_attach (rhel5) or utrace_attach_task (rhel6), but don't
+    # get confused by the private module version of any active stap module.
+    return [grep_kallsyms "T utrace_attach"]
+}
+
+
+# Test for tracepoint-based utrace, or rather the in-kernel
+# facilities which enable our emulation of utrace.
+proc utrace_emu_p {} {
+    # Check for the set of 5 tracepoints we need and task_work_add()
+    # (see runtime/autoconf-utrace-via-tracepoints.c for details).
+    return [expr [grep_kallsyms task_work_add]                  \
+              && [grep_kallsyms tracepoint_sched_process_fork]  \
+              && [grep_kallsyms tracepoint_sched_process_exec]  \
+              && [grep_kallsyms tracepoint_sched_process_exit]  \
+              && [grep_kallsyms tracepoint_sys_enter]           \
+              && [grep_kallsyms tracepoint_sys_exit]            \
+           ]
+}
+
+
+# Test for utrace - any flavor will do...
 proc utrace_p {} {
-    set path "/proc/kallsyms"
-    # We've got 2 ways to provide utrace support:
+    return [expr [utrace_orig_p] || [utrace_emu_p] ]
+}
+
+
+proc classic_uprobes_p {} {
+    # If this is a utrace kernel, then we can use our version of uprobes.
+    # No need to build it now, stap will handle that itself.
     #
-    # (1) Kernel built-in utrace (CONFIG_UTRACE).  Look for
-    # 'utrace_attach'.
-    if {! [catch {exec grep -q utrace_attach $path} dummy]} {
-	return 1
+    # Although ia64 has classical utrace, uprobes hasn't been
+    # ported there (PR7081).
+    return [expr [utrace_orig_p] && ! [istarget ia64-*-*] ]
+}
 
-    # (2) Tracepoint-based utrace.  Check for the set of 5 tracepoints
-    # we need and task_work_add() (see
-    # runtime/autoconf-utrace-via-tracepoints.c for details).
-    } elseif {! [catch {exec grep -q tracepoint_sched_process_fork $path} dummy]
-	      && ! [catch {exec grep -q tracepoint_sched_process_exit $path} dummy]
-	      && ! [catch {exec grep -q tracepoint_sys_enter $path} dummy]
-	      && ! [catch {exec grep -q tracepoint_sys_exit $path} dummy]
-
-	      && ! [catch {exec grep -q tracepoint_sched_process_exec $path} dummy]
-	      && ! [catch {exec grep -q task_work_add $path} dummy]} {
-        return 1
-    }
-    return 0
+proc inode_uprobes_p {} {
+    # inode-uprobes (or unlikely compiled-in classical uprobes?)
+    #
+    # Note we're looking for " uprobe_register" to avoid finding
+    # 'kallsyms_uprobe_register' from a loaded systemtap module.
+    return [expr [grep_kallsyms register_uprobe]        \
+              || [grep_kallsyms " uprobe_register"]     \
+           ]
 }
 
 
 proc uprobes_p {} {
-    set path "/proc/kallsyms"
-    # If this is a utrace kernel, then we can use our version of uprobes.
-    # No need to build it now, stap will handle that itself.
-    #
-    # classical utrace?
-    if {! [catch {exec grep -q utrace_attach $path} dummy]} {
-	# Although ia64 has classical utrace, uprobes hasn't been
-	# ported there (PR7081).
-	if {[istarget ia64-*-*]} {
- 	    return 0
-	}
-	return 1
-    }
-
-    # inode-uprobes or (unlikely compiled-in classical uprobes?)
-    #
-    # Note we're looking for " uprobe_register" to avoid finding
-    # 'kallsyms_uprobe_register' from a loaded systemtap module.
-    if {! [catch {exec grep -q register_uprobe $path} dummy]
-	|| ! [catch {exec grep -q " uprobe_register" $path} dummy]} {
-	return 1
-    }
-    return 0
+    return [expr [classic_uprobes_p] || [inode_uprobes_p] ]
 }
 
 
-proc inode_uprobes_p {} {
-    set path "/proc/kallsyms"
-
-    # Note we're looking for " uprobe_register" to avoid finding
-    # 'kallsyms_uprobe_register' from a loaded systemtap module.
-    if {! [catch {exec grep -q " uprobe_register" $path} dummy]} {
-	return 1
-    }
-    return 0
+proc classic_uretprobes_p {} {
+    # Classic uprobes always has uretprobes
+    return [classic_uprobes_p]
 }
 
+proc inode_uretprobes_p {} {
+    # inode-uprobes, now with return probes!  Looking for any mention of
+    # uretprobe, notably arch_uretprobe_hijack_return_addr
+    return [expr [inode_uprobes_p] && [grep_kallsyms uretprobe] ]
+}
 
 proc uretprobes_p {} {
-    set path "/proc/kallsyms"
-    if {! [uprobes_p]} { return 0 }
-    if {! [catch {exec grep -q uretprobe $path} dummy]} { return 1 }
-    if {! [catch {exec grep -q utrace_attach $path} dummy]} { return 1 }
-    return 0
+    return [expr [classic_uretprobes_p] || [inode_uretprobes_p] ]
 }
-
 
 
 proc dyninst_p {} {

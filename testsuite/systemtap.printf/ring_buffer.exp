@@ -1,12 +1,7 @@
 # Basic ring_buffer test.
 
 proc ring_buffer_p {} {
-    set path "/proc/kallsyms"
-    if {! [catch {exec grep -q ring_buffer_consume $path} dummy]} {
-        return 1
-    } else {
-        return 0
-    }
+    return [grep_kallsyms ring_buffer_consume]
 }
 
 set script {
