@@ -66,6 +66,40 @@ proc test_embedded_C { privilege test_fraction } {
 	    continue
 	}
 	    
+	# We need to ignore the stub functions in registers.stp that
+	# get overridden by arch-specific functions in
+	# $ARCH/registers.stp.
+	if { $status == "no embedded C" } {
+	    switch "$prototype" {
+		"register (string)" -
+		"u_register (string)" -
+		"int_arg (long)" -
+		"uint_arg (long)" -
+		"long_arg (long)" -
+		"ulong_arg (long)" -
+		"longlong_arg (long)" -
+		"ulonglong_arg (long)" -
+		"pointer_arg (long)" -
+		"s32_arg (long)" -
+		"u32_arg (long)" -
+		"s64_arg (long)" -
+		"u64_arg (long)" -
+		"asmlinkage()" -
+		"fastcall()" -
+		"regparm(long)"
+		{
+		    # Note that we only want to ignore the first mention
+		    # for each function. If the "real" function is "no
+		    # embedded C", we'll go ahead and test it the 2nd
+		    # time we see it.
+		    if { ![info exists stub_seen($info)] } {
+			set stub_seen($info) 1
+			continue
+		    }
+		}
+	    }
+	}
+
 	# Deprecated functions will be untested
 	switch "$prototype" {
 	    "cpuid ()"
