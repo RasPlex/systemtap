@@ -161,6 +161,13 @@ proc add_args { probe_type pid } {
     # Replace "library(string).statement(string)" with "library(string).statement("libloopfunc@libloop.c:*")"
     regsub -all "library\\(string\\).statement\\(string\\)" $probe "library(string).statement(\"libloopfunc@libloop.c:*\")" probe
 
+    # Replace "library(string).plt.statement(number)" with
+    # "library(string).plt.statement($addr_of_libloopfunc)"
+    regsub -all "library\\(string\\).plt.statement\\(number\\)" $probe "library(string).plt.statement($addr_of_libloopfunc)" probe
+    # Replace "library(string).plt(string).statement(number)" with
+    # "library(string).plt(string).statement($addr_of_libloopfunc)"
+    regsub -all "library\\(string\\).plt\\(string\\).statement\\(number\\)" $probe "library(string).plt(string).statement($addr_of_libloopfunc)" probe
+
     # Replace "statement(number)" with "statement($addr_of_bar)"
     regsub -all "statement\\(number\\)" $probe "statement($addr_of_bar)" probe
     # Replace "statement(string)" with "statement("bar@loop.c:*")"
@@ -283,8 +290,6 @@ proc test_probes { privilege } {
 	    process.function(string).return -
 	    process.library(string).function(number).return -
 	    process.library(string).function(string).return -
-	    process(number).statement(number).absolute -
-	    process(number).statement(number).absolute.return -
 	    process(string).function(number).return -
 	    process(string).function(string).return -
 	    process(string).library(string).function(number).return -
@@ -292,21 +297,27 @@ proc test_probes { privilege } {
 	    {
 		if {![uretprobes_p]} { setup_kfail URETPROBES *-*-* }
 	    }
+	    process(number).statement(number).absolute
+	    {
+		# Inode uprobes don't support 'absolute' probes.
+		if {[inode_uprobes_p]} { setup_kfail INODE_UPROBES *-*-* }
+	    }
+	    process(number).statement(number).absolute.return
+	    {
+		# 'absolute.return' probes could fail because we're
+		# using inode uprobes or we don't have uretprobes.
+		if {[inode_uprobes_p]} {
+		    setup_kfail INODE_UPROBES *-*-*
+		} elseif {![uretprobes_p]} {
+		    setup_kfail URETPROBES *-*-*
+		}
+	    }
 	    process(number).insn -
 	    process(number).insn.block -
 	    process(string).insn -
 	    process(string).insn.block
 	    {
 		if {![utrace_orig_p]} { setup_kfail ITRACE *-*-* }
-	    }
-	    process(string).library(string).plt.statement(number) -
-	    process(string).library(string).plt(string).statement(number) -
-	    process.library(string).plt.statement(number) -
-	    process.library(string).plt(string).statement(number)
-	    {
-		if {$privilege == "stapusr"} {
-		    setup_xfail *-*-*
-		}
 	    }
 	}
 
