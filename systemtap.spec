@@ -55,7 +55,7 @@ Release: 1%{?dist}
 # local user:            systemtap
 #
 # Unusual scenarios:
-# 
+#
 # intermediary stap-client for --remote:       systemtap-client (-runtime unused)
 # intermediary stap-server for --use-server:   systemtap-server (-devel unused)
 
@@ -203,8 +203,8 @@ Requires: coreutils grep sed unzip zip
 Requires: openssh-clients
 
 %description client
-This package contains/requires the components needed to develop 
-systemtap scripts, and compile them using a local systemtap-devel 
+This package contains/requires the components needed to develop
+systemtap scripts, and compile them using a local systemtap-devel
 or a remote systemtap-server installation, then run them using a
 local or remote systemtap-runtime.  It includes script samples and
 documentation, and a copy of the tapset library for reference.
@@ -596,7 +596,11 @@ exit 0
 
 %triggerin runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
-    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %ifarch ppc64
+        arch=ppc64
+    %else
+        arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
         ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
         ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
@@ -605,7 +609,11 @@ done
 
 %triggerun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
-    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %ifarch ppc64
+        arch=ppc64
+    %else
+        arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
         rm -f ${archdir}/libHelperSDT_${arch}.so
         rm -f ${archdir}/../ext/HelperSDT.jar
@@ -615,7 +623,11 @@ done
 %triggerpostun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 # Restore links for any JDKs remaining after a package removal:
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
-    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %ifarch ppc64
+        arch=ppc64
+    %else
+        arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
         ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
         ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
