@@ -41,7 +41,7 @@
  * data is not accessible.
  */
 function user_string:string (addr:long) {
-	return user_string_n(addr, %{ MAXSTRINGLEN %} )
+	return user_string_n(addr, @MAXSTRINGLEN)
 }
 
 /**
@@ -55,7 +55,7 @@ function user_string:string (addr:long) {
  * userspace data is not accessible.
  */
 function user_string2:string (addr:long, err_msg:string) {
-	return user_string_n2(addr, %{ MAXSTRINGLEN %}, err_msg)
+	return user_string_n2(addr, @MAXSTRINGLEN, err_msg)
 }
 
 /**
@@ -88,7 +88,7 @@ function user_string_warn:string (addr:long) {
  * about the failure.
  */
 function user_string2_warn:string (addr:long, warn_msg:string) {
-	return user_string2_n_warn(addr, %{ MAXSTRINGLEN %}, warn_msg)
+	return user_string2_n_warn(addr, @MAXSTRINGLEN, warn_msg)
 }
 
 /**
@@ -104,7 +104,7 @@ function user_string2_warn:string (addr:long, warn_msg:string) {
  * returned as a string, without double quotes.
  */
 function user_string_quoted:string (addr:long) {
-	return user_string_n_quoted(addr, %{ MAXSTRINGLEN %})
+	return user_string_n_quoted(addr, @MAXSTRINGLEN)
 }
 
 /**

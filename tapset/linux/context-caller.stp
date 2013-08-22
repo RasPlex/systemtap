@@ -35,7 +35,7 @@ function callers:string (n:long) {
                  @__context_unwind_error(n)
              }
              // ensure string cuts off cleanly at MAXSTRINGLEN:
-             l += strlen(foo); if (l > %{ MAXSTRINGLEN %}) break    
+             l += strlen(foo); if (l > @MAXSTRINGLEN) break    
              str .= foo
          }
          return str

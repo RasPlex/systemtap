@@ -165,7 +165,7 @@ function sprint_usyms (callers:string) {
                __line = sprintf (" %s : %s\n", __sym,
                 usymdata (strtol(__sym,16)));
                __l += strlen(__line)
-               if (__l > %{ MAXSTRINGLEN %}) break
+               if (__l > @MAXSTRINGLEN) break
                __foo .= __line
                __sym = tokenize ("", " ")
          }

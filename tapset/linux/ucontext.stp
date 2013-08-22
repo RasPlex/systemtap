@@ -52,7 +52,7 @@ function ucallers:string (n:long) {
                  @__context_unwind_error(n)
              }
              // ensure string cuts off cleanly at MAXSTRINGLEN:
-             __l += strlen(__foo); if (__l > %{ MAXSTRINGLEN %}) break
+             __l += strlen(__foo); if (__l > @MAXSTRINGLEN) break
              __str .= __foo
          }
          return __str

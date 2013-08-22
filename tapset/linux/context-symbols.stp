@@ -292,7 +292,7 @@ function sprint_syms (callers:string) {
                // cleanly handle overflow instead of printing partial line:
                __line = sprintf (" %s : %s\n", __sym, symdata (strtol(__sym,16)));
                __l += strlen(__line)
-               if (__l > %{ MAXSTRINGLEN %}) break
+               if (__l > @MAXSTRINGLEN) break
                __foo .= __line
                __sym = tokenize ("", " ")
          }
