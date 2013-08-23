@@ -1,4 +1,4 @@
-#!/usr/bin/bash 
+#!/usr/bin/bash
 
 function determine_apply_diff() {
 
@@ -54,6 +54,15 @@ fedpkg co systemtap
 cd systemtap
 
 git diff systemtap.spec ../systemtap-git/systemtap.spec > ../spec-diff
+
+# We don't need to know the difference in spec changelogs
+# changelogs should only ever grow, make sure we also trim the %changelog
+# context lines as well
+
+sed -i '/\%changelog/,$d' ../spec-diff
+tac ../spec-diff | sed '1,3d' | tac > spec-diff
+mv spec-diff ../spec-diff
+
 if [ -s ../spec-diff ]; then
     cat ../spec-diff
     echo "The above changes will apply to the fedora git tree,"
@@ -89,6 +98,6 @@ echo "Please ensure that you have an up to date fedoraproject SSL certificate, y
 
 fedpkg new-sources systemtap-$CHANGELOG_VERSION-$GIT_VERSION_TAG.tar.gz
 
-fedpkg commit -m "Automated weekly systemtap rawhide release: $GIT_VERSION_TAG" -p 
+fedpkg commit -m "Automated weekly systemtap rawhide release: $GIT_VERSION_TAG" -p
 
 fedpkg build
