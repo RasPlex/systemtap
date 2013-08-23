@@ -1,5 +1,5 @@
 .\" t
-.TH WARNING::DEBUGINFO 7stap 
+.TH WARNING::DEBUGINFO 7stap
 .SH NAME
 warning::debuginfo \- systemtap missing-debuginfo warnings
 
@@ -7,7 +7,7 @@ warning::debuginfo \- systemtap missing-debuginfo warnings
 For many symbolic probing operations, systemtap needs DWARF debuginfo for
 the relevant binaries.  This often includes resolving function/statement
 probes, or $context variables in related handlers.  DWARF debuginfo may
-be found in the original binaries built during compilation, or may have 
+be found in the original binaries built during compilation, or may have
 been split into separate files.  The
 .IR SYSTEMTAP_DEBUGINFO_PATH
 environment variable affects where systemtap looks for these files.
@@ -20,8 +20,8 @@ not have debuginfo-equipped binaries at all, you may need to rebuild it.
 kernel debuginfo
 For scripts that target the kernel, systemtap may search for the
 .IR vmlinux
-file created during its original build.  This is distinct from the 
-boot-loader's compressed/stripped 
+file created during its original build.  This is distinct from the
+boot-loader's compressed/stripped
 .IR vmlinuz
 file, and much larger.  If you have a hand-built kernel, make sure
 it was built with the
@@ -31,9 +31,17 @@ option.
 .TP
 process debuginfo
 For scripts that target user-space, systemtap may search for debuginfo.
-If you have hand-built binaries, use 
+If you have hand-built binaries, use
 .IR "CFLAGS=-g -O2"
 to compile them.
+
+.TP
+minidebuginfo
+On some systems, binaries may be compiled with a subset of debuginfo
+useful for function tracing and backtraces.  This 'Minidebuginfo' is
+a xz compressed section labeled .gnu_debugdata.  Support for
+minidebuginfo relies on elfutils
+version 0.156.
 
 .TP
 unnecessary debuginfo
@@ -45,12 +53,12 @@ probes could try instead
 (for non-DWARF syscall): these work similarly, and use more intricate
 (fragile) tapset functions to extract system call arguments.  Another
 option is use of compiled-in instrumentation such as kernel tracepoints
-or user-space 
+or user-space
 .IR <sys/sdt.h>
 markers in libraries or executables, which do not require debuginfo.
 If debuginfo was required for resolving a complicated
 .IR $var->foo->bar
-expression, it may be possible to use 
+expression, it may be possible to use
 .IR @cast(var,"foo","foo.h")->foo->bar
 to synthesize debuginfo for that type from a header file.
 
@@ -63,9 +71,9 @@ with the
 flag.
 The
 .IR stap-prep
-script included with systemtap may be able to download the 
+script included with systemtap may be able to download the
 appropriate kernel debuginfo.  Another possibility is to install and
-use a 
+use a
 .IR stap\-server
 remote-compilation instance on a machine on your network, where
 debuginfo and compilation resources can be centralized.  Try the
@@ -77,5 +85,6 @@ option, in case such a server is already running.
 .IR stappaths (7),
 .IR stap-server (8),
 .IR strip (1),
-.IR error::reporting (7stap)
-.IR error::contextvars (7stap)
+.IR error::reporting (7stap),
+.IR error::contextvars (7stap),
+.IR http://fedoraproject.org/wiki/Features/MiniDebugInfo

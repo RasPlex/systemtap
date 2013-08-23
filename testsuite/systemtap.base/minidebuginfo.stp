@@ -1,0 +1,3 @@
+#!/usr/bin/env stap
+
+probe process("binary").function("*") {log(probefunc())}

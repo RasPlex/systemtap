@@ -1,0 +1,23 @@
+set test "minidebuginfo"
+
+if {![installtest_p]} { untested $test; return }
+
+catch { exec gcc -o binary -g $srcdir/$subdir/minidebug.c } err
+
+if {$err == ""} then { pass "$test compile" } else { fail "$test compile $err" }
+
+catch { exec $srcdir/$subdir/create-minidebug.sh } err
+if {$err == ""} then { pass "$test create minidebug" } else { fail "$test create-minidebug.sh $err" }
+spawn stap $srcdir/$subdir/minidebuginfo.stp -c "./binary"
+set ok 0
+expect {
+    -timeout 30
+    -re {[^\r\n]*main\r\n} { incr ok; exp_continue }
+    -re {[^\r\n]*bar\r\n} { incr ok; exp_continue }
+    -re {[^\r\n]*foo\r\n} { incr ok; exp_continue }
+    eof { }
+    timeout { fail "$test (timeout)" }
+}
+catch { close }; wait
+if {$ok == 3} then { pass "$test ($ok)" } else { fail "$test ($ok)" }
+catch { exec rm binary mini_debuginfo.xz dynsyms funcsyms keep_symbols } err
