@@ -55,15 +55,18 @@ cd systemtap
 
 git diff systemtap.spec ../systemtap-git/systemtap.spec > ../spec-diff
 
-# We don't need to know the difference in spec changelogs
-# changelogs should only ever grow, make sure we also trim the %changelog
-# context lines as well
-
-sed -i '/\%changelog/,$d' ../spec-diff
-tac ../spec-diff | sed '1,3d' | tac > spec-diff
-mv spec-diff ../spec-diff
-
 if [ -s ../spec-diff ]; then
+    CHANGELOG_PRESENT=`grep \%changelog ../spec-diff`
+    # the space in front of %changelog is because its a diff context line
+    if [ "$CHANGELOG_PRESENT" == " %changelog" ]; then
+	# We don't need to know the difference in spec changelogs
+	# changelogs should only ever grow, make sure we also trim the %changelog
+	# context lines as well
+	sed -i '/\%changelog/,$d' ../spec-diff
+	tac ../spec-diff | sed '1,3d' | tac > spec-diff
+	mv spec-diff ../spec-diff
+    fi
+    # end changelog diff if
     cat ../spec-diff
     echo "The above changes will apply to the fedora git tree,"
     echo "would you like to apply the patch? (yes/no):"
