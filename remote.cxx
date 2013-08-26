@@ -305,6 +305,8 @@ class stapsh : public remote {
         fdin(-1), fdout(-1), IN(0), OUT(0)
       {}
 
+    vector<string> options;
+
     virtual int prepare()
       {
         int rc = 0;
@@ -426,6 +428,25 @@ class stapsh : public remote {
         this->remote_version = uname[1];
 
         this->s = s->clone(uname[2], uname[3]);
+
+        // set any option requested
+        if (!this->options.empty())
+          {
+            // check first if the option command is supported
+            if (strverscmp("2.4", this->remote_version.c_str()) > 0)
+              throw runtime_error(_F("stapsh %s does not support options",
+                                            this->remote_version.c_str()));
+
+            for (vector<string>::iterator it = this->options.begin();
+                it != this->options.end(); ++it)
+              {
+                send_command("option " + *it + "\n");
+                string reply = get_reply();
+                if (reply != "OK\n")
+                  throw runtime_error(_F("could not set option %s: %s",
+                                          it->c_str(), reply.c_str()));
+              }
+          }
       }
 
   public:
@@ -496,6 +517,10 @@ class unix_stapsh : public stapsh {
     unix_stapsh(systemtap_session& s, const uri_decoder& ud)
       : stapsh(s)
       {
+        // set verbosity to the requested level
+        for (unsigned i = 1; i < s.perpass_verbose[4]; i++)
+          this->options.push_back("verbose");
+
         sockaddr_un server;
         server.sun_family = AF_UNIX;
         if (ud.path.empty())

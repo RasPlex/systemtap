@@ -18,6 +18,13 @@
 //            to facilitate compatibility checks, in case the protocol needs to
 //            change.  MACHINE and RELEASE are reported as given by uname.
 //
+//   command: option OPTIONNAME
+//     reply: OK / error message
+//      desc: Enables the option OPTIONNAME. Introduced in v2.4. Currently
+//            supported options are:
+//
+//            verbose: Increases verbosity of debug statements.
+//
 //   command: file SIZE NAME
 //            DATA
 //     reply: OK / error message
@@ -72,6 +79,7 @@ struct stapsh_handler {
 
 
 static int do_hello(void);
+static int do_option(void);
 static int do_file(void);
 static int do_run(void);
 static int do_quit(void);
@@ -82,6 +90,7 @@ static const int signals[] = {
 
 static const struct stapsh_handler commands[] = {
       { "stap", do_hello },
+      { "option", do_option },
       { "file", do_file },
       { "run", do_run },
       { "quit", do_quit },
@@ -94,6 +103,16 @@ static pid_t staprun_pid = -1;
 
 static unsigned verbose = 0;
 
+struct stapsh_option {
+  const char* name;
+  unsigned* var;
+};
+
+static const struct stapsh_option options[] = {
+  { "verbose", &verbose },
+};
+static const unsigned noptions = sizeof(options) / sizeof(*options);
+
 #define dbug(level, format, args...) do { if (verbose >= level)                \
     fprintf (stderr, "stapsh:%s:%d " format, __FUNCTION__, __LINE__, ## args); \
   } while (0)
@@ -104,6 +123,22 @@ static unsigned verbose = 0;
   } } while (0)
 
 #define die(format, args...) ({ dbug(1, format, ## args); cleanup(2); })
+
+
+// Send a reply back to the client on stdout
+static int __attribute__ ((format (printf, 1, 2)))
+reply(const char* format, ...)
+{
+  va_list args, dbug_args;
+  va_start (args, format);
+  va_copy (dbug_args, args);
+  vdbug (1, format, dbug_args);
+  int ret = vprintf (format, args);
+  fflush (stdout);
+  va_end (dbug_args);
+  va_end (args);
+  return ret;
+}
 
 
 static void __attribute__ ((noreturn))
@@ -233,22 +268,6 @@ qpdecode(char* s)
 }
 
 
-// Send a reply back to the client on stdout
-static int __attribute__ ((format (printf, 1, 2)))
-reply(const char* format, ...)
-{
-  va_list args, dbug_args;
-  va_start (args, format);
-  va_copy (dbug_args, args);
-  vdbug (1, format, dbug_args);
-  int ret = vprintf (format, args);
-  fflush (stdout);
-  va_end (dbug_args);
-  va_end (args);
-  return ret;
-}
-
-
 static int
 do_hello()
 {
@@ -263,6 +282,26 @@ do_hello()
 
   reply ("stapsh %s %s %s\n", VERSION, uts.machine, uts.release);
   return 0;
+}
+
+static int
+do_option()
+{
+  char *opt = strtok(NULL, STAPSH_TOK_DELIM);
+  if (opt == NULL)
+    return reply("ERROR: Could not parse option\n");
+
+  // find and affect option
+  unsigned i;
+  for (i = 0; i < noptions; ++i)
+    if (strcmp(opt, options[i].name) == 0)
+      {
+        dbug(2, "turning on option %s\n", opt);
+        (*options[i].var)++;
+        reply("OK\n");
+        return 0;
+      }
+  return reply("ERROR: Invalid option\n");
 }
 
 static int
