@@ -23,6 +23,14 @@
 //      desc: Enables the option OPTIONNAME. Introduced in v2.4. Currently
 //            supported options are:
 //
+//            data: Causes data output from staprun to be prefixed by a line
+//            with the format "data stream size" where stream is either
+//            "stdout" or "stderr" and size is the size of the data. It also
+//            causes stapsh to send a "quit" message right before it leaves.
+//            This is necessary in conditions where stap cannot detect the
+//            state of stapsh from its pipes, such as when using a
+//            virtio-serial port.
+//
 //            verbose: Increases verbosity of debug statements.
 //
 //   command: file SIZE NAME
@@ -66,6 +74,8 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
+#include <fcntl.h>
+#include <poll.h>
 
 #define STAPSH_TOK_DELIM " \t\r\n"
 #define STAPSH_MAX_FILE_SIZE 32000000 // XXX should be cumulative?
@@ -100,7 +110,15 @@ static const unsigned ncommands = sizeof(commands) / sizeof(*commands);
 static char tmpdir[FILENAME_MAX] = "";
 
 static pid_t staprun_pid = -1;
+static int fd_staprun_out = -1;
+static int fd_staprun_err = -1;
 
+struct pollfd pfds[3];
+#define PFD_STAP_OUT    0
+#define PFD_STAPRUN_OUT 1
+#define PFD_STAPRUN_ERR 2
+
+static unsigned prefix_data = 0;
 static unsigned verbose = 0;
 
 struct stapsh_option {
@@ -110,6 +128,7 @@ struct stapsh_option {
 
 static const struct stapsh_option options[] = {
   { "verbose", &verbose },
+  { "data", &prefix_data },
 };
 static const unsigned noptions = sizeof(options) / sizeof(*options);
 
@@ -175,6 +194,18 @@ cleanup(int status)
       if (!posix_spawnp(&pid, argv[0], NULL, NULL,
                         (char* const*)argv, environ))
         waitpid(pid, NULL, 0);
+    }
+
+  // Announce we're quitting if prefixing is on. Schemes that use the "data"
+  // option (e.g. unix and libvirt) are not able to detect when stapsh exits and
+  // thus need this announcement to close the connection.
+  if (prefix_data)
+    reply("quit\n");
+
+  if (listening_port)
+    {
+      fclose(stapsh_in);
+      fclose(stapsh_out);
     }
 
   exit(status);
@@ -363,6 +394,105 @@ do_file()
   return ret;
 }
 
+// From util.cxx
+static int
+pipe_child_fd(posix_spawn_file_actions_t* fa, int pipefd[2], int childfd)
+{
+  if (pipe(pipefd))
+    return -1;
+
+  int err = 0;
+  int dir = childfd ? 1 : 0;
+  if (!fcntl(pipefd[0], F_SETFD, FD_CLOEXEC) &&
+      !fcntl(pipefd[1], F_SETFD, FD_CLOEXEC) &&
+      !(err = posix_spawn_file_actions_adddup2(fa, pipefd[dir], childfd)))
+    return 0;
+
+  int olderrno = errno;
+  close(pipefd[0]);
+  close(pipefd[1]);
+  return err ?: olderrno;
+}
+
+// based on stap_spawn_piped from util.cxx
+static pid_t
+spawn_staprun_piped(char** args)
+{
+  pid_t pid = -1;
+  int outfd[2], errfd[2];
+  posix_spawn_file_actions_t fa;
+
+  int err;
+  if ((err = posix_spawn_file_actions_init(&fa)) != 0)
+    {
+      reply("ERROR: Can't initialize posix_spawn actions: %s\n", strerror(err));
+      return -1;
+    }
+  if ((err = pipe_child_fd(&fa, outfd, 1)) != 0)
+    {
+      reply("ERROR: Can't create pipe for stdout: %s\n", strerror(err));
+      goto cleanup_fa;
+    }
+  if ((err = pipe_child_fd(&fa, errfd, 2)) != 0)
+    {
+      reply("ERROR: Can't create pipe for stderr: %s\n", strerror(err));
+      goto cleanup_out;
+    }
+
+  posix_spawn(&pid, args[0], &fa, NULL, args, environ);
+
+  if (pid > 0)
+    fd_staprun_err = errfd[0];
+  else
+    close(errfd[0]);
+  close(errfd[1]);
+
+cleanup_out:
+
+  if (pid > 0)
+    fd_staprun_out = outfd[0];
+  else
+    close(outfd[0]);
+  close(outfd[1]);
+
+cleanup_fa:
+
+  posix_spawn_file_actions_destroy(&fa);
+  return pid;
+}
+
+static pid_t
+spawn_staprun(char** args)
+{
+  pid_t pid = -1;
+  posix_spawn_file_actions_t fa;
+
+  int err;
+  if ((err = posix_spawn_file_actions_init(&fa)) != 0)
+    {
+      reply ("ERROR: Can't initialize posix_spawn actions: %s\n", strerror(err));
+      return -1;
+    }
+
+  // no stdin for staprun
+  if ((err = posix_spawn_file_actions_addopen(&fa, 0, "/dev/null", O_RDONLY, 0)) != 0)
+    {
+      reply("ERROR: Can't set posix_spawn actions: %s\n", strerror(err));
+      posix_spawn_file_actions_destroy(&fa);
+      return -1;
+    }
+
+  if ((err = posix_spawn(&pid, args[0], &fa, NULL, args, environ)) != 0)
+    {
+      reply("ERROR: Can't launch staprun: %s\n", strerror(err));
+      posix_spawn_file_actions_destroy(&fa);
+      return -1;
+    }
+
+  posix_spawn_file_actions_destroy(&fa);
+  return pid;
+}
+
 static int
 do_run()
 {
@@ -390,35 +520,87 @@ do_run()
   if (access(staprun, X_OK) != 0)
     return reply ("ERROR: can't execute %s (%s)\n", staprun, strerror(errno));
 
-  int ret = 0;
-  posix_spawn_file_actions_t fa;
-  if (posix_spawn_file_actions_init(&fa) != 0)
-    return reply ("ERROR: can't initialize posix_spawn actions\n");
-
-  // no stdin for staprun
-  if (posix_spawn_file_actions_addopen(&fa, 0, "/dev/null", O_RDONLY, 0) != 0)
-    ret = reply ("ERROR: can't set posix_spawn actions\n");
+  pid_t pid;
+  if (prefix_data)
+    pid = spawn_staprun_piped(args);
   else
+    pid = spawn_staprun(args);
+
+  if (pid <= 0)
     {
-      pid_t pid;
-      ret = posix_spawn(&pid, args[0], &fa, NULL, args, environ);
-      if (ret == 0)
-        staprun_pid = pid;
-      else
-        reply("ERROR: can't launch staprun\n");
+      staprun_pid = fd_staprun_out = fd_staprun_err = -1;
+      return reply ("ERROR: Failed to spawn staprun\n");
     }
 
-  posix_spawn_file_actions_destroy(&fa);
+  if (prefix_data)
+    {
+      // make staprun fds non-blocking and prep polling array
+      long flags;
+      flags = fcntl(fd_staprun_out, F_GETFL) | O_NONBLOCK;
+      fcntl(fd_staprun_out, F_SETFL, flags);
+      flags = fcntl(fd_staprun_err, F_GETFL) | O_NONBLOCK;
+      fcntl(fd_staprun_err, F_SETFL, flags);
 
-  if (ret == 0)
-    reply ("OK\n");
-  return ret;
+      pfds[PFD_STAPRUN_OUT].fd = fd_staprun_out;
+      pfds[PFD_STAPRUN_OUT].events = POLLIN;
+      pfds[PFD_STAPRUN_ERR].fd = fd_staprun_err;
+      pfds[PFD_STAPRUN_ERR].events = POLLIN;
+    }
+
+  staprun_pid = pid;
+  reply ("OK\n");
+  return 0;
 }
 
 static int
 do_quit()
 {
   cleanup(0);
+}
+
+static void
+process_command(void)
+{
+  char command[4096];
+
+  // This could technically block if only a partial command is received, but
+  // stap commands are short and always end in \n. Even if we do block it's not
+  // so bad a thing.
+  if (fgets(command, sizeof(command), stdin) == NULL)
+    return;
+
+  dbug(1, "command: %s", command);
+  const char* arg = strtok(command, STAPSH_TOK_DELIM) ?: "(null)";
+
+  unsigned i;
+  for (i = 0; i < ncommands; ++i)
+    if (strcmp(arg, commands[i].name) == 0)
+      {
+        int rc = commands[i].fn();
+        if (rc)
+          dbug(2, "failed command %s, rc=%d\n", arg, rc);
+        break;
+      }
+
+  if (i >= ncommands)
+    dbug(2, "invalid command %s\n", arg);
+}
+
+static void
+prefix_staprun(int fdin, FILE *out, const char *stream)
+{
+  char buf[4096];
+  ssize_t n = read(fdin, buf, sizeof buf);
+  if (n > 0)
+    {
+      // actually check if we need to prefix data (we could also be piping for
+      // other reasons, e.g. listening_mode != NULL)
+      if (prefix_data)
+        fprintf(out, "data %s %zd\n", stream, n);
+      if (fwrite(buf, n, 1, out) != 1)
+        dbug(2, "failed fwrite\n"); // appease older gccs (don't ignore fwrite rc)
+      fflush(out);
+    }
 }
 
 int
@@ -436,23 +618,24 @@ main(int argc, char* const argv[])
   if (chdir(tmpdir))
     die ("Can't change to temporary working directory \"%s\"!\n", tmpdir);
 
-  char command[4096];
-  while (fgets(command, sizeof(command), stdin))
+  // Prep pfds. For now we're only interested in commands from stap, and we
+  // don't poll staprun until it is started.
+  pfds[PFD_STAP_OUT].fd = fileno(stdin);
+  pfds[PFD_STAP_OUT].events = POLLIN | POLLHUP;
+  pfds[PFD_STAPRUN_OUT].events = 0;
+  pfds[PFD_STAPRUN_ERR].events = 0;
+
+  for (;;)
     {
-      dbug(1, "command: %s", command);
-      int rc = -1;
-      unsigned i;
-      const char* arg = strtok(command, STAPSH_TOK_DELIM) ?: "(null)";
-      for (i = 0; i < ncommands; ++i)
-        if (strcmp(arg, commands[i].name) == 0)
-          {
-            rc = commands[i].fn();
-            if (rc)
-              dbug(2, "failed command %s, rc=%d\n", arg, rc);
-            break;
-          }
-      if (i >= ncommands)
-        dbug(2, "invalid command %s\n", arg);
+      poll(pfds, staprun_pid > 0 ? 3 : 1, -1);
+      if (pfds[PFD_STAP_OUT].revents & POLLHUP)
+        break;
+      if (pfds[PFD_STAP_OUT].revents & POLLIN)
+        process_command();
+      if (pfds[PFD_STAPRUN_OUT].revents & POLLIN)
+        prefix_staprun(pfds[PFD_STAPRUN_OUT].fd, stdout, "stdout");
+      if (pfds[PFD_STAPRUN_ERR].revents & POLLIN)
+        prefix_staprun(pfds[PFD_STAPRUN_ERR].fd, stderr, "stderr");
     }
 
   cleanup(0);
