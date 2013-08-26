@@ -165,7 +165,12 @@ static FILE *stapsh_in, *stapsh_out, *stapsh_err;
     vfprintf (stapsh_err, format, args);                             \
   } } while (0)
 
-#define die(format, args...) ({ dbug(1, format, ## args); cleanup(2); })
+#define die(format, args...) do {                                    \
+  if (host_connected()) {                                            \
+    dbug(1, format, ## args);                                        \
+    fprintf(stapsh_err, ": %s (%d)\n", strerror(errno), errno); }    \
+  cleanup(2); } while (0)
+
 
 
 // Send a reply back to the client on stdout
@@ -376,19 +381,19 @@ do_file()
   if (arg)
     size = atoi(arg);
   if (size <= 0 || size > STAPSH_MAX_FILE_SIZE)
-    return reply ("ERROR: bad file size %d\n", size);
+    return reply ("ERROR: Bad file size %d\n", size);
 
   const char* name = strtok(NULL, STAPSH_TOK_DELIM);
   if (!name)
-    return reply ("ERROR: missing file name\n");
+    return reply ("ERROR: Missing file name\n");
   for (arg = name; *arg; ++arg)
     if (!isalnum(*arg) &&
         !(arg > name && (*arg == '.' || *arg == '_')))
-      return reply ("ERROR: bad character '%c' in file name\n", *arg);
+      return reply ("ERROR: Bad character '%c' in file name\n", *arg);
 
   FILE* f = fopen(name, "w");
   if (!f)
-    return reply ("ERROR: can't open file \"%s\" for writing\n", name);
+    return reply ("ERROR: Can't open file \"%s\" for writing\n", name);
   while (size > 0 && ret == 0)
     {
       char buf[1024];
@@ -397,9 +402,9 @@ do_file()
 	r = size;
       r = fread(buf, 1, r, stapsh_in);
       if (!r && feof(stapsh_in))
-        ret = reply ("ERROR: reached EOF while reading file data\n");
+        ret = reply ("ERROR: Reached EOF while reading file data\n");
       else if (!r)
-        ret = reply ("ERROR: unable to read file data\n");
+        ret = reply ("ERROR: Unable to read file data\n");
       else
         {
           size -= r;
@@ -410,7 +415,7 @@ do_file()
               size_t w = (buf + r) - bufp;
               w = fwrite(bufp, 1, w, f);
               if (!w)
-                ret = reply ("ERROR: unable to write file data\n");
+                ret = reply ("ERROR: Unable to write file data\n");
               else
                 bufp += w;
             }
@@ -538,16 +543,16 @@ do_run()
       // check if we have space left
       // note that we have to keep at least one 0 at the end for posix_spawn
       if (nargs + 1 > STAPSH_MAX_ARGS)
-        return reply ("ERROR: too many arguments\n");
+        return reply ("ERROR: Too many arguments\n");
       if (qpdecode(arg) != 0)
-        return reply ("ERROR: invalid encoding in argument \"%s\"\n", arg);
+        return reply ("ERROR: Invalid encoding in argument \"%s\"\n", arg);
       args[nargs++] = arg;
     }
 
   // Explicitly check execute permissions here, because posix_spawn will only
   // report that failure through a process exit code.
   if (access(staprun, X_OK) != 0)
-    return reply ("ERROR: can't execute %s (%s)\n", staprun, strerror(errno));
+    return reply ("ERROR: Can't execute %s (%s)\n", staprun, strerror(errno));
 
   // We pipe staprun under two conditions:
   // 1. The "data" option is on: we need to prefix all the output from staprun with data headers
@@ -661,7 +666,7 @@ main(int argc, char* const argv[])
       listening_port_fd = open(listening_port, O_RDWR);
       if (listening_port_fd == -1)
         // no one might be watching but might as well print
-        die("Error calling open()\n");
+        die("Error calling open()");
 
       // We need to have different FILE* for each direction, otherwise
       // we'll have trouble down the line due to stdio's buffering
@@ -670,16 +675,16 @@ main(int argc, char* const argv[])
       stapsh_out = fdopen(listening_port_fd, "w");
       stapsh_err = stapsh_out;
       if (!stapsh_in || !stapsh_out)
-        die("Could not open serial port\n");
+        die("Could not open serial port");
     }
 
   umask(0077);
   snprintf(tmpdir, sizeof(tmpdir), "%s/stapsh.XXXXXX",
            getenv("TMPDIR") ?: "/tmp");
   if (!mkdtemp(tmpdir))
-    die ("Can't make a temporary working directory!\n");
+    die ("Can't make a temporary working directory");
   if (chdir(tmpdir))
-    die ("Can't change to temporary working directory \"%s\"!\n", tmpdir);
+    die ("Can't change to temporary working directory \"%s\"", tmpdir);
 
   // Prep pfds. For now we're only interested in commands from stap, and we
   // don't poll staprun until it is started.
