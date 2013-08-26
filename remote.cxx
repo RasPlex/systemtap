@@ -126,6 +126,13 @@ class stapsh : public remote {
     int fdin, fdout;
     FILE *IN, *OUT;
     string remote_version;
+    size_t data_size;
+    string target_stream;
+
+    enum {
+      STAPSH_READY, // ready to receive next command
+      STAPSH_DATA   // currently printing data from a 'data' command
+    } stream_state;
 
     virtual void prepare_poll(vector<pollfd>& fds)
       {
@@ -163,30 +170,94 @@ class stapsh : public remote {
               // have data to read?
               if (fds[i].revents & POLLIN && OUT)
                 {
-                  char buf[4096];
-                  if (!prefix.empty())
+                  // if stapsh doesn't support commands, then just dump everything
+                  if (!vector_has(options, string("data")))
                     {
-                      // If we have a line prefix, then read lines one at a
-                      // time and copy out with the prefix.
-                      errno = 0;
-                      while (fgets(buf, sizeof(buf), OUT))
-                        cout << prefix << buf;
+                      // NB: we could splice here, but we don't know how much
+                      // data is available for reading. One way could be to
+                      // splice in small chunks and poll() fdout to check if
+                      // there's more.
+                      char buf[4096];
+                      size_t bytes_read;
+                      while ((bytes_read = fread(buf, 1, sizeof(buf), OUT)) > 0)
+                        printout(buf, bytes_read);
                       if (errno != EAGAIN)
                         err = true;
                     }
-                  else
+                  else // we expect commands (just data for now)
                     {
-                      // Otherwise read an entire block of data at once.
-                      size_t rc = fread(buf, 1, sizeof(buf), OUT);
-                      if (rc > 0)
+                      // When the 'data' option is turned on, all outputs from
+                      // staprun are first prepended with a line formatted as
+                      // "data <stream> <size>\n", where <stream> is either
+                      // "stdout" or "stderr", and <size> is the size of the
+                      // data. Also, the line "quit\n" is sent from stapsh right
+                      // before it exits.
+
+                      if (stream_state == STAPSH_READY)
                         {
-                          // NB: The buf could contain binary data,
-                          // including \0, so write as a block instead of
-                          // the usual <<string.
-                          cout.write(buf, rc);
+                          char cmdbuf[1024];
+                          char *rc;
+                          while ((rc = fgets(cmdbuf, sizeof(cmdbuf), OUT)) != NULL)
+                            {
+                              // check if it's a debug output from stapsh itself
+                              string line = string(cmdbuf);
+                              if (startswith(line, "stapsh:"))
+                                clog << line;
+                              else if (startswith(line, "quit\n"))
+                                  // && vector_has(options, string("data")))
+                                  // uncomment above if another command becomes
+                                  // possible
+                                {
+                                  err = true; // close connection
+                                  break;
+                                }
+                              else if (startswith(line, "data"))
+                                  // && vector_has(options, string("data")))
+                                  // uncomment above if another command becomes
+                                  // possible
+                                {
+                                  vector<string> cmd;
+                                  tokenize(line, cmd, " \t\r\n");
+                                  if (!is_valid_data_cmd(cmd))
+                                    {
+                                      clog << _("invalid data command from stapsh") << endl;
+                                      clog << _("received: ") << line;
+                                      err = true;
+                                    }
+                                  else
+                                    {
+                                      target_stream = cmd[1];
+                                      data_size = lex_cast<size_t>(cmd[2]);
+                                      stream_state = STAPSH_DATA;
+                                    }
+                                  break;
+                                }
+                            }
+                          if (rc == NULL && errno != EAGAIN)
+                            err = true;
                         }
-                      else
-                        err = true;
+
+                      if (stream_state == STAPSH_DATA)
+                        {
+                          if (data_size != 0)
+                            {
+                              // keep reading from OUT until either dry or data_size bytes done
+                              char buf[4096];
+                              size_t max_read = min<size_t>(sizeof(buf), data_size);
+                              size_t bytes_read = 0;
+                              while (max_read > 0
+                                  && (bytes_read = fread(buf, 1, max_read, OUT)) > 0)
+                                {
+                                  printout(buf, bytes_read);
+                                  data_size -= bytes_read;
+                                  max_read = min<size_t>(sizeof(buf), data_size);
+                                }
+                              if (bytes_read == 0 && errno != EAGAIN)
+                                err = true;
+                            }
+                          if (data_size == 0)
+                            stream_state = STAPSH_READY;
+                        }
                     }
                 }
 
@@ -208,10 +279,13 @@ class stapsh : public remote {
             if (!startswith(reply, "stapsh:"))
               return reply;
 
-            // Why not clog here?  Well, once things get running we won't be
-            // able to distinguish stdout/err, so trying to fake it here would
-            // be less consistent than just keeping it merged.
-            cout << reply;
+            // if data is not prefixed, we will have no way to distinguish
+            // between stdout and stderr during staprun runtime, so we might as
+            // well print to stdout now as well to be more consistent
+            if (vector_has(options, string("data")))
+              clog << reply; // must be stderr since only replies go to stdout
+            else
+              cout << reply; // output to stdout to be more consistent with later
           }
 
         // Reached EOF, nothing to reply...
@@ -299,10 +373,73 @@ class stapsh : public remote {
         return o.str();
       }
 
+    static bool is_valid_data_cmd(const vector<string>& cmd)
+      {
+        bool err = false;
+
+        err = err || (cmd[0] != "data");
+        err = err || (cmd[1] != "stdout" && cmd[1] != "stderr");
+
+        if (!err) // try to cast as size_t
+          try { lex_cast<size_t>(cmd[2]); }
+          catch (...) { err = true; }
+
+        return !err;
+      }
+
+    virtual void printout(const char *buf, size_t size)
+      {
+        static string last_prefix;
+        static bool on_same_line;
+
+        if (size == 0)
+          return;
+
+        // don't prefix for stderr to be more consistent with ssh
+        if (!prefix.empty() && target_stream != "stderr")
+          {
+            vector<pair<const char*,int> > lines = split_lines(buf, size);
+            for (vector<pair<const char*,int> >::iterator it = lines.begin();
+                it != lines.end(); ++it)
+              {
+                if (last_prefix != prefix)
+                  {
+                    if (on_same_line)
+                      cout << endl;
+                    cout << prefix;
+                  }
+                else if (!on_same_line)
+                  cout << prefix;
+                cout.write(it->first, it->second);
+              }
+            cout.flush();
+            const char *last_line = lines.back().first;
+            const char last_char = last_line[lines.back().second-1];
+            on_same_line = !lines.empty() && last_char != '\n';
+            last_prefix = prefix;
+          }
+        else
+          {
+            // Otherwise dump the whole block
+            // NB: The buf could contain binary data,
+            // including \0, so write as a block instead of
+            // the usual << string.
+            if (target_stream == "stdout")
+              {
+                cout.write(buf, size);
+                cout.flush();
+              }
+            else // stderr
+              clog.write(buf, size);
+          }
+      }
+
   protected:
     stapsh(systemtap_session& s)
       : remote(s), interrupts_sent(0),
-        fdin(-1), fdout(-1), IN(0), OUT(0)
+        fdin(-1), fdout(-1), IN(0), OUT(0),
+        data_size(0), target_stream("stdout"), // default to stdout for schemes
+        stream_state(STAPSH_READY)         // that don't pipe stderr (e.g. ssh)
       {}
 
     vector<string> options;
@@ -517,6 +654,10 @@ class unix_stapsh : public stapsh {
     unix_stapsh(systemtap_session& s, const uri_decoder& ud)
       : stapsh(s)
       {
+        // Request that data be encapsulated since both stdout and stderr have
+        // to go over the same line. Also makes stapsh tell us when it quits.
+        this->options.push_back("data");
+
         // set verbosity to the requested level
         for (unsigned i = 1; i < s.perpass_verbose[4]; i++)
           this->options.push_back("verbose");
