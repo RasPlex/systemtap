@@ -250,6 +250,10 @@ Requires: dejagnu which elfutils grep nc
 Requires: gcc gcc-c++ make glibc-devel
 # testsuite/systemtap.base/ptrace.exp needs strace
 Requires: strace
+# testsuite/systemtap.base/ipaddr.exp needs nc. Unfortunately, the rpm
+# that provides nc has changed over time (from 'nc' to
+# 'nmap-ncat'). So, we'll do a file-based require.
+Requires: /usr/bin/nc
 %ifnarch ia64
 Requires: prelink
 %endif
