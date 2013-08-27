@@ -333,12 +333,8 @@ int init_staprun(void)
                 disable_kprobes_optimization();
 
 		if (insert_stap_module(& user_credentials) < 0) {
-#ifdef HAVE_ELF_GETSHDRSTRNDX
 			if(!rename_mod && errno == EEXIST)
 				err("Rerun with staprun option '-R' to rename this module.\n");
-#endif
-                        /* Without a working rename_module(), we shan't
-                           advise people to use -R. */
 			return -1;
 		}
 		rc = init_ctl_channel (modname, 0);

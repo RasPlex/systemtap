@@ -32,9 +32,6 @@
 /* Define to 1 if Dyninst is enabled */
 #undef HAVE_DYNINST
 
-/* Define to 1 if libelf has elf_getshdrstrndx */
-#undef HAVE_ELF_GETSHDRSTRNDX
-
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
@@ -51,8 +48,8 @@
 /* Define to 1 if you have the `dw' library (-ldw). */
 #undef HAVE_LIBDW
 
-/* Define to 1 if you have the <libelf.h> header file. */
-#undef HAVE_LIBELF_H
+/* Define to 1 if you have the `elf' library (-lelf). */
+#undef HAVE_LIBELF
 
 /* have librpm */
 #undef HAVE_LIBRPM

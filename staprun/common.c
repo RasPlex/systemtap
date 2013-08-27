@@ -346,13 +346,9 @@ void usage(char *prog)
 	"-d              Delete a module.  Only detached or unused modules\n"
 	"                the user has permission to access will be deleted. Use \"*\"\n"
 	"                (quoted) to delete all unused modules.\n"
-#ifdef HAVE_ELF_GETSHDRSTRNDX
         "-R              Have staprun create a new name for the module before\n"
         "                inserting it. This allows the same module to be inserted\n"
         "                more than once.\n"
-#else
-        "-R              (Module renaming is not available in this configuration.)\n"
-#endif
         "-r N:URI        Pass N:URI data to tapset functions remote_id()/remote_uri().\n"
 	"-D              Run in background. This requires '-o' option.\n"
 	"-S size[,N]     Switches output file to next file when the size\n"

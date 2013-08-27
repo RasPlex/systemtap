@@ -455,14 +455,11 @@ AC_MSG_NOTICE([stap will link $stap_LIBS])
 
 # staprun has more modest libelf needs
 if test $build_elfutils = no; then
-  AC_CHECK_HEADERS([libelf.h])
-
   save_LIBS="$LIBS"
   dnl this will only succeed with elfutils 0.142+
-  AC_CHECK_LIB(elf,elf_getshdrstrndx,[
-    AC_DEFINE([HAVE_ELF_GETSHDRSTRNDX],[1],[Define to 1 if libelf has elf_getshdrstrndx])
-    staprun_LIBS="$staprun_LIBS -lelf"
-  ])
+  AC_CHECK_LIB(elf,elf_getshdrstrndx,[],[
+    AC_MSG_FAILURE([libelf too old, need 0.142+])])
+  staprun_LIBS="$staprun_LIBS -lelf"
   LIBS="$save_LIBS"
 else
   # We built our own and staprun_LDFLAGS points at the install.

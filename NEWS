@@ -1,5 +1,8 @@
 * What's new in version 2.4
 
+- Although SystemTap itself requires elfutils 0.148+, staprun only
+  requires elfutils 0.142+, which could be useful with the
+  '--disable-translator' configure switch.
 
 * What's new in version 2.3, 2013-07-25
 

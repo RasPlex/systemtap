@@ -21,10 +21,8 @@
 
 /* The module-renaming facility only works with new enough
    elfutils: 0.142+. */
-#ifdef HAVE_LIBELF_H
 #include <libelf.h>
 #include <gelf.h>
-#endif
 
 #include <math.h>
 
@@ -200,7 +198,6 @@ int insert_module(
 	return 0;
 }
 
-#ifdef HAVE_ELF_GETSHDRSTRNDX
 static Elf_Scn *
 find_section_in_module(const void* module_file, const __off_t st_size, const char *section_name)
 {
@@ -239,12 +236,10 @@ find_section_in_module(const void* module_file, const __off_t st_size, const cha
   	}
 	return scn;
 }
-#endif /* HAVE_ELF_GETSHDRSTRNDX */
 
 int
 rename_module(void* module_file, const __off_t st_size)
 {
-#ifdef HAVE_ELF_GETSHDRSTRNDX
 	int length_to_replace;
 	char newname[MODULE_NAME_LEN];
 	char *p;
@@ -302,14 +297,6 @@ rename_module(void* module_file, const __off_t st_size)
 	}
 	_err("Could not find old name to replace!\n");
 	return -1;
-#else
-        /* Old or no elfutils?  Pretend to have renamed.  This means a
-           greater likelihood for module-name collisions, but so be
-           it. */
-        (void) module_file;
-        (void) st_size;
-        return 0; 
-#endif
 }
 
 
@@ -587,22 +574,6 @@ static privilege_t get_module_required_credentials (
   const __off_t st_size __attribute__ ((unused))
 )
 {
-#ifndef HAVE_ELF_GETSHDRSTRNDX
-  /* Without the proper ELF support, we can't determine the credentials required to run this
-     module. However, we know that it has been correctly signed (we only check privilege
-     credentials for correctly signed modules). It is therefore either
-       a) a dual-privilege-level era module compiled with stapusr privileges enforced or,
-       b) a multi-privilege-level era module with built-in privilege level checking.
-     In either case, we can load it for stapusr level users and above. In case a, it requires
-     exactly that privilege level. In case b, the module will self check against the user's
-     actual privilege level.
-  */
-  if (verbose >= 1) {
-    eprintf ("Unable to determine the privilege level required for the module %s. Assuming %s.\n",
-	 module_path, pr_name (pr_stapusr));
-  }
-  return pr_stapusr;
-#else
   Elf_Scn *scn = 0;
   Elf_Data *data = 0;
   GElf_Shdr shdr;
@@ -687,7 +658,6 @@ static privilege_t get_module_required_credentials (
 
   /* ALl is ok. Return the extracted privilege data. */
   return privilege;
-#endif /* HAVE_ELF_GETSHDRSTRNDX */
 }
 
 /*
