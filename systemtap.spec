@@ -486,7 +486,14 @@ getent passwd stap-server >/dev/null || \
 
 %post server
 
-test -e ~stap-server && chmod 755 ~stap-server
+# We have some duplication between the %files listings for the
+# ~stap-server directories and the explicit mkdir/chown/chmod bits
+# here.  Part of the reason may be that a preexisting stap-server
+# account may well be placed somewhere other than
+# %{_localstatedir}/lib/stap-server, but we'd like their permissions
+# set similarly.
+
+test -e ~stap-server && chmod 750 ~stap-server
 
 if [ ! -f ~stap-server/.systemtap/rc ]; then
   mkdir -p ~stap-server/.systemtap
@@ -497,7 +504,7 @@ fi
 
 test -e %{_localstatedir}/log/stap-server/log || {
      touch %{_localstatedir}/log/stap-server/log
-     chmod 664 %{_localstatedir}/log/stap-server/log
+     chmod 644 %{_localstatedir}/log/stap-server/log
      chown stap-server:stap-server %{_localstatedir}/log/stap-server/log
 }
 # If it does not already exist, as stap-server, generate the certificate
