@@ -292,7 +292,7 @@ expect {
 	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
 		exp_continue		
 	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello\); exit\(\);\}\r\n} {
+	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
 		exp_continue		
 	}
 	-re {^[ \t]*\^\r\n} {
@@ -485,7 +485,7 @@ expect {
 	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
 		exp_continue		
 	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello\); exit\(\);\}\r\n} {
+	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
 		exp_continue		
 	}
 	-re {^[ \t]*\^\r\n} {
@@ -675,7 +675,7 @@ expect {
 	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
 		exp_continue		
 	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello\); exit\(\);\}\r\n} {
+	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
 		exp_continue		
 	}
 	-re {^[ \t]*\^\r\n} {
@@ -870,7 +870,7 @@ expect {
 	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
 		exp_continue		
 	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello\); exit\(\);\}\r\n} {
+	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
 		exp_continue		
 	}
 	-re {^[ \t]*\^\r\n} {
