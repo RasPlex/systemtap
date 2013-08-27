@@ -1,5 +1,8 @@
 * What's new in version 2.4
 
+- SystemTap map variables are now allocated with vmalloc() instead of
+  with kmalloc(), which should cause memory to be less fragmented.
+
 - Although SystemTap itself requires elfutils 0.148+, staprun only
   requires elfutils 0.142+, which could be useful with the
   '--disable-translator' configure switch.
