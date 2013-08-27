@@ -15,133 +15,78 @@ set invalid_script {{probe begin{printf("Hello); exit();}}}
 ###### Embedded '\n' in Environment Variables ########
 # Should not allow embedded '\n' in Environment Variables
 set test "Embedded '\\n' in Env Vars"
-
-set skip 0
-set failed 1
 set cmd [concat env \"LANG=en_US\\n.utf8\" stap -e $valid_script $use_server]
 send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
 	-timeout 150
         -re {^Server: Localization key=value line [^\r\n]*\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^Hello\r\n} {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
+            pass $test
 	}
 	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
+            exp_continue
 	}
+        eof { 
+            fail "$test (eof)"
+        }
 	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
+            exec kill -INT -[exp_pid]
+            fail "$test (timeout)"
 	}
 }
 catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
 
 
 ###### Embedded ';' in Environment Variables ########
 # Should not allow embedded ';' in Environment Variables
 # There are many disallowed chars, but let's just try one
 set test "Embedded ';' in Env Vars"
-
-set skip 0
-set failed 1
 set cmd [concat env \"LANG=en_US\;.utf8\" stap -e $valid_script $use_server]
 send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
 	-timeout 150
 	-re "^Server: Localization value '\[^'\]*' contains illegal characters\r\n" {
-		# good, it was not passed through
-		set failed 0
-		exp_continue
-	}
-	-re {^Hello\r\n} {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
+            pass $test
 	}
 	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1
+            exp_continue
 	}
-	timeout {
-		exec kill -INT -[exp_pid]
-		set failed 1
+        eof { 
+            fail "$test (eof)"
+        }
+	timeout { 
+            exec kill -INT -[exp_pid]
+            fail "$test (timeout)"
 	}
 }
 catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
 
 
 ###### Use of "_.-@=" in Environment Variables ########
 # Should allow "_.-@=" in Environment Variables
 set test "Use of '_.-@=' in Env Vars"
-
-set skip 0
-set failed 0
 set cmd [concat env LANG=en_US.utf-8@toronto=test stap -e $valid_script $use_server]
 send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
 	-timeout 150
 	-re "^Hello\r\n" {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
+            pass $test
 	}
 	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
+            exp_continue
 	}
+        eof { 
+            fail "$test (eof)"
+        }
 	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
+            exec kill -INT -[exp_pid]
+            fail "$test (timeout)"
 	}
 }
 catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
+
 
 
 ######################################################
@@ -151,81 +96,53 @@ if {$failed != 0} {
 ########### LANG Proper Syntax Test (French) ##############
 # Run a basic execution test in French. Should return only "Bonjour".
 set test "LANG Proper Syntax Test (French)"
-
-set skip 0
-set failed 0
 set cmd [concat env LANG=fr_FR.utf8 stap -e $french_script $use_server]
 send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
 	-timeout 150
 	-re "^Bonjour\r\n" {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
+            pass $test
 	}
 	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
+            exp_continue
 	}
+        eof { 
+            fail "$test (eof)"
+        }
 	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
+            exec kill -INT -[exp_pid]
+            fail "$test (timeout)"
 	}
 }
 catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
 
 
 ########### LANG Proper Syntax Test (English) #############
 # Run a basic execution test in English. Should return only "Hello".
 set test "LANG Proper Syntax Test (English)"
-
-set skip 0
-set failed 0
 set cmd [concat env LANG=en_US.utf8 stap -e $valid_script $use_server]
 send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
 	-timeout 150
 	-re "^Hello\r\n" {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
+            pass $test
 	}
 	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
+            exp_continue
 	}
+        eof { 
+            fail "$test (eof)"
+        }
 	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
+            exec kill -INT -[exp_pid]
+            fail "$test (timeout)"
 	}
 }
 catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
+
+
 
 ########### LANG Bad Syntax Test (French) #############
 # Run an execution test with a syntax error, in French.
@@ -234,684 +151,55 @@ if {$failed != 0} {
 # up to date French translations. So, if we get anything in French, we
 # pass.
 set test "LANG Bad Syntax Test (French)"
-
-set failed 1
 set cmd [concat env LANG=fr_FR.utf8 stap -e $invalid_script $use_server]
 send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
 	-timeout 150
-	-re {^Aucun module a été renvoyé par le serveur\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^.*: Ne peut trouver la guillemet fermante\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^1 erreur d'analyse\.\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^Passe 1: .*\r\n} {
-		set failed 0
-		exp_continue
+	-re {Ne peut trouver la guillemet} {
+            pass $test
 	}
 	-re {^[^\r\n]*\r\n} {
 		exp_continue
 	}
+        eof { 
+            fail "$test (eof)"
+        }
 	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
+            exec kill -INT -[exp_pid]
+            fail "$test (timeout)"
 	}
 }
 catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
+
 
 ########### LANG Bad Syntax Test (English) #############
 # Run an execution test with a syntax error, in English.
 set test "LANG Bad Syntax Test (English)"
-
-set skip 0
-set failed 0
 set cmd [concat env LANG=en_US.utf8 stap -e $invalid_script $use_server]
 send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
 	-timeout 150
-	-re {^No module was returned by the server.\r\n} {
-		exp_continue		
-	}
 	-re {^parse error: Could not find matching closing quote\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*\^\r\n} {
-		exp_continue		
+		pass $test
 	}
 	-re {^1 parse error\.\r\n} {
-		exp_continue		
-	}
-	-re {^Pass 1: parse failed\..*\r\n} {
-		exp_continue		
-	}
-	-re {^Passes: via server failed.  Try again with another '-v' option.\r\n} {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1		
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LANG Proper Syntax Test (French, -k) #############
-# Run a basic execution test in French with -k.
-set test "LANG Proper Syntax Test (French, -k)"
-
-set skip 0
-set failed 0
-set cmd [concat env LANG=fr_FR.utf8 stap -e $french_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re "^Bonjour\r\n" {
-		exp_continue
-	}
-	-re {^Conservation du répertoire temporaire "/tmp/stap......"\r\n} {
-		exp_continue	
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LANG Proper Syntax Test (English, -k) #############
-# Run a basic execution test in English with -k.
-set test "LANG Proper Syntax Test (English, -k)"
-
-set skip 0
-set failed 0
-set cmd [concat env LANG=en_US.utf8 stap -e $valid_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re "^Hello\r\n" {
-		exp_continue
-	}
-	-re {^Keeping temporary directory "/tmp/stap......"\r\n} {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LANG Bad Syntax Test (French, -k) #############
-# Run an execution test with a syntax error, in French, with -k.
-#
-# Note that we can't test for exact output here, since we may not have
-# up to date French translations. So, if we get anything in French, we
-# pass.
-set test "LANG Bad Syntax Test (French, -k)"
-
-set failed 1
-set cmd [concat env LANG=fr_FR.utf8 stap -e $invalid_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re {^Aucun module a été renvoyé par le serveur\r\n} {
-		set failed 0
-		exp_continue		
-	}
-	-re {^.*: Ne peut trouver la guillemet fermante\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^1 erreur d'analyse\.\r\n} {
-		set failed 0
-		exp_continue	
-	}
-	-re {^Passe 1: .*\r\n} {
-		set failed 0
-		exp_continue	
-	}
-	-re {^Conservation du répertoire temporaire "/tmp/stap......"\r\n} {
-		set failed 0
-		exp_continue	
-	}
-	-re {^[^\r\n]*\r\n} {
-		exp_continue	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LANG Bad Syntax Test (English, -k) #############
-# Run an execution test with a syntax error, in English, with -k.
-set test "LANG Bad Syntax Test (English, -k)"
-
-set skip 0
-set failed 0
-set cmd [concat env LANG=en_US.utf8 stap -e $invalid_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re {^No module was returned by the server.\r\n} {
-		exp_continue		
-	}
-	-re {^parse error: Could not find matching closing quote\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*\^\r\n} {
-		exp_continue		
-	}
-	-re {^1 parse error\.\r\n} {
-		exp_continue		
-	}
-	-re {^Pass 1: parse failed\..*\r\n} {
-		exp_continue		
-	}
-	-re {^Passes: via server failed.  Try again with another '-v' option.\r\n} {
-		exp_continue
-	}
-	-re {^Keeping temporary directory "/tmp/stap......"\r\n} {
-		exp_continue		
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1		
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-######################################################
-################## LC_ALL Tests ######################
-######################################################
-
-########### LC_ALL Proper Syntax Test (French) ##############
-# Run a basic execution test in French. Should return only "Bonjour".
-set test "LC_ALL Proper Syntax Test (French)"
-
-set skip 0
-set failed 0
-set cmd [concat env LC_ALL=fr_FR.utf8 stap -e $french_script $use_server]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re "^Bonjour\r\n" {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LC_ALL Proper Syntax Test (English) #############
-# Run a basic execution test in English. Should return only "Hello".
-set test "LC_ALL Proper Syntax Test (English)"
-
-set skip 0
-set failed 0
-set cmd [concat env LC_ALL=en_US.utf8 stap -e $valid_script $use_server]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re "^Hello\r\n" {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LC_ALL Bad Syntax Test (French) #############
-# Run an execution test with a syntax error, in French.
-#
-# Note that we can't test for exact output here, since we may not have
-# up to date French translations. So, if we get anything in French, we
-# pass.
-set test "LC_ALL Bad Syntax Test (French)"
-
-set failed 1
-set cmd [concat env LC_ALL=fr_FR.utf8 stap -e $invalid_script $use_server]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re {^Aucun module a été renvoyé par le serveur\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^.*: Ne peut trouver la guillemet fermante\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^1 erreur d'analyse\.\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^Passe 1: .*\r\n} {
-		set failed 0
-		exp_continue
+		pass $test
 	}
 	-re {^[^\r\n]*\r\n} {
 		exp_continue
 	}
+        eof { 
+            fail "$test (eof)"
+        }
 	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
+            exec kill -INT -[exp_pid]
+            fail "$test (timeout)"
 	}
 }
 catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
 
-########### LC_ALL Bad Syntax Test (English) #############
-# Run an execution test with a syntax error, in English.
-set test "LC_ALL Bad Syntax Test (English)"
-
-set skip 0
-set failed 0
-set cmd [concat env LC_ALL=en_US.utf8 stap -e $invalid_script $use_server]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re {^No module was returned by the server.\r\n} {
-		exp_continue		
-	}
-	-re {^parse error: Could not find matching closing quote\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*\^\r\n} {
-		exp_continue		
-	}
-	-re {^1 parse error\.\r\n} {
-		exp_continue		
-	}
-	-re {^Pass 1: parse failed\..*\r\n} {
-		exp_continue		
-	}
-	-re {^Passes: via server failed.  Try again with another '-v' option.\r\n} {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1		
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LC_ALL Proper Syntax Test (French, -k) #############
-# Run a basic execution test in French with -k.
-set test "LC_ALL Proper Syntax Test (French, -k)"
-
-set skip 0
-set failed 0
-set cmd [concat env LC_ALL=fr_FR.utf8 stap -e $french_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re "^Bonjour\r\n" {
-		exp_continue
-	}
-	-re {^Conservation du répertoire temporaire "/tmp/stap......"\r\n} {
-		exp_continue	
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-
-########### LC_ALL Proper Syntax Test (English, -k) #############
-# Run a basic execution test in English with -k.
-set test "LC_ALL Proper Syntax Test (English, -k)"
-
-set skip 0
-set failed 0
-set cmd [concat env LC_ALL=en_US.utf8 stap -e $valid_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re "^Hello\r\n" {
-		exp_continue
-	}
-	-re {^Keeping temporary directory "/tmp/stap......"\r\n} {
-		exp_continue
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-########### LC_ALL Bad Syntax Test (French, -k) #############
-# Run an execution test with a syntax error, in French, with -k.
-#
-# Note that we can't test for exact output here, since we may not have
-# up to date French translations. So, if we get anything in French, we
-# pass.
-set test "LC_ALL Bad Syntax Test (French, -k)"
-
-set failed 1
-set cmd [concat env LC_ALL=fr_FR.utf8 stap -e $invalid_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re {^Aucun module a été renvoyé par le serveur\r\n} {
-		set failed 0
-		exp_continue		
-	}
-	-re {^.*: Ne peut trouver la guillemet fermante\r\n} {
-		set failed 0
-		exp_continue
-	}
-	-re {^1 erreur d'analyse\.\r\n} {
-		set failed 0
-		exp_continue	
-	}
-	-re {^Passe 1: .*\r\n} {
-		set failed 0
-		exp_continue	
-	}
-	-re {^Conservation du répertoire temporaire "/tmp/stap......"\r\n} {
-		set failed 0
-		exp_continue	
-	}
-	-re {^[^\r\n]*\r\n} {
-		exp_continue	
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
-
-
-########### LC_ALL Bad Syntax Test (English, -k) #############
-# Run an execution test with a syntax error, in English, with -k.
-set test "LC_ALL Bad Syntax Test (English, -k)"
-
-set skip 0
-set failed 0
-set cmd [concat env LC_ALL=en_US.utf8 stap -e $invalid_script $use_server -k]
-send_log "executing: $cmd\n"
-eval spawn $cmd
-expect {
-	-timeout 150
-	-re {^No module was returned by the server.\r\n} {
-		exp_continue		
-	}
-	-re {^parse error: Could not find matching closing quote\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*at: junk 'Hello\); exit\(\);\}' at <input>:1:20\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*source: probe begin\{printf\("Hello"\); exit\(\);\}\r\n} {
-		exp_continue		
-	}
-	-re {^[ \t]*\^\r\n} {
-		exp_continue		
-	}
-	-re {^1 parse error\.\r\n} {
-		exp_continue		
-	}
-	-re {^Pass 1: parse failed\..*\r\n} {
-		exp_continue		
-	}
-	-re {^Passes: via server failed.  Try again with another '-v' option.\r\n} {
-		exp_continue
-	}
-	-re {^Keeping temporary directory "/tmp/stap......"\r\n} {
-		exp_continue		
-	}
-        -re {^WARNING: The domain name, [^,]*, does not match the DNS name\(s\) on the server certificate:\r\n} {
-		set skip 1
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		if {$skip} {
-			set skip [expr $skip - 1]
-			exp_continue
-		}
-		set str [string trimright $expect_out(0,string)]
-		verbose -log "unrecognized output: $str"
-		set failed 1		
-	}
-	timeout { 
-		exec kill -INT -[exp_pid]
-		set failed 1		
-	}
-}
-catch {close}; catch {wait}
-if {$failed != 0} {
-	fail "$test"
-    } else {
-	pass "$test"
-}
 
 ######################################################
 ################ LC_CTYPE Tests ######################
