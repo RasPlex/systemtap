@@ -9,8 +9,7 @@ if {![installtest_p]} { untested $TEST_NAME; return }
 ########## Inserting 2 Identical Modules: Staprun without -R #################
 # Should give an error when inserting 2 identical modules 
 # when calling staprun directly without using -R
-set test "$TEST_NAME: Inserting 2 Identical Modules: Staprun without -R"
-set failed 0
+
 set compile { exec stap -e {probe begin{printf("Hello\n");}} -p4 }
 set module_path [eval $compile] 
 set module_name [file rootname [file tail $module_path]]
@@ -18,20 +17,41 @@ set module_name [file rootname [file tail $module_path]]
 spawn staprun $module_path
 set firstid $spawn_id
 
+# Make sure we get the output from the 1st copy of the module before
+# trying to load the 2nd copy of the module.
+set test "$TEST_NAME: Inserting 1st module"
+set output_seen 0
+expect {
+    -timeout 30
+    "Hello\r\n" { set output_seen 1 }
+    timeout { fail "$test (timeout)" }
+}
+if {$output_seen} {
+    pass "$test"
+} else {
+    fail "$test"
+    return
+}
+
+set test "$TEST_NAME: Inserting 2 Identical Modules: Staprun without -R"
+set failed 0
+
 spawn staprun $module_path
 set secondid $spawn_id
 
 # Make sure it fails
 expect {
-	-re {^ERROR: Couldn't insert module .*: File exists\r\n} {
-		exp_continue
-	}
-	-re {^ERROR: Rerun with staprun option '\-R' to rename this module.\r\n} {
-		exp_continue
-	}
-	-re {^[^\r\n]*\r\n} {
-		set failed 1		
-	}
+    -timeout 30
+    -re {^ERROR: Couldn't insert module .*: File exists\r\n} {
+	exp_continue
+    }
+    -re {^ERROR: Rerun with staprun option '\-R' to rename this module.\r\n} {
+	exp_continue
+    }
+    -re {^[^\r\n]*\r\n} {
+	set failed 1		
+    }
+    timeout { fail "$test (timeout)" }
 }
 
 # Kill both of the hanging processes
@@ -41,9 +61,9 @@ exec kill $firstpid
 exec kill $secondpid
 catch { wait -i $firstid; wait -i $secondid; close }
 if {$failed} {
-	fail "$test"
-    } else {
-	pass "$test"
+    fail "$test"
+} else {
+    pass "$test"
 }
 
 # Is the module still loaded?
