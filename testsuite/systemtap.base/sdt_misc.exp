@@ -151,6 +151,16 @@ for {set i 0} {$i < [llength $pbtype_flags]} {incr i} {
 	set test_xtra ""
 	if {$runtime != ""} {
 	    set test_xtra " ($runtime)"
+
+	    if {$runtime == "dyninst"} {
+		# With --runtime=dyninst these tests will fail since
+		# the dyninst runtime needs a target executable
+		# (either '-c exe' or '-x pid'). So, skip these tests
+		# to speed up test execution.
+		xfail "$test ${pbtype_mssg}${test_xtra} attach"
+		continue
+	    }
+
 	    # This is perhaps a wee bit clumsy
 	    verbose -log "$loop_exepath >| ,semclean 2>&1 & TEST=\$! ; \
 		$stap_path --runtime=$runtime $srcdir/$subdir/sdt_misc.stp $loop_exepath >| ,semout ; \
@@ -419,12 +429,23 @@ for {set i 0} {$i < [llength $pbtype_flags]} {incr i} {
 	set test_xtra ""
 	if {$runtime != ""} {
 	    set test_xtra " ($runtime)"
-	    # With --runtime=dyninst these tests will fail since the
-	    # dyninst runtime needs a target executable (either '-c
-	    # exe' or '-x pid'). So, skip these tests to speed up test
-	    # execution.
-	    xfail "$test ${pbtype_mssg}${test_xtra} shared attach"
-	    continue
+
+	    if {$runtime == "dyninst"} {
+		# With --runtime=dyninst these tests will fail since
+		# the dyninst runtime needs a target executable
+		# (either '-c exe' or '-x pid'). So, skip these tests
+		# to speed up test execution.
+		xfail "$test ${pbtype_mssg}${test_xtra} shared attach"
+		continue
+	    }
+
+	    # This is perhaps a wee bit clumsy
+	    verbose -log "$loop_exepath >| ,semclean 2>&1 & TEST=\$! ; \
+		$stap_path --runtime=$runtime $srcdir/$subdir/sdt_misc.stp $loop_exepath $supl_sopath >| ,semout ; \
+		/bin/kill -SIGINT \$TEST"
+	    system "$loop_exepath >,semclean 2>&1 & TEST=\$! ; \
+		$stap_path --runtime=$runtime $srcdir/$subdir/sdt_misc.stp $loop_exepath $supl_sopath >| ,semout ; \
+		/bin/kill -SIGINT \$TEST"
 	} elseif {[uprobes_p]} {
 	    # This is perhaps a wee bit clumsy
 	    verbose -log "$loop_exepath >| ,semclean 2>&1 & TEST=\$! ; \
