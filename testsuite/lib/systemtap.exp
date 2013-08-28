@@ -541,10 +541,24 @@ proc as_non_root { command } {
 	if {[catch {exec /usr/bin/logname} logname] || $logname == "root"} {
 	    set logname "nobody"
 	}
-	set command "su -s /bin/sh $logname -c \"$command\""
+
+	# User 'nobody' doesn't have a home directory, which means we
+	# can't create ~nobody/.systemtap. So, temporarily override
+	# SYSTEMTAP_DIR.
+	if {$logname == "nobody"} {
+	    set stap_dir "/tmp/.systemtap-nobody"
+	    set command "su -s /bin/sh $logname -c \"SYSTEMTAP_DIR=$stap_dir $command\""
+	} else {
+	    set command "su -s /bin/sh $logname -c \"$command\""
+	}
     }
     verbose -log "as_non_root $command"
     set res [catch {eval exec $command} value]
+    if {$effective_uid == 0 && $logname == "nobody"} {
+	# If we created a SYSTEMTAP_DIR for user 'nobody' above, we
+	# can now remove it.
+	catch {exec rm -rf $stap_dir}
+    }
     verbose -log "OUT $value"
     verbose -log "RC $res"
     return  $res
