@@ -87,6 +87,11 @@ proc uretprobes_p {} {
     return [expr [classic_uretprobes_p] || [inode_uretprobes_p] ]
 }
 
+proc plt_probes_p {} {
+    # .plt probes need uprobes and a supported arch (x86 and arm)
+    return [expr [uprobes_p] \
+	    && [regexp "^(x86_64|i.86|arm.*)$" $::tcl_platform(machine)] ]
+}
 
 proc dyninst_p {} {
     global systemtap_dyninst_p

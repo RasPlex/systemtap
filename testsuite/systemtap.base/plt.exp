@@ -7,29 +7,21 @@ proc cleanup_handler { verbose } {
 }
 
 proc error_handler { res test message } {
-global verbose
-if { $res == 0 } {
-    verbose "$test $message" 2
-    fail "$test $message"
-    return 1
-} elseif { $message != "" } {
-    pass $test
-    return 0
-} else {return 0}
+    global verbose
+    if { $res == 0 } {
+	verbose "$test $message" 2
+	fail "$test $message"
+	return 1
+    } elseif { $message != "" } {
+	pass $test
+	return 0
+    } else {
+	return 0
+    }
 }
 
-if {![installtest_p]} {untested $test; return}
-if {![uprobes_p]} {untested $test; return}
-if {![utrace_p]} {
-    untested "$test"
-    cleanup_handler $verbose
-    return
-}
-if {![regexp "^(x86_64|i.86)$" $::tcl_platform(machine)]} {
-    untested "$test"
-    cleanup_handler $verbose
-    return
-}
+if {![installtest_p]} { untested $test; return }
+if {![plt_probes_p]} { untested $test; return }
 
 set stap_path $env(SYSTEMTAP_PATH)/stap
 

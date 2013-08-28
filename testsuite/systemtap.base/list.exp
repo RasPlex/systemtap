@@ -20,11 +20,18 @@ proc test_uprobes_list { test input output_re } {
     }
 }
 
+proc test_plt_list { test input output_re } {
+    if {[plt_probes_p]} {
+        test_list $test $input $output_re
+    } else {
+        unsupported $test
+    }
+}
 
-test_uprobes_list plt-glob {process("stap").plt("re??")} \
+test_plt_list plt-glob {process("stap").plt("re??")} \
     {process."stap"..plt."read".\r\n}
 
-test_uprobes_list plt-glob2 {process("stap").plt("re*")} \
+test_plt_list plt-glob2 {process("stap").plt("re*")} \
     {process."stap"..plt."read".\r\n}
 
 # NB: this would be nice to probe, but we don't have the
@@ -33,7 +40,7 @@ test_uprobes_list plt-glob2 {process("stap").plt("re*")} \
 # NB: we expect the extra "?" suffix due to filename globbing
 #    -re {process."[^\r\n]*stap"..plt."read"..\r\n} { pass $test }
 
-test_uprobes_list plt-non-glob {process("stap").plt("read")} \
+test_plt_list plt-non-glob {process("stap").plt("read")} \
     {process."stap"..plt."read".\r\n}
 
 test_uprobes_list mark-non-glob {process("stap").mark("pass5__end")} \

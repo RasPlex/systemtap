@@ -63,6 +63,7 @@ proc dyninst_kfails {test} {
 
 set uprobes_p [uprobes_p]
 set utrace_p [utrace_p]
+set plt_probes_p [plt_probes_p]
 foreach runtime [get_runtime_list] {
     foreach file [lsort [glob -nocomplain $srcdir/$self/*.stp]] {
 	set test $self/[file tail $file]
@@ -86,10 +87,7 @@ foreach runtime [get_runtime_list] {
 		
 		semok/plt1.stp -
 		semok/plt2.stp {
-		    # The .plt tests need uprobes and x86
-		    if {![regexp "^(x86_64|i.86)$" $::tcl_platform(machine)]} {
-			untested $test; continue }
-		    if {!$uprobes_p} { untested $test; continue } }
+		    if {!$plt_probes_p} { untested $test; continue } }
 	    }
 	    verbose -log "Running $file"
 	    set rc [stap_run_batch $file]
