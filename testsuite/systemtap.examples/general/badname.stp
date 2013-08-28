@@ -10,15 +10,25 @@ function filter:long (name:string)
 }
 
 global squash_inode_permission
-probe kernel.function("may_create@fs/namei.c")
+
+# We really want to probe may_create(). But, may_create() is now
+# always inlined, and stap can't find its arguments. So, we have to
+# probe may_create()'s callers.
+
+probe kernel.function("vfs_create"), kernel.function("vfs_mknod"),
+      kernel.function("vfs_mkdir"), kernel.function("vfs_symlink"),
+      kernel.function("vfs_link"), kernel.function("vfs_rename")
 {
   # screen out the conditions which may_create will fail anyway
-  if ($child->d_inode || $dir->i_flags & 16) next
+  if (@choose_defined($dentry->d_inode, $new_dentry->d_inode)
+      || @choose_defined($dir->i_flags, $new_dir->i_flags) & %{ S_DEAD %}) next
 
   # check that the new file meets our naming rules
-  if (filter(kernel_string($child->d_name->name)))
+  if (filter(kernel_string(@choose_defined($dentry->d_name->name,
+					   $new_dentry->d_name->name))))
     squash_inode_permission[tid()] = 1
 }
+
 probe kernel.function("inode_permission@fs/namei.c").return !,
       kernel.function("permission@fs/namei.c").return
 {
