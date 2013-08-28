@@ -25,7 +25,10 @@ may fail if function
 does not exist in the kernel any more.  Debugging or symbol data may be absent for
 some types of 
 .IR .function " or " .statement
-probes; check for availability of debuginfo.  Use a wildcard parameter such as
+probes; check for availability of debuginfo.  Try the
+.IR stap\-prep
+program to download possibly-required debuginfo.
+Use a wildcard parameter such as
 .I stap \-l 'kprobe.function("*foo*")'
 to locate still-existing variants.  Use
 .IR ! " or " ?
@@ -69,6 +72,7 @@ can help pinpoint the problem.
 
 .SH SEE ALSO
 .IR stap (1),
+.IR stap-prep (1),
 .IR stapprobes (3stap),
 .IR probe::* (3stap),
 .IR error::dwarf (7stap),
