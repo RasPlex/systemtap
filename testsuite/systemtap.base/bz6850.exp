@@ -27,6 +27,6 @@ expect {
 	timeout { fail "$test (timeout)" }
 	eof { }
 }
-wait
+catch { close }; catch { wait }
 if {[file exists bz6850_pass]} then { pass "$test -p5" } else { fail "$test -p5" }
 exec rm -f bz6850_pass bz6850

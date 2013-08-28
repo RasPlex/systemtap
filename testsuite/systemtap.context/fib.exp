@@ -41,7 +41,7 @@ expect {
     timeout { fail "$test (timeout)" }
     eof { }
 }
-wait
+catch { close }; catch { wait }
 if {$fibcalls == 18 && $maincalls == 2} { pass "$test ($fibcalls $maincalls)" } { fail "$test ($fibcalls $maincalls)" }
 
 spawn stap -c "$testexe 10" -- $teststp --entry
@@ -55,5 +55,5 @@ expect {
     timeout { fail "$test (timeout)" }
     eof { }
 }
-wait
+catch { close }; catch { wait }
 if {$fibcalls == 55 && $maincalls == 10} { pass "$test ($fibcalls $maincalls)" } { fail "$test ($fibcalls $maincalls)" }
