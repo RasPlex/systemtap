@@ -139,6 +139,13 @@ static const unsigned noptions = sizeof(options) / sizeof(*options);
 static char *listening_port = NULL;
 static int listening_port_fd = -1;
 
+static struct utsname uts;
+
+static FILE *stapsh_in, *stapsh_out, *stapsh_err;
+
+static int sigio_enabled = 0;
+static int sigio_port_status = 0;
+
 // Returns nonzero if the host is connected. Used by any function/macro which
 // writes to the port. This is necessary because if the host is not connected,
 // a write() to the port will block.
@@ -146,12 +153,12 @@ static int host_connected()
 {
   if (listening_port == NULL || stapsh_out == stdout)
     return 1;
+  if (sigio_enabled)
+    return sigio_port_status;
   struct pollfd p = { listening_port_fd , POLLHUP, 0 };
   poll(&p, 1, 0);
   return !(p.revents & POLLHUP);
 }
-
-static FILE *stapsh_in, *stapsh_out, *stapsh_err;
 
 #define dbug(level, format, args...) do {                            \
   if (verbose >= level && host_connected())                          \
@@ -167,8 +174,9 @@ static FILE *stapsh_in, *stapsh_out, *stapsh_err;
 
 #define die(format, args...) do {                                    \
   if (host_connected()) {                                            \
-    dbug(1, format, ## args);                                        \
-    fprintf(stapsh_err, ": %s (%d)\n", strerror(errno), errno); }    \
+    fprintf (stapsh_err, "stapsh:%s:%d " format,                     \
+              __FUNCTION__, __LINE__, ## args);                      \
+    fprintf (stapsh_err, ": %s (%d)\n", strerror(errno), errno); }   \
   cleanup(2); } while (0)
 
 
@@ -250,6 +258,23 @@ handle_signal(int sig)
 }
 
 static void
+sigio_handler(int sig)
+{
+  // sanity checks
+  if (sig != SIGIO || listening_port_fd == -1)
+    return;
+  struct pollfd pfd = { listening_port_fd, POLLHUP, 0 };
+  poll(&pfd, 1, 0);
+  sigio_port_status = !(pfd.revents & POLLHUP);
+}
+
+static int
+can_sigio(void)
+{
+  return strverscmp("2.6.37", uts.release) <= 0;
+}
+
+static void
 setup_signals (void)
 {
   unsigned i;
@@ -261,6 +286,17 @@ setup_signals (void)
     sigaddset (&sa.sa_mask, signals[i]);
   for (i = 0; i < sizeof(signals) / sizeof(*signals); ++i)
     sigaction (signals[i], &sa, NULL);
+
+  // catch SIGIO if kernel supports it
+  if (listening_port && can_sigio())
+    {
+      memset(&sa, 0, sizeof(sa));
+      sa.sa_handler = sigio_handler;
+      sigemptyset (&sa.sa_mask);
+      sigaddset (&sa.sa_mask, SIGIO);
+      sigaction (SIGIO, &sa, NULL);
+      sigio_enabled = 1;
+    }
 }
 
 static void __attribute__ ((noreturn))
@@ -340,10 +376,6 @@ do_hello()
     return 1;
 
   // XXX check caller's version compatibility
-
-  struct utsname uts;
-  if (uname(&uts))
-    return 1;
 
   reply ("stapsh %s %s %s\n", VERSION, uts.machine, uts.release);
   return 0;
@@ -573,7 +605,7 @@ do_run()
   if (prefix_data || listening_port != NULL)
     {
       // make staprun fds non-blocking and prep polling array
-      long flags;
+      int flags;
       flags = fcntl(fd_staprun_out, F_GETFL) | O_NONBLOCK;
       fcntl(fd_staprun_out, F_SETFL, flags);
       flags = fcntl(fd_staprun_err, F_GETFL) | O_NONBLOCK;
@@ -659,6 +691,10 @@ main(int argc, char* const argv[])
 
   parse_args(argc, argv);
 
+  // we're gonna need this for setup_signals so let's do it now
+  if (uname(&uts))
+    die("Error calling uname");
+
   setup_signals();
 
   if (listening_port != NULL)
@@ -667,6 +703,20 @@ main(int argc, char* const argv[])
       if (listening_port_fd == -1)
         // no one might be watching but might as well print
         die("Error calling open()");
+
+      if (can_sigio())
+        {
+          // make ourselves the recipient of SIGIO signals for this port
+          if (fcntl(listening_port_fd, F_SETOWN, getpid()) < 0)
+            die("Error calling fcntl F_SETOWN");
+
+          // add O_ASYNC flag to enable SIGIO notifications on this port
+          int flags = fcntl(listening_port_fd, F_GETFL);
+          if (flags == -1)
+            die("Error calling fcntl F_GETFL");
+          if (fcntl(listening_port_fd, F_SETFL, flags | O_ASYNC) == -1)
+            die("Error calling fcntl F_SETFL");
+        }
 
       // We need to have different FILE* for each direction, otherwise
       // we'll have trouble down the line due to stdio's buffering
@@ -694,10 +744,12 @@ main(int argc, char* const argv[])
   pfds[PFD_STAPRUN_ERR].events = 0;
 
   // Wait until a host connects before entering the command loop or poll() will
-  // return with POLLHUP right away.
+  // return with POLLHUP right away. Note that sleep() will be interrupted upon
+  // SIGIO.
   if (listening_port != NULL)
     while (!host_connected())
-      sleep(1);
+      sleep(2); // Once we support only platforms with guaranteed SIGIO support,
+                // we could replace this with a pause().
 
   for (;;)
     {
