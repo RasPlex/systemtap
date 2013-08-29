@@ -73,6 +73,14 @@ foreach file $meta_files {
     cd $dir
     verbose -log "TEST PWD=[pwd]"
     
+    # If the test has an associated tcl file, run it. More complicated
+    # feature testing can be done there.
+    set test_tcl_file [file tail ${test}.tcl]
+    if {[file exists $test_tcl_file]} {
+	verbose -log "sourcing $test_tcl_file for $test"
+	source $test_tcl_file
+    }
+
     set command $test_support
     set supported_p 1
     if { $command != "" }  { # need to test support

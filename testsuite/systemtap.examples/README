@@ -112,3 +112,8 @@ examples.  Discussions take place on the
   ready for submission as an example, feel free to ask questions or
   discuss the work-in-progress script with other people working with
   SystemTap.
+
+Note that the check.exp test script checks for an optional tcl file
+that can check to see if the example is applicable to the system,
+somewhat analogous to the 'test_support' key mentioned above.
+
