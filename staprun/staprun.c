@@ -182,18 +182,38 @@ static int enable_uprobes(void)
 static int insert_stap_module(privilege_t *user_credentials)
 {
 	char special_options[128];
+        int rc, fips_mode_fd;
+        char fips_mode = '0';
+        char *misc = "";
 
 	/* Add the _stp_bufsize option.  */
 	if (snprintf_chk(special_options, sizeof (special_options),
 			 "_stp_bufsize=%d", buffer_size))
 		return -1;
 
-	stap_module_inserted = insert_module(modpath, special_options,
-					     modoptions,
-					     assert_stap_module_permissions,
-					     user_credentials);
+        fips_mode_fd = open("/proc/sys/crypto/fips_enabled", O_RDONLY);
+        if (fips_mode_fd >= 0) {
+                char c;
+                rc = read(fips_mode_fd, &c, 1);
+                if (rc == 1) fips_mode = c;
+                close (fips_mode_fd);
+        }
+
+        /* In FIPS mode, a kernel may panic if given an improperly-signed module.
+           Right now, we have no way of signing them with the kernel build-time keys,
+           so we punt.  See also SecureBoot. */
+        if ((fips_mode != '0') && !getenv("STAP_FIPS_OVERRIDE")) {
+                errno = EPERM;
+                stap_module_inserted = -1;
+                misc = "in FIPS mode ";
+        } else {
+        	stap_module_inserted = insert_module(modpath, special_options,
+                                                     modoptions,
+                                                     assert_stap_module_permissions,
+                                                     user_credentials);
+        }
         if (stap_module_inserted != 0)
-                err("Couldn't insert module '%s': %s\n", modpath, moderror(errno));
+                err("Couldn't insert module %s'%s': %s\n", misc, modpath, moderror(errno));
 	return stap_module_inserted;
 }
 

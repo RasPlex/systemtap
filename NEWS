@@ -7,6 +7,11 @@
   requires elfutils 0.142+, which could be useful with the
   '--disable-translator' configure switch.
 
+- Under FIPS mode (/proc/sys/crypto/fips_enabled=1), staprun will
+  refuse to load systemtap modules (since these are not normally
+  signed with the kernel's build-time keys).  This protection may
+  be suppressed with the $STAP_FIPS_OVERRIDE environment variable.
+
 * What's new in version 2.3, 2013-07-25
 
 - More context-accessing functions throw systemtap exceptions upon a
