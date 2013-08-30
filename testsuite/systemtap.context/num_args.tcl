@@ -50,6 +50,7 @@ expect {
 		pass "string function arguments -- $tag"
 	    }
 	    timeout {fail "string function arguments -- $tag"}
+	    eof {fail "string function arguments -- $tag"}
 	}
     }
     -re "semantic error:" {
