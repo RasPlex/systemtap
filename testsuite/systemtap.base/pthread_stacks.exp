@@ -1,5 +1,8 @@
 set test "pthread_stacks"
 
+if {![installtest_p]} { untested $test; return }
+if {![uprobes_p]} { untested $test; return }
+
 set exepath "[pwd]/pthread_stacks.x"
 set flags "additional_flags=-pthread additional_flags=-g"
 
