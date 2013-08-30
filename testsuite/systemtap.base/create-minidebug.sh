@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 # Extract the dynamic symbols from the main binary, there is no need
 # to also have these in the normal symbol table

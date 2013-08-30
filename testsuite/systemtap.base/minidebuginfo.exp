@@ -1,6 +1,7 @@
 set test "minidebuginfo"
 
 if {![installtest_p]} { untested $test; return }
+if {![uprobes_p]} { untested $test; return }
 
 catch { exec gcc -o binary -g $srcdir/$subdir/minidebug.c } err
 
