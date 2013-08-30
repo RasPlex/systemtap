@@ -1,6 +1,7 @@
 set test "perf"
 
 if {! [installtest_p]} { untested "$test"; return }
+if {! [perf_probes_p]} { untested "$test"; return }
 
 proc cleanup_handler { verbose } {
     catch {exec rm -f towers.x}
@@ -21,19 +22,18 @@ if { $res != "" } {
 }
 
 spawn $stap_path -c $exepath -e "
-global towers_n
-global XXX_n
+    global towers_n
+    global XXX_n
 
-probe perf.sw.task_clock.process(\"$exepath\")
-{
- towers_n += 1
-}
+    probe perf.sw.task_clock.process(\"$exepath\")
+    {
+	towers_n += 1
+    }
 
-probe perf.sw.task_clock.process(\"XXX\") 
-{ 
- XXX_n += 1
-}
-"
+    probe perf.sw.task_clock.process(\"XXX\") 
+    { 
+	XXX_n += 1
+    }"
 
 # there is no "XXX" process so this probe should have been ignored
 set ok 0
@@ -44,7 +44,6 @@ expect {
     timeout { fail "$test (timeout)" }
     eof { }
 }
-
 catch {close}; catch {wait}
 
 if {$ok == 2} {
@@ -56,13 +55,12 @@ if {$ok == 2} {
 set subtest "process"
 
 spawn $stap_path -c $exepath -e "
-global towers_n
+    global towers_n
 
-probe perf.sw.task_clock.process
-{
- towers_n += 1
-}
-"
+    probe perf.sw.task_clock.process
+    {
+	towers_n += 1
+    }"
 
 set ok 0
 expect {
@@ -71,7 +69,6 @@ expect {
     timeout { fail "$test (timeout)" }
     eof { }
 }
-
 catch {close}; catch {wait}
 
 if {$ok == 1} {
@@ -84,158 +81,165 @@ set subtest "counter"
 
 target_compile $srcdir/$subdir/towers.c $exepath executable "additional_flags=-g"
 
-spawn $stap_path -c $exepath -e "
-global towers
-global main
-
-probe perf.hw.instructions.process(\"$exepath\").counter(\"a\")
-{
- counter_a += 1
-}
-
-probe perf.hw.instructions.process(\"$exepath\").counter(\"b\")
-{
- counter_b += 1
-}
-
-probe process(\"$exepath\").statement(\"towers@towers.c\")
-{
- towers <<< @perf(\"a\")
-}
-
-probe process(\"$exepath\").statement(\"main@towers.c\")
-{
- main <<< @perf(\"b\")
-}
-
-probe end
-{
- printf(\"count main=%d\\ncount towers=%d\\ncounter %d/%d\\n\", @count(main), @count(towers), counter_a, counter_b)
- printf(\"min main=%d\\nmin towers=%d\\n\", @min(main), @min(towers))
- printf(\"max main=%d\\nmax towers=%d\\n\", @max(main), @max(towers))
-}
-"
-
-set ok 0
-expect {
-    -timeout 180
-    -re {count main=1} { incr ok; exp_continue }
-    -re {count towers=500} { incr ok; exp_continue }
-    -re {min main=[0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
-    -re {min towers=[0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
-    -re {max main=[0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
-    -re {max towers=[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
-    -re {not supported by this kernel} {
-	# If this type of perf probe isn't supported by this kernel,
-	# kfail the test.
-	setup_kfail 15727 *-*-*; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof { }
-}
-
-catch {close}; catch {wait}
-
-spawn $stap_path -c $exepath -e "
-global main
-global counter_a
-
-probe perf.hw.instructions.counter(\"a\")
-{
- counter_a += 1
-}
-
-probe process(\"$exepath\").statement(\"main@towers.c\")
-{
- # counter \"a\" has no defined process so the default is $exepath
- main <<< @perf(\"a\")
-}
-
-probe end
-{
- printf(\"count main=%d\\n\", @count(main))
-}
-"
-
-expect {
-    -timeout 180
-    -re {count main=1} { incr ok; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof { }
-}
-catch {close}; catch {wait}
-
-if {$ok == 7} {
-    pass "$test $subtest"
+if {! [uprobes_p]} {
+    untested "$test $subtest"
 } else {
-    fail "$test $subtest ($ok)"
+    spawn $stap_path -c $exepath -e "
+	global towers
+	global main
+	
+	probe perf.hw.instructions.process(\"$exepath\").counter(\"a\")
+	{
+	    counter_a += 1
+	}
+	
+	probe perf.hw.instructions.process(\"$exepath\").counter(\"b\")
+	{
+	    counter_b += 1
+	}
+	
+	probe process(\"$exepath\").statement(\"towers@towers.c\")
+	{
+	    towers <<< @perf(\"a\")
+	}
+	
+	probe process(\"$exepath\").statement(\"main@towers.c\")
+	{
+	    main <<< @perf(\"b\")
+	}
+	
+	probe end
+	{
+	    printf(\"count main=%d\\ncount towers=%d\\ncounter %d/%d\\n\",
+		   @count(main), @count(towers), counter_a, counter_b)
+	    printf(\"min main=%d\\nmin towers=%d\\n\", @min(main),
+		   @min(towers))
+	    printf(\"max main=%d\\nmax towers=%d\\n\", @max(main),
+		   @max(towers))
+	}"
+
+    set ok 0
+    expect {
+	-timeout 180
+	-re {count main=1} { incr ok; exp_continue }
+	-re {count towers=500} { incr ok; exp_continue }
+	-re {min main=[0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
+	-re {min towers=[0-9][0-9][0-9][0-9][0-9][0-9]} {
+	    incr ok; exp_continue }
+	-re {max main=[0-9][0-9][0-9][0-9][0-9][0-9]} { incr ok; exp_continue }
+	-re {max towers=[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]} {
+	    incr ok; exp_continue }
+	-re {not supported by this kernel} {
+	    # If this type of perf probe isn't supported by this kernel,
+	    # kfail the test.
+	    setup_kfail 15727 *-*-*; exp_continue }
+	timeout { fail "$test (timeout)" }
+	eof { }
+    }
+    catch {close}; catch {wait}
+
+    spawn $stap_path -c $exepath -e "
+	global main
+	global counter_a
+
+	probe perf.hw.instructions.counter(\"a\")
+	{
+	    counter_a += 1
+	}
+	
+	probe process(\"$exepath\").statement(\"main@towers.c\")
+	{
+	    # counter \"a\" has no defined process so the default is $exepath
+	    main <<< @perf(\"a\")
+	}
+	
+	probe end
+	{
+	    printf(\"count main=%d\\n\", @count(main))
+	}"
+    expect {
+	-timeout 180
+	-re {count main=1} { incr ok; exp_continue }
+	timeout { fail "$test (timeout)" }
+	eof { }
+    }
+    catch {close}; catch {wait}
+
+    if {$ok == 7} {
+	pass "$test $subtest"
+    } else {
+	fail "$test $subtest ($ok)"
+    }
 }
 
 set subtest "error check"
 
-spawn $stap_path -e "
-global x
-
-probe perf.hw.cpu_cycles.process(\"$exepath\").counter(\"a\") {} 
-
-probe process(\"$exepath\").function(\"main\")
-{
- # wrong type
- x = \"b\" . @perf(\"a\")
-}"
-
-set ok 0
-expect {
-    -timeout 180
-    -re {semantic error:.*type mismatch.*long vs. string} { incr ok; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof { }
-}
-catch {close}; catch {wait}
-
-spawn $stap_path -e "
-global x
-
-probe perf.hw.cpu_cycles.process(\"/bin/ls\").counter(\"b\") {}
-
-probe process(\"$exepath\").function(\"main\")
-{
- # wrong process
- y = @perf(\"b\")
-}"
-
-expect {
-    -timeout 180
-    -re {semantic error: perf counter 'b' not defined} { incr ok; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof { }
-}
-catch {close}; catch {wait}
-
-spawn $stap_path -e "
-global x
-
-probe perf.hw.cpu_cycles.process(\"/bin/ls\").counter(\"a\") {}
-
-probe process(\"$exepath\").function(\"main\")
-{
- # wrong counter
- y = @perf(\"b\")
-}"
-
-expect {
-    -timeout 180
-    -re {semantic error: perf counter 'b' not defined} { incr ok; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof { }
-}
-
-catch {close}; catch {wait}
-
-if {$ok == 3} {
-    pass "$test $subtest"
+if {! [uprobes_p]} {
+    untested "$test $subtest"
 } else {
-    fail "$test $subtest ($ok)"
-}
+    spawn $stap_path -e "
+	global x
 
+	probe perf.hw.cpu_cycles.process(\"$exepath\").counter(\"a\") {} 
+
+	probe process(\"$exepath\").function(\"main\")
+	{
+	    # wrong type
+	    x = \"b\" . @perf(\"a\")
+	}"
+    set ok 0
+    expect {
+	-timeout 180
+	-re {semantic error:.*type mismatch.*long vs. string} {
+	    incr ok; exp_continue }
+	timeout { fail "$test (timeout)" }
+	eof { }
+    }
+    catch {close}; catch {wait}
+
+    spawn $stap_path -e "
+	global x
+
+	probe perf.hw.cpu_cycles.process(\"/bin/ls\").counter(\"b\") {}
+
+	probe process(\"$exepath\").function(\"main\")
+	{
+	    # wrong process
+	    y = @perf(\"b\")
+	}"
+    expect {
+	-timeout 180
+	-re {semantic error: perf counter 'b' not defined} {
+	    incr ok; exp_continue }
+	timeout { fail "$test (timeout)" }
+	eof { }
+    }
+    catch {close}; catch {wait}
+
+    spawn $stap_path -e "
+	global x
+
+	probe perf.hw.cpu_cycles.process(\"/bin/ls\").counter(\"a\") {}
+
+	probe process(\"$exepath\").function(\"main\")
+	{
+	    # wrong counter
+	    y = @perf(\"b\")
+	}"
+    expect {
+	-timeout 180
+	-re {semantic error: perf counter 'b' not defined} {
+	    incr ok; exp_continue }
+	timeout { fail "$test (timeout)" }
+	eof { }
+    }
+    catch {close}; catch {wait}
+
+    if {$ok == 3} {
+	pass "$test $subtest"
+    } else {
+	fail "$test $subtest ($ok)"
+    }
+}
 
 cleanup_handler $verbose

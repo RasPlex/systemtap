@@ -93,6 +93,11 @@ proc plt_probes_p {} {
 	    && [regexp "^(x86_64|i.86|arm.*)$" $::tcl_platform(machine)] ]
 }
 
+proc perf_probes_p {} {
+    # perf probes need and exported perf_event_create_kernel_counter
+    return [grep_kallsyms perf_event_create_kernel_counter]
+}
+
 proc dyninst_p {} {
     global systemtap_dyninst_p
     return $systemtap_dyninst_p

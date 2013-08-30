@@ -1,6 +1,10 @@
 # Check that perf/timer probes trigger in both kernel and user space.
 set test "pt_user_mode"
 
+if {! [installtest_p]} { untested "$test"; return }
+# Notice we don't need to check for perf probe support (perf_probes_p)
+# here, since perf probes are optional in the script.
+
 set effective_pid [exec /usr/bin/id -u]
 if { $effective_pid != 0 } {
     untested "$test (perf probes require root access)"
