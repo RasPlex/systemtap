@@ -1,4 +1,8 @@
 set test "utf_pretty"
+
+if {! [installtest_p]} { untested "$test"; return }
+if {! [uprobes_p]} { untested "$test"; return }
+
 set ::result_string {{.c8='s', .c16='t', .c32='p', .s8="stapΑΩ☺😈", .s16="stapΑΩ☺😈", .s32="stapΑΩ☺😈"}}
 
 set srcfile "$srcdir/$subdir/$test.cxx"

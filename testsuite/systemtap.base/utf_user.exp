@@ -1,4 +1,8 @@
 set test "utf_user"
+
+if {! [installtest_p]} { untested "$test"; return }
+if {! [uprobes_p]} { untested "$test"; return }
+
 set ::result_string {73 74 61 70 391 3A9 263A D83D DE08 :
 stapΑΩ☺😈
 73 74 61 70 391 3A9 263A 1F608 :

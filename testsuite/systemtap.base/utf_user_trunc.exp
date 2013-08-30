@@ -1,4 +1,8 @@
 set test "utf_user_trunc"
+
+if {! [installtest_p]} { untested "$test"; return }
+if {! [uprobes_p]} { untested "$test"; return }
+
 set ::result_string {utf-16:012345678Z
 utf-16:0123456789
 utf-16:01234567Ω
