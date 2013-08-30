@@ -1,5 +1,8 @@
 set test "target_set_thread"
 
+if {! [installtest_p]} { untested "$test"; return }
+if {! [uprobes_p]} { untested "$test"; return }
+
 # target_set should not forget a process once one of its threads ends.
 # (this is an issue with using syscall.exit, which is only a true process exit
 #  if that was the last thread in the thread group.)
