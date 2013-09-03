@@ -968,11 +968,7 @@ probe nd_syscall.execve = kprobe.function("sys_execve")
 	// filename = user_string($filename)
 	// args = __get_argv($argv, 0)
 	// argstr = sprintf("%s %s", filename, __get_argv($argv, 1))
-	//
-	// Why use u_register("r2") on s390? The odd s390 argument
-	// passing (PR15913).
-	filename = user_string(%( arch == "s390" %? u_register("r2")
-			       %: pointer_arg(1) %))
+	filename = user_string(pointer_arg(1))
 	args = __get_argv(pointer_arg(2), 0)
 	argstr = sprintf("%s %s", filename, __get_argv(pointer_arg(2), 1))
 }
