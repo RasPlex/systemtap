@@ -1,5 +1,8 @@
 set test debugtypes
 
+if {! [installtest_p]} { untested "$test"; return }
+if {! [uprobes_p]} { untested "$test"; return }
+
 # Make sure gcc has support for the '-gdwarf-4 -fdebug-types-section'
 # options, otherwise, there is no point to running this test.
 if {[catch {exec gcc -E -gdwarf-4 -fdebug-types-section - < /dev/null}]} {
