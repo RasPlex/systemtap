@@ -1,0 +1,63 @@
+#!/bin/bash
+# Keeps respawning stapsh on the given port
+# External programs used: basename, date, expr (all in coreutils)
+# Must be in libexec dir
+
+STAPSH=@bindir@/stapsh
+
+# Make sure we were given a port
+if [ ! -n "$1" ]; then
+   echo "Usage: `basename $0` <port>" >&2
+   exit 1
+fi
+
+STAPSH_PID=/var/run/stapsh.$(basename $1).pid
+STAPSHD_PID=/var/run/stapshd.$(basename $1).pid
+
+# Make sure the port exists
+if [ ! -c "$1" ]; then
+   echo "Argument $1 is not a character device" >&2
+   if [ -f "$STAPSHD_PID" ]; then
+      rm "$STAPSHD_PID"
+   fi
+   exit 2
+fi
+
+# Returns the time in seconds
+now() {
+   echo $(date "+%s")
+}
+
+# Returns the time elapsed in seconds since arg
+elapsed() {
+   echo $(expr $(now) - $1)
+}
+
+# If stapsh is restarted more than 5 times in less than 1 second, we abort
+last=$(now)
+respawns=0
+while [ true ]; do
+   if [ "$(elapsed $last)" -gt 1 ]; then
+      last=$(now)
+      respawns=0
+   elif [ "$respawns" -gt 5 ]; then
+      echo "Too many respawns... aborting" >&2
+      rm "$STAPSH_PID"
+      if [ -f "$STAPSHD_PID" ]; then
+         rm "$STAPSHD_PID"
+      fi
+      exit 3
+   elif [ ! -c "$1" ]; then
+      echo "Port no longer available" >&2
+      if [ -f "$STAPSHD_PID" ]; then
+         rm "$STAPSHD_PID"
+      fi
+      exit 4
+   fi
+   $STAPSH -l "$1" &>/dev/null &
+   pid=$!
+   echo $pid > $STAPSH_PID
+   wait $pid
+   respawns=$(expr $respawns + 1)
+done
+

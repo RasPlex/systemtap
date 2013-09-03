@@ -1,0 +1,16 @@
+# To use this template service file, you would do something like
+# systemctl start stapsh@org.systemtap.stapsh.0.service
+# This file should end up in /usr/lib/systemd/system during installation
+# Docs: http://0pointer.de/blog/projects/instances.html
+
+[Unit]
+Description=SystemTap stapsh on %I
+Documentation=man:stap man:stapsh
+BindsTo=dev-virtio\x2dports-%i.device
+After=dev-virtio\x2dports-%i.device
+
+[Service]
+ExecStart=@bindir@/stapsh -l /dev/virtio-ports/%I
+Restart=always
+RestartSec=0
+

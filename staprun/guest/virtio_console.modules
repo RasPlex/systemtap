@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Necessary for RHEL5. Ensures that the virtio_console module is loaded if
+# virtio_serial ports are detected. Place in "/etc/sysconfig/modules/".
+
+function detect_virtio_console
+{
+	for modalias in /sys/bus/virtio/devices/virtio*/modalias; do
+		if [ "`cat $modalias`" == "virtio:d00000003v00001AF4" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+if detect_virtio_console; then
+	/sbin/modprobe virtio_console >/dev/null 2>&1
+fi
+

@@ -1,0 +1,161 @@
+#!/bin/bash
+#
+# chkconfig: - 90 10
+# description: Starts up stapshd instances for each SystemTap virtio-serial \
+#              port discovered.
+#
+# Should end up in init dir
+
+if [ -f /etc/rc.d/init.d/functions ]; then
+  . /etc/rc.d/init.d/functions
+fi
+
+STAPSHD=@libexecdir@/systemtap/stapsh-daemon
+STAPSH=@bindir@/stapsh
+
+PORT_BASENAME="/dev/virtio-ports/org.systemtap.stapsh"
+
+# Prints paths to available SystemTap ports and returns the number of ports
+ports() {
+   count=0
+   for port in $PORT_BASENAME.*; do
+      if [[ $port =~ $PORT_BASENAME.[0-9]+ ]]; then
+         echo "$port"
+         count=$(expr $count + 1)
+      fi
+   done
+   return $count
+}
+
+count_missing() {
+   missing=0
+   for port in $(ports); do
+      if [ ! -f "/var/run/stapshd.$(basename $port).pid" ]; then
+         missing=$(expr $missing + 1)
+      fi
+   done
+   return $missing
+}
+
+# Start stapshd instances
+start() {
+   prts=$(ports)
+   if [ $? -eq 0 ]; then
+      echo "no ports detected" >&2
+      # This shouldn't be an error
+      return 0
+   fi
+   count_missing
+   if [ $? -eq 0 ]; then
+      echo "already running" >&2
+      return 0
+   fi
+   for port in $prts; do
+      pidfile="/var/run/stapshd.$(basename $port).pid"
+      if [ ! -f "$pidfile" ]; then
+         $STAPSHD "$port" &>/dev/null &
+         echo $! > $pidfile
+      fi
+   done
+   return 0
+}
+
+# First stops stapshd instances and then the stapsh instances
+stop() {
+   for pidfile in /var/run/stapshd.$(basename $PORT_BASENAME).*.pid; do
+      if [ -f "$pidfile" ]; then
+         killproc -p $pidfile stapshd
+      fi
+      # Delete PID file if killproc didn't do it
+      if [ -f "$pidfile" ]; then
+         rm $pidfile
+      fi
+   done
+   for pidfile in /var/run/stapsh.$(basename $PORT_BASENAME).*.pid; do
+      if [ -f "$pidfile" ]; then
+         killproc -p $pidfile stapsh
+      fi
+      # Delete PID file if killproc didn't do it
+      if [ -f "$pidfile" ]; then
+         rm $pidfile
+      fi
+   done
+   return 0
+}
+
+# Only restart if we're running
+condrestart() {
+   if [ -f "/var/run/stapshd.$(basename $PORT_BASENAME).*.pid" ]; then
+      stop
+      start
+   fi
+   return 0
+}
+
+# Check if there's a stapshd instance for each port
+status() {
+   prts=$(ports)
+   if [ $? -eq 0 ]; then
+      echo "not running" >&2
+      return 3
+   fi
+   count_missing
+   if [ $? -eq 0 ]; then
+      echo "running"
+      return 0
+   else
+      echo "missing $missing stapshd instances"
+      return 3
+   fi
+}
+
+# Stops any stapshd instances that are still running for a non-existent port
+# and starts stapshd instances for any port that doesn't have one
+reload() {
+   for pidfile in /var/run/stapshd.$(basename $PORT_BASENAME).*.pid; do
+      if [ -f "$pidfile" -a ! -c "/dev/virtio-ports/$(basename $PORT_BASENAME)" ]; then
+         killproc -p $pidfile stapshd
+         # Delete PID file if killproc didn't do it
+         if [ -f "$pidfile" ]; then
+            rm $pidfile
+         fi
+      fi
+   done
+   for pidfile in /var/run/stapsh.$(basename $PORT_BASENAME).*.pid; do
+      if [ -f "$pidfile" -a ! -c "/dev/virtio-ports/$(basename $PORT_BASENAME)" ]; then
+         killproc -p $pidfile stapsh
+         # Delete PID file if killproc didn't do it
+         if [ -f "$pidfile" ]; then
+            rm $pidfile
+         fi
+      fi
+   done
+   start
+}
+
+# Main logic
+case "$1" in
+   start)
+      start
+      ;;
+   stop)
+      stop
+      ;;
+   status)
+      status
+      ;;
+   restart)
+      stop
+      start
+      ;;
+   condrestart|try-restart)
+      condrestart
+      ;;
+   reload)
+      reload
+      ;;
+   *)
+      echo "Usage: $0 {start|stop|restart|reload|condrestart|status}"
+      exit 1
+esac
+exit $?

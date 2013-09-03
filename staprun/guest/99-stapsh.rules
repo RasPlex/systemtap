@@ -1,0 +1,7 @@
+# Instantiates a stapsh systemd service for each detected port
+# Should end up in /usr/lib/udev/rules.d
+# Docs: systemd.device(5), udev(7)
+
+SUBSYSTEM=="virtio-ports", ATTR{name}=="org.systemtap.stapsh.[0-9]*", \
+  TAG+="systemd" ENV{SYSTEMD_WANTS}="stapsh@$attr{name}.service"
+
