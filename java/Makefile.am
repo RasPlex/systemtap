@@ -29,11 +29,6 @@ noinst_DATA =
 noinst_PROGRAMS =
 pkglibexec_SCRIPTS = 
 
-if HAVE_SELINUX
-AM_CFLAGS += $(selinux_CFLAGS)
-AM_LDFLAGS = $(selinux_LIBS)
-endif #HAVE_SELINUX
-
 if HAVE_JAVA
 
 # only install if we need Byteman support!
@@ -44,17 +39,20 @@ noinst_PROGRAMS += libHelperSDT.so
 libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
 libHelperSDT_so_LDFLAGS = -lc
 
+# the full class name is:
+HELPERSDT = org/systemtap/byteman/helper/HelperSDT
+
 # build HelperSDT.class
-noinst_DATA += HelperSDT.class
-CLEANFILES += HelperSDT.class
-HelperSDT.class: $(srcdir)/org/systemtap/byteman/helper/HelperSDT.java
-	$(JAVAC) -d . $(srcdir)/org/systemtap/byteman/helper/HelperSDT.java
+noinst_DATA += $(HELPERSDT).class
+CLEANFILES += $(HELPERSDT).class
+$(HELPERSDT).class: $(srcdir)/$(HELPERSDT).java
+	$(JAVAC) -d . $(srcdir)/$(HELPERSDT).java
 
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
 noinst_DATA += HelperSDT.jar
 CLEANFILES += HelperSDT.jar
-HelperSDT.jar: HelperSDT.class
-	$(JAR) cvf HelperSDT.jar org/systemtap/byteman/helper/HelperSDT.class
+HelperSDT.jar: $(HELPERSDT).class
+	$(JAR) cvf HelperSDT.jar $(HELPERSDT).class
 
 # place/install libHelperSDT.so and HelperSDT.jar
 install-exec-local:
@@ -66,8 +64,3 @@ uninstall-local:
 	rm -rf $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
 
 endif #HAVE_JAVA
-
-# Arrange for the top-level git_version.h to be regenerated at every "make".
-BUILT_SOURCES += git_version.stamp
-git_version.stamp ../git_version.h:
-	$(MAKE) -C .. $(notdir $@)

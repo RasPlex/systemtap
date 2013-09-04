@@ -57,19 +57,18 @@ host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS =
 noinst_PROGRAMS = $(am__EXEEXT_1)
-@HAVE_SELINUX_TRUE@am__append_1 = $(selinux_CFLAGS)
 
 # only install if we need Byteman support!
-@HAVE_JAVA_TRUE@am__append_2 = stapbm
+@HAVE_JAVA_TRUE@am__append_1 = stapbm
 
 # build libHelperSDT.so
-@HAVE_JAVA_TRUE@am__append_3 = libHelperSDT.so
+@HAVE_JAVA_TRUE@am__append_2 = libHelperSDT.so
 
 # build HelperSDT.class
 
 # jar cvf HelperSDT.jar HelperSDT.class libHelperSDT.so
-@HAVE_JAVA_TRUE@am__append_4 = HelperSDT.class HelperSDT.jar
-@HAVE_JAVA_TRUE@am__append_5 = HelperSDT.class HelperSDT.jar
+@HAVE_JAVA_TRUE@am__append_3 = $(HELPERSDT).class HelperSDT.jar
+@HAVE_JAVA_TRUE@am__append_4 = $(HELPERSDT).class HelperSDT.jar
 subdir = java
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/stapbm.in $(top_srcdir)/depcomp
@@ -324,20 +323,20 @@ JAVA_ARCH := $(target_cpu)
 # XXX: perhaps autoconfigure the following?
 JAVAC = javac
 JAR = jar
-
-# Arrange for the top-level git_version.h to be regenerated at every "make".
-BUILT_SOURCES = git_version.stamp
-CLEANFILES = $(am__append_5)
+BUILT_SOURCES = 
+CLEANFILES = $(am__append_4)
 
 #AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
 AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-I$(srcdir)/java -I$(JAVADIR)/include/linux \
-	-I$(JAVADIR)/include -fPIC -shared $(am__append_1)
-noinst_DATA = $(am__append_4)
-pkglibexec_SCRIPTS = $(am__append_2)
-@HAVE_SELINUX_TRUE@AM_LDFLAGS = $(selinux_LIBS)
+	-I$(JAVADIR)/include -fPIC -shared
+noinst_DATA = $(am__append_3)
+pkglibexec_SCRIPTS = $(am__append_1)
 @HAVE_JAVA_TRUE@libHelperSDT_so_SOURCES = HelperSDT.c HelperSDT.h
 @HAVE_JAVA_TRUE@libHelperSDT_so_LDFLAGS = -lc
+
+# the full class name is:
+@HAVE_JAVA_TRUE@HELPERSDT = org/systemtap/byteman/helper/HelperSDT
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -685,10 +684,10 @@ override JAVA_ARCH:=$(JAVA_ARCH:i%86=i386)
 override JAVA_ARCH:=$(JAVA_ARCH:sparcv9=sparc)
 override JAVA_ARCH:=$(JAVA_ARCH:sparc64=sparcv9)
 override JAVA_ARCH:=$(JAVA_ARCH:arm%=arm)
-@HAVE_JAVA_TRUE@HelperSDT.class: $(srcdir)/org/systemtap/byteman/helper/HelperSDT.java
-@HAVE_JAVA_TRUE@	$(JAVAC) -d . $(srcdir)/org/systemtap/byteman/helper/HelperSDT.java
-@HAVE_JAVA_TRUE@HelperSDT.jar: HelperSDT.class
-@HAVE_JAVA_TRUE@	$(JAR) cvf HelperSDT.jar org/systemtap/byteman/helper/HelperSDT.class
+@HAVE_JAVA_TRUE@$(HELPERSDT).class: $(srcdir)/$(HELPERSDT).java
+@HAVE_JAVA_TRUE@	$(JAVAC) -d . $(srcdir)/$(HELPERSDT).java
+@HAVE_JAVA_TRUE@HelperSDT.jar: $(HELPERSDT).class
+@HAVE_JAVA_TRUE@	$(JAR) cvf HelperSDT.jar $(HELPERSDT).class
 
 # place/install libHelperSDT.so and HelperSDT.jar
 @HAVE_JAVA_TRUE@install-exec-local:
@@ -698,8 +697,6 @@ override JAVA_ARCH:=$(JAVA_ARCH:arm%=arm)
 @HAVE_JAVA_TRUE@uninstall-local:
 @HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/libHelperSDT_$(JAVA_ARCH).so
 @HAVE_JAVA_TRUE@	rm -rf $(DESTDIR)$(pkglibexecdir)/HelperSDT.jar
-git_version.stamp ../git_version.h:
-	$(MAKE) -C .. $(notdir $@)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
