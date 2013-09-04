@@ -1,56 +1,58 @@
-probe syscall.open {
-      
-      actualLength = strlen (filename)-2; // -2 to account for the quotes
-      
-                                              // 34 = '"' -- i.e. valid filename
-      if (actualLength > 5 && actualLength < 15 && stringat(filename,0) == 34) {
-        filename = substr(filename, 1, actualLength)
+global success
+
+probe module("memory1_module").function("stp_memory1_set_str")
+{
+	actualLength = $bytes
+	if (actualLength <= 5 || actualLength >= 15)
+		next
+
+	string_copy = kernel_string($string);
         four = 4;
-        five = 5;
+       	five = 5;
         fifteen = 15;
 	success = 1;
 
-	expected_1_1 = sprintf ("%.1s", filename);
+	expected_1_1 = sprintf ("%.1s", string_copy);
         testName = "%m default width and precision";
-        result = sprintf ("%m", $filename);
+        result = sprintf ("%m", $string);
 	if (result != expected_1_1) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
-	expected_5_5 = sprintf ("%.5s", filename);
+	expected_5_5 = sprintf ("%.5s", string_copy);
         testName = "%m static precision smaller than input";
-        result = sprintf ("%.5m", $filename);
+        result = sprintf ("%.5m", $string);
 	if (result != expected_5_5) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
         testName = "%m dynamic precision smaller than input";
-        result = sprintf ("%.*m", five, $filename);
+        result = sprintf ("%.*m", five, $string);
 	if (result != expected_5_5) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
         testName = "%m dynamic precision equal to input";
-	expected_actual_actual = filename;
-        result = sprintf ("%.*m", actualLength, $filename);
+	expected_actual_actual = string_copy;
+        result = sprintf ("%.*m", actualLength, $string);
 	if (result != expected_actual_actual) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
-	expected_5_1 = sprintf ("    %.1s", filename);
+	expected_5_1 = sprintf ("    %.1s", string_copy);
         testName = "%m static width default precision";
-        result = sprintf ("%5m", $filename);
+        result = sprintf ("%5m", $string);
 	if (result != expected_5_1) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
         testName = "%m dynamic width default precision";
-        result = sprintf ("%*m", five, $filename);
+        result = sprintf ("%*m", five, $string);
 	if (result != expected_5_1) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
@@ -58,29 +60,29 @@ probe syscall.open {
 
 	expected_4_5 = expected_5_5;
         testName = "%m static width smaller than static precision";
-        result = sprintf ("%4.5m", $filename);
+        result = sprintf ("%4.5m", $string);
 	if (result != expected_4_5) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
-	expected_15_5 = sprintf ("          %.5s", filename);
+	expected_15_5 = sprintf ("          %.5s", string_copy);
         testName = "%m static width larger than static precision";
-        result = sprintf ("%15.5m", $filename);
+        result = sprintf ("%15.5m", $string);
 	if (result != expected_15_5) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
         testName = "%m dynamic width smaller than static precision";
-        result = sprintf ("%*.5m", four, $filename);
+        result = sprintf ("%*.5m", four, $string);
 	if (result != expected_4_5) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
         testName = "%m dynamic width larger than static precision";
-        result = sprintf ("%*.5m", fifteen, $filename);
+        result = sprintf ("%*.5m", fifteen, $string);
 	if (result != expected_15_5) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
@@ -88,58 +90,64 @@ probe syscall.open {
 
 	expected_4_actual = expected_actual_actual;
         testName = "%m static width smaller than dynamic precision";
-        result = sprintf ("%4.*m", actualLength, $filename);
+        result = sprintf ("%4.*m", actualLength, $string);
 	if (result != expected_4_actual) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
-	expected_15_actual = sprintf ("%15s", filename);
+	expected_15_actual = sprintf ("%15s", string_copy);
         testName = "%m static width larger than dynamic precision";
-        result = sprintf ("%15.*m", actualLength, $filename);
+        result = sprintf ("%15.*m", actualLength, $string);
 	if (result != expected_15_actual) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
         testName = "%m dynamic width smaller than dynamic precision";
-        result = sprintf ("%*.*m", four, actualLength, $filename);
+        result = sprintf ("%*.*m", four, actualLength, $string);
 	if (result != expected_4_actual) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
         testName = "%m dynamic width larger than dynamic precision";
-        result = sprintf ("%*.*m", fifteen, actualLength, $filename);
+        result = sprintf ("%*.*m", fifteen, actualLength, $string);
 	if (result != expected_15_actual) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
 
 	expected_16_actual = sprintf ("  %02x%02x%02x%02x%02x%02x",
-				      stringat(filename, 0),
-				      stringat(filename, 1),
-				      stringat(filename, 2),
-				      stringat(filename, 3),
-				      stringat(filename, 4),
-				      stringat(filename, 5));
+				      stringat(string_copy, 0),
+				      stringat(string_copy, 1),
+				      stringat(string_copy, 2),
+				      stringat(string_copy, 3),
+				      stringat(string_copy, 4),
+				      stringat(string_copy, 5));
 	testName = "%M dynamic width larger than dynamic precision";
-	result = sprintf ("%*.*M", 14, 6, $filename);
+	result = sprintf ("%*.*M", 14, 6, $string);
 	if (result != expected_16_actual) {
 		printf ("Test %s failed\n", testName);
 		success = 0;
 	}
-
-	if (success)
-	   print ("Test passed\n");
-
-        exit();
-    }
+	exit();
 }
 
 probe timer.s(10) {
-      // If the script runs this long, something has gone wrong with providing
-      // a syscall.read-generating workload.
-      println ("syscall.read timeout")
+      // If the script runs this long, something has gone wrong
+      println ("timeout")
       exit()
+}
+
+probe begin
+{
+	println("systemtap starting probe")
+}
+
+probe end
+{
+	println("systemtap ending probe")
+	if (success)
+		print ("Test passed\n");
 }

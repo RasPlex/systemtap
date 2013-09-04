@@ -1,10 +1,82 @@
 set test "memory1"
 set ::result_string {Test passed}
 
-# Make sure we run some dummy workload, so the script doesn't block
-# forever waiting for an open syscall.
-#
-# Note that we don't test other runtimes here since the script uses
-# 'syscall.open'.
-stap_run2 $srcdir/$subdir/$test.stp -w -c "/bin/sh < /dev/null"
-stap_run2 $srcdir/$subdir/$test.stp -w -c "/bin/sh < /dev/null" -DSTP_LEGACY_PRINT
+if {![installtest_p]} {
+    untested $test
+    return
+}
+
+set build_dir ""
+set uname [exec /bin/uname -r]
+
+proc build_and_install_module {} {
+    global build_dir
+    global srcdir subdir
+
+    # Create the build directory and populate it
+    if {[catch {exec mktemp -d staptestXXXXXX} build_dir]} {
+	verbose -log "Failed to create temporary directory: $build_dir"
+	return 0
+    }
+    exec cp $srcdir/$subdir/memory1_module.c $build_dir/
+    exec cp -p $srcdir/$subdir/memory1_module.Makefile $build_dir/Makefile
+
+    # Build the module
+    if {[catch {exec make -C $build_dir clean} res]} {
+	verbose -log "$res"
+	return 0
+    }
+    catch {exec make -C $build_dir} res
+    verbose -log "$res"
+    if {![file exists $build_dir/memory1_module.ko]} {
+	return 0
+    }
+    set res [as_root [list cp $build_dir/memory1_module.ko /lib/modules/$::uname/kernel/]]
+    if { $res != 0 } {
+	verbose -log "$res"
+	return 0
+    }
+
+    # Install the module
+    set res [as_root [list /sbin/insmod $build_dir/memory1_module.ko]]
+    if {$res != 0} {
+	verbose -log "$res"
+	return 0
+    }
+    return 1
+}
+
+proc cleanup_module {} {
+    global build_dir
+    as_root [list /bin/rm -f /lib/modules/$::uname/kernel/memory1_module.ko]
+    as_root [list /sbin/rmmod memory1_module]
+    if {$build_dir != ""} {
+	catch { exec rm -rf $build_dir }
+    }
+}
+
+proc memory1_load {} {
+    # Trigger the test module
+    if {[file exists /proc/stap_memory1_test]} {
+	exec echo Memory1Test > /proc/stap_memory1_test
+	return 0
+    } else {
+	return 1
+    }
+}
+
+if {[build_and_install_module] == 0} {
+    verbose -log "BUILD FAILED"
+    fail "$test (could not build/install module)"
+    return
+} else {
+    pass "$test (built and installed module)"
+}
+
+
+# Note that we don't test other runtimes here since the script uses a
+# kernel module
+stap_run $srcdir/$subdir/$test.stp memory1_load $result_string 
+stap_run $srcdir/$subdir/$test.stp memory1_load $result_string -DSTP_LEGACY_PRINT
+
+cleanup_module
