@@ -1,10 +1,22 @@
 # Testcase for various embedded-C functions in tcp.stp and netfilter.stp.
 
+set test "net-sanity"
+if {![installtest_p]} {untested $test; return}
+
 set file $srcdir/$subdir/net-sanity.stp
 foreach value {0 0xffffffff 0xffffffffffffffff} {
     foreach ix {0 1 2 3 4} {
         set test "net-sanity $value $ix"
         if {![installtest_p]} {untested $test; continue}
+
+	# s390x machines don't error when reading address 0 (or when
+	# reading offsets from 0xffffffffffffffff)
+	if {[istarget s390x-*-*]} {
+	    if {$value == 0 || ($value == 0xffffffffffffffff && $ix > 0)} {
+		setup_kfail S390X [istarget]
+	    }
+	}
+
         spawn stap $file $value $ix
         set errs 0
         verbose -log "exp $test $errs"
