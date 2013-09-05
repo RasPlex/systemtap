@@ -1,0 +1,28 @@
+probe syscall.unlink, syscall.unlinkat
+{
+	printf("cmdline_arg(0) = %s\n", cmdline_arg(0))
+	printf("cmdline_arg(1) = %s\n", cmdline_arg(1))
+	printf("cmdline_arg(2) = %s\n", cmdline_arg(2))
+
+	printf("cmdline_str = %s\n", cmdline_str())
+
+	printf("cmdline_args(0, 1) = %s\n", cmdline_args(0, 1, " "))
+	printf("cmdline_args(0, 2) = %s\n", cmdline_args(0, 2, " "))
+	printf("cmdline_args(1, 2) = %s\n", cmdline_args(1, 2, " "))
+
+	printf("cmdline_args(0, 0) = %s\n", cmdline_args(0, 0, " "))
+	printf("cmdline_args(1, 1) = %s\n", cmdline_args(1, 1, " "))
+	printf("cmdline_args(2, 2) = %s\n", cmdline_args(2, 2, " "))
+
+	printf("cmdline_args(0, -1) = %s\n", cmdline_args(0, -1, " "))
+	printf("cmdline_args(1, -1) = %s\n", cmdline_args(1, -1, " "))
+	printf("cmdline_args(2, -1) = %s\n", cmdline_args(2, -1, " "))
+	exit()
+}
+
+# Just timeout if we haven't gotten a probe hit yet 
+probe timer.s(10)
+{
+	printf("timeout\n")
+	exit()
+}
