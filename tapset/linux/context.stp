@@ -388,9 +388,9 @@ function uaddr:long ()
 
 /**
  * sfunction cmdline_args - Fetch command line arguments from current process
- * @n: First argument to get (zero is the command itself)
+ * @n: First argument to get (zero is normally the program itself)
  * @m: Last argument to get (or minus one for all arguments after n)
- * @delim: String to use to delimit arguments when more than one.
+ * @delim: String to use to separate arguments when more than one.
  *
  * Description: Returns arguments from the current process starting
  * with argument number n, up to argument m. If there are less than n
@@ -403,44 +403,39 @@ function cmdline_args:string(n:long, m:long, delim:string)
 {
   __args = "";
   __mm = @cast(task_current(), "task_struct", "kernel<linux/sched.h>")->mm;
-  if (__mm)
-    {
-      __arg_start = @cast(__mm, "mm_struct", "kernel<linux/sched.h>")->arg_start;
-      __arg_end = @cast(__mm, "mm_struct", "kernel<linux/sched.h>")->arg_end;
-      if (__arg_start != 0 && __arg_end != 0)
-        {
-          __nr = 0;
-          __len = __arg_end - __arg_start;
-          __arg = user_string2(__arg_start, "");
-          while (__len > 0)
-            {
-              if (__nr == n)
-                __args = __arg;
-              else if (__nr > n)
-                {
-                  if (__arg == "")
-                    __args .= delim . "\"\""
-                  else
-                    __args .= delim . __arg;
-                }
+  if (__mm == 0)
+    return "";
 
-              __arg_len = strlen(__arg);
-              __arg_start += __arg_len + 1;
-              __len -= __arg_len + 1;
-              if (__len > 0 && __nr != m)
-                __arg = user_string2(__arg_start, "");
-              else
-                __arg = "";
-              __nr++;
-            }
-        }
-    }
+  __arg_start = @cast(__mm, "mm_struct", "kernel<linux/sched.h>")->arg_start;
+  __arg_end = @cast(__mm, "mm_struct", "kernel<linux/sched.h>")->arg_end;
+  if (__arg_start == 0 || __arg_end == 0)
+    return "";
+
+  for (__nr=0;
+       (__arg_start < __arg_end) && // still string content left?
+         (m<0 || __nr<=m); // caller still interested?
+       __nr++) { 
+
+    __arg = user_string2(__arg_start, ""); // argv[__nr], unquoted
+    __arg_start += strlen(__arg) + 1; // skip over for next iteration
+
+    if (__nr == n)     // caller starting to get interested?
+      __args = __arg;
+    else if (__nr > n) // caller still interested?
+      {
+        if (__arg == "")
+          __args .= delim . "\"\""
+        else
+          __args .= delim . __arg;
+      }
+  }
+
   return __args;
 }
 
 /**
  * sfunction cmdline_arg - Fetch a command line argument
- * @n: Argument to get (zero is the command itself)
+ * @n: Argument to get (zero is the program itself)
  *
  * Description: Returns argument the requested argument from the
  * current process or the empty string when there are not that many
