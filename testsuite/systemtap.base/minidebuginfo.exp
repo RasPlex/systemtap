@@ -9,7 +9,7 @@ if {$err == ""} then { pass "$test compile" } else { fail "$test compile $err" }
 
 catch { exec $srcdir/$subdir/create-minidebug.sh } err
 if {$err == ""} then { pass "$test create minidebug" } else { fail "$test create-minidebug.sh $err" }
-spawn stap $srcdir/$subdir/minidebuginfo.stp -c "./binary"
+spawn stap $srcdir/$subdir/minidebuginfo.stp -c "./binary.test"
 set ok 0
 expect {
     -timeout 30
@@ -21,4 +21,4 @@ expect {
 }
 catch { close }; wait
 if {$ok == 3} then { pass "$test ($ok)" } else { fail "$test ($ok)" }
-catch { exec rm binary mini_debuginfo.xz dynsyms funcsyms keep_symbols } err
+catch { exec rm binary binary.dynsyms binary.funcsyms binary.keep_symbols binary.mini_debuginfo binary.strip binary.debug binary.mini_debuginfo.xz binary.test } err
