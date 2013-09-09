@@ -1,10 +1,15 @@
 set test "user_string_n_quoted"
+if {![installtest_p]} { untested $test; return }
 
 spawn stap $srcdir/$subdir/user_string_n_quoted.stp -c "echo this_is_a_test > /dev/null"
 expect {
-	-timeout 30
+	-timeout 60
 	{"this_is_a_"...} { pass $test }
 	eof { fail $test }
-	timeout { fail "$test (timeout)" }
+	timeout {
+		fail "$test (timeout)"
+		catch { exec kill -INT -[exp_pid] }
+	}
 }
 
+catch { close }; catch { wait }

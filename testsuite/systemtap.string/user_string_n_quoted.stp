@@ -1,7 +1,7 @@
 # Ensure that user_string_n_quoted truncates properly and there's no
 # off-by-one error... PR15617
 
-probe nd_syscall.write {
+probe syscall.write {
 	if (pid() == target()) {
 		printf("%s\n", user_string_n_quoted(buf_uaddr, 15))
 		exit()
