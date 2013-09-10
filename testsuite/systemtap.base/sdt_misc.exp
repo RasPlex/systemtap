@@ -530,7 +530,7 @@ for {set i 0} {$i < [llength $pbtype_flags]} {incr i} {
     catch {close}; catch {wait}
     
     if { $ok == 51 || $ok == 48 \
-	     || (($ok == 43 || $ok == 40 ) && ([istarget "i.86-*-*"] \
+	     || (($ok == 43 || $ok == 40 ) && ([istarget "i*86-*-*"] \
 						   || [istarget "arm-*-*"]))} {
 	pass "$test wildcard $pbtype_mssg"
     } else {
