@@ -5602,7 +5602,7 @@ struct sdt_uprobe_var_expanding_visitor: public var_expanding_visitor
       DRI ("r7", 7, SI);
       DRI ("r8", 8, SI);
       DRI ("r9", 9, SI);
-      DRI ("sl", 10, SI);
+      DRI ("r10", 10, SI); DRI ("sl", 10, SI);
       DRI ("fp", 11, SI);
       DRI ("ip", 12, SI);
       DRI ("sp", 13, SI);
@@ -5895,9 +5895,9 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
       // On ARM test for [REGISTER, OFFSET]
      if (elf_machine == EM_ARM)
        {
-         rc = regexp_match (asmarg, string("^\\[(")+regnames+string("), #([+-]?[0-9]+)([+-][0-9]*)?([+-][0-9]*)?\\]$"), matches);
+         rc = regexp_match (asmarg, string("^\\[(")+regnames+string(")(, #([+-]?[0-9]+)([+-][0-9]*)?([+-][0-9]*)?)?\\]$"), matches);
          reg = 1;
-         offset1 = 2;
+         offset1 = 3;
        }
      else
        {
