@@ -65,7 +65,7 @@ probe process("utrace_syscall_args").syscall {
 	    # argument 1 that holds all the actual arguments. Handle
 	    # this.
 	    addr = mmap_args[1]
-	    if (! %{ _stp_is_comat_task() %}) {
+	    if (! %{ _stp_is_compat_task() %}) {
 	    	mmap_args[1] = user_long(&@cast(addr, "mmap_arg_struct")->addr)
 		mmap_args[2] = user_long(&@cast(addr, "mmap_arg_struct")->len)
 		mmap_args[3] = user_long(&@cast(addr, "mmap_arg_struct")->prot)
