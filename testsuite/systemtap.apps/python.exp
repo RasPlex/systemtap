@@ -12,9 +12,9 @@ if {! [info exists env(SYSTEMTAP_TESTAPPS)] || (
 }
 
 set msdata "[pwd]/stap-python"
-set python2release "2.7.2"
+set python2release "2.7.5"
 set python2dir "python2"
-set python3release "3.2.2"
+set python3release "3.3.2"
 set python3dir "python3"
 set testsuite "[pwd]"
 
