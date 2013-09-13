@@ -273,6 +273,7 @@ send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
     -timeout 150
+    -re {^.*\r\n} { exp_continue }
     timeout { 
 	exec kill -INT -[exp_pid]
 	set failed 1
@@ -305,6 +306,7 @@ send_log "executing: $cmd\n"
 eval spawn $cmd
 expect {
     -timeout 150
+    -re {^.*\r\n} { exp_continue }
     timeout { 
 	exec kill -INT -[exp_pid]
 	set failed 1
@@ -477,6 +479,7 @@ foreach privilege {"--unprivileged" "--privilege=stapusr" "--privilege=stapsys"}
 	-re {^stap_[^ \t\r\n]*\.ko\r\n} {
 	    set module_name [string trim "$expect_out(0,string)" \r\n]
 	    set failed 0
+	    exp_continue
 	}
 	-re {^.*\r\n} { exp_continue }
 	timeout { 
@@ -559,6 +562,7 @@ foreach privilege {"--unprivileged" "--privilege=stapusr" "--privilege=stapsys"}
 	    -timeout 150
 	    -re {^Hello From Server\r\n} {
 		set failed 0
+		exp_continue
 	    }
 	    timeout { 
 		exec kill -INT -[exp_pid]
@@ -626,6 +630,7 @@ if {$no_module == 1 || ! [installtest_p]} {
 	-timeout 150
 	-re {^Hello From Server\r\n} {
 	    set failed 0
+	    exp_continue;
 	}
 	timeout { 
 	    exec kill -INT -[exp_pid]

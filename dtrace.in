@@ -275,11 +275,13 @@ def main():
             os.remove(fn)
         else:
             print "source: " + fn
-        if (use_cpp):
-            if (not keep_temps):
-                os.remove(s_filename)
-            else:
-                print "cpp: " + s_filename
+
+    if (use_cpp):
+        if (not keep_temps):
+            os.remove(s_filename)
+        else:
+            print "cpp: " + s_filename
+
     return 0
 
 if __name__ == "__main__":

@@ -182,10 +182,10 @@ function display_dict_variable (dict, variable, namespace, co_name_str, co_filen
     for (i = 0; i < n; i++) {
 	dict_key = get_dict_key (dict, i)      
 	dict_value = get_dict_value (dict, i)      
+	if (dict_key == 0 || dict_value == 0) break
 	key_str = set_string (@cast (dict_key, "PyStringObject", "PYTHON2")->ob_sval)
 	key_type_str = get_type (dict_key)
 
-	if (dict_key == 0 || dict_value == 0) break
 	if (wildcard_match (key_str, variable)) {
 	    foreach ([var, file] in python2_vars_seen) {
 		if (var == key_str

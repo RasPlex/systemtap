@@ -1,0 +1,25 @@
+set test "caller"
+
+if {! [installtest_p]} { untested "$test"; return }
+
+set test_script {
+    global caller_str
+
+    probe begin {
+        printf("systemtap starting probe\n")
+    }
+
+    probe kernel.function("vfs_write") {
+	caller_str = caller()
+	exit()
+    }
+
+    probe end {
+        printf("systemtap ending probe\n")
+	printf("%s\n", caller_str)
+    }
+}
+
+# We expect that the caller of vfs_write() will be sys_write().
+set output {[Ss]y[Ss]_write 0x[0-9a-f]+\r\n}
+stap_run $test no_load $output -e $test_script -c "echo hi > /dev/null"

@@ -14,8 +14,9 @@ be corrected.
 .TP
 function.return probes
 .IR process.function().return 
-probes require "return-probes" or "uretprobes" functionality, that has not
-been implemented yet in the kernel.  Until it is re-added, consider using
+probes require "return-probes" or "uretprobes" functionality, which was not
+implemented in the builtin inode-uprobes until kernel 3.10.  If you cannot
+upgrade your kernel, consider using
 .IR process.statement() 
 probes placed on source line numbers at the function's return statements.
 
