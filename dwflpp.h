@@ -325,6 +325,7 @@ struct dwflpp
                                           Dwarf_Die *innerdie,
                                           const target_symbol *e);
 
+  bool has_gnu_debugdata();
 
 private:
   DwflPtr dwfl_ptr;

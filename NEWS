@@ -1,5 +1,9 @@
 * What's new in version 2.4
 
+- Systemtap now checks for and uses (when available) the .gnu_debugdata
+  section which contains a subset of debuginfo, useful for backtraces
+  and function probing
+
 - SystemTap map variables are now allocated with vmalloc() instead of
   with kmalloc(), which should cause memory to be less fragmented.
 

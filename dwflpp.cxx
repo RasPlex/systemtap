@@ -3811,5 +3811,28 @@ dwflpp::pr15123_retry_addr (Dwarf_Addr pc, Dwarf_Die* die)
   return 0;
 }
 
+bool
+dwflpp::has_gnu_debugdata ()
+{
+  Dwarf_Addr load_addr;
+  // Note we really want the actual elf file, not the dwarf .debug file.
+  Elf* elf = dwfl_module_getelf (module, &load_addr);
+  size_t shstrndx;
+  assert (elf_getshdrstrndx (elf, &shstrndx) >= 0);
+
+  // Get the gnu_debugdata section header
+  Elf_Scn *scn = NULL;
+  GElf_Shdr *gnu_debugdata_shdr = NULL;
+  GElf_Shdr gnu_debugdata_shdr_mem;
+  while ((scn = elf_nextscn (elf, scn)))
+    {
+      gnu_debugdata_shdr = gelf_getshdr (scn, &gnu_debugdata_shdr_mem);
+      assert (gnu_debugdata_shdr != NULL);
+      if (strcmp (elf_strptr (elf, shstrndx, gnu_debugdata_shdr->sh_name), ".gnu_debugdata") == 0)
+	return true;
+    }
+  return false;
+}
+
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */

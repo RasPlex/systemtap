@@ -1013,7 +1013,7 @@ dwarf_query::query_module_symtab()
       if (dw.name_has_wildcard(function_str_val))
         {
           // Until we augment the blacklist sufficently...
-          if (function_str_val.find_first_not_of("*?") == string::npos)
+	  if ((function_str_val.find_first_not_of("*?") == string::npos) && !dw.has_gnu_debugdata())
             {
               // e.g., kernel.function("*")
               cerr << _F("Error: Pattern '%s' matches every single "
@@ -1092,8 +1092,9 @@ dwarf_query::handle_query_module()
     query_module_dwarf();
 
   // Consult the symbol table if we haven't found all we're looking for.
-  // asm functions can show up in the symbol table but not in dwarf.
-  if (sess.consult_symtab && !query_done)
+  // asm functions can show up in the symbol table but not in dwarf,
+  // or if we want to check the .gnu_debugdata section
+  if ((sess.consult_symtab || dw.has_gnu_debugdata()) && !query_done)
     query_module_symtab();
 
   // Add to list of visited modules
