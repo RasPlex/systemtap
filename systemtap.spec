@@ -821,7 +821,15 @@ done
 
 # ------------------------------------------------------------------------
 
+# Future new-release entries should be of the form
+# * DDD MMM DD YYYY YOURNAME <YOUREMAIL> - V-R
+# - Upstream release, see wiki page below for detailed notes.
+#   http://sourceware.org/systemtap/wiki/SystemTapReleases
+
 %changelog
+* Thu Jul 25 2013 Frank Ch. Eigler <fche@redhat.com> - 2.3-1
+- Upstream release.
+
 * Thu May 16 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2.1-1
 - Upstream release.
 
