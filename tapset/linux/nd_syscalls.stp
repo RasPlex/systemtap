@@ -958,6 +958,11 @@ probe __nd_syscall.eventfd.return = kprobe.function("sys_eventfd").return
 }
 
 # execve _____________________________________________________
+%( kernel_v >= "3.7" %?
+# In kernels >= 3.7, sys_execve() has been moved to generic code, so we
+# can use it with confidence.
+#
+# execve _____________________________________________________
 # SYSCALL_DEFINE3(execve,
 #		const char __user *, filename,
 #		const char __user *const __user *, argv,
@@ -977,39 +982,80 @@ probe nd_syscall.execve.return = kprobe.function("sys_execve").return
 	name = "execve"
 	retstr = returnstr(1)
 }
+%:
+# In kernels < 3.7, sys_execve() was in arch-specific code (and had
+# varying arguments). But, it was just a wrapper around generic
+# do_execve().
+#
+# int do_execve(char * filename,
+#	char __user *__user *argv,
+#	char __user *__user *envp,
+#	struct pt_regs * regs)
+probe nd_syscall.execve = kprobe.function("do_execve").call
+{
+	name = "execve"
+	filename = kernel_string(pointer_arg(1))
+	args = __get_argv(pointer_arg(2), 0)
+	argstr = sprintf("%s %s", filename, __get_argv(pointer_arg(2), 1))
+}
+probe nd_syscall.execve.return = kprobe.function("do_execve").return
+{
+	name = "execve"
+	retstr = returnstr(1)
+}
+%)
 
+%( kernel_v >= "3.7" %?
+# In kernels >= 3.7, compat_sys_execve() has been moved to generic
+# code, so we can use it with confidence.
+#
 # asmlinkage long compat_sys_execve(const char __user * filename,
 #	const compat_uptr_t __user * argv,
 #	const compat_uptr_t __user * envp)
-# static int compat_do_execve(const char *filename,
-#	const compat_uptr_t __user *__argv,
-#	const compat_uptr_t __user *__envp)
-probe nd_syscall.compat_execve = _nd_syscall.compat_sys_execve !,
-	_nd_syscall.compat_do_execve ?
+probe nd_syscall.compat_execve = kprobe.function("compat_sys_execve").call ?
 {
 	name = "compat_execve"
+	// filename = user_string($filename)
 	// args = __get_compat_argv($argv, 0)
 	// argstr = sprintf("%s %s", filename, __get_compat_argv($argv, 1))
+	asmlinkage()
+	filename = user_string(pointer_arg(1))
 	args = __get_compat_argv(pointer_arg(2), 0)
 	argstr = sprintf("%s %s", filename,
 			 __get_compat_argv(pointer_arg(2), 1))
 }
-probe _nd_syscall.compat_sys_execve = kprobe.function("compat_sys_execve").call
+probe nd_syscall.compat_execve.return =
+	kprobe.function("compat_sys_execve").return ?
 {
-	asmlinkage()
-	filename = user_string(pointer_arg(1))
+	name = "compat_execve"
+	retstr = returnstr(1)
 }
-probe _nd_syscall.compat_do_execve = kprobe.function("compat_do_execve").call
+%:
+# In kernels < 3.7, compat_sys_execve() was in arch-specific code (and
+# had varying arguments). But, it was just a wrapper around generic
+# compat_do_execve().
+#
+# static int compat_do_execve(const char *filename,
+#	const compat_uptr_t __user *__argv,
+#	const compat_uptr_t __user *__envp)
+probe nd_syscall.compat_execve = kprobe.function("compat_do_execve").call ?
 {
+	name = "compat_execve"
+	// filename = kernel_string($filename)
+	// args = __get_compat_argv($argv, 0)
+	// argstr = sprintf("%s %s", filename, __get_compat_argv($argv, 1))
 	filename = kernel_string(pointer_arg(1))
+	args = __get_compat_argv(pointer_arg(2), 0)
+	argstr = sprintf("%s %s", filename,
+			 __get_compat_argv(pointer_arg(2), 1))
 }
 probe nd_syscall.compat_execve.return =
-	kprobe.function("compat_sys_execve").return !,
 	kprobe.function("compat_do_execve").return ?
 {
 	name = "compat_execve"
 	retstr = returnstr(1)
 }
+%)
 
 # exit _______________________________________________________
 # long sys_exit(int error_code)
