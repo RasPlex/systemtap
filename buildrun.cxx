@@ -426,9 +426,9 @@ compile_pass (systemtap_session& s)
 
   // o << "CFLAGS += -fno-unit-at-a-time" << endl;
 
-  // 256 bytes should be enough for anybody
+  // 256^W512 bytes should be enough for anybody
   // XXX this doesn't validate varargs, per gcc bug #41633
-  o << "EXTRA_CFLAGS += $(call cc-option,-Wframe-larger-than=256)" << endl;
+  o << "EXTRA_CFLAGS += $(call cc-option,-Wframe-larger-than=512)" << endl;
 
   // Assumes linux 2.6 kbuild
   o << "EXTRA_CFLAGS += -Wno-unused" << (s.omit_werror ? "" : " -Werror") << endl;
