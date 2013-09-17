@@ -715,6 +715,131 @@ class unix_stapsh : public stapsh {
     virtual ~unix_stapsh() { finish(); }
 };
 
+class libvirt_stapsh : public stapsh {
+  private:
+
+    pid_t child;
+
+    libvirt_stapsh(systemtap_session& s, const uri_decoder& ud)
+      : stapsh(s)
+      {
+        string domain;
+        string libvirt_uri;
+
+        // Request that data be encapsulated since both stdout and stderr have
+        // to go over the same line. Also makes stapsh tell us when it quits.
+        this->options.push_back("data");
+
+        // set verbosity to the requested level
+        for (unsigned i = 1; i < s.perpass_verbose[4]; i++)
+          this->options.push_back("verbose");
+
+        // A valid libvirt URI has one of two forms:
+        //  - libvirt://DOMAIN/LIBVIRT_URI?LIBVIRT_QUERY
+        //  - libvirt:DOMAIN/LIBVIRT_URI?LIBVIRT_QUERY
+        // We only advertise the first form, but to be nice, we also accept the
+        // second form. In the first form, DOMAIN is authority, LIBVIRT_URI is
+        // path, and LIBVIRT_QUERY is the query. In the second form, the DOMAIN
+        // is part of the path.
+
+        if (ud.has_fragment)
+          throw runtime_error(_("libvirt target URI doesn't support a #fragment"));
+
+        if (ud.has_authority) // first form
+          {
+            domain = ud.authority;
+            if (!ud.path.empty())
+              {
+                libvirt_uri = ud.path.substr(1);
+                if (ud.has_query)
+                  libvirt_uri += "?" + ud.query;
+              }
+          }
+        else // second form
+          {
+            if (ud.path.empty())
+              throw runtime_error(_("libvirt target URI requires a domain name"));
+
+            size_t slash = ud.path.find_first_of('/');
+            if (slash == string::npos)
+              domain = ud.path;
+            else
+              {
+                domain = ud.path.substr(0, slash);
+                libvirt_uri = ud.path.substr(slash+1);
+              }
+          }
+
+        int in, out;
+        vector<string> cmd;
+
+        string stapvirt = BINDIR "/stapvirt";
+        if (!file_exists(stapvirt))
+          throw runtime_error(_("stapvirt missing"));
+
+        cmd.push_back(stapvirt);
+
+        // carry verbosity into stapvirt
+        for (unsigned i = 1; i < s.perpass_verbose[4]; i++)
+          cmd.push_back("-v");
+
+        if (!libvirt_uri.empty())
+          {
+            cmd.push_back("-c");
+            cmd.push_back(libvirt_uri);
+          }
+
+        cmd.push_back("connect");
+        cmd.push_back(domain);
+
+        // mask signals for stapvirt since it relies instead on stap or stapsh
+        // closing its connection to know when to exit (otherwise, stapvirt
+        // would receive SIGINT on Ctrl-C and exit nonzero)
+
+        // NB: There is an interesting issue to note here. Some libvirt URIs
+        // will create child processes of stapvirt (e.g. qemu+ssh:// will
+        // create an ssh process under stapvirt, also qemu+ext://, see
+        // <libvirt.org/remote.html> for more info). These processes do not
+        // keep the mask of stapvirt we are creating here, but are still part
+        // of the same process group.
+        //     This means that e.g. SIGINT will not be blocked. Thus, stapvirt
+        // explicitly adds a handler for SIGCHLD and forcefully disconnects
+        // upon receiving it (otherwise it would await indefinitely).
+        {
+          stap_sigmasker masked;
+          child = stap_spawn_piped(s.verbose, cmd, &in, &out);
+        }
+
+        if (child <= 0)
+          throw runtime_error(_("error launching stapvirt"));
+
+        try
+          {
+            set_child_fds(in, out);
+          }
+        catch (runtime_error&)
+          {
+            finish();
+            throw;
+          }
+      }
+
+    int finish()
+      {
+        int rc = stapsh::finish();
+        if (child <= 0)
+          return rc;
+
+        int rc2 = stap_waitpid(s->verbose, child);
+        child = 0;
+        return rc ?: rc2;
+      }
+
+    public:
+      friend class remote;
+
+      virtual ~libvirt_stapsh() { finish(); }
+};
 
 // stapsh-based ssh_remote
 class ssh_remote : public stapsh {
@@ -1088,6 +1213,8 @@ remote::create(systemtap_session& s, const string& uri, int idx)
             it = new direct_stapsh(s);
           else if (ud.scheme == "unix")
             it = new unix_stapsh(s, ud);
+          else if (ud.scheme == "libvirt")
+            it = new libvirt_stapsh(s, ud);
           else if (ud.scheme == "ssh")
             it = ssh_remote::create(s, ud);
           else
