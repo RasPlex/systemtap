@@ -194,6 +194,14 @@ proc setup_systemtap_environment {} {
     # No compile-server started yet.
     set server_pid 0
 
+    # If the environment variable ARCH exists, this can throw off our
+    # custom module building (when set to the wrong value). To be
+    # safe, remove it.
+    if [info exists env(ARCH)] {
+	verbose -log "clearing env ARCH (was $env(ARCH))"
+	unset env(ARCH)
+    }
+
     # PATH, SYSTEMTAP_TAPSET, SYSTEMTAP_RUNTIME, LD_LIBRARY_PATH are already set.
     foreach var {PATH STAP SRCDIR SYSTEMTAP_TAPSET SYSTEMTAP_RUNTIME SYSTEMTAP_DIR LD_LIBRARY_PATH} {
         if [info exists env($var)] {
