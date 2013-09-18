@@ -3476,12 +3476,10 @@ get_or_keep_online_server_info (
 
     fail:
       // Cleanup.
-      if (sb)
-        avahi_service_browser_free(sb);
-    
-      if (client)
+      if (client) {
+	// Also frees the service browser
         avahi_client_free(client);
-
+      }
       if (simple_poll)
         avahi_simple_poll_free(simple_poll);
 #else // ! HAVE_AVAHI
