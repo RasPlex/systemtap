@@ -235,7 +235,7 @@ proc setup_systemtap_environment {} {
 # Set up the environment so that tests will be performed using the systemtap
 # client and server.
 proc setup_server { args } {
-    global srcdir env installed_stap logfile use_server avahi_ok_p
+    global srcdir env installed_stap logfile use_server server_spec avahi_ok_p
 
     # Start the server
     if {! [start_server $args]} then {
@@ -247,23 +247,33 @@ proc setup_server { args } {
     set res [catch { exec stap --list-servers=online,trusted,compatible >& stap-list-servers.out } looksee]
     verbose -log "stap --list-servers returned: res==$res"
     verbose -log $looksee[exec cat stap-list-servers.out]
-    set res [catch { exec grep "^ host" stap-list-servers.out } looksee]
+    set listRes [catch { exec grep "^ host" stap-list-servers.out } looksee]
     verbose -log "grep for servers returned: res==$res\n$looksee"
 
-    set avahi_ok_p 1
+    # Try to discover the port the server is listening on from the server log.
+    # We're matching a line of the form:
+    # "Thu Jul 25 11:58:11 2013: Using network address <addr>:37804"
+    set res [catch { exec /bin/cat $logfile | awk "/Using network address/ {print \$9}" } server_address]
+    send_log "server_address=='$server_address'\n"
     if {$res != 0} then {
+	verbose -log "Unable to discover the address used by the systemtap server"
+	shutdown_server
+	return 0
+    }
+    set res [regsub ".*:(\[0-9\]\[0-9\]*)\$" $server_address {\1} server_port]
+    send_log "server_port=='$server_port'\n"
+    if {$res != 1} then {
+	verbose -log "Unable to discover the port used by the systemtap server"
+	shutdown_server
+	return 0
+    }
+    set server_spec [info hostname]:$server_port
+    send_log "server_spec=='$server_spec'\n"
+
+    set avahi_ok_p 1
+    if {$listRes != 0} then {
 	verbose -log "Unable to automatically find the systemtap server -- check firewall settings for mDNS"
 	set avahi_ok_p 0
-
-	# Try to discover the port the server is listening on from the server
-	# log.
-	set res [catch { exec /bin/cat $logfile | awk "/^Systemtap Compile Server on port .* ready/ {print \$6}" } server_port]
-	if {$res != 0} then {
-	    verbose -log "Unable to discover the port used by the systemtap server"
-	    shutdown_server
-	    return 0
-	}
-	set server_spec [info hostname]:$server_port
 	verbose -log "Client/Server tests will be run by contacting the server directly as $server_spec"
 
 	# Make sure stap can contact the server directly
