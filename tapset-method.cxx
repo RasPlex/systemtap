@@ -56,7 +56,6 @@ string bmoption_escape (string s) {
 struct java_builder: public derived_probe_builder
 {
 private:
-  bool cache_initialized;
   typedef multimap<string, string> java_cache_t;
   typedef multimap<string, string>::const_iterator java_cache_const_iterator_t;
   typedef pair<java_cache_const_iterator_t, java_cache_const_iterator_t>
@@ -64,7 +63,7 @@ private:
   java_cache_t java_cache;
 
 public:
-  java_builder (): cache_initialized (false) {}
+  java_builder () {}
 
   void build (systemtap_session & sess,
 	      probe * base,

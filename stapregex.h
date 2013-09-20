@@ -19,11 +19,11 @@
 
 struct systemtap_session; /* from session.h */
 struct token; /* from parse.h */
-struct translator_output; /* from translator-output.h */
+class translator_output; /* from translator-output.h */
 
 namespace stapregex {
   struct regexp; /* from stapregex-tree.h */
-  class dfa; /* from stapregex-dfa.h */
+  struct dfa; /* from stapregex-dfa.h */
 };
 
 struct stapdfa {
