@@ -8,7 +8,7 @@ set test "sdt_misc"
 # 5. Test attaching to a running process with markers in a shared object
 # 6. Test .mark probe wildcard matching
 # 7. Test types defined in sdt_misc_.d.  This requires -g
-# 8. Test V3 asm support
+# 8. Test V3 $$parms support
 
 set v_flags {{-DSTAP_SDT_V1} {-DSTAP_SDT_V2} {-DSTAP_SDT_V3}}
 set pbtype_mssgs {{V1_uprobe} {V2_uprobe} {V3_uprobe}}
@@ -25,7 +25,7 @@ proc cleanup_handler { verbose } {
 		       sdt_misc_${x}_types.x libsdt_${x}_loop.so }
 	}
 	catch {exec rm -f sdt_misc_.c sdt_misc_.h sdt_misc_.o sdt_types.x \
-		   sdt_asm.x ,semclean ,semout}
+		   ,semclean ,semout}
     }
 }
 
@@ -586,54 +586,8 @@ for {set i 0} {$i < [llength $pbtype_flags]} {incr i} {
     }
 } ; # end pbtype_flags
 
-# 8. Test V3 asm support
 
-if {[istarget "x86_64-*-*"] || [istarget "i*86-*-*"]} {
-    set asm_flags [sdt_includes]
-    # avoid WARNING for @defined($no_such_var)
-    set asm_flags "$asm_flags additional_flags=-g"
-    set res [target_compile $srcdir/$subdir/sdt_asm.S sdt_asm.x \
-		 executable $asm_flags]
-    if { $res != "" } {
-	verbose "target_compile failed: $res" 2
-	fail "$test compiling sdt_asm.S"
-    } else {
-	pass "$test compiling sdt_asm.S"
-    }
-    
-    foreach runtime [get_runtime_list] {
-	set test_xtra ""
-	if {$runtime != ""} {
-	    set test_xtra " ($runtime)"
-	    verbose -log "spawn $stap_path --runtime=$runtime -c [pwd]/sdt_asm.x $srcdir/$subdir/sdt_asm.stp [pwd]/sdt_asm.x"
-	    spawn $stap_path --runtime=$runtime -c [pwd]/sdt_asm.x $srcdir/$subdir/sdt_asm.stp [pwd]/sdt_asm.x
-	} elseif {[uprobes_p]} {
-	    verbose -log "spawn $stap_path -c [pwd]/sdt_asm.x $srcdir/$subdir/sdt_asm.stp [pwd]/sdt_asm.x"
-	    spawn $stap_path -c [pwd]/sdt_asm.x $srcdir/$subdir/sdt_asm.stp [pwd]/sdt_asm.x
-	} else {
-	    untested "$test asm"
-	    continue
-	}
-	set ok 0
-	set notok 0
-	set fail "asm"
-	expect {
-	    -timeout 180
-	    -re {FAIL: [a-z0-9]} { regexp " .*$" $expect_out(0,string) s;
-		incr notok; set fail "$fail $s"; exp_continue }
-	    -re {PASS: [a-z0-9]} { incr ok; exp_continue }
-	    timeout { fail "$test (timeout)" }
-	    eof { }
-	}
-	catch {close}; catch {wait}
-    
-	if { $notok != 0 || $ok == 0} {
-	    fail "$test asm${test_xtra} ($ok) $fail"
-	} else {
-	    pass "$test asm${test_xtra} ($ok)"
-	}
-    }
-} ; # x86_64 | i.86
+# 8. Test V3 $$parms support
 
 foreach runtime [get_runtime_list] {
     set test_xtra ""
