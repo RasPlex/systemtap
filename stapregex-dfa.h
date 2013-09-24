@@ -22,7 +22,7 @@
 #include <queue>
 #include <utility>
 
-struct translator_output; /* from translator-output.h */
+class translator_output; /* from translator-output.h */
 
 namespace stapregex {
 

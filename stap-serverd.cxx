@@ -333,7 +333,7 @@ entry_group_callback (
     {
     case AVAHI_ENTRY_GROUP_ESTABLISHED:
       // The entry group has been established successfully.
-      log (_F("Service '%s' successfully established.", avahi_service_name));
+      log (_F("Avahi service '%s' successfully established.", avahi_service_name));
       break;
 
     case AVAHI_ENTRY_GROUP_COLLISION: {
@@ -351,10 +351,9 @@ entry_group_callback (
     }
 
     case AVAHI_ENTRY_GROUP_FAILURE:
+      // Some kind of failure happened.
       server_error (_F("Avahi entry group failure: %s",
-		  avahi_strerror (avahi_client_errno (avahi_entry_group_get_client (g)))));
-      // Some kind of failure happened while we were registering our services.
-      avahi_threaded_poll_stop (avahi_threaded_poll);
+		       avahi_strerror (avahi_client_errno (avahi_entry_group_get_client (g)))));
       break;
 
     case AVAHI_ENTRY_GROUP_UNCOMMITED:
@@ -447,9 +446,17 @@ create_services (AvahiClient *c) {
 
  fail:
   avahi_entry_group_reset (avahi_group);
-  avahi_threaded_poll_stop (avahi_threaded_poll);
 }
 
+static void avahi_cleanup_client () {
+  // This also frees the entry group, if any
+  if (avahi_client) {
+    avahi_client_free (avahi_client);
+    avahi_client = 0;
+    avahi_group = 0;
+  }
+}
+ 
 static void
 client_callback (AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata)
 {
@@ -466,7 +473,19 @@ client_callback (AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void *
 
     case AVAHI_CLIENT_FAILURE:
       server_error (_F("Avahi client failure: %s", avahi_strerror (avahi_client_errno (c))));
-      avahi_threaded_poll_stop (avahi_threaded_poll);
+      if (avahi_client_errno (c) == AVAHI_ERR_DISCONNECTED)
+	{
+	  // The client has been disconnected; probably because the avahi daemon has been
+	  // restarted. We can free the client here and try to reconnect using a new one.
+	  // Passing AVAHI_CLIENT_NO_FAIL allows the new client to be
+	  // created, even if the avahi daemon is not running. Our service will be advertised
+	  // if/when the daemon is started.
+	  avahi_cleanup_client ();
+	  int error;
+	  avahi_client = avahi_client_new (avahi_threaded_poll_get (avahi_threaded_poll),
+					   (AvahiClientFlags)AVAHI_CLIENT_NO_FAIL,
+					   client_callback, NULL, & error);
+	}
       break;
 
     case AVAHI_CLIENT_S_COLLISION:
@@ -484,10 +503,13 @@ client_callback (AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void *
       break;
 
     case AVAHI_CLIENT_CONNECTING:
+      // The avahi-daemon is not currently running. Our service will be advertised
+      // if/when the deamon is started.
+      server_error (_F("The Avahi daemon is not running. Avahi service '%s' will be established when the deamon is started", avahi_service_name));
       break;
     }
 }
- 
+
 static void
 avahi_cleanup () {
   if (avahi_service_name)
@@ -498,15 +520,7 @@ avahi_cleanup () {
     avahi_threaded_poll_stop (avahi_threaded_poll);
 
   // Clean up the avahi objects. The order of freeing these is significant.
-  if (avahi_group) {
-    avahi_entry_group_reset (avahi_group);
-    avahi_entry_group_free (avahi_group);
-    avahi_group = 0;
-  }
-  if (avahi_client) {
-    avahi_client_free (avahi_client);
-    avahi_client = 0;
-  }
+  avahi_cleanup_client ();
   if (avahi_threaded_poll) {
     avahi_threaded_poll_free (avahi_threaded_poll);
     avahi_threaded_poll = 0;
@@ -541,10 +555,12 @@ avahi_publish_service (CERTCertificate *cert)
       return;
     }
 
-  // Always allocate a new client.
+  // Always allocate a new client. Passing AVAHI_CLIENT_NO_FAIL allows the client to be
+  // created, even if the avahi daemon is not running. Our service will be advertised
+  // if/when the daemon is started.
   int error;
   avahi_client = avahi_client_new (avahi_threaded_poll_get (avahi_threaded_poll),
-				   (AvahiClientFlags)0,
+				   (AvahiClientFlags)AVAHI_CLIENT_NO_FAIL,
 				   client_callback, NULL, & error);
   // Check whether creating the client object succeeded.
   if (! avahi_client)

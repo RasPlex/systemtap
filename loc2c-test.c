@@ -38,7 +38,7 @@ struct dwfunc
   bool matchdebug;
 };
 
-static void __attribute__ ((noreturn))
+static void __attribute__ ((noreturn, format (printf, 2, 3)))
 fail (void *arg __attribute__ ((unused)), const char *fmt, ...)
 {
   va_list ap;

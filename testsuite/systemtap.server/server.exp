@@ -1,4 +1,8 @@
-set test "Server Tests"
+set test "Server Tests:"
+
+# We will be looking for specific log messages, so specify our own log file.
+set server_log $logfile
+
 # Don't attempt these tests if the client/server are not available
 if {! [setup_server]} then {
     untested "Server Tests"
@@ -105,4 +109,61 @@ if {! [uprobes_p]} then {
     }
 }
 
+#-------------------------------------------------------
+# avahi-daemon restart: PR 15872
+# Make sure that the server can survive an avahi-daemon restart and still accept requests
+# via avahi. We can only test this is avahi is available.
+if {$avahi_ok_p != 1} {
+    set dontTest 1
+} else {
+    set dontTest 0
+}
+
+if {$dontTest == 1} {
+    untested "$test $subtest"
+} else {
+    set subtest "server reacts to avahi-daemon restart"
+    if {![as_root "service avahi-daemon restart"]} {
+	# Could not restart the avahi daemon
+	set dontTest 1
+    } else {
+	# Give the server time to react
+	catch {exec sleep 1}
+    }
+}
+
+if {$dontTest == 1} {
+    untested "$test $subtest"
+} else {
+    set rc [catch {exec grep "Avahi client failure: Daemon connection failed" $server_log} result]
+    if {$rc != 0} {
+	fail "$test $subtest"
+    } else {
+	pass "$test $subtest"
+    }
+}
+
+set subtest "server re-established avahi-daemon connection"
+if {$dontTest == 1} {
+    untested "$test $subtest"
+} else {
+    set rc [catch {exec grep -c {Adding Avahi service .Systemtap Compile Server, pid=.*} $server_log} result]
+    # Make sure the target line was found more than once.
+    if {$rc != 0 || $result < 2} {
+	fail "$test $subtest"
+    } else {
+	pass "$test $subtest"
+    }
+}
+
+set subtest "server still serves client requests"
+if {$dontTest == 1 || ! [installtest_p]} then {
+    untested "$test $subtest"
+} else {
+    # Contact the server directly, so that we know we're getting the one we want.
+    set rc [stap_run_batch $srcdir/systemtap.server/hello.stp --use-server=$server_spec]
+    if {$rc == 0} { pass "$test $subtest" } else { fail "$test $subtest" }
+}
+
+#-------------------------------------------------------
 cleanup

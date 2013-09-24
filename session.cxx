@@ -902,12 +902,13 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 	    if (strlen(optarg) < 1 || strlen(optarg) > 5)
 	      ok = false;
 	    if (ok)
-	      for (unsigned i=0; i<strlen(optarg); i++)
-		if (isdigit (optarg[i]))
-		  perpass_verbose[i] += optarg[i]-'0';
-		else
-		  ok = false;
-                
+	      {
+		for (unsigned i=0; i<strlen(optarg); i++)
+		  if (isdigit (optarg[i]))
+		    perpass_verbose[i] += optarg[i]-'0';
+		  else
+		    ok = false;
+	      }
 	    if (! ok)
 	      {
 		cerr << _("Invalid --vp argument: it takes 1 to 5 digits.") << endl;

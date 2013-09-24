@@ -774,12 +774,6 @@ compile_server_client::passes_0_4 ()
   if (rc != 0) goto done;
   rc = process_response ();
 
-  if (rc == 0 && s.last_pass == 4)
-    {
-      cout << s.module_name + ".ko";
-      cout << endl;
-    }
-
  done:
   struct tms tms_after;
   times (& tms_after);
@@ -795,6 +789,36 @@ compile_server_client::passes_0_4 ()
         << ((tv_after.tv_sec - tv_before.tv_sec) * 1000 + \
             ((long)tv_after.tv_usec - (long)tv_before.tv_usec) / 1000) << "real ms."
 
+  if (rc == 0)
+    {
+      // Save the module, if necessary.
+      if (s.last_pass == 4)
+	s.save_module = true;
+
+      // Copy module to the current directory.
+      if (! pending_interrupts)
+	{
+	  if (s.save_module)
+	    {
+	      string module_src_path = s.tmpdir + "/" + s.module_filename();
+	      string module_dest_path = s.module_filename();
+	      copy_file (module_src_path, module_dest_path, s.verbose >= 3);
+	      // Also copy the module signature, it it exists.
+	      module_src_path += ".sgn";
+	      if (file_exists (module_src_path))
+		{
+		  module_dest_path += ".sgn";
+		  copy_file(module_src_path, module_dest_path, s.verbose >= 3);
+		}
+	    }
+	  // Print the name of the module
+	  if (s.last_pass == 4)
+	    {
+	      cout << s.module_filename() << endl;
+	    }
+	}
+    }
+
   // syntax errors, if any, are already printed
   if (s.verbose)
     {
@@ -808,28 +832,6 @@ compile_server_client::passes_0_4 ()
   if (rc)
     {
       clog << _("Passes: via server failed.  Try again with another '-v' option.") << endl;
-    }
-
-  if (rc == 0)
-    {
-      // Save the module, if necessary.
-      if (s.last_pass == 4)
-	s.save_module = true;
-
-      // Copy module to the current directory.
-      if (s.save_module && ! pending_interrupts)
-	{
-	  string module_src_path = s.tmpdir + "/" + s.module_name + ".ko";
-	  string module_dest_path = s.module_name + ".ko";
-	  copy_file (module_src_path, module_dest_path, s.verbose >= 3);
-	  // Also copy the module signature, it it exists.
-	  module_src_path += ".sgn";
-	  if (file_exists (module_src_path))
-	    {
-	      module_dest_path += ".sgn";
-	      copy_file(module_src_path, module_dest_path, s.verbose >= 3);
-	    }
-	}
     }
 
   PROBE1(stap, client__end, &s);
@@ -3474,12 +3476,10 @@ get_or_keep_online_server_info (
 
     fail:
       // Cleanup.
-      if (sb)
-        avahi_service_browser_free(sb);
-    
-      if (client)
+      if (client) {
+	// Also frees the service browser
         avahi_client_free(client);
-
+      }
       if (simple_poll)
         avahi_simple_poll_free(simple_poll);
 #else // ! HAVE_AVAHI
