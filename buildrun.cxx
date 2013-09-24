@@ -398,6 +398,8 @@ compile_pass (systemtap_session& s)
   output_exportconf(s, o, "kallsyms_lookup_name", "STAPCONF_KALLSYMS");
   output_autoconf(s, o, "autoconf-uidgid.c", "STAPCONF_LINUX_UIDGID_H", NULL);
   output_exportconf(s, o, "sigset_from_compat", "STAPCONF_SIGSET_FROM_COMPAT_EXPORTED");
+  output_exportconf(s, o, "vzalloc", "STAPCONF_VZALLOC");
+  output_exportconf(s, o, "vzalloc_node", "STAPCONF_VZALLOC_NODE");
 
   o << module_cflags << " += -include $(STAPCONF_HEADER)" << endl;
 

@@ -339,6 +339,16 @@ static void *_stp_kzalloc(size_t size)
   return _stp_kzalloc_gfp(size, STP_ALLOC_FLAGS);
 }
 
+#ifndef STAPCONF_VZALLOC
+static void *vzalloc(unsigned long size)
+{
+	void *ret = vmalloc(size);
+	if (ret)
+		memset(ret, 0, size);
+	return ret;
+}
+#endif
+
 static void *_stp_vzalloc(size_t size)
 {
 	void *ret;
@@ -362,6 +372,17 @@ static void *_stp_vzalloc(size_t size)
 #endif
 	return ret;
 }
+
+
+#ifndef STAPCONF_VZALLOC_NODE
+static void *vzalloc_node(unsigned long size, int node)
+{
+	void *ret = vmalloc_node(size, node);
+	if (ret)
+		memset(ret, 0, size);
+	return ret;
+}
+#endif
 
 static void *_stp_vzalloc_node(size_t size, int node)
 {
