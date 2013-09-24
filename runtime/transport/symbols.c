@@ -13,6 +13,9 @@
 #define _STP_SYMBOLS_C_
 #include "../sym.h"
 
+#ifndef KERN_CONT
+#define KERN_CONT	""
+#endif
 
 static void systemtap_module_refresh (void);
 static int _stp_kmodule_check (const char*);
