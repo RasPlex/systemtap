@@ -58,6 +58,17 @@ server_cert_nickname ()
 }
 
 string
+add_cert_db_prefix (const string &db_path) {
+#if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR >= 12)
+  // Use the dbm prefix, if a prefix is not already specified,
+  // since we're using the old database format.
+  if (db_path.find (':') == string::npos)
+    return string("dbm:") + db_path;
+#endif
+  return db_path;
+}
+
+string
 server_cert_db_path ()
 {
   string data_path;
@@ -165,6 +176,8 @@ SECStatus
 nssInit (const char *db_path, int readWrite, int issueMessage)
 {
   SECStatus secStatus;
+  string full_db_path = add_cert_db_prefix (db_path);
+  db_path = full_db_path.c_str();
   if (readWrite)
     secStatus = NSS_InitReadWrite (db_path);
   else
@@ -193,6 +206,8 @@ nssCleanup (const char *db_path)
     {
       if (db_path)
 	{
+	  string full_db_path = add_cert_db_prefix (db_path);
+	  db_path = full_db_path.c_str();
 	  nsscommon_error (_F("WARNING: Attempt to shutdown NSS for database %s, which was never initialized", db_path));
 	}
       return;
@@ -203,7 +218,11 @@ nssCleanup (const char *db_path)
   if (NSS_Shutdown () != SECSuccess)
     {
       if (db_path)
-	nsscommon_error (_F("Unable to shutdown NSS for database %s", db_path));
+	{
+	  string full_db_path = add_cert_db_prefix (db_path);
+	  db_path = full_db_path.c_str();
+	  nsscommon_error (_F("Unable to shutdown NSS for database %s", db_path));
+	}
       else
 	nsscommon_error (_("Unable to shutdown NSS"));
       nssError ();

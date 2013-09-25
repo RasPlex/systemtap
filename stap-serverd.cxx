@@ -1951,8 +1951,9 @@ listen ()
 					     local_client_cert_db_path ());
       if (secStatus != SECSuccess)
 	{
+	  // Not fatal. Other clients may trust the server and trust can be added
+	  // for the local client in other ways.
 	  server_error (_("Unable to authorize certificate for the local client"));
-	  goto done;
 	}
 
       // Launch the server.
