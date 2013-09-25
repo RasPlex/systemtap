@@ -22,6 +22,7 @@ nss_db_status () {
 	echo "NSS database path '$db_path' does not exist"
 	return
     fi
+    run "ls '$db_path'"
     dbm_files_found=0
     sql_files_found=0
     secmod_found=0
