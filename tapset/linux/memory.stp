@@ -30,7 +30,7 @@ function vm_fault_contains:long (value:long, test:long)
 	switch (STAP_ARG_test){
 	case 0: res = STAP_ARG_value & VM_FAULT_OOM; break;
 	case 1: res = STAP_ARG_value & VM_FAULT_SIGBUS; break;
-#if defined(VM_FAULT_MINOR) && VM_FAULT_MINOR != 0
+#if defined(VM_FAULT_MINOR) && VM_FAULT_MINOR == 0
 	case 2: /* VM_FAULT_MINOR infered by that flags off */
 		res = !((VM_FAULT_OOM | VM_FAULT_SIGBUS | VM_FAULT_MAJOR) & 
 				 STAP_ARG_value);
