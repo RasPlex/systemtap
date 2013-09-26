@@ -528,8 +528,10 @@ dnl We require libvirt >= 1.0.2 because stapvirt relies on the
 dnl virDomainOpenChannel function, which was implemented in 1.0.2.
 PKG_CHECK_MODULES([libvirt], [libvirt >= 1.0.2], [have_libvirt=yes], [have_libvirt=no])
 AM_CONDITIONAL([HAVE_LIBVIRT], [test "${have_libvirt}" = "yes"])
+AC_DEFINE([HAVE_LIBVIRT],[1],[Define to 1 if libvirt development libraries are installed])
 PKG_CHECK_MODULES([libxml2], [libxml-2.0], [have_libxml2=yes], [have_libxml2=no])
 AM_CONDITIONAL([HAVE_LIBXML2], [test "${have_libxml2}" = "yes"])
+AC_DEFINE([HAVE_XML2],[1],[Define to 1 if libxml2 development libraries are installed])
 
 AC_CACHE_CHECK([for assembler .section "?" flags support], stap_cv_sectionq, [
 old_CFLAGS="$CFLAGS"
