@@ -1,0 +1,44 @@
+set test "sdt_casm"
+
+# Test SDT in C-asm with STAP_PROBE_ASM, with and without asm operands.
+#
+# An attempted fix for PR13974 had broken STAP_PROBE_ASM, because in that case
+# there's some ambiguity whether %note and %progbits should be %%-escaped.  We
+# can't determine that in general, because it depends on whether the user's
+# asm() has operands.  That fix was thus reverted, and we're testing to make
+# sure STAP_PROBE_ASM doesn't regress again.
+
+if {! [installtest_p]} { untested "$test"; return }
+
+proc cleanup_handler { verbose } {
+    if { $verbose == 0 } {
+	catch {exec rm -f sdt_casm.x}
+    }
+}
+
+set script $srcdir/$subdir/$test.stp
+set ::result_string {PASS: probe0
+PASS: probe1}
+
+set asm_flags [sdt_includes]
+set asm_flags "$asm_flags additional_flags=-std=c99"
+set res [target_compile $srcdir/$subdir/sdt_casm.c sdt_casm.x \
+             executable $asm_flags]
+if { $res != "" } {
+    verbose "target_compile failed: $res" 2
+    fail "$test compiling sdt_casm.c"
+} else {
+    pass "$test compiling sdt_casm.c"
+}
+    
+foreach runtime [get_runtime_list] {
+    if {$runtime != ""} {
+        stap_run3 "$test ($runtime)" $script --runtime=$runtime -c sdt_casm.x
+    } elseif {[uprobes_p]} {
+        stap_run3 $test $script -c ./sdt_casm.x
+    } else {
+        untested "$test"
+    }
+}
+
+cleanup_handler $verbose

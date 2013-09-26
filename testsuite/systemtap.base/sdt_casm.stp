@@ -1,0 +1,12 @@
+probe process.mark("probe0") 
+{
+    printf("PASS: %s\n", $$name)
+}
+
+probe process.mark("probe1") 
+{
+    if ($arg1 == 42)
+        printf("PASS: %s\n", $$name)
+    else
+        printf("FAIL: %s (%d != 42)\n", $$name, $arg1)
+}
