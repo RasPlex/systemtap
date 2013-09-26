@@ -171,22 +171,9 @@ __extension__ extern unsigned long long __sdt_unsp;
 # define _SDT_ASM_AUTOGROUP ""
 #endif
 
-/* We used to have just "note", but some assemblers don't support that.
- * GAS documents that it should be @note, but since ARM uses @ for
- * comments, it also supports %note.  It appears we can get away with
- * the latter everywhere, so long as we escape it depending on mode.
- * NB: %progbits apparently doesn't need (and can't have) similar %%
- * escaping, since that asm() has no operands. */
-#ifdef __ASSEMBLER__
-#define _SDT_ASM_NOTE %note
-#else
-#define _SDT_ASM_NOTE %%note
-#endif
-
 #define _SDT_ASM_BODY(provider, name, pack_args, args)			      \
   _SDT_ASM_1(990:	_SDT_NOP)					      \
-  _SDT_ASM_3(		.pushsection .note.stapsdt,_SDT_ASM_AUTOGROUP,	      \
-							_SDT_ASM_NOTE)	      \
+  _SDT_ASM_3(		.pushsection .note.stapsdt,_SDT_ASM_AUTOGROUP,"note") \
   _SDT_ASM_1(		.balign 4)					      \
   _SDT_ASM_3(		.4byte 992f-991f, 994f-993f, _SDT_NOTE_TYPE)	      \
   _SDT_ASM_1(991:	.asciz _SDT_NOTE_NAME)				      \
@@ -202,7 +189,7 @@ __extension__ extern unsigned long long __sdt_unsp;
 
 #define _SDT_ASM_BASE							      \
   _SDT_ASM_1(.ifndef _.stapsdt.base)					      \
-  _SDT_ASM_5(		.pushsection .stapsdt.base,"aG",%progbits,	      \
+  _SDT_ASM_5(		.pushsection .stapsdt.base,"aG","progbits",	      \
 							.stapsdt.base,comdat) \
   _SDT_ASM_1(		.weak _.stapsdt.base)				      \
   _SDT_ASM_1(		.hidden _.stapsdt.base)				      \
