@@ -1150,6 +1150,7 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 
 	case LONG_OPT_SUPPRESS_HANDLER_ERRORS:
 	  suppress_handler_errors = true;
+          c_macros.push_back (string ("STAP_SUPPRESS_HANDLER_ERRORS"));
 	  break;
 
 	case LONG_OPT_MODINFO:
