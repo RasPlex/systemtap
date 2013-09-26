@@ -455,6 +455,12 @@ systemtap_session::version ()
 #ifdef HAVE_JAVA
        << " JAVA"
 #endif
+#ifdef HAVE_LIBVIRT
+       << " LIBVIRT"
+#endif
+#ifdef HAVE_LIBXML2
+       << " LIBXML2"
+#endif
        << endl;
 }
 
