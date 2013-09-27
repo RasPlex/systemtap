@@ -85,6 +85,7 @@ run "printenv | egrep '^PATH=|^LD_LIBRARY_PATH=|^SYSTEMTAP_.*=|^XDG_DATA.*=|^NSS
 run "stap -vv --poison-cache -p4 -e 'probe begin {exit()}'"
 run "gcc -v"
 run "uname -a"
+run "dmesg | fgrep 'Linux version'"
 run "dmesg | egrep 'stap|systemtap' | tail -n 10"
 run "hostname"
 run "nslookup `hostname`"
