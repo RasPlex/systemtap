@@ -563,6 +563,56 @@ extern void __store_deref_bad(void);
       STORE_DEREF_FAULT(addr);						      \
   })
 
+#elif defined (__aarch64__)
+
+#define _stp_deref(size, addr, seg)                                           \
+  ({									      \
+    int _bad = 0;							      \
+    intptr_t _v = 0;							      \
+    mm_segment_t _oldfs = get_fs();                                           \
+    set_fs(seg);                                                              \
+    pagefault_disable();                                                      \
+    if (lookup_bad_addr((unsigned long)addr, size))			      \
+      _bad = 1;                                                               \
+    else                                                                      \
+      switch (size)                                                           \
+        {                                                                     \
+	case 1: __get_user_asm("ldrb", "%w", _v, (unsigned long)addr, _bad); break;\
+	case 2: __get_user_asm("ldrh", "%w",_v, (unsigned long)addr, _bad); break;\
+	case 4: __get_user_asm("ldr", "%w",_v,  (unsigned long)addr, _bad); break;\
+	case 8: __get_user_asm("ldr", "%",_v,  (unsigned long)addr, _bad); break;\
+        default: BUILD_BUG();			                              \
+        }                                                                     \
+    pagefault_enable();                                                       \
+    set_fs(_oldfs);                                                           \
+    if (_bad)								      \
+      DEREF_FAULT(addr);						      \
+    _v;									      \
+  })
+
+#define _stp_store_deref(size, addr, value, seg)                              \
+  ({									      \
+    int _bad = 0;							      \
+    mm_segment_t _oldfs = get_fs();                                           \
+    set_fs(seg);                                                              \
+    pagefault_disable();                                                      \
+    if (lookup_bad_addr((unsigned long)addr, size))			      \
+      _bad = 1;                                                               \
+    else                                                                      \
+      switch (size)                                                           \
+        {                                                                     \
+	case 1: __put_user_asm("strb", "%w", ((u8)(value)), addr, _bad); break;\
+	case 2: __put_user_asm("strh", "%w", ((u16)(value)), addr, _bad); break;\
+	case 4: __put_user_asm("str", "%w", ((u32)(value)), addr, _bad); break;\
+	case 8: __put_user_asm("str", "%", ((u64)(value)), addr, _bad); break;\
+        default: BUILD_BUG();                                                 \
+        }                                                                     \
+    pagefault_enable();                                                       \
+    set_fs(_oldfs);                                                           \
+    if (_bad)								      \
+      STORE_DEREF_FAULT(addr);						      \
+  })
+
 #elif defined (__arm__)
 
 /* Macros for ARM lifted from 2.6.21.1's linux/include/asm-arm/uaccess.h

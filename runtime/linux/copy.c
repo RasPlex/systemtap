@@ -24,9 +24,6 @@
  * @{
  */
 
-
-static long __stp_strncpy_from_user(char *dst, const char __user *src, long count);
-
 #ifdef CONFIG_GENERIC_STRNCPY_FROM_USER
 #define __stp_strncpy_from_user(dst,src,count,res) \
 	do { res = strncpy_from_user(dst, src, count); } while(0)
@@ -91,7 +88,7 @@ do {									   \
 #define __stp_strncpy_from_user(dst,src,count,res) \
 	do { res = __strncpy_from_user(dst, src, count); } while(0)
 
-#elif defined (__s390__) || defined (__s390x__)
+#elif defined (__s390__) || defined (__s390x__)|| defined (__aarch64__)
 #define __stp_strncpy_from_user(dst,src,count,res) \
 	do { res = strncpy_from_user(dst, src, count); } while(0)
 #elif defined (__ia64__)

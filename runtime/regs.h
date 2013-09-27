@@ -42,6 +42,12 @@
 #define REG_SP(regs) regs->gpr[1]
 #define REG_LINK(regs) regs->link
 
+#elif defined (__aarch64__)
+
+#define REG_IP(regs) regs->pc
+#define REG_SP(regs) regs->sp
+#define REG_LINK(regs) regs->regs[30]
+
 #elif defined (__arm__)
 
 #define REG_IP(regs) regs->ARM_pc

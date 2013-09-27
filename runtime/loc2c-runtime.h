@@ -154,6 +154,15 @@
 #define pt_regs_store_register(pt_regs,regno,value) \
   (pt_regs->gpr[regno] = (value))
 
+#elif defined (__aarch64__)
+
+#undef pt_regs_fetch_register
+#undef pt_regs_store_register
+#define pt_regs_fetch_register(pt_regs,regno) \
+  ((long) pt_regs->regs[regno])
+#define pt_regs_store_register(pt_regs,regno,value) \
+  (pt_regs->regs[regno] = (value))
+
 #elif defined (__arm__)
 
 #undef pt_regs_fetch_register
