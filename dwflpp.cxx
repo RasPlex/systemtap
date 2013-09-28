@@ -3768,7 +3768,12 @@ dwflpp::pr15123_retry_addr (Dwarf_Addr pc, Dwarf_Die* die)
   // - if the architecture is familiar enough that we can have a
   // hard-coded constant to skip over the prologue.
   //
-  // Otherwise, we could give a false-positive - return corrupted data.
+  // Otherwise, we could give a false-positive - return corrupted
+  // data.
+  //
+  // Use of -mfentry is detectable only if CFLAGS=-grecord-gcc-switches
+  // was used.  Without it, set the PR15123_ASSUME_MFENTRY environment
+  // variable to override the -mfentry test.
 
   if (getenv ("PR15123_DISABLE"))
     return 0;
@@ -3779,11 +3784,13 @@ dwflpp::pr15123_retry_addr (Dwarf_Addr pc, Dwarf_Die* die)
   if (! dwarf_attr_integrate(&cudie, DW_AT_producer, &cudie_producer))
     return 0;
 
-  const char* producer = dwarf_formstring(&cudie_producer);
-  if (!producer)
-    return 0;
-  if (! strstr(producer, "-mfentry"))
-    return 0;
+  if (!getenv ("PR15123_ASSUME_MFENTRY")) {
+    const char* producer = dwarf_formstring(&cudie_producer);
+    if (!producer)
+      return 0;
+    if (! strstr(producer, "-mfentry"))
+      return 0;
+  }
 
   // Determine if this pc maps to the beginning of a
   // real function (not some inlined doppelganger.  This
