@@ -153,18 +153,9 @@ function _stp_arg:long (argnum:long, sign_extend:long, truncate:long)
 		return;
 	}
 
-/* FIXME: syscall_get_arguments(current, regs, 0, 1, &val) is
-   failing. For some reason, orig_gpr2 doesn't have the 1st syscall
-   argument, gpr2 does. For now, instead of fixing the kernel, patch
-   it here. */
-	if (STAP_ARG_argnum == 1) {
-		memcpy(&val, &regs->gprs[2], sizeof(val));		
-	}
-	else {
-		syscall_get_arguments(current, regs,
-				      (((int)STAP_ARG_argnum) - 1), 1,
-				      &val);
-	}
+	syscall_get_arguments(current, regs,
+			      (((int)STAP_ARG_argnum) - 1), 1,
+			      &val);
 
 	if (STAP_ARG_truncate || _stp_is_compat_task()) {
 		if (STAP_ARG_sign_extend)
