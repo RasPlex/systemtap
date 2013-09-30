@@ -133,21 +133,15 @@ __stp_utrace_task_finder_target_exec(enum utrace_resume_action action,
 #endif
 #endif
 
-#ifdef UTRACE_ORIG_VERSION
-static u32
-__stp_utrace_task_finder_target_death(struct utrace_engine *engine,
-				      struct task_struct *tsk);
-#else
 #if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
 static u32
-__stp_utrace_task_finder_target_death(struct utrace_engine *engine,
-				      bool group_dead, int signal);
+__stp_utrace_task_finder_target_exit(u32 action, struct utrace_engine *engine,
+				     long orig_code, long *code);
 #else
 static u32
-__stp_utrace_task_finder_target_death(struct utrace_engine *engine,
-				      struct task_struct *tsk,
-				      bool group_dead, int signal);
-#endif
+__stp_utrace_task_finder_target_exit(struct utrace_engine *engine,
+				     struct task_struct *tsk,
+				     long orig_code, long *code);
 #endif
 
 #ifdef UTRACE_ORIG_VERSION
@@ -239,7 +233,7 @@ stap_register_task_finder_target(struct stap_task_finder_target *new_tgt)
 	new_tgt->mprotect_events = 0;
 	memset(&new_tgt->ops, 0, sizeof(new_tgt->ops));
 	new_tgt->ops.report_exec = &__stp_utrace_task_finder_target_exec;
-	new_tgt->ops.report_death = &__stp_utrace_task_finder_target_death;
+	new_tgt->ops.report_exit = &__stp_utrace_task_finder_target_exit;
 	new_tgt->ops.report_quiesce = &__stp_utrace_task_finder_target_quiesce;
 	new_tgt->ops.report_syscall_entry = \
 		&__stp_utrace_task_finder_target_syscall_entry;
@@ -478,7 +472,7 @@ __stp_get_mm_path(struct mm_struct *mm, char *buf, int buflen)
  */
 #define __STP_TASK_FINDER_EVENTS (UTRACE_EVENT(CLONE)		\
 				  | UTRACE_EVENT(EXEC)		\
-				  | UTRACE_EVENT(DEATH))
+				  | UTRACE_EVENT(EXIT))
 
 /*
  * __STP_TASK_BASE_EVENTS: base events for stap_task_finder_target's
@@ -487,7 +481,7 @@ __stp_get_mm_path(struct mm_struct *mm, char *buf, int buflen)
  * __STP_TASK_VM_BASE_EVENTS: base events for
  * stap_task_finder_target's with map callback's
  */
-#define __STP_TASK_BASE_EVENTS	(UTRACE_EVENT(DEATH)|UTRACE_EVENT(EXEC))
+#define __STP_TASK_BASE_EVENTS	(UTRACE_EVENT(EXIT)|UTRACE_EVENT(EXEC))
 
 #define __STP_TASK_VM_BASE_EVENTS (__STP_TASK_BASE_EVENTS	\
 				   | UTRACE_EVENT(SYSCALL_ENTRY)\
@@ -499,7 +493,7 @@ __stp_get_mm_path(struct mm_struct *mm, char *buf, int buflen)
  * quiesces, we reset the events to __STP_ATTACHED_TASK_BASE_EVENTS
  * events.
  */
-#define __STP_ATTACHED_TASK_EVENTS (UTRACE_EVENT(DEATH)		\
+#define __STP_ATTACHED_TASK_EVENTS (UTRACE_EVENT(EXIT)		\
 				    | UTRACE_EVENT(QUIESCE))
 
 #define __STP_ATTACHED_TASK_BASE_EVENTS(tgt)			\
@@ -1065,21 +1059,16 @@ __stp_utrace_task_finder_report_exec(enum utrace_resume_action action,
 	return UTRACE_RESUME;
 }
 
-#ifdef UTRACE_ORIG_VERSION
-static u32
-stap_utrace_task_finder_report_death(struct utrace_engine *engine,
-				     struct task_struct *tsk)
-#else
+
 #if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
 static u32
-stap_utrace_task_finder_report_death(struct utrace_engine *engine,
-				     bool group_dead, int signal)
+stap_utrace_task_finder_report_exit(u32 action, struct utrace_engine *engine,
+				    long orig_code, long *code)
 #else
 static u32
-stap_utrace_task_finder_report_death(struct utrace_engine *engine,
-				     struct task_struct *tsk,
-				     bool group_dead, int signal)
-#endif
+stap_utrace_task_finder_report_exit(struct utrace_engine *engine,
+				    struct task_struct *tsk,
+				    long orig_code, long *code)
 #endif
 {
 	debug_task_finder_detach();
@@ -1144,21 +1133,15 @@ __stp_utrace_task_finder_target_exec(enum utrace_resume_action action,
 	return UTRACE_DETACH;
 }
 
-#ifdef UTRACE_ORIG_VERSION
-static u32
-__stp_utrace_task_finder_target_death(struct utrace_engine *engine,
-				      struct task_struct *tsk)
-#else
 #if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
 static u32
-__stp_utrace_task_finder_target_death(struct utrace_engine *engine,
-				      bool group_dead, int signal)
+__stp_utrace_task_finder_target_exit(u32 action, struct utrace_engine *engine,
+				     long orig_code, long *code)
 #else
 static u32
-__stp_utrace_task_finder_target_death(struct utrace_engine *engine,
-				      struct task_struct *tsk,
-				      bool group_dead, int signal)
-#endif
+__stp_utrace_task_finder_target_exit(struct utrace_engine *engine,
+				     struct task_struct *tsk,
+				     long orig_code, long *code)
 #endif
 {
 #if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
@@ -1179,12 +1162,10 @@ __stp_utrace_task_finder_target_death(struct utrace_engine *engine,
 	// don't know which callback(s) to call.
 	//
 	// So, now when an "interesting" thread is found, we add a
-	// separate UTRACE_EVENT(DEATH) handler for each attached
+	// separate UTRACE_EVENT(EXIT) handler for each attached
 	// handler.
 	if (tgt != NULL && tsk != NULL) {
-		__stp_call_callbacks(tgt, tsk, 0,
-				     ((tsk->signal == NULL)
-				      || (atomic_read(&tsk->signal->live) == 0)));
+		__stp_call_callbacks(tgt, tsk, 0, (tsk->pid == tsk->tgid));
 	}
 
 	__stp_tf_handler_end();
@@ -1578,7 +1559,7 @@ __stp_utrace_task_finder_target_syscall_exit(enum utrace_resume_action action,
 static struct utrace_engine_ops __stp_utrace_task_finder_ops = {
 	.report_clone = __stp_utrace_task_finder_report_clone,
 	.report_exec = __stp_utrace_task_finder_report_exec,
-	.report_death = stap_utrace_task_finder_report_death,
+	.report_exit = stap_utrace_task_finder_report_exit,
 };
 
 static int

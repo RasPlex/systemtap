@@ -168,7 +168,7 @@ set thread_exec_flags "libs=-lpthread"
 # clean up the best it can.  It really kills the original task,
 # promotes the thread to be the process group leader (and changes the
 # thread's pid to the original process group leader's pid).
-set thread_exec_script_output "exe\\((\\d+)\\) begin\r\nexe\\(\\d+\\) thread begin\r\nexe\\(\\1\\) thread end\r\nexe\\(\\1\\) end\r\nsleep\\(\\1\\) begin\r\nsleep\\(\\1\\) end\r\ntime slept: OK\r\n"
+set thread_exec_script_output "exe\\((\\d+)\\) begin\r\nexe\\(\\d+\\) thread begin\r\nexe\\(\\1\\)( thread)? end\r\nexe\\(\\1\\) end\r\nsleep\\(\\1\\) begin\r\nsleep\\(\\1\\) end\r\ntime slept: OK\r\n"
 
 # Compile our multi-threaded program that exec's /bin/sleep.
 set test_exepath $thread_exec_exepath

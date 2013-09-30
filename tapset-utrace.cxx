@@ -786,13 +786,25 @@ utrace_derived_probe_group::emit_linux_probe_decl (systemtap_session& s,
     // stops the thread, that works around bug 6841.
     case UDPF_SYSCALL:
       s.op->line() << " .flags=(UDPF_SYSCALL),";
-      s.op->line() << " .ops={ .report_syscall_entry=stap_utrace_probe_syscall,  .report_death=stap_utrace_task_finder_report_death },";
+      s.op->newline() << "#if !defined(CONFIG_UTRACE)";
+      s.op->newline() << " .ops={ .report_syscall_entry=stap_utrace_probe_syscall,  .report_death=stap_utrace_task_finder_report_death },";
       s.op->line() << " .events=(UTRACE_EVENT(SYSCALL_ENTRY)|UTRACE_EVENT(DEATH)),";
+      s.op->newline() << "#else";
+      s.op->newline() << " .ops={ .report_syscall_entry=stap_utrace_probe_syscall,  .report_exit=stap_utrace_task_finder_report_exit },";
+      s.op->line() << " .events=(UTRACE_EVENT(SYSCALL_ENTRY)|UTRACE_EVENT(EXIT)),";
+      s.op->newline() << "#endif";
+      s.op->newline();
       break;
     case UDPF_SYSCALL_RETURN:
       s.op->line() << " .flags=(UDPF_SYSCALL_RETURN),";
-      s.op->line() << " .ops={ .report_syscall_exit=stap_utrace_probe_syscall, .report_death=stap_utrace_task_finder_report_death },";
+      s.op->newline() << "#if !defined(CONFIG_UTRACE)";
+      s.op->newline() << " .ops={ .report_syscall_exit=stap_utrace_probe_syscall, .report_death=stap_utrace_task_finder_report_death },";
       s.op->line() << " .events=(UTRACE_EVENT(SYSCALL_EXIT)|UTRACE_EVENT(DEATH)),";
+      s.op->newline() << "#else";
+      s.op->newline() << " .ops={ .report_syscall_exit=stap_utrace_probe_syscall, .report_exit=stap_utrace_task_finder_report_exit },";
+      s.op->line() << " .events=(UTRACE_EVENT(SYSCALL_EXIT)|UTRACE_EVENT(EXIT)),";
+      s.op->newline() << "#endif";
+      s.op->newline();
       break;
 
     case UDPF_NONE:
