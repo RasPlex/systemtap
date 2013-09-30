@@ -16,6 +16,11 @@
   signed with the kernel's build-time keys).  This protection may
   be suppressed with the $STAP_FIPS_OVERRIDE environment variable.
 
+- For systems with in-kernel utrace, 'process.end' and 'thread.end'
+  probes will hit before the target's parent process is notified of
+  the target's death. This matches the behavior of newer kernels
+  without in-kernel utrace.
+
 * What's new in version 2.3, 2013-07-25
 
 - More context-accessing functions throw systemtap exceptions upon a
