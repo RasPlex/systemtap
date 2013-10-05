@@ -7099,13 +7099,14 @@ dwarf_builder::build(systemtap_session & sess,
       dw = get_user_dw(sess, module_name);
     }
 
+  assert(dw);
+
   if (sess.verbose > 3)
     clog << _F("dwarf_builder::build for %s", module_name.c_str()) << endl;
 
   string dummy_mark_name; // NB: PR10245: dummy value, need not substitute - => __
   if (get_param(parameters, TOK_MARK, dummy_mark_name))
     {
-      assert(dw);
       sdt_query sdtq(base, location, *dw, filled_parameters, finished_results, user_lib);
       dw->iterate_over_modules(&query_module, &sdtq);
       return;

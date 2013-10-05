@@ -13,6 +13,8 @@
 
 #include <string>
 #include <deque>
+#include <iterator>
+#include <algorithm>
 #include <utility>
 #include <cmath>
 #include <cassert>
@@ -106,28 +108,14 @@ range *
 range_union(range *old_a, range *old_b)
 {
   if (old_a == NULL && old_b == NULL) return NULL;
-  if (old_a == NULL || old_a->segments.empty()) return new range(*old_b);
-  if (old_b == NULL || old_b->segments.empty()) return new range(*old_a);
-
-  range a(*old_a);
-  range b(*old_b);
+  if (old_a == NULL) return new range(*old_b);
+  if (old_b == NULL) return new range(*old_a);
 
   /* First, gather the segments from both ranges into one sorted pile: */
   deque<segment> s;
-
-  while (!a.segments.empty())
-    {
-      while (!b.segments.empty()
-             && b.segments.front().first < a.segments.front().first)
-        {
-          s.push_back(b.segments.front()); b.segments.pop_front();
-        }
-      s.push_back(a.segments.front()); a.segments.pop_front();
-    }
-  while (!b.segments.empty())
-    {
-      s.push_back(b.segments.front()); b.segments.pop_front();
-    }
+  merge(old_a->segments.begin(), old_a->segments.end(),
+        old_b->segments.begin(), old_b->segments.end(),
+        inserter(s, s.end()));
 
   /* Now go through and merge overlapping segments. */
   range *ran = new range;

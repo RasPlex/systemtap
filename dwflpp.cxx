@@ -1368,12 +1368,17 @@ dwflpp::iterate_over_plt (void *object, void (*callback)(void *object, const cha
   GElf_Shdr plt_shdr_mem;
   while ((scn = elf_nextscn (elf, scn)))
     {
-      plt_shdr = gelf_getshdr (scn, &plt_shdr_mem);
-      assert (plt_shdr != NULL);
-      if (strcmp (elf_strptr (elf, shstrndx, plt_shdr->sh_name), ".plt") == 0)
-	break;
+      GElf_Shdr *shdr = gelf_getshdr (scn, &plt_shdr_mem);
+      assert (shdr != NULL);
+      if (strcmp (elf_strptr (elf, shstrndx, shdr->sh_name), ".plt") == 0)
+	{
+	  plt_shdr = shdr;
+	  break;
+	}
     }
-	
+  if (plt_shdr == NULL)
+    return 0;
+
   // Layout of the plt section
   int plt0_entry_size;
   int plt_entry_size;

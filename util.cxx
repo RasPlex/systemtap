@@ -665,15 +665,13 @@ stap_spawn(int verbose, const vector<string>& args,
 {
   string::const_iterator it;
   it = args[0].begin();
-  const char *cmd;
   string command;
   if(*it == '/' && (access(args[0].c_str(), X_OK)==-1)) //checking to see if staprun is executable
     // XXX PR13274 needs-session to use print_warning()
     clog << _F("WARNING: %s is not executable (%s)", args[0].c_str(), strerror(errno)) << endl;
   for (size_t i = 0; i < args.size(); ++i)
     command += " " + args[i];
-  cmd = command.c_str();
-  PROBE1(stap, stap_system__start, cmd);
+  PROBE1(stap, stap_system__start, command.c_str());
   if (verbose > 1)
     clog << _("Running") << command << endl;
 

@@ -83,11 +83,14 @@ struct be_builder: public derived_probe_builder
                      literal_map_t const & parameters,
                      vector<derived_probe *> & finished_results)
   {
-    int64_t priority;
-    if ((type == BEGIN && !get_param(parameters, TOK_BEGIN, priority)) ||
-        (type == END && !get_param(parameters, TOK_END, priority)) ||
-        (type == ERROR && !get_param(parameters, TOK_ERROR, priority)))
-      priority = 0;
+    int64_t priority = 0;
+    if (type == BEGIN)
+      get_param(parameters, TOK_BEGIN, priority);
+    else if (type == END)
+      get_param(parameters, TOK_END, priority);
+    else if (type == ERROR)
+      get_param(parameters, TOK_ERROR, priority);
+
     finished_results.push_back
       (new be_derived_probe(base, location, type, priority));
   }
