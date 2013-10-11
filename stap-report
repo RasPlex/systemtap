@@ -79,6 +79,7 @@ nss_db_status () {
 run "id"
 run "stap -V"
 run "which stap"
+run "cat $HOME/.systemtap/rc"
 run "which stap-server"
 run "locate --regex '/stap(run|io|dyn)?$' | xargs ls -ald"
 run "printenv | egrep '^PATH=|^LD_LIBRARY_PATH=|^SYSTEMTAP_.*=|^XDG_DATA.*=|^NSS.*='"
