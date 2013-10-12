@@ -21,6 +21,20 @@
 
 #include <linux/cpufreq.h>
 
+/* The interval at which the __stp_time_timer_callback routine runs,
+   which resynchronizes our per-cpu base_ns/base_cycles values.  A
+   lower rate (higher interval) is sufficient if we get cpufreq-change
+   notifications. */
+#define STP_TIME_SYNC_INTERVAL_NOCPUFREQ  ((HZ+9)/10) /* ten times per second */
+#define STP_TIME_SYNC_INTERVAL_CPUFREQ    (HZ*10)     /* once per ten seconds */
+static int __stp_cpufreq_notifier_registered = 0;
+
+#ifndef STP_TIME_SYNC_INTERVAL
+#define STP_TIME_SYNC_INTERVAL (__stp_cpufreq_notifier_registered ? \
+                                STP_TIME_SYNC_INTERVAL_CPUFREQ : \
+                                STP_TIME_SYNC_INTERVAL_NOCPUFREQ)
+#endif
+
 #ifndef NSEC_PER_MSEC
 #define NSEC_PER_MSEC	1000000L
 #endif
@@ -57,9 +71,6 @@ typedef struct __stp_time_t {
 } stp_time_t;
 
 static void *stp_time = NULL;
-#ifdef CONFIG_CPU_FREQ
-static int __stp_cpufreq_notifier_registered = 0;
-#endif
 
 /* Try to estimate the number of CPU cycles in a millisecond - i.e. kHz.  This
  * relies heavily on the accuracy of udelay.  By calling udelay twice, we
@@ -122,7 +133,6 @@ __stp_time_timer_callback(unsigned long val)
 
     __stp_ktime_get_real_ts(&ts);
     cycles = get_cycles();
-
     ns = (NSEC_PER_SEC * (int64_t)ts.tv_sec) + ts.tv_nsec;
 
     time = per_cpu_ptr(stp_time, smp_processor_id());
@@ -137,7 +147,7 @@ __stp_time_timer_callback(unsigned long val)
 	    two consecutive timer resets.  */
 
     if (likely(atomic_read(session_state()) != STAP_SESSION_STOPPED))
-        mod_timer(&time->timer, jiffies + 1);
+        mod_timer(&time->timer, jiffies + STP_TIME_SYNC_INTERVAL);
 }
 
 /* This is called as an IPI, with interrupts disabled. */
@@ -154,7 +164,7 @@ __stp_init_time(void *info)
     time->freq = __stp_get_freq();
 
     init_timer(&time->timer);
-    time->timer.expires = jiffies + 1;
+    time->timer.expires = jiffies + STP_TIME_SYNC_INTERVAL;
     time->timer.function = __stp_time_timer_callback;
 
 #ifndef STAPCONF_ADD_TIMER_ON
@@ -172,6 +182,9 @@ __stp_time_cpufreq_callback(struct notifier_block *self,
     struct cpufreq_freqs *freqs;
     int freq_khz;
     stp_time_t *time;
+    struct timespec ts;
+    int64_t ns;
+    cycles_t cycles;
 
     switch (state) {
         case CPUFREQ_POSTCHANGE:
@@ -181,6 +194,12 @@ __stp_time_cpufreq_callback(struct notifier_block *self,
             time = per_cpu_ptr(stp_time, freqs->cpu);
             write_seqlock_irqsave(&time->lock, flags);
             time->freq = freq_khz;
+            /* Also do the guts of __stp_time_timer_callback. */
+            __stp_ktime_get_real_ts(&ts);
+            cycles = get_cycles();
+            ns = (NSEC_PER_SEC * (int64_t)ts.tv_sec) + ts.tv_nsec;
+            time->base_ns = ns;
+            time->base_cycles = cycles;
             write_sequnlock_irqrestore(&time->lock, flags);
             break;
     }
