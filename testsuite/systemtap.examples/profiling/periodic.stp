@@ -30,13 +30,13 @@ function output()
     fname = symname(funct[timer])
     if (fname == "process_timeout") {
       fname = sprintf("%s(%d)",
-        kernel_string_n(@cast(data[timer], "struct task_struct")->comm, 16),
-        @cast(data[timer], "struct task_struct")->pid)
+                      kernel_string_n(@cast(data[timer], "struct task_struct", "kernel<linux/sched.h>")->comm, 16),
+                      @cast(data[timer], "struct task_struct", "kernel<linux/sched.h>")->pid)
       type="process"
     } else if (fname == "delayed_work_timer_fn") {
-      faddr = @defined(@cast(data[timer], "struct delayed_work")->work->func)
-        ? @cast(data[timer], "struct delayed_work")->work->func
-	: @cast(data[timer], "struct work_struct")->func
+      faddr = @defined(@cast(data[timer], "struct delayed_work", "kernel<linux/workqueue.h>")->work->func)
+      ? @cast(data[timer], "struct delayed_work", "kernel<linux/workqueue.h>")->work->func
+      : @cast(data[timer], "struct work_struct", "kernel<linux/workqueue.h>")->func
       fname = sprintf("%s", symname(faddr))
       type="work_q"
     } else {
