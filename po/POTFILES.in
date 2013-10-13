@@ -42,6 +42,14 @@ setupdwfl.h
 stap-authorize-cert.cxx
 stap-gen-cert.cxx
 staplog.c
+stapregex.cxx
+stapregex-dfa.cxx
+stapregex-dfa.h
+stapregex.h
+stapregex-parse.cxx
+stapregex-parse.h
+stapregex-tree.cxx
+stapregex-tree.h
 staprun/common.c
 staprun/ctl.c
 staprun/mainloop.c
@@ -65,6 +73,7 @@ tapset-dynprobe.cxx
 tapset-dynprobe.h
 tapset-itrace.cxx
 tapset-mark.cxx
+tapset-method.cxx
 tapset-netfilter.cxx
 tapset-perfmon.cxx
 tapset-procfs.cxx
@@ -76,6 +85,8 @@ task_finder.cxx
 task_finder.h
 translate.cxx
 translate.h
+translator-output.cxx
+translator-output.h
 unordered.h
 util.cxx
 util.h
