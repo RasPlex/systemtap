@@ -21,12 +21,15 @@
 #
 # Optionally, specify sorting by event-count rather than task-id
 # stap eventcount.stp -G sort=count [...probe points...]
+#
+# Optionally, specify a limit for sorted event count reports
+# stap eventcount.stp -G lines=10 [...probe points...]
 
 global period=10
 global cumulative=0
 global comm=""
 global sort="tid"
-
+global lines=9223372036854775807 # LONGLONG_MAX
 
 probe %($# == 0 || $# > 32 %? begin %: never %)
 {
@@ -107,19 +110,19 @@ function report () {
   printf("%-24s %-38s %s\n", "TID", "EVENT", "COUNT (RATE Hz)")
   printf("%-24s %-38s %s\n", "---", "-----", "---------------")
   if (sort == "count")
-    foreach([tid, name] in c-)
+    foreach([tid, name] in c- limit lines)
       printf("%-24s %-38s %d (%d.%02d)\n", tid, name,
            @count(c[tid, name]),
            (@count(c[tid,name])*100000/elapsed_ms)/100,
            (@count(c[tid,name])*100000/elapsed_ms)%100)
   else if (sort == "tid")
-    foreach([tid+, name] in c)
+    foreach([tid+, name] in c limit lines)
       printf("%-24s %-38s %d (%d.%02d)\n", tid, name,
            @count(c[tid, name]),
            (@count(c[tid,name])*100000/elapsed_ms)/100,
            (@count(c[tid,name])*100000/elapsed_ms)%100)
   else # unsorted
-    foreach([tid, name] in c)
+    foreach([tid, name] in c limit lines)
       printf("%-24s %-38s %d (%d.%02d)\n", tid, name,
            @count(c[tid, name]),
            (@count(c[tid,name])*100000/elapsed_ms)/100,
