@@ -419,7 +419,7 @@ class stapsh : public remote {
         vector<string> uname;
         tokenize(reply, uname, " \t\r\n");
         if (uname.size() != 4 || uname[0] != "stapsh")
-          throw runtime_error(_("failed to get uname from stapsh"));
+          throw runtime_error(_F("invalid hello from stapsh: %s", reply.c_str()));
 
         // We assume that later versions will know how to talk to us.
         // Looking backward, we use this for make_run_command().
@@ -519,7 +519,8 @@ class unix_stapsh : public stapsh {
           {
             const char *msg = strerror(errno);
             ::close(fd);
-            throw runtime_error(_F("error connecting to socket: %s", msg));
+            throw runtime_error(_F("error connecting to socket %s: %s",
+                                    server.sun_path, msg));
           }
 
         // Try to dup it, so class stapsh can have truly separate fds for its
