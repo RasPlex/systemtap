@@ -55,6 +55,9 @@
 //
 // If stapsh reaches EOF on its standard input, it will send SIGHUP to the
 // child process, wait for completion, then cleanup and exit normally.
+// Since v2.4, the program can also be run in listening mode, compatible with
+// QEMU's virtio-serial feature. In this mode, stapsh will listen for commands
+// on the port. Behaviour is otherwise the same.
 
 
 #include "../config.h"
@@ -132,13 +135,34 @@ static const struct stapsh_option options[] = {
 };
 static const unsigned noptions = sizeof(options) / sizeof(*options);
 
-#define dbug(level, format, args...) do { if (verbose >= level)                \
-    fprintf (stderr, "stapsh:%s:%d " format, __FUNCTION__, __LINE__, ## args); \
+// if != NULL, then we're in listening mode
+static char *listening_port = NULL;
+static int listening_port_fd = -1;
+
+// Returns nonzero if the host is connected. Used by any function/macro which
+// writes to the port. This is necessary because if the host is not connected,
+// a write() to the port will block.
+static int host_connected()
+{
+  if (listening_port == NULL || stapsh_out == stdout)
+    return 1;
+  struct pollfd p = { listening_port_fd , POLLHUP, 0 };
+  poll(&p, 1, 0);
+  return !(p.revents & POLLHUP);
+}
+
+static FILE *stapsh_in, *stapsh_out, *stapsh_err;
+
+#define dbug(level, format, args...) do {                            \
+  if (verbose >= level && host_connected())                          \
+    fprintf (stapsh_err, "stapsh:%s:%d " format,                     \
+              __FUNCTION__, __LINE__, ## args);                      \
   } while (0)
 
-#define vdbug(level, format, args) do { if (verbose >= level) { \
-    fprintf (stderr, "stapsh:%s:%d ", __FUNCTION__, __LINE__);  \
-    vfprintf (stderr, format, args);                            \
+#define vdbug(level, format, args) do {                              \
+  if (verbose >= level && host_connected()) {                        \
+    fprintf (stapsh_err, "stapsh:%s:%d ", __FUNCTION__, __LINE__);   \
+    vfprintf (stapsh_err, format, args);                             \
   } } while (0)
 
 #define die(format, args...) ({ dbug(1, format, ## args); cleanup(2); })
@@ -148,12 +172,14 @@ static const unsigned noptions = sizeof(options) / sizeof(*options);
 static int __attribute__ ((format (printf, 1, 2)))
 reply(const char* format, ...)
 {
+  if (!host_connected())
+    return 1;
   va_list args, dbug_args;
   va_start (args, format);
   va_copy (dbug_args, args);
   vdbug (1, format, dbug_args);
-  int ret = vprintf (format, args);
-  fflush (stdout);
+  int ret = vfprintf (stapsh_out, format, args);
+  fflush (stapsh_out);
   va_end (dbug_args);
   va_end (args);
   return ret;
@@ -235,7 +261,7 @@ setup_signals (void)
 static void __attribute__ ((noreturn))
 usage (char *prog, int status)
 {
-  fprintf (stderr, "%s [-v]\n", prog);
+  fprintf (stapsh_err, "%s [-v] [-l PORT]\n", prog);
   exit (status);
 }
 
@@ -243,11 +269,14 @@ static void
 parse_args(int argc, char* const argv[])
 {
   int c;
-  while ((c = getopt (argc, argv, "v")) != -1)
+  while ((c = getopt (argc, argv, "vl:")) != -1)
     switch (c)
       {
       case 'v':
         ++verbose;
+        break;
+      case 'l':
+        listening_port = optarg;
         break;
       case '?':
       default:
@@ -255,7 +284,7 @@ parse_args(int argc, char* const argv[])
       }
   if (optind < argc)
     {
-      fprintf (stderr, "%s: invalid extraneous arguments\n", argv[0]);
+      fprintf (stapsh_err, "%s: invalid extraneous arguments\n", argv[0]);
       usage (argv[0], 2);
     }
 }
@@ -366,8 +395,8 @@ do_file()
       size_t r = sizeof(buf);
       if ((size_t)size < sizeof(buf))
 	r = size;
-      r = fread(buf, 1, r, stdin);
-      if (!r && feof(stdin))
+      r = fread(buf, 1, r, stapsh_in);
+      if (!r && feof(stapsh_in))
         ret = reply ("ERROR: reached EOF while reading file data\n");
       else if (!r)
         ret = reply ("ERROR: unable to read file data\n");
@@ -520,8 +549,12 @@ do_run()
   if (access(staprun, X_OK) != 0)
     return reply ("ERROR: can't execute %s (%s)\n", staprun, strerror(errno));
 
+  // We pipe staprun under two conditions:
+  // 1. The "data" option is on: we need to prefix all the output from staprun with data headers
+  // 2. We're in listening mode: staprun needs to use the same port for
+  //    writing, but would fail to open it since stapsh is already using it
   pid_t pid;
-  if (prefix_data)
+  if (prefix_data || listening_port != NULL)
     pid = spawn_staprun_piped(args);
   else
     pid = spawn_staprun(args);
@@ -532,7 +565,7 @@ do_run()
       return reply ("ERROR: Failed to spawn staprun\n");
     }
 
-  if (prefix_data)
+  if (prefix_data || listening_port != NULL)
     {
       // make staprun fds non-blocking and prep polling array
       long flags;
@@ -561,16 +594,24 @@ do_quit()
 static void
 process_command(void)
 {
+  static int no_cmd_yet = 1;
   char command[4096];
 
   // This could technically block if only a partial command is received, but
   // stap commands are short and always end in \n. Even if we do block it's not
   // so bad a thing.
-  if (fgets(command, sizeof(command), stdin) == NULL)
+  if (fgets(command, sizeof(command), stapsh_in) == NULL)
     return;
 
   dbug(1, "command: %s", command);
   const char* arg = strtok(command, STAPSH_TOK_DELIM) ?: "(null)";
+
+  // If this is the first command and we're in listening mode, the only
+  // acceptable command is "stap". This is necessary because there can be
+  // data leftover in the buffer from a previous session
+  if (no_cmd_yet && listening_port != NULL && strcmp(arg, "stap") != 0)
+    return;
+  no_cmd_yet = 0;
 
   unsigned i;
   for (i = 0; i < ncommands; ++i)
@@ -606,9 +647,31 @@ prefix_staprun(int fdin, FILE *out, const char *stream)
 int
 main(int argc, char* const argv[])
 {
+  // set those right away so that *print* statements don't fail
+  stapsh_in  = stdin;
+  stapsh_out = stdout;
+  stapsh_err = stderr;
+
   parse_args(argc, argv);
 
   setup_signals();
+
+  if (listening_port != NULL)
+    {
+      listening_port_fd = open(listening_port, O_RDWR);
+      if (listening_port_fd == -1)
+        // no one might be watching but might as well print
+        die("Error calling open()\n");
+
+      // We need to have different FILE* for each direction, otherwise
+      // we'll have trouble down the line due to stdio's buffering
+      // (doing "r+" on sockets is very wonky)
+      stapsh_in  = fdopen(listening_port_fd, "r");
+      stapsh_out = fdopen(listening_port_fd, "w");
+      stapsh_err = stapsh_out;
+      if (!stapsh_in || !stapsh_out)
+        die("Could not open serial port\n");
+    }
 
   umask(0077);
   snprintf(tmpdir, sizeof(tmpdir), "%s/stapsh.XXXXXX",
@@ -620,10 +683,16 @@ main(int argc, char* const argv[])
 
   // Prep pfds. For now we're only interested in commands from stap, and we
   // don't poll staprun until it is started.
-  pfds[PFD_STAP_OUT].fd = fileno(stdin);
+  pfds[PFD_STAP_OUT].fd = fileno(stapsh_in);
   pfds[PFD_STAP_OUT].events = POLLIN | POLLHUP;
   pfds[PFD_STAPRUN_OUT].events = 0;
   pfds[PFD_STAPRUN_ERR].events = 0;
+
+  // Wait until a host connects before entering the command loop or poll() will
+  // return with POLLHUP right away.
+  if (listening_port != NULL)
+    while (!host_connected())
+      sleep(1);
 
   for (;;)
     {
@@ -633,9 +702,9 @@ main(int argc, char* const argv[])
       if (pfds[PFD_STAP_OUT].revents & POLLIN)
         process_command();
       if (pfds[PFD_STAPRUN_OUT].revents & POLLIN)
-        prefix_staprun(pfds[PFD_STAPRUN_OUT].fd, stdout, "stdout");
+        prefix_staprun(pfds[PFD_STAPRUN_OUT].fd, stapsh_out, "stdout");
       if (pfds[PFD_STAPRUN_ERR].revents & POLLIN)
-        prefix_staprun(pfds[PFD_STAPRUN_ERR].fd, stderr, "stderr");
+        prefix_staprun(pfds[PFD_STAPRUN_ERR].fd, stapsh_err, "stderr");
     }
 
   cleanup(0);
