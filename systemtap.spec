@@ -30,6 +30,12 @@
 %{!?with_emacsvim: %global with_emacsvim 1}
 %{!?with_java: %global with_java 1}
 
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
+   %define initdir %{_initddir}
+%else # RHEL5 doesn't know _initddir
+   %define initdir %{_initrddir}
+%endif
+
 Name: systemtap
 Version: 2.4
 Release: 1%{?dist}
@@ -437,8 +443,8 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/cache/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-install -m 755 initscript/systemtap $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+mkdir -p $RPM_BUILD_ROOT%{initdir}
+install -m 755 initscript/systemtap $RPM_BUILD_ROOT%{initdir}
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/script.d
@@ -450,7 +456,7 @@ install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.servic
 mkdir -p $RPM_BUILD_ROOT%{_tmpfilesdir}
 install -m 644 stap-server.conf $RPM_BUILD_ROOT%{_tmpfilesdir}/stap-server.conf
 %else
-install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{initdir}
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 initscript/config.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/stap-server
@@ -685,7 +691,7 @@ done
 %{_unitdir}/stap-server.service
 %{_tmpfilesdir}/stap-server.conf
 %else
-%{_sysconfdir}/rc.d/init.d/stap-server
+%{initdir}/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
 %endif
@@ -785,7 +791,7 @@ done
 
 %files initscript
 %defattr(-,root,root)
-%{_sysconfdir}/rc.d/init.d/systemtap
+%{initdir}/systemtap
 %dir %{_sysconfdir}/systemtap
 %dir %{_sysconfdir}/systemtap/conf.d
 %dir %{_sysconfdir}/systemtap/script.d
