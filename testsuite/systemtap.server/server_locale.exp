@@ -30,7 +30,7 @@ expect {
             fail "$test (eof)"
         }
 	timeout { 
-            exec kill -INT -[exp_pid]
+            exec kill -INT -- -[exp_pid]
             fail "$test (timeout)"
 	}
 }
@@ -56,7 +56,7 @@ expect {
             fail "$test (eof)"
         }
 	timeout { 
-            exec kill -INT -[exp_pid]
+            exec kill -INT -- -[exp_pid]
             fail "$test (timeout)"
 	}
 }
@@ -81,7 +81,7 @@ expect {
             fail "$test (eof)"
         }
 	timeout { 
-            exec kill -INT -[exp_pid]
+            exec kill -INT -- -[exp_pid]
             fail "$test (timeout)"
 	}
 }
@@ -111,7 +111,7 @@ expect {
             fail "$test (eof)"
         }
 	timeout { 
-            exec kill -INT -[exp_pid]
+            exec kill -INT -- -[exp_pid]
             fail "$test (timeout)"
 	}
 }
@@ -136,7 +136,7 @@ expect {
             fail "$test (eof)"
         }
 	timeout { 
-            exec kill -INT -[exp_pid]
+            exec kill -INT -- -[exp_pid]
             fail "$test (timeout)"
 	}
 }
@@ -166,7 +166,7 @@ expect {
             fail "$test (eof)"
         }
 	timeout { 
-            exec kill -INT -[exp_pid]
+            exec kill -INT -- -[exp_pid]
             fail "$test (timeout)"
 	}
 }
@@ -194,7 +194,7 @@ expect {
             fail "$test (eof)"
         }
 	timeout { 
-            exec kill -INT -[exp_pid]
+            exec kill -INT -- -[exp_pid]
             fail "$test (timeout)"
 	}
 }

@@ -98,7 +98,7 @@ expect {
 	fail "shared buffer hosting. unexpected EOF"
     }
 }
-exec kill -INT -[exp_pid]
+exec kill -INT -- -[exp_pid]
 if { $c1 == 2 && $c2 == 2 } {
 	pass "buffer sharing"
 } else {

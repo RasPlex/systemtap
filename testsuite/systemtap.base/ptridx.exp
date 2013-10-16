@@ -34,11 +34,11 @@ for {set i 0} {$i < [all_compile_flags]} {incr i} {
         -re {^[ap] (0x[0-9a-f]+ => )?17, 23\r\n} { incr ok; exp_continue }
         timeout {
 	  fail "$test-$extra_name (timeout)"
-	  exec kill -INT -[exp_pid]
+	  exec kill -INT -- -[exp_pid]
 	}
         eof { }
       }
-      exec kill -INT -[exp_pid]
+      exec kill -INT -- -[exp_pid]
       catch { close }; catch { wait }
 
       if {$ok == 2} {

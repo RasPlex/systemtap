@@ -60,7 +60,7 @@ foreach runtime [get_runtime_list] {
 	continue
     }
 
-    exec kill -INT -[exp_pid -i $exe_id]
+    exec kill -INT -- -[exp_pid -i $exe_id]
     catch {close -i $exe_id}
     catch {wait -i $exe_id}
 }

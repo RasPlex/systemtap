@@ -9,7 +9,7 @@ spawn stap $srcdir/$subdir/pr14546.stp "println(backtrace())"
 set ko 0
 expect {
     -timeout 60
-    timeout { fail "$test (timeout)"; exec kill -INT -[exp_pid] }
+    timeout { fail "$test (timeout)"; exec kill -INT -- -[exp_pid] }
     -re {^ERROR: [^\r\n]*\r\n} { incr ko; exp_continue }
     eof { }
 }
@@ -21,7 +21,7 @@ spawn stap $srcdir/$subdir/pr14546.stp "println(backtrace()); println(backtrace(
 set ko 0
 expect {
     -timeout 60
-    timeout { fail "$test (timeout)"; exec kill -INT -[exp_pid] }
+    timeout { fail "$test (timeout)"; exec kill -INT -- -[exp_pid] }
     -re {^ERROR: [^\r\n]*\r\n} { incr ko; exp_continue }
     eof { }
 }
@@ -33,7 +33,7 @@ spawn stap $srcdir/$subdir/pr14546.stp "println(backtrace()); println(backtrace(
 set ko 0
 expect {
     -timeout 60
-    timeout { fail "$test (timeout)"; exec kill -INT -[exp_pid] }
+    timeout { fail "$test (timeout)"; exec kill -INT -- -[exp_pid] }
     -re {^ERROR: [^\r\n]*\r\n} { incr ko; exp_continue }
     eof { }
 }
@@ -45,7 +45,7 @@ spawn stap $srcdir/$subdir/pr14546.stp "println(backtrace()); println(ubacktrace
 set ko 0
 expect {
     -timeout 60
-    timeout { fail "$test (timeout)"; exec kill -INT -[exp_pid] }
+    timeout { fail "$test (timeout)"; exec kill -INT -- -[exp_pid] }
     -re {^ERROR: [^\r\n]*\r\n} { incr ko; exp_continue }
     eof { }
 }

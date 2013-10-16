@@ -53,7 +53,7 @@ if {! [uprobes_p]} then {
 	}
 	-re {^.*\r\n} { exp_continue }
 	timeout { 
-	    exec kill -INT -[exp_pid]
+	    exec kill -INT -- -[exp_pid]
 	}
     }
     catch {close}; catch {wait}

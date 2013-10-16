@@ -54,6 +54,6 @@ expect {
     timeout {fail "all args tests - timeout"}
     eof {fail "function arguments: unexpected timeout"}
 }
-exec kill -INT -[exp_pid]
+exec kill -INT -- -[exp_pid]
 catch { close }
 wait

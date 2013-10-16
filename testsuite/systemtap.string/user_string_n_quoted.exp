@@ -8,7 +8,7 @@ expect {
 	eof { fail $test }
 	timeout {
 		fail "$test (timeout)"
-		catch { exec kill -INT -[exp_pid] }
+		catch { exec kill -INT -- -[exp_pid] }
 	}
 }
 

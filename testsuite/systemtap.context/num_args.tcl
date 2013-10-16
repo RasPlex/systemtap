@@ -59,6 +59,6 @@ expect {
     timeout {fail "all function arguments tests - timeout"}
     eof {fail "function arguments -- $tag: unexpected timeout"}
 }
-exec kill -INT -[exp_pid]
+exec kill -INT -- -[exp_pid]
 catch close
 wait

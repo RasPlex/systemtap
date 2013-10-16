@@ -48,11 +48,11 @@ expect {
   -re "(alias\.two and alias\.\* probed)\r\n" { advance }
   timeout {
 	fail "$test (timeout)"
-	exec kill -INT -[exp_pid] 
+	exec kill -INT -- -[exp_pid] 
   }
   eof { }
 }
 
-exec kill -INT -[exp_pid]
+exec kill -INT -- -[exp_pid]
 catch {close}; catch {wait}
 if {$ok != 8} {fail "conditional probes ($ok)"}

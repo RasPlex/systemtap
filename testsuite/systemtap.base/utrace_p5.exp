@@ -119,7 +119,7 @@ proc run_cat_5_sec {} {
     spawn $exepath
     set exe_id $spawn_id
     after 5000;
-    exec kill -INT -[exp_pid -i $exe_id]
+    exec kill -INT -- -[exp_pid -i $exe_id]
     catch {close -i $exe_id}
     catch {wait -i $exe_id}
     return 0;

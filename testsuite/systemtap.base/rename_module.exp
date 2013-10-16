@@ -39,9 +39,9 @@ expect {
 }
 
 # Kill both of the spawned processes
-catch {exec kill -INT -[exp_pid -i $firstid]}
+catch {exec kill -INT -- -[exp_pid -i $firstid]}
 catch {close -i $firstid}; catch {wait -i $firstid}
-catch {exec kill -INT -[exp_pid -i $secondid]}
+catch {exec kill -INT -- -[exp_pid -i $secondid]}
 catch {close -i $secondid}; catch {wait -i $secondid}
 
 if {$failed1 || $failed2} {
@@ -107,9 +107,9 @@ expect {
 }
 
 # Kill both of the spawned processes
-catch {exec kill -INT -[exp_pid -i $firstid]}
+catch {exec kill -INT -- -[exp_pid -i $firstid]}
 catch {close -i $firstid}; catch {wait -i $firstid}
-catch {exec kill -INT -[exp_pid -i $secondid]}
+catch {exec kill -INT -- -[exp_pid -i $secondid]}
 catch {close -i $secondid}; catch {wait -i $secondid}
 
 if {$failed1 || $failed2} {
@@ -148,9 +148,9 @@ expect {
 }
 
 # Kill both of the spawned processes
-catch {exec kill -INT -[exp_pid -i $firstid]}
+catch {exec kill -INT -- -[exp_pid -i $firstid]}
 catch {close -i $firstid}; catch {wait -i $firstid}
-catch {exec kill -INT -[exp_pid -i $secondid]}
+catch {exec kill -INT -- -[exp_pid -i $secondid]}
 catch {close -i $secondid}; catch {wait -i $secondid}
 
 if {$failed1 || $failed2} {

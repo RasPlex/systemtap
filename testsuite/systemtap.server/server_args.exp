@@ -45,7 +45,7 @@ proc stap_direct_and_with_client {stap options} {
 	    }
 	    -re {^.*\r\n} { exp_continue }
 	    timeout { 
-		exec kill -INT -[exp_pid]
+		exec kill -INT -- -[exp_pid]
 	    }
 	}
 	catch {close}; catch {wait}

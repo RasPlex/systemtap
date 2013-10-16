@@ -71,11 +71,11 @@ expect {
     -re {^ 0x[a-f0-9]+ : _[^\r\n]+\r\n} {incr start_func; exp_continue}
     -re {^ 0x[a-f0-9]+ : [^\r\n]+/libc-[^\r\n]+\r\n} {incr start_func; exp_continue}
 
-    timeout { fail "libmarkunamestack-$testname (timeout)"; exec kill -INT -[exp_pid] }
+    timeout { fail "libmarkunamestack-$testname (timeout)"; exec kill -INT -- -[exp_pid] }
     eof { }
 }
 # kill again for good measure
-exec kill -INT -[exp_pid]
+exec kill -INT -- -[exp_pid]
 catch {close}; catch {wait -i $spawn_id}
 
 if {$lib == 8} { pass "lib-$testname" } {

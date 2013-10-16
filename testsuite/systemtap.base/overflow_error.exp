@@ -23,7 +23,7 @@ foreach runtime [get_runtime_list] {
 	$error_msg2 {incr pass; exp_continue}
 	$exit_warning {incr pass; exp_continue}
 	timeout {
-	    exec kill -INT -[exp_pid]
+	    exec kill -INT -- -[exp_pid]
 	    fail "$test_name timed out"
 	}
 	eof {}

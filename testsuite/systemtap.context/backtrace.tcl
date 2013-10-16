@@ -197,7 +197,7 @@ expect {
 	incr script_exit;
     }
 }
-exec kill -INT -[exp_pid]
+exec kill -INT -- -[exp_pid]
 if {$m1 == 3} {
     pass "backtrace of yyy_func2"
 } else {
