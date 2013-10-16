@@ -22,6 +22,14 @@
 /* Define to 1 if you have the <BPatch_object.h> header file. */
 #undef HAVE_BPATCH_OBJECT_H
 
+/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYCURRENT
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+#undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
 /* Define to 1 if you have the <crash/defs.h> header file. */
 #undef HAVE_CRASH_DEFS_H
 
@@ -59,6 +67,12 @@
 
 /* Define to 1 if you have the 'sqlite3' library (-lsqlite3). */
 #undef HAVE_LIBSQLITE3
+
+/* Define to 1 if libvirt development libraries are installed */
+#undef HAVE_LIBVIRT
+
+/* Define to 1 if libxml2 development libraries are installed */
+#undef HAVE_LIBXML2
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H

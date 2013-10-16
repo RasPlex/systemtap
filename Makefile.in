@@ -82,35 +82,36 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = $(am__EXEEXT_1)
+bin_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2)
 @BUILD_TRANSLATOR_TRUE@am__append_1 = stap
 @BUILD_TRANSLATOR_TRUE@am__append_2 = dtrace
-@BUILD_TRANSLATOR_TRUE@pkglibexec_PROGRAMS = $(am__EXEEXT_2) \
-@BUILD_TRANSLATOR_TRUE@	$(am__EXEEXT_3)
+@BUILD_TRANSLATOR_TRUE@pkglibexec_PROGRAMS = $(am__EXEEXT_3) \
+@BUILD_TRANSLATOR_TRUE@	$(am__EXEEXT_4)
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_3 = stap-sign-module stap-authorize-cert
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_4 = stap-serverd stap-gen-cert
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_5 = stap-server
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_6 = stap-start-server stap-stop-server
-@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@am__append_7 = $(avahi_CFLAGS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@am__append_7 = stapvirt
 @BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@am__append_8 = $(avahi_CFLAGS)
-@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@am__append_9 = $(avahi_LIBS)
-@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_10 = nsscommon.cxx csclient.cxx cscommon.cxx 
-@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_11 = $(nss_CFLAGS) -DSTAP
-@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_12 = $(nss_CFLAGS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@am__append_9 = $(avahi_CFLAGS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@am__append_10 = $(avahi_LIBS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_11 = nsscommon.cxx csclient.cxx cscommon.cxx 
+@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_12 = $(nss_CFLAGS) -DSTAP
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_13 = $(nss_CFLAGS)
-@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_14 = $(nss_LIBS)
-@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_15 = install-scripts
-@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_16 = -Iinclude-elfutils
-@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_17 = -Llib-elfutils -Wl,-rpath-link,lib-elfutils \
+@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_14 = $(nss_CFLAGS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_15 = $(nss_LIBS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__append_16 = install-scripts
+@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_17 = -Iinclude-elfutils
+@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_18 = -Llib-elfutils -Wl,-rpath-link,lib-elfutils \
 @BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@		-Wl,--enable-new-dtags,-rpath,$(pkglibdir)
 
-@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_18 = stamp-elfutils
 @BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_19 = stamp-elfutils
-@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_20 = lib-elfutils/libdw.so
-@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_21 = install-elfutils
-@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@@HAVE_NSS_TRUE@am__append_22 = $(avahi_CFLAGS)
+@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_20 = stamp-elfutils
+@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_21 = lib-elfutils/libdw.so
+@BUILD_ELFUTILS_TRUE@@BUILD_TRANSLATOR_TRUE@am__append_22 = install-elfutils
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@@HAVE_NSS_TRUE@am__append_23 = $(avahi_CFLAGS)
-@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@@HAVE_NSS_TRUE@am__append_24 = $(avahi_LIBS)
+@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@@HAVE_NSS_TRUE@am__append_24 = $(avahi_CFLAGS)
+@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_AVAHI_TRUE@@HAVE_NSS_TRUE@am__append_25 = $(avahi_LIBS)
 @BUILD_TRANSLATOR_TRUE@noinst_PROGRAMS = loc2c-test$(EXEEXT)
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -120,8 +121,10 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/initscript/config.stap-server.in \
 	$(top_srcdir)/initscript/systemtap.in \
 	$(top_srcdir)/initscript/stap-server.in $(srcdir)/run-stap.in \
-	$(srcdir)/dtrace.in depcomp $(am__noinst_HEADERS_DIST) \
-	$(oldinclude_HEADERS)
+	$(srcdir)/dtrace.in $(top_srcdir)/staprun/guest/stapshd.in \
+	$(top_srcdir)/staprun/guest/stapsh-daemon.in \
+	$(top_srcdir)/staprun/guest/stapsh@.service.in depcomp \
+	$(am__noinst_HEADERS_DIST) $(oldinclude_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
 	$(top_srcdir)/m4/iconv.m4 $(top_srcdir)/m4/lib-ld.m4 \
@@ -136,15 +139,18 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES = includes/sys/sdt-config.h \
 	initscript/config.systemtap initscript/config.stap-server \
-	initscript/systemtap initscript/stap-server run-stap dtrace
+	initscript/systemtap initscript/stap-server run-stap dtrace \
+	staprun/guest/stapshd staprun/guest/stapsh-daemon \
+	staprun/guest/stapsh@.service
 CONFIG_CLEAN_VPATH_FILES =
 @BUILD_TRANSLATOR_TRUE@am__EXEEXT_1 = stap$(EXEEXT)
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@am__EXEEXT_2 = stapvirt$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)" \
 	"$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)" \
 	"$(DESTDIR)$(oldincludedir)"
-@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__EXEEXT_2 = stap-sign-module$(EXEEXT) \
+@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__EXEEXT_3 = stap-sign-module$(EXEEXT) \
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	stap-authorize-cert$(EXEEXT)
-@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__EXEEXT_3 = stap-serverd$(EXEEXT) \
+@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@am__EXEEXT_4 = stap-serverd$(EXEEXT) \
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	stap-gen-cert$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS) $(pkglibexec_PROGRAMS)
 @BUILD_TRANSLATOR_TRUE@am_loc2c_test_OBJECTS =  \
@@ -241,6 +247,12 @@ stap_sign_module_OBJECTS = $(am_stap_sign_module_OBJECTS)
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(am__DEPENDENCIES_1)
 stap_sign_module_LINK = $(CXXLD) $(stap_sign_module_CXXFLAGS) \
 	$(CXXFLAGS) $(stap_sign_module_LDFLAGS) $(LDFLAGS) -o $@
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@am_stapvirt_OBJECTS = stapvirt-stapvirt.$(OBJEXT)
+stapvirt_OBJECTS = $(am_stapvirt_OBJECTS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@stapvirt_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@	$(am__DEPENDENCIES_1)
+stapvirt_LINK = $(CCLD) $(stapvirt_CFLAGS) $(CFLAGS) \
+	$(stapvirt_LDFLAGS) $(LDFLAGS) -o $@
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -316,7 +328,8 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(loc2c_test_SOURCES) $(stap_SOURCES) \
 	$(stap_authorize_cert_SOURCES) $(stap_gen_cert_SOURCES) \
-	$(stap_serverd_SOURCES) $(stap_sign_module_SOURCES)
+	$(stap_serverd_SOURCES) $(stap_sign_module_SOURCES) \
+	$(stapvirt_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -400,6 +413,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INTLLIBS = @INTLLIBS@
+INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
 JAVADIR = @JAVADIR@
 LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
@@ -492,6 +506,10 @@ infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+libvirt_CFLAGS = @libvirt_CFLAGS@
+libvirt_LIBS = @libvirt_LIBS@
+libxml2_CFLAGS = @libxml2_CFLAGS@
+libxml2_LIBS = @libxml2_LIBS@
 localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
@@ -553,12 +571,18 @@ oldinclude_HEADERS = includes/sys/sdt.h includes/sys/sdt-config.h
 @BUILD_TRANSLATOR_TRUE@	tapset-dynprobe.cxx tapset-method.cxx \
 @BUILD_TRANSLATOR_TRUE@	translator-output.cxx stapregex.cxx \
 @BUILD_TRANSLATOR_TRUE@	stapregex-tree.cxx stapregex-parse.cxx \
-@BUILD_TRANSLATOR_TRUE@	stapregex-dfa.cxx $(am__append_10)
+@BUILD_TRANSLATOR_TRUE@	stapregex-dfa.cxx $(am__append_11)
 @BUILD_TRANSLATOR_TRUE@noinst_HEADERS = sdt_types.h
 @BUILD_TRANSLATOR_TRUE@stap_LDADD = @stap_LIBS@ @sqlite3_LIBS@ \
-@BUILD_TRANSLATOR_TRUE@	@LIBINTL@ -lpthread $(am__append_9) \
-@BUILD_TRANSLATOR_TRUE@	$(am__append_14)
-@BUILD_TRANSLATOR_TRUE@stap_DEPENDENCIES = $(am__append_20)
+@BUILD_TRANSLATOR_TRUE@	@LIBINTL@ -lpthread $(am__append_10) \
+@BUILD_TRANSLATOR_TRUE@	$(am__append_15)
+@BUILD_TRANSLATOR_TRUE@stap_DEPENDENCIES = $(am__append_21)
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@stapvirt_SOURCES = stapvirt.c
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@stapvirt_CFLAGS = $(AM_CFLAGS) \
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@	$(libvirt_CFLAGS) \
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@	$(libxml2_CFLAGS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@stapvirt_LDFLAGS = $(AM_LDFLAGS)
+@BUILD_TRANSLATOR_TRUE@@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@stapvirt_LDADD = $(libvirt_LIBS) $(libxml2_LIBS)
 
 # Arrange for git_version.h to be regenerated at every "make".
 # Code fragment is based upon RadeonHD.am.
@@ -568,20 +592,20 @@ oldinclude_HEADERS = includes/sys/sdt.h includes/sys/sdt-config.h
 # of foo-bar.c if it is newer than the foo-bar.o file. Using noinst_foo_SOURCES
 # instead of foo_SOURCES prevents shipping git_version.h in dist tarballs,
 # which may cause false GIT_FOO readings.
-BUILT_SOURCES = git_version.stamp $(am__append_18)
-CLEANFILES = git_version.h $(am__append_19) $(pkglibexec_PROGRAMS)
+BUILT_SOURCES = git_version.stamp $(am__append_19)
+CLEANFILES = git_version.h $(am__append_20) $(pkglibexec_PROGRAMS)
 GIT_VERSION_CMD = $(SHELL) $(top_srcdir)/git_version.sh
-PHONIES = $(am__append_15) $(am__append_21) runcheck update-po \
+PHONIES = $(am__append_16) $(am__append_22) runcheck update-po \
 	dist-gzip rpm srpm uprobes install-uprobes
 @BUILD_TRANSLATOR_TRUE@stap_CFLAGS = $(AM_CFLAGS) @PIECFLAGS@ \
-@BUILD_TRANSLATOR_TRUE@	$(am__append_11)
+@BUILD_TRANSLATOR_TRUE@	$(am__append_12)
 @BUILD_TRANSLATOR_TRUE@stap_CXXFLAGS = $(AM_CXXFLAGS) @PIECXXFLAGS@ \
-@BUILD_TRANSLATOR_TRUE@	$(am__append_7) $(am__append_12)
+@BUILD_TRANSLATOR_TRUE@	$(am__append_8) $(am__append_13)
 @BUILD_TRANSLATOR_TRUE@stap_CPPFLAGS = $(AM_CPPFLAGS) -DSTAP_SDT_V2 \
-@BUILD_TRANSLATOR_TRUE@	$(am__append_8) $(am__append_13) \
-@BUILD_TRANSLATOR_TRUE@	$(am__append_16)
-@BUILD_TRANSLATOR_TRUE@stap_LDFLAGS = $(AM_LDFLAGS) @PIELDFLAGS@ \
+@BUILD_TRANSLATOR_TRUE@	$(am__append_9) $(am__append_14) \
 @BUILD_TRANSLATOR_TRUE@	$(am__append_17)
+@BUILD_TRANSLATOR_TRUE@stap_LDFLAGS = $(AM_LDFLAGS) @PIELDFLAGS@ \
+@BUILD_TRANSLATOR_TRUE@	$(am__append_18)
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_sign_module_SOURCES = stap-sign-module.cxx nsscommon.cxx util.cxx
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_sign_module_CPPFLAGS = $(AM_CPPFLAGS)
 @BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_sign_module_CXXFLAGS = $(AM_CXXFLAGS) @PIECXXFLAGS@ $(nss_CFLAGS)
@@ -598,15 +622,15 @@ PHONIES = $(am__append_15) $(am__append_21) runcheck update-po \
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_serverd_CXXFLAGS = $(AM_CXXFLAGS) \
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	@PIECXXFLAGS@ \
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(nss_CFLAGS) \
-@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(am__append_23)
+@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(am__append_24)
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_serverd_CFLAGS = $(AM_CFLAGS) \
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	@PIECFLAGS@ \
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(nss_CFLAGS) \
-@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(am__append_22)
+@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(am__append_23)
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_serverd_LDFLAGS = $(AM_LDFLAGS) @PIELDFLAGS@
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_serverd_LDADD = $(nss_LIBS) \
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	-lpthread \
-@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(am__append_24)
+@BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@	$(am__append_25)
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_gen_cert_SOURCES = stap-gen-cert.cxx util.cxx nsscommon.cxx
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_gen_cert_CXXFLAGS = $(AM_CXXFLAGS) @PIECXXFLAGS@ $(nss_CFLAGS)
 @BUILD_SERVER_TRUE@@BUILD_TRANSLATOR_TRUE@@HAVE_NSS_TRUE@stap_gen_cert_CFLAGS = $(AM_CFLAGS) @PIECFLAGS@ $(nss_CFLAGS)
@@ -703,6 +727,12 @@ initscript/stap-server: $(top_builddir)/config.status $(top_srcdir)/initscript/s
 run-stap: $(top_builddir)/config.status $(srcdir)/run-stap.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 dtrace: $(top_builddir)/config.status $(srcdir)/dtrace.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+staprun/guest/stapshd: $(top_builddir)/config.status $(top_srcdir)/staprun/guest/stapshd.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+staprun/guest/stapsh-daemon: $(top_builddir)/config.status $(top_srcdir)/staprun/guest/stapsh-daemon.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+staprun/guest/stapsh@.service: $(top_builddir)/config.status $(top_srcdir)/staprun/guest/stapsh@.service.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
@@ -815,6 +845,10 @@ stap-serverd$(EXEEXT): $(stap_serverd_OBJECTS) $(stap_serverd_DEPENDENCIES) $(EX
 stap-sign-module$(EXEEXT): $(stap_sign_module_OBJECTS) $(stap_sign_module_DEPENDENCIES) $(EXTRA_stap_sign_module_DEPENDENCIES) 
 	@rm -f stap-sign-module$(EXEEXT)
 	$(AM_V_CXXLD)$(stap_sign_module_LINK) $(stap_sign_module_OBJECTS) $(stap_sign_module_LDADD) $(LIBS)
+
+stapvirt$(EXEEXT): $(stapvirt_OBJECTS) $(stapvirt_DEPENDENCIES) $(EXTRA_stapvirt_DEPENDENCIES) 
+	@rm -f stapvirt$(EXEEXT)
+	$(AM_V_CCLD)$(stapvirt_LINK) $(stapvirt_OBJECTS) $(stapvirt_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -949,6 +983,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap_sign_module-nsscommon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap_sign_module-stap-sign-module.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stap_sign_module-util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stapvirt-stapvirt.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -1019,6 +1054,20 @@ stap-mdfour.obj: mdfour.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mdfour.c' object='stap-mdfour.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stap_CPPFLAGS) $(CPPFLAGS) $(stap_CFLAGS) $(CFLAGS) -c -o stap-mdfour.obj `if test -f 'mdfour.c'; then $(CYGPATH_W) 'mdfour.c'; else $(CYGPATH_W) '$(srcdir)/mdfour.c'; fi`
+
+stapvirt-stapvirt.o: stapvirt.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stapvirt_CFLAGS) $(CFLAGS) -MT stapvirt-stapvirt.o -MD -MP -MF $(DEPDIR)/stapvirt-stapvirt.Tpo -c -o stapvirt-stapvirt.o `test -f 'stapvirt.c' || echo '$(srcdir)/'`stapvirt.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/stapvirt-stapvirt.Tpo $(DEPDIR)/stapvirt-stapvirt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stapvirt.c' object='stapvirt-stapvirt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stapvirt_CFLAGS) $(CFLAGS) -c -o stapvirt-stapvirt.o `test -f 'stapvirt.c' || echo '$(srcdir)/'`stapvirt.c
+
+stapvirt-stapvirt.obj: stapvirt.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stapvirt_CFLAGS) $(CFLAGS) -MT stapvirt-stapvirt.obj -MD -MP -MF $(DEPDIR)/stapvirt-stapvirt.Tpo -c -o stapvirt-stapvirt.obj `if test -f 'stapvirt.c'; then $(CYGPATH_W) 'stapvirt.c'; else $(CYGPATH_W) '$(srcdir)/stapvirt.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/stapvirt-stapvirt.Tpo $(DEPDIR)/stapvirt-stapvirt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stapvirt.c' object='stapvirt-stapvirt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stapvirt_CFLAGS) $(CFLAGS) -c -o stapvirt-stapvirt.obj `if test -f 'stapvirt.c'; then $(CYGPATH_W) 'stapvirt.c'; else $(CYGPATH_W) '$(srcdir)/stapvirt.c'; fi`
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

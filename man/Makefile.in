@@ -82,6 +82,7 @@ host_triplet = @host@
 target_triplet = @target@
 @BUILD_TRANSLATOR_TRUE@am__append_1 = stap.1 stap-prep.1 stap-report.1
 @BUILD_SERVER_TRUE@@HAVE_NSS_TRUE@am__append_2 = stap-server.8
+@HAVE_LIBVIRT_TRUE@@HAVE_LIBXML2_TRUE@am__append_3 = stapvirt.1
 subdir = man
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/stappaths.7.in
@@ -189,6 +190,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INTLLIBS = @INTLLIBS@
+INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
 JAVADIR = @JAVADIR@
 LDFLAGS = @LDFLAGS@
 LIBICONV = @LIBICONV@
@@ -281,6 +283,10 @@ infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+libvirt_CFLAGS = @libvirt_CFLAGS@
+libvirt_LIBS = @libvirt_LIBS@
+libxml2_CFLAGS = @libxml2_CFLAGS@
+libxml2_LIBS = @libxml2_LIBS@
 localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
@@ -315,7 +321,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dist foreign
 man_MANS = stapprobes.3stap stapfuncs.3stap stapvars.3stap \
 	stapex.3stap dtrace.1 stap-merge.1 stappaths.7 stapsh.8 \
-	$(am__append_1) $(am__append_2)
+	$(am__append_1) $(am__append_2) $(am__append_3)
 all: all-am
 
 .SUFFIXES:
