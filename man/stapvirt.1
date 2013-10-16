@@ -3,6 +3,19 @@
 .SH NAME
 stapvirt \- prepare libvirt domains for systemtap probing
 
+.\" macros
+.de SAMPLE
+.br
+.RS
+.nf
+.nh
+..
+.de ESAMPLE
+.hy
+.fi
+.RE
+..
+
 .SH SYNOPSIS
 \fBstapvirt\fR
 [\fB-c\fR \fIURI\fR]
@@ -73,6 +86,100 @@ currently running, it must be restarted before changes take effect.
 Display the following information about the domain: its name, its UUID, its
 state, the number of permanent SystemTap ports installed, and whether
 hotplugging is supported.
+
+.SH TUTORIAL
+This tutorial will help you get started with stapvirt. Let's start by listing
+all the privileged domains on the machine with the \fBlist\fR command:
+
+.SAMPLE
+\fB$\fR stapvirt -c 'qemu:///system' list
+Available domains on URI 'qemu:///system':
+ID      State     Type        Name
+2       running   persistent  TestVM
+.ESAMPLE
+
+Note that we specified the libvirt URI using the -c switch. Otherwise libvirt
+might have defaulted to e.g. 'qemu:///session'.
+
+Rather than typing the URI everytime, it might be easier to instead set the
+.nh
+LIBVIRT_DEFAULT_URI
+.ni
+environment variable and omit the -c switch. Note that this is a libvirt
+functionality (see
+.nh
+<libvirt.org/uri.html>
+.hy
+for more details).
+
+The \fBlist\fR command indicates that we have a running domain named 'TestVM'
+with ID 2. Let's use the \fBquery\fR command to retrieve more information:
+
+.SAMPLE
+\fB$\fR stapvirt query TestVM # by name
+\fB$\fR stapvirt query 2      # by ID
+
+              Name:  TestVM
+              UUID:  905951c0-fa4f-409b-079c-c91ddda27028
+             State:  running
+                ID:  2
+              Type:  persistent
+   Permanent Ports:  0
+       Hotplugging:  not supported
+.ESAMPLE
+
+The \fBquery\fR command gives us some basic information about the domain, such
+as its name, UUID, and state. More importantly, it gives us two pieces of
+information: the number of permanent ports installed, and whether hotplugging is
+supported.  Technically, hotplugging support depends on libvirt and qemu, and is
+not related to the domain in itself.
+
+If hotplugging were supported, we could stop here and run \fIstap\fR directly.
+Since in our case hotplugging is not supported, we need to add SystemTap ports.
+To do this, we use the \fBport-add\fR command:
+
+.SAMPLE
+\fB$\fR stapvirt port-add TestVM
+Added new port org.systemtap.stapsh.0
+The domain must be restarted before changes take effect.
+.ESAMPLE
+
+We can confirm that a port was added by running the \fBquery\fR command again:
+
+.SAMPLE
+\fB$\fR stapvirt query TestVM
+\fB...\fR
+   Permanent Ports:  1
+       Hotplugging:  not supported
+.ESAMPLE
+
+It now indicates that there is 1 permanent port. We can also use the
+\fBport-list\fR command to know exactly where the port will be created:
+
+.SAMPLE
+\fB$\fR stapvirt port-list TestVM
+/var/lib/libvirt/qemu/TestVM.org.systemtap.stapsh.0.sock
+.ESAMPLE
+
+After stopping and restarting the domain, we are now ready to use the port with
+\fIstap\fR:
+
+.SAMPLE
+\fB$\fR stap -e 'probe begin { printf("Hello from TestVM!\\n"); exit() }' \\
+       --remote=libvirt://TestVM
+Hello from TestVM!
+.ESAMPLE
+
+Finally, if we'd like to remove the port, we can use the \fBport-remove\fR
+command:
+
+.SAMPLE
+\fB$\fR stapvirt port-remove TestVM
+Removed port org.systemtap.stapsh.0
+The domain must be restarted before changes take effect.
+.ESAMPLE
+
+And that's all there is to it!
 
 .SH SEE ALSO
 .IR stap (1)

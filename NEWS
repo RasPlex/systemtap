@@ -8,7 +8,6 @@
 
   Virtual machines managed by libvirt can be prepared using stapvirt.
   See stapvirt(1) and the --remote option in stap(1) for more details.
-  Also see PR13078 for a stapvirt tutorial.
 
 - Systemtap now checks for and uses (when available) the .gnu_debugdata
   section which contains a subset of debuginfo, useful for backtraces
