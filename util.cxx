@@ -397,6 +397,33 @@ tokenize_cxx(const string& str, vector<string>& tokens)
   tokens.push_back(str.substr(pos));
 }
 
+// Searches for lines in buf delimited by either \n, \0. Returns a vector
+// containing tuples of the type (start of line, length of line). If data
+// remains before the end of the buffer, a last line is added. All delimiters
+// are kept.
+vector<pair<const char*,int> >
+split_lines(const char *buf, size_t n)
+{
+  vector<pair<const char*,int> > lines;
+  const char *eol, *line;
+  line = eol = buf;
+  while ((size_t)(eol-buf) < n)
+    {
+      if (*eol == '\n' || *eol == '\0')
+        {
+          lines.push_back(make_pair(line, eol-line+1));
+          line = ++eol;
+        }
+      else
+        eol++;
+    }
+
+  // add any last line
+  if (eol > line)
+    lines.push_back(make_pair(line, eol-line));
+
+  return lines;
+}
 
 // Resolve an executable name to a canonical full path name, with the
 // same policy as execvp().  A program name not containing a slash

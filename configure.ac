@@ -522,6 +522,20 @@ if test "$with_dyninst" != "no"; then
 fi
 AM_CONDITIONAL([HAVE_DYNINST], [test "${have_dyninst}" = "yes"])
 
+dnl Check for the libvirt and libxml2 devel packages
+
+dnl We require libvirt >= 1.0.2 because stapvirt relies on the
+dnl virDomainOpenChannel function, which was implemented in 1.0.2.
+PKG_CHECK_MODULES([libvirt], [libvirt >= 1.0.2], [
+   have_libvirt=yes
+   AC_DEFINE([HAVE_LIBVIRT],[1],[Define to 1 if libvirt development libraries are installed])
+   ], [have_libvirt=no])
+AM_CONDITIONAL([HAVE_LIBVIRT], [test "${have_libvirt}" = "yes"])
+PKG_CHECK_MODULES([libxml2], [libxml-2.0], [
+   have_libxml2=yes
+   AC_DEFINE([HAVE_LIBXML2],[1],[Define to 1 if libxml2 development libraries are installed])
+   ], [have_libxml2=no])
+AM_CONDITIONAL([HAVE_LIBXML2], [test "${have_libxml2}" = "yes"])
 
 AC_CACHE_CHECK([for assembler .section "?" flags support], stap_cv_sectionq, [
 old_CFLAGS="$CFLAGS"
@@ -678,6 +692,9 @@ AC_CONFIG_FILES(java/Makefile)
 AC_CONFIG_FILES([java/stapbm], [chmod +x java/stapbm])
 AC_CONFIG_FILES(staprun/Makefile)
 AC_CONFIG_FILES([staprun/run-staprun], [chmod +x staprun/run-staprun])
+AC_CONFIG_FILES([staprun/guest/stapshd], [chmod +x staprun/guest/stapshd])
+AC_CONFIG_FILES([staprun/guest/stapsh-daemon], [chmod +x staprun/guest/stapsh-daemon])
+AC_CONFIG_FILES([staprun/guest/stapsh@.service])
 
 # Setup "shadow" directory doc/beginners that has everything setup for
 # publican in one directory (through directory links if necessary).

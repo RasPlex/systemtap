@@ -29,6 +29,23 @@
 %{!?with_systemd: %global with_systemd 0%{?fedora} >= 19 || 0%{?rhel} >= 7}
 %{!?with_emacsvim: %global with_emacsvim 1}
 %{!?with_java: %global with_java 1}
+# don't want to build runtime-virthost for f18 or RHEL5/6
+%{!?with_virthost: %global with_virthost 0%{?fedora} >= 19 || 0%{?rhel} >= 7}
+%{!?with_virtguest: %global with_virtguest 1}
+
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
+   %define initdir %{_initddir}
+%else # RHEL5 doesn't know _initddir
+   %define initdir %{_initrddir}
+%endif
+
+%if %{with_virtguest}
+   %if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
+      %define udevrulesdir /lib/udev/rules.d
+   %else
+      %define udevrulesdir /etc/udev/rules.d
+   %endif
+%endif
 
 Name: systemtap
 Version: 2.4
@@ -47,6 +64,8 @@ Release: 1%{?dist}
 # systemtap-sdt-devel    /usr/include/sys/sdt.h /usr/bin/dtrace
 # systemtap-testsuite    /usr/share/systemtap/testsuite*, req:systemtap, req:sdt-devel
 # systemtap-runtime-java libHelperSDT.so, HelperSDT.jar, stapbm, req:-runtime
+# systemtap-runtime-virthost  /usr/bin/stapvirt, req:libvirt req:libxml2
+# systemtap-runtime-virtguest udev rules, init scripts/systemd service, req:-runtime
 #
 # Typical scenarios:
 #
@@ -118,6 +137,10 @@ BuildRequires: emacs
 %endif
 %if %{with_java}
 BuildRequires: jpackage-utils java-devel
+%endif
+%if %{with_virthost}
+BuildRequires: libvirt-devel >= 1.0.2
+BuildRequires: libxml2-devel
 %endif
 
 # Install requirements
@@ -293,6 +316,42 @@ that probe Java processes running on the OpenJDK 1.6 and OpenJDK 1.7
 runtimes using Byteman.
 %endif
 
+%if %{with_virthost}
+%package runtime-virthost
+Summary: Systemtap Cross-VM Instrumentation - host
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: libvirt >= 1.0.2
+Requires: libxml2
+
+%description runtime-virthost
+This package includes the components required to run systemtap scripts
+inside a libvirt-managed domain from the host without using a network
+connection.
+%endif
+
+%if %{with_virtguest}
+%package runtime-virtguest
+Summary: Systemtap Cross-VM Instrumentation - guest
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: systemtap-runtime = %{version}-%{release}
+%if %{with_systemd}
+Requires(post): findutils coreutils
+Requires(preun): grep coreutils
+Requires(postun): grep coreutils
+%else
+Requires(post): chkconfig initscripts
+Requires(preun): chkconfig initscripts
+Requires(postun): initscripts
+%endif
+
+%description runtime-virtguest
+This package installs the services necessary on a virtual machine for a
+systemtap-runtime-virthost machine to execute systemtap scripts.
+%endif
 
 # ------------------------------------------------------------------------
 
@@ -437,8 +496,8 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/cache/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-install -m 755 initscript/systemtap $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+mkdir -p $RPM_BUILD_ROOT%{initdir}
+install -m 755 initscript/systemtap $RPM_BUILD_ROOT%{initdir}
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/script.d
@@ -450,7 +509,7 @@ install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.servic
 mkdir -p $RPM_BUILD_ROOT%{_tmpfilesdir}
 install -m 644 stap-server.conf $RPM_BUILD_ROOT%{_tmpfilesdir}/stap-server.conf
 %else
-install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{initdir}
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 initscript/config.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/stap-server
@@ -468,6 +527,23 @@ do
 done
 %endif
 
+%if %{with_virtguest}
+   mkdir -p $RPM_BUILD_ROOT%{udevrulesdir}
+   %if %{with_systemd}
+      install -p -m 644 staprun/guest/99-stapsh.rules $RPM_BUILD_ROOT%{udevrulesdir}
+      mkdir -p $RPM_BUILD_ROOT%{_unitdir}
+      install -p -m 644 staprun/guest/stapsh@.service $RPM_BUILD_ROOT%{_unitdir}
+   %else
+      install -p -m 644 staprun/guest/99-stapsh-init.rules $RPM_BUILD_ROOT%{udevrulesdir}
+      install -p -m 755 staprun/guest/stapshd $RPM_BUILD_ROOT%{initdir}
+      mkdir -p $RPM_BUILD_ROOT%{_libexecdir}/systemtap
+      install -p -m 755 staprun/guest/stapsh-daemon $RPM_BUILD_ROOT%{_libexecdir}/systemtap
+      mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/modules
+      # Technically, this is only needed for RHEL5, in which the MODULE_ALIAS is missing, but
+      # it does no harm in RHEL6 as well
+      install -p -m 755 staprun/guest/virtio_console.modules $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/modules
+   %endif
+%endif
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
@@ -591,6 +667,54 @@ if [ "$1" -ge "1" ] ; then
 fi
 exit 0
 
+%post runtime-virtguest
+%if %{with_systemd}
+   # Start services if there are ports present
+   if [ -d /dev/virtio-ports ]; then
+      (find /dev/virtio-ports -iname 'org.systemtap.stapsh.[0-9]*' -type l \
+         | xargs -n 1 basename \
+         | xargs -n 1 -I {} /bin/systemctl start stapsh@{}.service) >/dev/null 2>&1 || :
+   fi
+%else
+   /sbin/chkconfig --add stapshd
+   /sbin/chkconfig stapshd on
+   /sbin/service stapshd start >/dev/null 2>&1 || :
+%endif
+exit 0
+
+%preun runtime-virtguest
+# Stop service if this is an uninstall rather than an upgrade
+if [ $1 = 0 ]; then
+   %if %{with_systemd}
+      # We need to stop all stapsh services. Because they are instantiated from
+      # a template service file, we can't simply call disable. We need to find
+      # all the running ones and stop them all individually
+      for service in `/bin/systemctl --full | grep stapsh@ | cut -d ' ' -f 1`; do
+         /bin/systemctl stop $service >/dev/null 2>&1 || :
+      done
+   %else
+      /sbin/service stapshd stop >/dev/null 2>&1
+      /sbin/chkconfig --del stapshd
+   %endif
+fi
+exit 0
+
+%postun runtime-virtguest
+# Restart service if this is an upgrade rather than an uninstall
+if [ "$1" -ge "1" ]; then
+   %if %{with_systemd}
+      # We need to restart all stapsh services. Because they are instantiated from
+      # a template service file, we can't simply call restart. We need to find
+      # all the running ones and restart them all individually
+      for service in `/bin/systemctl --full | grep stapsh@ | cut -d ' ' -f 1`; do
+         /bin/systemctl condrestart $service >/dev/null 2>&1 || :
+      done
+   %else
+      /sbin/service stapshd condrestart >/dev/null 2>&1
+   %endif
+fi
+exit 0
+
 %post
 # Remove any previously-built uprobes.ko materials
 (make -C %{_datadir}/systemtap/runtime/uprobes clean) >/dev/null 2>&1 || true
@@ -685,7 +809,7 @@ done
 %{_unitdir}/stap-server.service
 %{_tmpfilesdir}/stap-server.conf
 %else
-%{_sysconfdir}/rc.d/init.d/stap-server
+%{initdir}/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
 %endif
@@ -785,7 +909,7 @@ done
 
 %files initscript
 %defattr(-,root,root)
-%{_sysconfdir}/rc.d/init.d/systemtap
+%{initdir}/systemtap
 %dir %{_sysconfdir}/systemtap
 %dir %{_sysconfdir}/systemtap/conf.d
 %dir %{_sysconfdir}/systemtap/script.d
@@ -818,6 +942,25 @@ done
 %{_libexecdir}/systemtap/stapbm
 %endif
 
+%if %{with_virthost}
+%files runtime-virthost
+%{_mandir}/man1/stapvirt.1*
+%{_bindir}/stapvirt
+%endif
+
+%if %{with_virtguest}
+%files runtime-virtguest
+%if %{with_systemd}
+   %{udevrulesdir}/99-stapsh.rules
+   %{_unitdir}/stapsh@.service
+%else
+   %{udevrulesdir}/99-stapsh-init.rules
+   %dir %{_libexecdir}/systemtap
+   %{_libexecdir}/systemtap/stapsh-daemon
+   %{initdir}/stapshd
+   %{_sysconfdir}/sysconfig/modules/virtio_console.modules
+%endif
+%endif
 
 # ------------------------------------------------------------------------
 
@@ -827,6 +970,9 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Wed Oct 09 2013 Jonathan Lebon <jlebon@redhat.com>
+- Added runtime-virthost and runtime-virtguest packages.
+
 * Thu Jul 25 2013 Frank Ch. Eigler <fche@redhat.com> - 2.3-1
 - Upstream release.
 

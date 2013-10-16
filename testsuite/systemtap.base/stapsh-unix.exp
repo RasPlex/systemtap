@@ -17,6 +17,9 @@ if {![installtest_p] || [catch {exec test -f /usr/bin/socat}]} {
     set socat_pid [spawn /usr/bin/socat UNIX-LISTEN:$sock EXEC:stapsh]
     set socat_sid $spawn_id
 
+    # give time for socat to get fully set up
+    sleep 1
+
     stap_run2 $srcdir/$subdir/$test.stp --remote=unix:$sock
 
     set spawn_id $socat_sid 

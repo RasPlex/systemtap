@@ -14,6 +14,8 @@
 #include <set>
 #include <iomanip>
 #include <map>
+#include <algorithm>
+
 extern "C" {
 #if ENABLE_NLS
 #include <libintl.h>
@@ -57,6 +59,7 @@ void tokenize(const std::string& str, std::vector<std::string>& tokens,
 void tokenize_full(const std::string& str, std::vector<std::string>& tokens,
 	      const std::string& delimiters);
 void tokenize_cxx(const std::string& str, std::vector<std::string>& tokens);
+std::vector<std::pair<const char*,int> > split_lines(const char *buf, size_t n);
 std::string find_executable(const std::string& name);
 std::string find_executable(const std::string& name,
 			    const std::string& sysroot,
@@ -235,6 +238,11 @@ class save_and_restore
     ~save_and_restore() { *ptr = previous_value; }
 };
 
+template <typename T>
+inline bool vector_has(std::vector<T>& v, T item)
+{
+  return std::find(v.begin(), v.end(), item) != v.end();
+}
 
 // Returns whether a string starts with the given prefix
 inline bool
