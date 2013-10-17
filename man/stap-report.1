@@ -4,8 +4,11 @@
 stap\-report \- collect system information that is useful for debugging systemtap bugs
 
 .\" macros
+.\" do not nest SAMPLEs
 .de SAMPLE
 .br
+
+.nr oldin \\n(.i
 .RS
 .nf
 .nh
@@ -14,6 +17,8 @@ stap\-report \- collect system information that is useful for debugging systemta
 .hy
 .fi
 .RE
+.in \\n[oldin]u
+
 ..
 
 .SH SYNOPSIS
@@ -43,6 +48,7 @@ enabled features: AVAHI LIBSQLITE3 NSS TR1_UNORDERED_MAP NLS
 == which stap ==
 /usr/bin/stap
 == locate --regex '/stap(run)?$' | xargs ls -ald ==
+.ESAMPLE
 
 .SH SEE ALSO
 .IR stap (1)

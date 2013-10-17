@@ -4,8 +4,11 @@
 stap\-prep \- prepare system for systemtap use
 
 .\" macros
+.\" do not nest SAMPLEs
 .de SAMPLE
 .br
+
+.nr oldin \\n(.i
 .RS
 .nf
 .nh
@@ -14,6 +17,8 @@ stap\-prep \- prepare system for systemtap use
 .hy
 .fi
 .RE
+.in \\n[oldin]u
+
 ..
 
 .SH SYNOPSIS
@@ -40,6 +45,7 @@ automate.
 .SAMPLE
 $ stap-prep
 Please install linux-image-3.2.0-2-amd64-dbg
+.ESAMPLE
 
 .SH SEE ALSO
 .IR stap (1)

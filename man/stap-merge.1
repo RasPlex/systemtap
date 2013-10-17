@@ -4,8 +4,11 @@
 stap\-merge \- systemtap per-cpu binary merger
 
 .\" macros
+.\" do not nest SAMPLEs
 .de SAMPLE
 .br
+
+.nr oldin \\n(.i
 .RS
 .nf
 .nh
@@ -14,6 +17,8 @@ stap\-merge \- systemtap per-cpu binary merger
 .hy
 .fi
 .RE
+.in \\n[oldin]u
+
 ..
 
 .SH SYNOPSIS

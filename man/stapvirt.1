@@ -5,6 +5,8 @@ stapvirt \- prepare libvirt domains for systemtap probing
 
 .\" macros
 .de SAMPLE
+
+.nr oldin \\n(.i
 .br
 .RS
 .nf
@@ -14,6 +16,8 @@ stapvirt \- prepare libvirt domains for systemtap probing
 .hy
 .fi
 .RE
+.in \\n[oldin]u
+
 ..
 
 .SH SYNOPSIS
@@ -100,7 +104,7 @@ ID      State     Type        Name
 
 Note that we specified the libvirt URI using the -c switch. Otherwise libvirt
 might have defaulted to e.g. 'qemu:///session'.
-
+.PP
 Rather than typing the URI everytime, it might be easier to instead set the
 .nh
 LIBVIRT_DEFAULT_URI
@@ -111,7 +115,7 @@ functionality (see
 <libvirt.org/uri.html>
 .hy
 for more details).
-
+.PP
 The \fBlist\fR command indicates that we have a running domain named 'TestVM'
 with ID 2. Let's use the \fBquery\fR command to retrieve more information:
 
@@ -133,7 +137,7 @@ as its name, UUID, and state. More importantly, it gives us two pieces of
 information: the number of permanent ports installed, and whether hotplugging is
 supported.  Technically, hotplugging support depends on libvirt and qemu, and is
 not related to the domain in itself.
-
+.PP
 If hotplugging were supported, we could stop here and run \fIstap\fR directly.
 Since in our case hotplugging is not supported, we need to add SystemTap ports.
 To do this, we use the \fBport-add\fR command:
