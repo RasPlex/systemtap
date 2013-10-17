@@ -11,10 +11,12 @@
 probe syscall.getresgid16 = kernel.function("sys32_getresgid16") ?
 {
 	name = "getresgid"
-	rgid_uaddr = $rgid
-	egid_uaddr = $egid
-	sgid_uaddr = $sgid
-	argstr = sprintf("%p, %p, %p", $rgid, $egid, $sgid)
+	rgid_uaddr = @choose_defined($rgidp, $rgid)
+	egid_uaddr = @choose_defined($egidp, $egid)
+	sgid_uaddr = @choose_defined($sgidp, $sgid)
+	argstr = sprintf("%p, %p, %p", @choose_defined($rgidp, $rgid),
+			 @choose_defined($egidp, $egid),
+			 @choose_defined($sgidp, $sgid))
 }
 probe syscall.getresgid16.return = kernel.function("sys32_getresgid16").return ?
 {
@@ -27,10 +29,12 @@ probe syscall.getresgid16.return = kernel.function("sys32_getresgid16").return ?
 probe syscall.getresuid16 = kernel.function("sys32_getresuid16") ?
 {
 	name = "getresuid"
-	ruid_uaddr = $ruid
-	euid_uaddr = $euid
-	suid_uaddr = $suid
-	argstr = sprintf("%p, %p, %p", $ruid, $euid, $suid)
+	ruid_uaddr = @choose_defined($ruidp, $ruid)
+	euid_uaddr = @choose_defined($euidp, $euid)
+	suid_uaddr = @choose_defined($suidp, $suid)
+	argstr = sprintf("%p, %p, %p", @choose_defined($ruidp, $ruid),
+			 @choose_defined($euidp, $euid),
+			 @choose_defined($suidp, $suid))
 }
 probe syscall.getresuid16.return = kernel.function("sys32_getresuid16").return ?
 {
