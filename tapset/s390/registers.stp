@@ -2,6 +2,79 @@
 
 global _reg_offsets, _stp_regs_registered
 
+%{
+#include <asm/ptrace.h>
+
+/*
+ * The following routines help with getting arguments off the s390x
+ * stack. For more details see:
+ *
+ * "S/390 ELF Application Binary Interface Supplement"
+ * <http://refspecs.linuxfoundation.org/ELF/zSeries/lzsabi0_s390/x414.html>
+ */
+
+/*
+ * This is a copy of the kernel's kernel_stack_pointer(), which is
+ * only available on newer kernels.
+ */
+static inline unsigned long _stp_kernel_stack_pointer(struct pt_regs *regs)
+{
+	return regs->gprs[15] & PSW_ADDR_INSN;
+}
+
+/*
+ * This is a copy of the kernel's unexported regs_within_kernel_stack().
+ */
+static int
+_stp_regs_within_kernel_stack(struct pt_regs *regs, unsigned long addr)
+{
+        unsigned long ksp = _stp_kernel_stack_pointer(regs);
+
+        return (addr & ~(THREAD_SIZE - 1)) == (ksp & ~(THREAD_SIZE - 1));
+}
+%}
+
+/*
+ * _stp_get_kernel_stack_param() - get Nth parameter from the stack
+ * n:stack parameter number (starts from 0)
+ *
+ * _stp_get_kernel_stack_param() returns nth parameter from
+ * the kernel stack. If the nth entry is NOT in the kernel stack, this
+ * returns 0. 
+ *
+ * This is based on the kernel's (unexported)
+ * regs_get_kernel_stack_nth() function.
+ */
+function _stp_get_kernel_stack_param:long(n:long)
+%{
+        unsigned long addr;
+	struct pt_regs *regs;
+
+	regs = CONTEXT->kregs;
+	if (!regs) {
+		CONTEXT->last_error = "No registers available in this context";
+		return;
+	}
+
+        // The parameters start just after the stack frame.
+        addr = (_stp_kernel_stack_pointer(regs) + sizeof(struct stack_frame)
+		+ STAP_ARG_n * sizeof(long));
+        if (!_stp_regs_within_kernel_stack(regs, addr)) {
+		STAP_RETVALUE = 0;
+                return;
+	}
+        STAP_RETVALUE = kread((unsigned long *)addr);
+	return;
+
+	if (0) {
+deref_fault: /* branched to from kread() */
+		snprintf (CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
+        		"kernel fault at %#lx accessing stack param(%d)",
+			addr, (int)STAP_ARG_n);
+    		CONTEXT->last_error = CONTEXT->error_buffer;
+	}
+%}
+
 function _stp_register_regs() {
 	/* Same order as pt_regs */
 	_reg_offsets["args"] = 0
@@ -130,44 +203,51 @@ function u_register:long (name:string) {
  * 32-bit app), sign-extend the 32-bit value.
  */
 function _stp_arg:long (argnum:long, sign_extend:long, truncate:long)
-%{ /* pure */
-	unsigned long val = 0;
-	struct pt_regs *regs;
-
-	STAP_RETVALUE = 0;
-	if (STAP_ARG_argnum < 1 || STAP_ARG_argnum > 6) {
-		snprintf(CONTEXT->error_buffer, sizeof(CONTEXT->error_buffer),
-			 "Cannot access arg %d", (int)STAP_ARG_argnum);
-		CONTEXT->last_error = CONTEXT->error_buffer;
-		return;
+{
+	val = 0
+	if (argnum < 1 || argnum > 8) {
+		error(sprintf("Cannot acces arg(%d)", argnum))
+		return 0
 	}
-	if (CONTEXT->user_mode_p) {
-		CONTEXT->last_error = ("Cannot access function args in"
-				       " user context");
-		return;
-	}
-	regs = CONTEXT->kregs;
-	if (!regs) {
-		CONTEXT->last_error = ("Cannot access function args"
-				       " (no registers available)");
-		return;
+	if (%{ CONTEXT->user_mode_p %}) {
+		error("Cannot access function args in user context");
+		return 0;
 	}
 
-	syscall_get_arguments(current, regs,
-			      (((int)STAP_ARG_argnum) - 1), 1,
-			      &val);
+	/*
+	 * Why not use syscall_get_arguments() here? On the s390x,
+	 * syscall_get_arguments() is only defined to work on the
+	 * pt_regs structure that gets intialized when a context
+	 * switch from user space to kernel space happens due to a
+	 * system call. This pt_regs structure is returned by
+	 * 'task_pt_regs(current)'.
+	 *
+	 * This function is designed to get the argument of the
+	 * current kernel function, which may or may not be a
+	 * syscall. So, we have to roll our own.
+	 */
 
-	if (STAP_ARG_truncate || _stp_is_compat_task()) {
-		if (STAP_ARG_sign_extend)
-			STAP_RETVALUE = (int64_t) (int32_t) val;
-		else
-			/* High bits may be garbage. */
-			STAP_RETVALUE = (int64_t) (val & 0xffffffff);
+	if (argnum == 1)
+		val = u_register("r2")
+	else if (argnum == 2)
+		val = u_register("r3")
+	else if (argnum == 3)
+		val = u_register("r4")
+	else if (argnum == 4)
+		val = u_register("r5")
+	else if (argnum == 5)
+		val = u_register("r6")
+	else if (argnum >= 6)
+		val = _stp_get_kernel_stack_param(argnum - 6)
+
+	if (truncate || %{ _stp_is_compat_task() %}) {
+		/* High bits may be garbage. */
+		val = (val & 0xffffffff)
+		if (sign_extend)
+			val = _stp_sign_extend32(val)
 	}
-	else
-		STAP_RETVALUE = (int64_t) val;
-	return;
-%}
+	return val
+}
 
 /* Return the value of function arg #argnum (1=first arg) as a signed int. */
 function int_arg:long (argnum:long) {
