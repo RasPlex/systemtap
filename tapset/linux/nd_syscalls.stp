@@ -3649,10 +3649,12 @@ probe nd_syscall.mmap2 = kprobe.function("sys_mmap_pgoff") ?
 	// # Although the kernel gets an unsigned long fd, on the
 	// # user-side it is a signed int.  Fix this.
 	// fd = __int32($fd)
-	// pgoffset = $pgoff
+	// # $pgoff is the number of pages. Convert this back into a
+	// # number of bytes.
+	// pgoffset = $pgoff * %{ PAGE_SIZE %}
 	// argstr = sprintf("%p, %d, %s, %s, %d, %d", $addr, $len,
 	// 	_mprotect_prot_str($prot), _mmap_flags($flags),
-	// 	__int32($fd), $pgoff)
+	// 	__int32($fd), pgoffset)
 	asmlinkage()
 	start = ulong_arg(1)
 	length = ulong_arg(2)
@@ -3661,7 +3663,9 @@ probe nd_syscall.mmap2 = kprobe.function("sys_mmap_pgoff") ?
 	# Although the kernel gets an unsigned long fd, on the
 	# user-side it is a signed int.  Fix this.
 	fd = int_arg(5)
-	pgoffset = ulong_arg(6)
+	# $pgoff is the number of pages. Convert this back into a
+	# number of bytes.
+	pgoffset = ulong_arg(6) * %{ PAGE_SIZE %}
 	argstr = sprintf("%p, %d, %s, %s, %d, %d", start, length,
 		_mprotect_prot_str(prot), _mmap_flags(flags),
 		fd, pgoffset)
