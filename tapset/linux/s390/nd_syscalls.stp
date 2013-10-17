@@ -58,22 +58,22 @@ probe nd_syscall.ipc.return = kprobe.function("sys_ipc").return ?
 # long old_mmap(struct mmap_arg_struct __user *arg)
 # long old32_mmap(struct mmap_arg_struct_emu31 __user *arg)
 #
-probe nd_syscall.mmap = kprobe.function("old_mmap") ?,
-                        kprobe.function("old32_mmap") ?,
-                        kprobe.function("SyS_s390_old_mmap") ?
+probe nd_syscall.mmap = __nd_syscall.mmap, __nd_syscall.mmap32
 {
 	name = "mmap"
-
-	// if ((symname(addr()) == "old_mmap") || (symname(addr()) == "SyS_s390_old_mmap"))
-	// 	argstr = get_mmap_args($arg)
-	// else
-	// 	argstr = get_32mmap_args($arg)
-
+}
+probe __nd_syscall.mmap = kprobe.function("old_mmap") ?,
+			  kprobe.function("SyS_s390_old_mmap") ?
+{
+	// argstr = get_mmap_args($arg)
 	asmlinkage()
-	if ((symname(addr()) == "old_mmap") || (symname(addr()) == "SyS_s390_old_mmap"))
-		argstr = get_mmap_args(pointer_arg(1))
-	else
-		argstr = get_32mmap_args(pointer_arg(1))
+	argstr = get_mmap_args(pointer_arg(1))
+}
+probe __nd_syscall.mmap32 = kprobe.function("old32_mmap") ?
+{
+	// argstr = get_32mmap_args($arg)
+	asmlinkage()
+	argstr = get_32mmap_args(pointer_arg(1))
 }
 probe nd_syscall.mmap.return = kprobe.function("old_mmap").return ?,
                                kprobe.function("old32_mmap").return ?,
@@ -88,21 +88,21 @@ probe nd_syscall.mmap.return = kprobe.function("old_mmap").return ?,
 # long sys_mmap2(struct mmap_arg_struct __user  *arg)
 # long sys32_mmap2(struct mmap_arg_struct_emu31 __user *arg)
 #
-probe nd_syscall.mmap2 = kprobe.function("sys_mmap2") ?,
-                         kprobe.function("sys32_mmap2") ?
+probe nd_syscall.mmap2 = __nd_syscall.mmap2, __nd_syscall.mmap2_32
 {
 	name = "mmap2"
-
-	// if ((symname(addr()) == "sys_mmap2") || (symname(addr()) == "SyS_mmap2"))
-	// 	argstr = get_mmap_args($arg)
-	// else
-	// 	argstr = get_32mmap_args($arg)
-
+}
+probe __nd_syscall.mmap2 = kprobe.function("sys_mmap2") ?
+{
+	// argstr = get_mmap_args($arg)
 	asmlinkage()
-	if ((symname(addr()) == "sys_mmap2") || (symname(addr()) == "SyS_mmap2"))
-		argstr = get_mmap_args(pointer_arg(1))
-	else
-		argstr = get_32mmap_args(pointer_arg(1))
+	argstr = get_mmap_args(pointer_arg(1))
+}
+probe __nd_syscall.mmap2_32 = kprobe.function("sys32_mmap2") ?
+{
+	// argstr = get_32mmap_args($arg)
+	asmlinkage()
+	argstr = get_32mmap_args(pointer_arg(1))
 }
 
 probe nd_syscall.mmap2.return = kprobe.function("sys_mmap2").return ?,
