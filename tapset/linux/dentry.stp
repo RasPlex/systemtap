@@ -107,7 +107,7 @@ function real_mount:long(vfsmnt:long)
 		 * offset of the 'mnt' member of 'struct mount.
 		 */
 		offset = &@cast(0, "mount")->mnt
-		if (vfsmnt > offset)
+		if (vfsmnt < 0 || vfsmnt > offset)
 			return (vfsmnt - offset)
 	}
 	return 0
@@ -149,8 +149,9 @@ function task_dentry_path:string(task:long,dentry:long,vfsmnt:long)
 				/* Global root? */
 				if (@cast(mnt, "mount")->mnt_parent == vfsmnt)
 					return sprintf("/%s", name);
+
 				dentry = @cast(mnt, "mount")->mnt_mountpoint
-				vfsmnt = @cast(mnt, "mount")->mnt_parent
+				vfsmnt = &@cast(mnt, "mount")->mnt_parent->mnt
 			}
 			else {
 				/* Global root? */
