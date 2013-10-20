@@ -6074,14 +6074,14 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
       if (! session.suppress_warnings)
         {
           if (probe_type == UPROBE3_TYPE)
-            session.print_warning (_F("Can't parse SDT_V3 operand '%s'", asmarg.c_str()), e->tok);
+            session.print_warning (_F("Can't parse SDT_V3 operand '%s' [man error::sdt]", asmarg.c_str()), e->tok);
           else // must be *PROBE2; others don't get asm operands
-            session.print_warning (_F("Downgrading SDT_V2 probe argument to dwarf, can't parse '%s'", 
+            session.print_warning (_F("Downgrading SDT_V2 probe argument to dwarf, can't parse '%s' [man error::sdt]", 
                                       asmarg.c_str()), e->tok);
         }
       assert (argexpr == 0);
       need_debug_info = true;
-      throw semantic_error(_("SDT asm not understood, requires debuginfo"), e->tok);
+      throw semantic_error(_("SDT asm not understood, requires debuginfo [man error::sdt]"), e->tok);
 
     matched:
       assert (argexpr != 0);
