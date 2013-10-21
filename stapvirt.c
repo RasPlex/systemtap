@@ -680,7 +680,7 @@ cleanup_buf:
 static virStreamPtr
 domainOpenChannel(virConnectPtr conn, virDomainPtr dom, xmlNodeSetPtr ports)
 {
-    virStreamPtr stream = virStreamNew(conn, 0);
+    virStreamPtr stream = virStreamNew(conn, VIR_STREAM_NONBLOCK);
     if (stream == NULL) {
         err("Couldn't create a new stream object\n");
         return NULL;
@@ -1136,7 +1136,7 @@ cmd_connect()
             goto error; // proper error msg already emitted
         hotplugged = 1;
 
-        ctxt.st = virStreamNew(conn, 0);
+        ctxt.st = virStreamNew(conn, VIR_STREAM_NONBLOCK);
         if (ctxt.st == NULL) {
             err("Couldn't create a new stream object\n");
             goto error;
