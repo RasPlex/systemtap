@@ -28,6 +28,8 @@ new inode-uprobes does not have this capability.
 
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR http://kernelnewbies.org/Linux_3.5 ,
 .IR http://sourceware.org/systemtap/wiki/utrace ,

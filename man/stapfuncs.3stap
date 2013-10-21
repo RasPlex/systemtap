@@ -16,6 +16,8 @@ are documented on the
 man page.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR function::* (3stap),
 .IR tapset::* (3stap)

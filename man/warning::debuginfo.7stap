@@ -81,6 +81,8 @@ debuginfo and compilation resources can be centralized.  Try the
 option, in case such a server is already running.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR stappaths (7),
 .IR stap-server (8),

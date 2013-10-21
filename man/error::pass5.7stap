@@ -81,6 +81,8 @@ with an option such as
 can help pinpoint the problem.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR http://sourceware.org/systemtap/wiki/TipExhaustedResourceErrors ,
 .IR error::fault (7stap),

@@ -133,6 +133,8 @@ stap\-server service default log file.
 .hy
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stapprobes (3stap),
 .IR staprun (8),
 .IR stapvars (3stap),

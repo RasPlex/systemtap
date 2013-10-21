@@ -120,6 +120,8 @@ and online at
 .hy
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1)
 .IR stapprobes (3stap)
 .IR stappaths (7)

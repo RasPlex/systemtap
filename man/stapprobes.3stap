@@ -1288,6 +1288,8 @@ syscall.*.return
 refers to the group of probe aliases with any name in the third position
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR probe::* (3stap),
 .IR tapset::* (3stap)

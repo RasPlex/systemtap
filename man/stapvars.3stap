@@ -48,5 +48,7 @@ Simply defined as the number 0.
 More files and their corresponding paths can be found in the stappaths (7) manual page.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1)
 .IR stappaths (7)

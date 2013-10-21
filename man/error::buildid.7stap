@@ -71,6 +71,8 @@ debuginfo packages, the split .IR .debug files may not exactly match
 the main binaries.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR http://fedoraproject.org/wiki/Releases/FeatureBuildId ,
 .IR stap (1),
 .IR stapprobes (3stap),

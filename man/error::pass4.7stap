@@ -45,5 +45,7 @@ with an option such as
 can also help pinpoint the problem.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR error::reporting (7stap)

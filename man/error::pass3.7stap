@@ -21,6 +21,8 @@ Increasing the verbosity of pass-3 with an option such as
 may help pinpoint the problem.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR stapprobes (3stap)
 .IR error::reporting (7stap)

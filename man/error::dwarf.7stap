@@ -64,6 +64,8 @@ availability of parameter data and a reliable probe site,
 all without reliance on debuginfo.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR http://dwarfstd.org/ ,
 .IR http://sourceware.org/systemtap/wiki/TipContextVariables ,

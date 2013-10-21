@@ -51,5 +51,7 @@ Increasing the verbosity of pass-1 with an option such as
 can help pinpoint the problem.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR error::reporting (7stap)

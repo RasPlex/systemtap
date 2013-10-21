@@ -34,5 +34,7 @@ stap options, or wrapping relevant parts of the probe handlers in a
 block.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR error::reporting (7stap)

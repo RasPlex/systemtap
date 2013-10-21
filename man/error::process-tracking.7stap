@@ -52,5 +52,7 @@ kernel version newer than 3.5 is needed, or an older version must be
 compiled with appropriate utrace patches.
 
 .SH SEE ALSO
+.nh
+.nf
 .IR stap (1),
 .IR error::reporting (7stap)
