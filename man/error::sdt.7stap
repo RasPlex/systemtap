@@ -81,9 +81,12 @@ operands into registers, and "g" leaves operands essentially unconstrained.
 .TP
 revert to debuginfo
 As long as the instrumented program compiles, it may be fine simply to
-eschew extraction of a few individual parameters.  If DWARF debuginfo was
-generated and preserved, a systemtap script could refer to the underlying
-source context variables instead of the positional STAP_PROBE parameters.
+keep using <sys/sdt.h> but eschew extraction of a few individual
+parameters.  In the worst case, disable <sys/sdt.h> macros entirely to
+eschew the compiled-in instrumentation.  If DWARF debuginfo was
+generated and preserved, a systemtap script could refer to the
+underlying source context variables instead of the positional
+STAP_PROBE parameters.
 
 .SH SEE ALSO
 .nh
