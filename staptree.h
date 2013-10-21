@@ -33,15 +33,21 @@ struct semantic_error: public std::runtime_error
   const token* tok1;
   const token* tok2;
   const semantic_error *chain;
+  const std::string errsrc;
 
   ~semantic_error () throw () {}
 
   semantic_error (const std::string& msg, const token* t1=0):
-    runtime_error (msg), tok1 (t1), tok2 (0), chain (0) {}
+    runtime_error (msg), tok1 (t1), tok2 (0), chain (0), errsrc(msg) {}
 
   semantic_error (const std::string& msg, const token* t1,
                   const token* t2):
-    runtime_error (msg), tok1 (t1), tok2 (t2), chain (0) {}
+    runtime_error (msg), tok1 (t1), tok2 (t2), chain (0), errsrc(msg) {}
+
+  std::string errsrc_chain(void) const
+    {
+      return errsrc + (chain ? "|" + chain->errsrc_chain() : "");
+    }
 };
 
 // ------------------------------------------------------------------------

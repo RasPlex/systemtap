@@ -93,6 +93,7 @@ systemtap_session::systemtap_session ():
   module_cache (0),
   benchmark_sdt_loops(0),
   benchmark_sdt_threads(0),
+  suppressed_errors(0),
   last_token (0)
 {
   struct utsname buf;
@@ -274,6 +275,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   module_cache (0),
   benchmark_sdt_loops(other.benchmark_sdt_loops),
   benchmark_sdt_threads(other.benchmark_sdt_threads),
+  suppressed_errors(0),
   last_token (0)
 {
   release = kernel_release = kern;
@@ -1852,65 +1854,49 @@ systemtap_session::print_token (ostream& o, const token* tok)
 }
 
 
-
 void
-systemtap_session::print_error (const semantic_error& e)
+systemtap_session::print_error (const semantic_error& se)
 {
-  string message_str[2];
-  string align_semantic_error ("        ");
-
-  // We generate two messages.  The second one ([1]) is printed
-  // without token compression, for purposes of duplicate elimination.
-  // This way, the same message that may be generated once with a
-  // compressed and once with an uncompressed token still only gets
-  // printed once.
-  for (int i=0; i<2; i++)
-    {
-      stringstream message;
-
-      message << colorize(_("semantic error:"), "error") << ' ' << e.what ();
-      if (e.tok1 || e.tok2)
-        message << ": ";
-      if (e.tok1)
-        {
-          if (i == 0)
-            {
-              print_token (message, e.tok1);
-              message << endl;
-              print_error_source (message, align_semantic_error, e.tok1);
-            }
-          else message << *e.tok1;
-        }
-      if (e.tok2)
-        {
-          if (i == 0)
-            {
-              print_token (message, e.tok2);
-              message << endl;
-              print_error_source (message, align_semantic_error, e.tok2);
-            }
-          else message << *e.tok2;
-        }
-      message << endl;
-      message_str[i] = message.str();
-    }
-
   // skip error message printing for listing mode with low verbosity
   if (this->listing_mode && this->verbose <= 1)
     {
-      seen_errors.insert (message_str[1]); // increment num_errors()
+      seen_errors[se.errsrc_chain()]++; // increment num_errors()
       return;
     }
 
-  // Duplicate elimination
-  if (seen_errors.find (message_str[1]) == seen_errors.end())
+  // duplicate elimination
+  if (verbose > 0 || seen_errors[se.errsrc_chain()] < 1)
     {
-      seen_errors.insert (message_str[1]);
-      cerr << message_str[0];
+      seen_errors[se.errsrc_chain()]++;
+      for (const semantic_error *e = &se; e != NULL; e = e->chain)
+        cerr << build_error_msg(*e);
     }
+  else suppressed_errors++;
+}
 
-  if (e.chain)
-    print_error (* e.chain);
+string
+systemtap_session::build_error_msg (const semantic_error& e)
+{
+  stringstream message;
+  string align_semantic_error ("        ");
+
+  message << colorize(_("semantic error:"), "error") << ' ' << e.what ();
+  if (e.tok1 || e.tok2)
+    message << ": ";
+  if (e.tok1)
+    {
+      print_token (message, e.tok1);
+      message << endl;
+      print_error_source (message, align_semantic_error, e.tok1);
+    }
+  if (e.tok2)
+    {
+      print_token (message, e.tok2);
+      message << endl;
+      print_error_source (message, align_semantic_error, e.tok2);
+    }
+  message << endl;
+  return message.str();
 }
 
 void
@@ -1989,6 +1975,23 @@ systemtap_session::print_error (const parse_error &pe,
                                 const token* tok,
                                 const std::string &input_name)
 {
+  // duplicate elimination
+  if (verbose > 0 || seen_errors[pe.errsrc_chain()] < 1)
+    {
+      seen_errors[pe.errsrc_chain()]++;
+      cerr << build_error_msg(pe, tok, input_name);
+      for (const parse_error *e = pe.chain; e != NULL; e = e->chain)
+        cerr << build_error_msg(*e, e->tok, input_name);
+    }
+  else suppressed_errors++;
+}
+
+string
+systemtap_session::build_error_msg (const parse_error& pe,
+                                    const token* tok,
+                                    const std::string &input_name)
+{
+  stringstream message;
   string align_parse_error ("     ");
 
   // print either pe.what() or a deferred error from the lexer
@@ -1996,11 +1999,11 @@ systemtap_session::print_error (const parse_error &pe,
   if (tok && tok->type == tok_junk && tok->msg != "")
     {
       found_junk = true;
-      cerr << colorize(_("parse error:"), "error") << ' ' << tok->msg << endl;
+      message << colorize(_("parse error:"), "error") << ' ' << tok->msg << endl;
     }
   else
     {
-      cerr << colorize(_("parse error:"), "error") << ' ' << pe.what() << endl;
+      message << colorize(_("parse error:"), "error") << ' ' << pe.what() << endl;
     }
 
   // NB: It makes sense for lexer errors to always override parser
@@ -2009,36 +2012,28 @@ systemtap_session::print_error (const parse_error &pe,
 
   if (pe.tok || found_junk)
     {
-      cerr << _("\tat: ") << colorize(tok) << endl;
-      print_error_source (cerr, align_parse_error, tok);
+      message << _("\tat: ") << colorize(tok) << endl;
+      print_error_source (message, align_parse_error, tok);
     }
   else if (tok) // "expected" type error
     {
-      cerr << _("\tsaw: ") << colorize(tok) << endl;
-      print_error_source (cerr, align_parse_error, tok);
+      message << _("\tsaw: ") << colorize(tok) << endl;
+      print_error_source (message, align_parse_error, tok);
     }
   else
     {
-      cerr << _("\tsaw: ") << input_name << " EOF" << endl;
+      message << _("\tsaw: ") << input_name << " EOF" << endl;
     }
 
   // print chained macro invocations
   while (tok && tok->chain) {
     tok = tok->chain;
-    cerr << _("\tin expansion of macro: ") << colorize(tok) << endl;
-    print_error_source (cerr, align_parse_error, tok);
+    message << _("\tin expansion of macro: ") << colorize(tok) << endl;
+    print_error_source (message, align_parse_error, tok);
   }
+  message << endl;
 
-  // print other chained errors
-  if (pe.chain)
-    {
-      // NB: input_name is considered to be irrelevant for chained
-      // parse errors, since it is never used so long as pe.tok is
-      // well-defined; and a chained error MUST have a specified
-      // token:
-      assert (pe.tok);
-      print_error (* pe.chain, pe.tok, input_name);
-    }
+  return message.str();
 }
 
 void

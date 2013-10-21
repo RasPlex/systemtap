@@ -42,6 +42,11 @@ extern "C" {
 #define _F(format, ...) autosprintf(_(format), __VA_ARGS__)
 #define _NF(format, format_plural, count, ...) \
         autosprintf(_N((format), (format_plural), (count)), __VA_ARGS__)
+#define _STRINGIFY_MORE(s) #s
+#define _STRINGIFY(s) _STRINGIFY_MORE(s)
+#define ERR_SRC (string(__FUNCTION__) + ":" + _STRINGIFY(__LINE__))
+#define SEMANTIC_ERROR(...) semantic_error(ERR_SRC, __VA_ARGS__)
+#define PARSE_ERROR(...) parse_error(ERR_SRC, __VA_ARGS__)
 
 const char *get_home_directory(void);
 size_t get_file_size(const std::string &path);
