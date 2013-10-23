@@ -1,0 +1,29 @@
+#! /bin/sh
+
+echo checking running as root
+if [ `whoami` != "root" ]; then
+   echo run as root
+   exit 1
+fi
+
+echo checking /sys/kernel/debug mounted
+if test -d /sys/kernel/debug/tracing/events
+then
+        true
+else
+        mount -t debugfs /dev/null /sys/kernel/debug
+fi
+
+tmp=`mktemp -d`
+echo made work directory $tmp
+trap 'rm -fr $tmp' 0 1 2 3 5 9 15
+
+echo gathering perf tracepoint list
+${PERF-perf} list | grep Tracepoint | egrep -v 'sys_(enter|exit)_' | 
+     cut -f2 -d':' | awk '{print $1}' | sort > $tmp/perf
+
+echo gathering systemtap tracepoint list
+${STAP-stap} -L 'kernel.trace("*")' | cut -f2 -d'"' | sort > $tmp/stap
+
+echo diff '<perf' vs. '>stap' tracepoints
+comm -3 $tmp/perf $tmp/stap
