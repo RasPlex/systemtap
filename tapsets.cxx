@@ -10291,6 +10291,7 @@ tracepoint_builder::init_dw(systemtap_session& s)
   glob_suffixes.push_back("include/trace/events/*.h");
   glob_suffixes.push_back("include/trace/*.h");
   glob_suffixes.push_back("arch/x86/kvm/*trace.h");
+  glob_suffixes.push_back("arch/x86/include/asm/trace/*.h");
   glob_suffixes.push_back("fs/xfs/linux-*/xfs_tr*.h");
   glob_suffixes.push_back("fs/xfs/xfs_trace*.h");
 
@@ -10322,11 +10323,15 @@ tracepoint_builder::init_dw(systemtap_session& s)
               endswith(header, "_event_types.h"))
             continue;
 
+          // With headers now plopped under arch/FOO/include/asm/*,
+          // the following logic miss some tracepoints.
+#if 0
           // skip identical headers from the build and source trees.
           size_t root_pos = header.rfind("include/");
           if (root_pos != string::npos &&
               !duped_headers.insert(header.substr(root_pos + 8)).second)
             continue;
+#endif
 
           system_headers.push_back(header);
         }
