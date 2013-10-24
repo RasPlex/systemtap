@@ -65,16 +65,16 @@ static void _stp_vlog (enum code type, const char *func, int line,
 	}
 
 	/* Note that if the message is too long it will just get truncated. */
-	num = _stp_vsnprintf(buf + start, STP_LOG_BUF_LEN - start - 1,
-			     fmt, args);
+	num = vsnprintf(buf + start, STP_LOG_BUF_LEN - start - 1, fmt, args);
 	if ((num + start) == 0)
 		return;
 
+	/* Mimic vscnprintf's length computation.  */
+	if (num >= STP_LOG_BUF_LEN - start - 1)
+		num = STP_LOG_BUF_LEN - start - 2;
+
 	/* If the last character is not a newline, then add one. */
 	if (buf[num + start - 1] != '\n') {
-		/* Make sure we don't overflow the buffer. */
-		if ((num + start + 1) >= STP_LOG_BUF_LEN)
-			num--;
 		buf[num + start] = '\n';
 		num++;
 		buf[num + start] = '\0';
