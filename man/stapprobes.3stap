@@ -5,6 +5,8 @@ stapprobes \- systemtap probe points
 
 .\" macros
 .de SAMPLE
+
+.nr oldin \\n(.i
 .br
 .RS
 .nf
@@ -14,6 +16,8 @@ stapprobes \- systemtap probe points
 .hy
 .fi
 .RE
+.in \\n[oldin]u
+
 ..
 
 .SH DESCRIPTION

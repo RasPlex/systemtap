@@ -5,6 +5,8 @@ stapex \- systemtap examples
 
 .\" macros
 .de SAMPLE
+
+.nr oldin \\n(.i
 .br
 .RS
 .nf
@@ -14,6 +16,8 @@ stapex \- systemtap examples
 .hy
 .fi
 .RE
+.in \\n[oldin]u
+
 ..
 
 .SH LANGUAGE BASICS

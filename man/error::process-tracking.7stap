@@ -5,6 +5,8 @@ warning::process-tracking \- process-tracking facilities are not available
 
 .\" macros
 .de SAMPLE
+
+.nr oldin \\n(.i
 .br
 .RS
 .nf
@@ -14,6 +16,8 @@ warning::process-tracking \- process-tracking facilities are not available
 .hy
 .fi
 .RE
+.in \\n[oldin]u
+
 ..
 
 .SH DESCRIPTION

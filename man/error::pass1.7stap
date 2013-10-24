@@ -3,7 +3,8 @@
 .SH NAME
 error::pass1 \- systemtap pass-1 errors
 
-.SH DESCRIPTION Errors that occur during pass 1 (parsing) usually mean
+.SH DESCRIPTION
+Errors that occur during pass 1 (parsing) usually mean
 a basic syntax error of some sort occurred in the systemtap script.
 There are several classes of problems possible:
 

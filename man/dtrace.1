@@ -3,6 +3,24 @@
 .SH NAME
 dtrace \- Dtrace compatibile user application static probe generation tool.
 
+.\" macros
+.\" do not nest SAMPLEs
+.de SAMPLE
+.br
+
+.nr oldin \\n(.i
+.RS
+.nf
+.nh
+..
+.de ESAMPLE
+.hy
+.fi
+.RE
+.in \\n[oldin]u
+
+..
+
 .SH SYNOPSIS
 
 .br
@@ -55,25 +73,19 @@ option is given.
 Systemtap is source compatible with dtrace user application static
 probe support.
 Given a file \fItest.d\fR containing:
-.RS
-.in +2
-.nf
+.SAMPLE
 provider sdt_probes 
 {
   probe test_0 (int type);
   probe test_1 (struct astruct node);
 };
 struct astruct {int a; int b;};
-.fi
-.in
-.RE
+.ESAMPLE
 Then the command \fI"dtrace\ \-s\ test.d\ \-G"\fR will create the
 probe definition file \fItest.o\fR and the command \fI"dtrace\ \-s\
 test.d\ \-h"\fR will create the probe header file \fItest.h\fR
 Subsequently the application can use the generated macros this way:
-
-.in +2
-.nf
+.SAMPLE
 #include "test.h"
  \.\.\.
 struct astruct s;
@@ -82,8 +94,7 @@ SDT_PROBES_TEST_0(value);
  \.\.\.
 if (SDT_PROBES_TEST_1_ENABLED())
     SDT_PROBES_TEST_1(expensive_function(s));
-.fi
-.in
+.ESAMPLE
 
 .SH SEMAPHORES
 
@@ -99,9 +110,7 @@ Sometimes, semaphore variables are not necessary nor helpful.  Skipping
 them can simplfy the build process, by omitting the extra \fI"test.o"\fR
 file.  To skip dependence upon semaphore variables, include \fI"<sys/sdt.h>"\fR
 within the application before \fI"test.h"\fR:
-
-.in +2
-.nf
+.SAMPLE
 #include <sys/sdt.h>
 #include "test.h"
  \.\.\.
@@ -111,9 +120,7 @@ SDT_PROBES_TEST_0(value);
  \.\.\.
 if (SDT_PROBES_TEST_1_ENABLED())
    SDT_PROBES_TEST_1(cheap_function(s));
-.fi
-.in
-
+.ESAMPLE
 In this mode, the ENABLED() test is fixed at 1.
 
 .SH SEE ALSO
