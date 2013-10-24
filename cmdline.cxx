@@ -54,6 +54,7 @@ struct option stap_long_options[] = {
   { "suppress-time-limits", 0, NULL, LONG_OPT_SUPPRESS_TIME_LIMITS },
   { "runtime", 1, NULL, LONG_OPT_RUNTIME },
   { "dyninst", 0, NULL, LONG_OPT_RUNTIME_DYNINST },
+  { "benchmark-sdt", 0, NULL, LONG_OPT_BENCHMARK_SDT },
   { "benchmark-sdt-loops", 1, NULL, LONG_OPT_BENCHMARK_SDT_LOOPS },
   { "benchmark-sdt-threads", 1, NULL, LONG_OPT_BENCHMARK_SDT_THREADS },
   { "color", 2, NULL, LONG_OPT_COLOR_ERRS },
