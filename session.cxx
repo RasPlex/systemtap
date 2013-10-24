@@ -701,11 +701,8 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
               return 1;
             }
             // At runtime user module names are resolved through their
-            // canonical (absolute) path.
-            const char *mpath = canonicalize_file_name (optarg);
-            if (mpath == NULL) // Must be a kernel module name
-              mpath = optarg;
-            unwindsym_modules.insert (string (mpath));
+            // canonical (absolute) path, or else it's a kernel module name.
+            unwindsym_modules.insert (resolve_path (optarg));
             // NB: we used to enable_vma_tracker() here for PR10228, but now
             // we'll leave that to pragma:vma functions which actually use it.
             break;
@@ -1224,13 +1221,14 @@ systemtap_session::parse_cmdline (int argc, char * const argv [])
 	      cerr << "ERROR: multiple --sysroot options not supported" << endl;
 	      return 1;
 	  } else {
-	      const char *spath = canonicalize_file_name (optarg);
+	      char *spath = canonicalize_file_name (optarg);
 	      if (spath == NULL) {
 		  cerr << _F("ERROR: %s is an invalid directory for --sysroot", optarg) << endl;
 		  return 1;
 	      }
 
 	      sysroot = string(spath);
+	      free (spath);
 	      if (sysroot[sysroot.size() - 1] != '/')
 		  sysroot.append("/");
 

@@ -6905,9 +6905,8 @@ dwarf_builder::build(systemtap_session & sess,
                   // patterns like process("stap*").  Otherwise it may go through
                   // to the next round of expansion as ("stap"), leading to a $PATH
                   // search that's not consistent with the glob search already done.
-
-                  char *cf = canonicalize_file_name (globbed);
-                  if (cf) globbed = cf;
+                  string canononicalized = resolve_path (globbed);
+                  globbed = canononicalized.c_str();
 
                   // synthesize a new probe_point, with the glob-expanded string
                   probe_point *pp = new probe_point (*location);

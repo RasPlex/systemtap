@@ -488,23 +488,11 @@ string find_executable(const string& name, const string& sysroot,
     retpath = sysroot + name;
 
   // Canonicalize the path name.
-  char *cf = canonicalize_file_name (retpath.c_str());
-  if (cf)
-    {
-      string scf = string(cf);
-      if (sysroot.empty())
-        retpath = scf;
-      else {
-        int pos = scf.find(sysroot);
-        if (pos == 0)
-          retpath = scf;
-        else
-          throw runtime_error(_F("find_executable(): file %s not in sysroot %s", cf, sysroot.c_str()));
-      }
-      free (cf);
-    }
-
-  return retpath;
+  string scf = resolve_path(retpath);
+  if (!startswith(scf, sysroot))
+    throw runtime_error(_F("find_executable(): file %s not in sysroot %s",
+                           scf.c_str(), sysroot.c_str()));
+  return scf;
 }
 
 

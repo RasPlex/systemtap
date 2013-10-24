@@ -251,6 +251,12 @@ startswith(const std::string & s, const char * prefix)
   return (s.compare(0, std::strlen(prefix), prefix) == 0);
 }
 
+inline bool
+startswith(const std::string & s, const std::string & prefix)
+{
+  return (s.compare(0, prefix.length(), prefix) == 0);
+}
+
 
 // Returns whether a string ends with the given suffix
 inline bool
