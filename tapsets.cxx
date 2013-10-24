@@ -6886,6 +6886,7 @@ dwarf_builder::build(systemtap_session & sess,
 
           // Evaluate glob here, and call derive_probes recursively with each match.
           glob_t the_blob;
+          set<string> dupes;
           int rc = glob (module_name.c_str(), 0, NULL, & the_blob);
           if (rc)
             throw semantic_error (_F("glob %s error (%s)", module_name.c_str(), lex_cast(rc).c_str() ));
@@ -6907,6 +6908,12 @@ dwarf_builder::build(systemtap_session & sess,
                   // search that's not consistent with the glob search already done.
                   string canononicalized = resolve_path (globbed);
                   globbed = canononicalized.c_str();
+
+                  // The canonical names can result in duplication, for example
+                  // having followed symlinks that are common with shared
+                  // libraries.  Filter those out.
+                  if (!dupes.insert(canononicalized).second)
+                    continue;
 
                   // synthesize a new probe_point, with the glob-expanded string
                   probe_point *pp = new probe_point (*location);
