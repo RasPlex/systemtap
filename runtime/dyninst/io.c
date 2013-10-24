@@ -85,8 +85,9 @@ static void _stp_vlog (enum code type, const char *func, int line,
 		 * NB: don't explicitly send the \0 terminator. */
 		_stp_dyninst_transport_write_oob_data(buf, num + start);
 	}
-	else if (type == DBUG) {
-		/* Debug messages go over the normal data path.  */
+	else if (type == DBUG && _stp_runtime_get_context() != NULL) {
+                /* Debug messages go over the normal data path if we have a
+                 * context for transport.  */
 		_stp_print(buf);
 		_stp_print_flush();
 	}
