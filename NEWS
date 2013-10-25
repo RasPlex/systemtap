@@ -1,5 +1,9 @@
 * What's new in version 2.4
 
+- Statistics aggregate typed objects are now implemented locklessly,
+  if the translator finds that they are only ever read (using the
+  foreach / @count / etc. constructs) in a probe-begin/end/error.
+
 - SystemTap now supports probing inside virtual machines using the
   libvirt and unix schemes, e.g.
 
