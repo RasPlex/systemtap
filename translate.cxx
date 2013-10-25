@@ -100,9 +100,9 @@ struct c_unparser: public unparser, public visitor
   void emit_module_exit ();
   void emit_function (functiondecl* v);
   void emit_lock_decls (const varuse_collecting_visitor& v);
-  void emit_locks (const varuse_collecting_visitor& v);
+  void emit_locks ();
   void emit_probe (derived_probe* v);
-  void emit_unlocks (const varuse_collecting_visitor& v);
+  void emit_unlocks ();
 
   void emit_compiled_printfs ();
   void emit_compiled_printf_locals ();
@@ -2231,12 +2231,12 @@ c_unparser::emit_probe (derived_probe* v)
       o->newline() << "__label__ out;";
 
       // emit static read/write lock decls for global variables
-      varuse_collecting_visitor vut(*session);
       if (v->needs_global_locks ())
         {
-	  v->body->visit (& vut);
-	  emit_lock_decls (vut);
-	}
+          varuse_collecting_visitor vut(*session);
+          v->body->visit (& vut);
+          emit_lock_decls (vut);
+        }
 
       // initialize frame pointer
       o->newline() << "struct " << v->name << "_locals * __restrict__ l = "
@@ -2254,7 +2254,7 @@ c_unparser::emit_probe (derived_probe* v)
 
       // emit all read/write locks for global variables
       if (v->needs_global_locks ())
-	  emit_locks (vut);
+        emit_locks ();
 
       // initialize locals
       for (unsigned j=0; j<v->locals.size(); j++)
@@ -2287,7 +2287,7 @@ c_unparser::emit_probe (derived_probe* v)
 
       o->indent(1);
       if (v->needs_global_locks ())
-	emit_unlocks (vut);
+	emit_unlocks ();
 
       // XXX: do this flush only if the body included a
       // print/printf/etc. routine!
@@ -2319,10 +2319,11 @@ c_unparser::emit_lock_decls(const varuse_collecting_visitor& vut)
   for (unsigned i = 0; i < session->globals.size(); i++)
     {
       vardecl* v = session->globals[i];
-      bool read_p = vut.read.find(v) != vut.read.end();
-      bool write_p = vut.written.find(v) != vut.written.end();
+      bool read_p = vut.read.count(v) > 0;
+      bool write_p = vut.written.count(v) > 0;
       if (!read_p && !write_p) continue;
 
+      bool written_p;
       if (v->type == pe_stats) // read and write locks are flipped
         // Specifically, a "<<<" to a stats object is considered a
         // "shared-lock" operation, since it's implicitly done
@@ -2332,7 +2333,10 @@ c_unparser::emit_lock_decls(const varuse_collecting_visitor& vut)
         {
           if (write_p && !read_p) { read_p = true; write_p = false; }
           else if (read_p && !write_p) { read_p = false; write_p = true; }
+          written_p = vcv_needs_global_locks.read.count(v) > 0;
         }
+      else
+        written_p = vcv_needs_global_locks.written.count(v) > 0;
 
       // We don't need to read lock "read-mostly" global variables.  A
       // "read-mostly" global variable is only written to within
@@ -2340,12 +2344,8 @@ c_unparser::emit_lock_decls(const varuse_collecting_visitor& vut)
       // begin/end probes).  If vcv_needs_global_locks doesn't mark
       // the global as written to, then we don't have to lock it
       // here to read it safely.
-      if (read_p && !write_p)
-        {
-	  if (vcv_needs_global_locks.written.find(v)
-	      == vcv_needs_global_locks.written.end())
-	    continue;
-	}
+      if (!written_p && read_p && !write_p)
+        continue;
 
       o->newline() << "{";
       o->newline(1) << ".lock = global_lock(" + c_globalname(v->name) + "),";
@@ -2373,7 +2373,7 @@ c_unparser::emit_lock_decls(const varuse_collecting_visitor& vut)
 
 
 void
-c_unparser::emit_locks(const varuse_collecting_visitor&)
+c_unparser::emit_locks()
 {
   o->newline() << "if (!stp_lock_probe(locks, ARRAY_SIZE(locks)))";
   o->newline(1) << "return;";
@@ -2382,7 +2382,7 @@ c_unparser::emit_locks(const varuse_collecting_visitor&)
 
 
 void
-c_unparser::emit_unlocks(const varuse_collecting_visitor&)
+c_unparser::emit_unlocks()
 {
   o->newline() << "stp_unlock_probe(locks, ARRAY_SIZE(locks));";
 }
