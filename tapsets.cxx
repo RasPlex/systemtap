@@ -1995,6 +1995,7 @@ validate_module_elf (Dwfl_Module *mod, const char *name,  base_query *q)
     case EM_S390: expect_machine = "s390"; break;
     case EM_IA_64: expect_machine = "ia64"; break;
     case EM_ARM: expect_machine = "arm*"; break;
+    case EM_AARCH64: expect_machine = "arm64"; break;
       // XXX: fill in some more of these
     default: expect_machine = "?"; break;
     }
@@ -5609,6 +5610,39 @@ struct sdt_uprobe_var_expanding_visitor: public var_expanding_visitor
       DRI ("sp", 13, SI);
       DRI ("lr", 14, SI);
       DRI ("pc", 15, SI);
+    } else if (elf_machine == EM_AARCH64) {
+      DRI ("x0", 0, DI); DRI ("w0", 0, SI);
+      DRI ("x1", 1, DI); DRI ("w1", 1, SI);
+      DRI ("x2", 2, DI); DRI ("w2", 2, SI);
+      DRI ("x3", 3, DI); DRI ("w3", 3, SI);
+      DRI ("x4", 4, DI); DRI ("w4", 4, SI);
+      DRI ("x5", 5, DI); DRI ("w5", 5, SI);
+      DRI ("x6", 6, DI); DRI ("w6", 6, SI);
+      DRI ("x7", 7, DI); DRI ("w7", 7, SI);
+      DRI ("x8", 8, DI); DRI ("w8", 8, SI);
+      DRI ("x9", 9, DI); DRI ("w9", 9, SI);
+      DRI ("x10", 10, DI); DRI ("w10", 10, SI);
+      DRI ("x11", 11, DI); DRI ("w11", 11, SI);
+      DRI ("x12", 12, DI); DRI ("w12", 12, SI);
+      DRI ("x13", 13, DI); DRI ("w13", 13, SI);
+      DRI ("x14", 14, DI); DRI ("w14", 14, SI);
+      DRI ("x15", 15, DI); DRI ("w15", 15, SI);
+      DRI ("x16", 16, DI); DRI ("w16", 16, SI);
+      DRI ("x17", 17, DI); DRI ("w17", 17, SI);
+      DRI ("x18", 18, DI); DRI ("w18", 18, SI);
+      DRI ("x19", 19, DI); DRI ("w19", 19, SI);
+      DRI ("x20", 20, DI); DRI ("w20", 20, SI);
+      DRI ("x21", 21, DI); DRI ("w21", 21, SI);
+      DRI ("x22", 22, DI); DRI ("w22", 22, SI);
+      DRI ("x23", 23, DI); DRI ("w23", 23, SI);
+      DRI ("x24", 24, DI); DRI ("w24", 24, SI);
+      DRI ("x25", 25, DI); DRI ("w25", 25, SI);
+      DRI ("x26", 26, DI); DRI ("w26", 26, SI);
+      DRI ("x27", 27, DI); DRI ("w27", 27, SI);
+      DRI ("x28", 28, DI); DRI ("w28", 28, SI);
+      DRI ("x29", 29, DI); DRI ("w29", 29, SI);
+      DRI ("x30", 30, DI); DRI ("w30", 30, SI);
+      DRI ("sp", 31, DI);
     } else if (arg_count) {
       /* permit this case; just fall back to dwarf */
     }
