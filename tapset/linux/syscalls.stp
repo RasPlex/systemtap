@@ -28,7 +28,7 @@
 # accept _____________________________________________________
 # long sys_accept(int fd, struct sockaddr __user *upeer_sockaddr,
 #                 int __user *upeer_addrlen, int flags)
-probe syscall.accept = _syscall.accept4 !, _syscall.accept
+probe syscall.accept = _syscall.accept4 !, _syscall.accept ?
 {
 	name = "accept"
 	sockfd = $fd
@@ -42,7 +42,7 @@ probe _syscall.accept4 = kernel.function("sys_accept4").call
 	flags = $flags
 	flags_str = _sock_flags_str($flags)
 }
-probe _syscall.accept = kernel.function("sys_accept").call ?
+probe _syscall.accept = kernel.function("sys_accept").call
 {
 	flags = 0
 	flags_str = "0"
