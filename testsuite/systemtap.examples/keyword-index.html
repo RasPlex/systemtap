@@ -163,7 +163,10 @@ keywords: <a href="keyword-index.html#PROFILING">PROFILING</a> <a href="keyword-
 <ul>
 <li><a href="process/futexes.stp">process/futexes.stp</a> - System-Wide Futex Contention<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#LOCKING">LOCKING</a> <a href="keyword-index.html#FUTEX">FUTEX</a> <br>
-<p>The script watches the futex syscall on the system. On exit the futexes address, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+<p>The script watches the futex syscall on the system. On exit the futex&#39;s address, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a href="process/futexes2.stp">process/futexes2.stp</a> - System-Wide Shared Futex Contention<br>
+keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#LOCKING">LOCKING</a> <a href="keyword-index.html#FUTEX">FUTEX</a> <br>
+<p>The script watches just shared futex syscalls on the system. On exit the futex&#39;s key, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes2.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li></ul>
 <h3><a name="GURU"><a href="#GURU">&para;</a> GURU</a></h3>
 <ul>
@@ -288,7 +291,10 @@ keywords: <a href="keyword-index.html#LOCKING">LOCKING</a> <br>
 <p>The bkl_stats.stp script can indicate which processes have excessive waits for the Big Kernel Lock (BKL) and which processes are taking the BKL for long periods of time. The bkl_stats.stp script prints lists of all the processes that require the BKL. Every five seconds two tables are printed out. The first table lists the processes that waited for the BKL followed by the number of times that the process waited, the minimum time of the wait, the average and the maximum time waited. The second table lists has similar information for the time spent in holding the lock for each of the processes.<p><font size="-2"><pre># stap bkl_stats.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a href="process/futexes.stp">process/futexes.stp</a> - System-Wide Futex Contention<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#LOCKING">LOCKING</a> <a href="keyword-index.html#FUTEX">FUTEX</a> <br>
-<p>The script watches the futex syscall on the system. On exit the futexes address, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+<p>The script watches the futex syscall on the system. On exit the futex&#39;s address, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a href="process/futexes2.stp">process/futexes2.stp</a> - System-Wide Shared Futex Contention<br>
+keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#LOCKING">LOCKING</a> <a href="keyword-index.html#FUTEX">FUTEX</a> <br>
+<p>The script watches just shared futex syscalls on the system. On exit the futex&#39;s key, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes2.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a href="process/mutex-contention.stp">process/mutex-contention.stp</a> - pthread mutex contention analysis<br>
 keywords: <a href="keyword-index.html#LOCKING">LOCKING</a> <br>
 <p>Tracks pthread-mutex initialization/use and underlying futex operations, to identify (with backtraces/symbol-names) the mutexes suffering most contention.  Invoke with &quot;-d SHLIB --ldd&quot;, perhaps with -DMAXMAPENTRIES=NNNN for some large NNNN, if the arrays overflow due to heavy activity.<p><font size="-2"><pre># stap mutex-contention.stp -c &quot;sleep 0.2&quot;</pre></font></p>
@@ -691,7 +697,10 @@ keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-inde
 <p>Prints a periodic tabular report about failing system calls, by process and by syscall failure.  The first optional argument specifies the reporting interval (in seconds, default 5); the second optional argument gives a screen height (number of lines in the report, default 20).<p><font size="-2"><pre># stap errsnoop.stp 1 10 -c &quot;sleep 1&quot;</pre></font></p>
 </li><li><a href="process/futexes.stp">process/futexes.stp</a> - System-Wide Futex Contention<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#LOCKING">LOCKING</a> <a href="keyword-index.html#FUTEX">FUTEX</a> <br>
-<p>The script watches the futex syscall on the system. On exit the futexes address, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+<p>The script watches the futex syscall on the system. On exit the futex&#39;s address, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a href="process/futexes2.stp">process/futexes2.stp</a> - System-Wide Shared Futex Contention<br>
+keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#LOCKING">LOCKING</a> <a href="keyword-index.html#FUTEX">FUTEX</a> <br>
+<p>The script watches just shared futex syscalls on the system. On exit the futex&#39;s key, the number of contentions, and the average time for each contention on the futex are printed from lowest pid number to highest.<p><font size="-2"><pre># stap futexes2.stp -c &quot;sleep 0.2&quot;</pre></font></p>
 </li><li><a href="process/sleeptime.stp">process/sleeptime.stp</a> - Trace Time Spent in Nanosleep Syscalls<br>
 keywords: <a href="keyword-index.html#SYSCALL">SYSCALL</a> <a href="keyword-index.html#NANOSLEEP">NANOSLEEP</a> <br>
 <p>The script watches each nanosleep syscall on the system. At the end of each nanosleep syscall the script prints out a line with a timestamp in microseconds, the pid, the executable name in parentheses, the &quot;nanosleep:&quot; key, and the duration of the sleep in microseconds.<p><font size="-2"><pre># stap sleeptime.stp -c &quot;sleep 0.2&quot;</pre></font></p>

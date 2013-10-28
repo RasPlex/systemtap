@@ -9,5 +9,6 @@ probe begin
     println(real_mount(0))
     println(d_path(0))
     println(inode_name(0))
+    println(inode_path(0))
     println(task_dentry_path(0, 0, 0))
 }

@@ -47,6 +47,37 @@ function d_name:string(dentry:long)
 }
 
 
+function __inode_first_dentry:long(inode:long)
+{
+        /* i_dentry is an hlist_head on 3.6+, or a list_head before that.  */
+        d_alias = @choose_defined(
+                        @cast(inode, "struct inode")->i_dentry->first,
+                        @cast(inode, "struct inode")->i_dentry->next)
+        dentry = d_alias - (& @cast(0, "struct dentry")->d_alias)
+        return dentry
+}
+
+
+function __inode_vfsmount:long(inode:long)
+{
+        /* s_mounts was added in kernel 3.6, commit b3d9b7a3c.  */
+        if (@defined(&@cast(0, "struct super_block")->s_mounts)) {
+                mnt_ns = @cast(task_current(), "struct task_struct")->nsproxy->mnt_ns
+                sb = @cast(inode, "struct inode")->i_sb
+
+                /* Look for the mount which matches the current namespace */
+                head = &@cast(sb, "struct super_block")->s_mounts
+                for (pos = @cast(head, "struct list_head")->next; pos != head;
+                                pos = @cast(pos, "struct list_head")->next) {
+                        mount = pos - (& @cast(0, "struct mount")->mnt_instance)
+                        if (@cast(mount, "struct mount")->mnt_ns == mnt_ns)
+                                return & @cast(mount, "struct mount")->mnt
+                }
+        }
+        return 0
+}
+
+
 /**
  *   sfunction inode_name - get the inode name
  * 
@@ -55,10 +86,25 @@ function d_name:string(dentry:long)
  */
 function inode_name:string(inode:long)
 {
-        i_dentry = & @cast(inode, "struct inode")->i_dentry;
-        d_alias = @cast(i_dentry, "struct list_head")->next;
-        dentry = d_alias - (& @cast(0, "struct dentry")->d_alias);
-        return reverse_path_walk(dentry);
+        return reverse_path_walk(__inode_first_dentry(inode))
+}
+
+
+/**
+ *   sfunction inode_path - get the path to an inode
+ * 
+ *   Returns the full path associated with the given inode.
+ *   @inode: Pointer to inode.
+ */
+function inode_path:string(inode:long)
+{
+        dentry = __inode_first_dentry(inode)
+        vfsmount = __inode_vfsmount(inode)
+        if (vfsmount != 0)
+                return task_dentry_path(task_current(), dentry, vfsmount)
+
+        /* This is not really a full path...  */
+        return reverse_path_walk(dentry)
 }
 
 
