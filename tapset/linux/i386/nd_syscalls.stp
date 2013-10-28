@@ -76,7 +76,7 @@ probe nd_syscall.ipc.return = kprobe.function("sys_ipc").return ?
 #	  unsigned long prot, unsigned long flags,
 #	  unsigned long fd, unsigned long pgoff)
 #
-probe nd_syscall.mmap2 = __nd_syscall.mmap2, __nd_syscall.mmap_pgoff
+probe nd_syscall.mmap2 = __nd_syscall.mmap2 ?, __nd_syscall.mmap_pgoff ?
 {
 	name = "mmap2"
 	// start = $addr
@@ -100,18 +100,18 @@ probe nd_syscall.mmap2 = __nd_syscall.mmap2, __nd_syscall.mmap_pgoff
 			length, _mprotect_prot_str(prot), _mmap_flags(flags),
 			fd, pgoffset)
 }
-probe __nd_syscall.mmap2 = kprobe.function("sys_mmap2") ?
+probe __nd_syscall.mmap2 = kprobe.function("sys_mmap2")
 {
 	asmlinkage()
 	pgoffset = ulong_arg(6)
 }
-probe __nd_syscall.mmap_pgoff = kprobe.function("sys_mmap_pgoff") ?
+probe __nd_syscall.mmap_pgoff = kprobe.function("sys_mmap_pgoff")
 {
 	asmlinkage()
 	pgoffset = ulong_arg(6) * %{ PAGE_SIZE %}
 }
-probe nd_syscall.mmap2.return = kprobe.function("sys_mmap_pgoff").return ?,
-                                kprobe.function("sys_mmap2").return ?
+probe nd_syscall.mmap2.return = kprobe.function("sys_mmap2").return ?,
+	kprobe.function("sys_mmap_pgoff").return ?
 {
 	name = "mmap2"
 	retstr = returnstr(2)
