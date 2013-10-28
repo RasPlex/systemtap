@@ -316,5 +316,8 @@ NSSYERROR(SEC_ERROR_PKCS11_DEVICE_ERROR,"A PKCS #11 module returned CKR_DEVICE_E
 #if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR > 12) || (NSS_VMAJOR == 3 && NSS_VMINOR == 12 && NSS_VPATCH >= 4)
 NSSYERROR(SEC_ERROR_BAD_INFO_ACCESS_METHOD,"Unknown information access method in certificate extension.");
 NSSYERROR(SEC_ERROR_CRL_IMPORT_FAILED,"Error attempting to import a CRL.");
+#endif
+/* 3.14.1 and later */
+#if (NSS_VMAJOR > 3) || (NSS_VMAJOR == 3 && NSS_VMINOR > 14) || (NSS_VMAJOR == 3 && NSS_VMINOR == 14 && NSS_VPATCH >= 1)
 NSSYERROR(SEC_ERROR_LEGACY_DATABASE,"Expecting a 'sql:' database but found a 'dbm:' database.");
 #endif
