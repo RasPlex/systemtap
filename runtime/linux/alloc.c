@@ -374,6 +374,13 @@ static void *_stp_vzalloc(size_t size)
 }
 
 
+#ifndef STAPCONF_VMALLOC_NODE
+static void *vmalloc_node(unsigned long size, int node __attribute__((unused)))
+{
+	return vmalloc(size);
+}
+#endif
+
 #ifndef STAPCONF_VZALLOC_NODE
 static void *vzalloc_node(unsigned long size, int node)
 {

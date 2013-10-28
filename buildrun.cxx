@@ -400,6 +400,7 @@ compile_pass (systemtap_session& s)
   output_exportconf(s, o, "sigset_from_compat", "STAPCONF_SIGSET_FROM_COMPAT_EXPORTED");
   output_exportconf(s, o, "vzalloc", "STAPCONF_VZALLOC");
   output_exportconf(s, o, "vzalloc_node", "STAPCONF_VZALLOC_NODE");
+  output_exportconf(s, o, "vmalloc_node", "STAPCONF_VMALLOC_NODE");
 
   o << module_cflags << " += -include $(STAPCONF_HEADER)" << endl;
 
