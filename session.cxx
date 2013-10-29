@@ -1899,6 +1899,20 @@ systemtap_session::build_error_msg (const semantic_error& e)
   return message.str();
 }
 
+
+void
+systemtap_session::report_suppression()
+{
+  if (this->suppressed_errors > 0)
+    cerr << colorize(_F("Number of suppressed error messages: %d.  "
+                        "Rerun with -v to see them.",
+                        this->suppressed_errors),
+                     "error") << endl;
+
+  // XXX: similar for suppressed warnings
+}
+
+
 void
 systemtap_session::print_error_source (std::ostream& message,
                                        std::string& align, const token* tok)

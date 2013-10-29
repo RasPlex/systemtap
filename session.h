@@ -404,6 +404,7 @@ public:
                                const std::string &input_name);
   void print_warning (const std::string& w, const token* tok = 0);
   void printscript(std::ostream& o);
+  void report_suppression();
 
   // NB: It is very important for all of the above (and below) fields
   // to be cleared in the systemtap_session ctor (session.cxx).

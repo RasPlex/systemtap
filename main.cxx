@@ -953,8 +953,7 @@ cleanup (systemtap_session &s, int rc)
 #endif
   }
 
-  if (s.suppressed_errors > 0)
-    cerr << "Suppressed " << s.suppressed_errors << " errors" << endl;
+  s.report_suppression();
 
   PROBE1(stap, pass6__end, &s);
 }
