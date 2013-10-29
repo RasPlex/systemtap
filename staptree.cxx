@@ -900,7 +900,7 @@ print_format::string_to_components(string const & str)
 	}
 
       if (curr.type == conv_unspecified)
-	throw parse_error(_("invalid or missing conversion specifier"));
+	throw PARSE_ERROR(_("invalid or missing conversion specifier"));
 
       ++i;
       res.push_back(curr);
@@ -913,7 +913,7 @@ print_format::string_to_components(string const & str)
       if (curr.type == conv_literal)
 	res.push_back(curr);
       else
-	throw parse_error(_("trailing incomplete print format conversion"));
+	throw PARSE_ERROR(_("trailing incomplete print format conversion"));
     }
 
   return res;

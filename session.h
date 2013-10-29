@@ -97,12 +97,12 @@ struct parse_error: public std::runtime_error
   const parse_error *chain;
   const std::string errsrc;
   ~parse_error () throw () {}
-  parse_error (const std::string& msg):
-    runtime_error (msg), tok (0), skip_some (true), chain(0), errsrc(msg) {}
-  parse_error (const std::string& msg, const token* t):
-    runtime_error (msg), tok (t), skip_some (true), chain(0), errsrc(msg) {}
-  parse_error (const std::string& msg, bool skip):
-    runtime_error (msg), tok (0), skip_some (skip), chain(0), errsrc(msg) {}
+  parse_error (const std::string& src, const std::string& msg):
+    runtime_error (msg), tok (0), skip_some (true), chain(0), errsrc(src) {}
+  parse_error (const std::string& src, const std::string& msg, const token* t):
+    runtime_error (msg), tok (t), skip_some (true), chain(0), errsrc(src) {}
+  parse_error (const std::string& src, const std::string& msg, bool skip):
+    runtime_error (msg), tok (0), skip_some (skip), chain(0), errsrc(src) {}
 
   std::string errsrc_chain(void) const
     {
