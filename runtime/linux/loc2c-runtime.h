@@ -640,16 +640,16 @@ extern void __store_deref_bad(void);
 #define __stp_get_user_asm_half(x,__gu_addr,err)		\
 ({								\
 	unsigned long __b1, __b2;				\
-	__stp_get_user_asm_byte(__b1, __gu_addr, err);		\
-	__stp_get_user_asm_byte(__b2, __gu_addr + 1, err);	\
+	__stp_get_user_asm_byte(__b1, (u8 *)(__gu_addr), err);  \
+	__stp_get_user_asm_byte(__b2, ((u8 *)(__gu_addr)) + 1, err);\
 	(x) = __b1 | (__b2 << 8);				\
 })
 #else
 #define __stp_get_user_asm_half(x,__gu_addr,err)		\
 ({								\
 	unsigned long __b1, __b2;				\
-	__stp_get_user_asm_byte(__b1, __gu_addr, err);		\
-	__stp_get_user_asm_byte(__b2, __gu_addr + 1, err);	\
+	__stp_get_user_asm_byte(__b1, (u8 *)(__gu_addr), err);  \
+	__stp_get_user_asm_byte(__b2, ((u8 *)(__gu_addr)) + 1, err);\
 	(x) = (__b1 << 8) | __b2;				\
 })
 #endif
@@ -693,15 +693,15 @@ extern void __store_deref_bad(void);
 #define __stp_put_user_asm_half(x,__pu_addr,err)			\
 ({									\
 	unsigned long __temp = (unsigned long)(x);			\
-	__stp_put_user_asm_byte(__temp, __pu_addr, err);		\
-	__stp_put_user_asm_byte(__temp >> 8, __pu_addr + 1, err);	\
+	__stp_put_user_asm_byte(__temp, (u8 *)(__pu_addr), err);	\
+	__stp_put_user_asm_byte(__temp >> 8, ((u8 *)(__pu_addr)) + 1, err);\
 })
 #else
 #define __stp_put_user_asm_half(x,__pu_addr,err)			\
 ({									\
 	unsigned long __temp = (unsigned long)(x);			\
-	__stp_put_user_asm_byte(__temp >> 8, __pu_addr, err);		\
-	__stp_put_user_asm_byte(__temp, __pu_addr + 1, err);		\
+	__stp_put_user_asm_byte(__temp >> 8, (u8 *)(__pu_addr), err);	\
+	__stp_put_user_asm_byte(__temp, ((u8 *)(__pu_addr)) + 1, err);	\
 })
 #endif
 
