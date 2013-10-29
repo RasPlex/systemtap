@@ -191,9 +191,9 @@ java_builder::build (systemtap_session & sess,
       method_str_val = method_str_val.substr(0, line_position);
       line_position = method_line_val.find_first_of(":");
       if (line_position != string::npos)
-        throw semantic_error (_("maximum of one line number (:NNN)"));
+        throw SEMANTIC_ERROR (_("maximum of one line number (:NNN)"));
       if (has_line_number && has_return)
-        throw semantic_error (_("conflict :NNN and .return probe"));
+        throw SEMANTIC_ERROR (_("conflict :NNN and .return probe"));
     }
 
   //need to count the number of parameters, exit if more than 10
@@ -203,7 +203,7 @@ java_builder::build (systemtap_session & sess,
     method_params_count++; // in this case we know there was at least a var, but no ','
 
   if (method_params_count > 10)
-    throw semantic_error (_("maximum of 10 java method parameters may be specified"));
+    throw SEMANTIC_ERROR (_("maximum of 10 java method parameters may be specified"));
 
   assert (has_method_str);
   (void) has_method_str;
@@ -217,7 +217,7 @@ java_builder::build (systemtap_session & sess,
     java_pid_str = _java_proc_class;
 
   if (! (has_pid_int || has_pid_str) )
-    throw semantic_error (_("missing JVMID"));
+    throw SEMANTIC_ERROR (_("missing JVMID"));
 
   /* The overall flow of control during a probed java method is something like this:
 

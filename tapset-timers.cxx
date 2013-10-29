@@ -60,14 +60,14 @@ timer_derived_probe::timer_derived_probe (probe* p, probe_point* l,
 {
   if (interval <= 0 || interval > 1000000) // make i and r fit into plain ints
     //TRANSLATORS: 'timer' is the name of a probe point
-    throw semantic_error (_("invalid interval for jiffies timer"));
+    throw SEMANTIC_ERROR (_("invalid interval for jiffies timer"));
   // randomize = 0 means no randomization
   if (randomize < 0 || randomize > interval)
     //TRANSLATORS: 'randomize' is a key word
-    throw semantic_error (_("invalid randomize for jiffies timer"));
+    throw SEMANTIC_ERROR (_("invalid randomize for jiffies timer"));
 
   if (locations.size() != 1)
-    throw semantic_error (_("only expect one probe point"));
+    throw SEMANTIC_ERROR (_("only expect one probe point"));
   // so we don't have to loop over them in the other functions
 }
 
@@ -196,13 +196,13 @@ struct hrtimer_derived_probe: public derived_probe
     derived_probe (p, l), interval (i), randomize (r)
   {
     if ((i < min_ns_interval) || (i > max_ns_interval))
-      throw semantic_error(_F("interval value out of range (%s, %s)",
+      throw SEMANTIC_ERROR(_F("interval value out of range (%s, %s)",
                           (lex_cast(scale < min_ns_interval ? min_ns_interval/scale : 1).c_str()),
                            lex_cast(max_ns_interval/scale).c_str()));
 
     // randomize = 0 means no randomization
     if ((r < 0) || (r > i))
-      throw semantic_error(_("randomization value out of range"));
+      throw SEMANTIC_ERROR(_("randomization value out of range"));
   }
 
   void join_group (systemtap_session& s);
@@ -515,7 +515,7 @@ timer_builder::build(systemtap_session & sess,
   if (has_null_param(parameters, "profile"))
     {
       if (sess.runtime_usermode_p())
-	throw semantic_error (_("profile timer probes not available with the dyninst runtime"));
+	throw SEMANTIC_ERROR (_("profile timer probes not available with the dyninst runtime"));
 
       /* As the latest mechanism for timer hook support has been
          removed, we need to bail explicitly if the corresponding
@@ -524,7 +524,7 @@ timer_builder::build(systemtap_session & sess,
            || sess.kernel_exports.find("unregister_timer_hook") == sess.kernel_exports.end())
           && (sess.kernel_exports.find("register_profile_notifier") == sess.kernel_exports.end()
               || sess.kernel_exports.find("unregister_profile_notifier") == sess.kernel_exports.end()))
-        throw semantic_error (_("profiling timer support (register_timer_hook) not found in kernel!"));
+        throw SEMANTIC_ERROR (_("profiling timer support (register_timer_hook) not found in kernel!"));
 
       sess.unwindsym_modules.insert ("kernel");
       finished_results.push_back
@@ -538,7 +538,7 @@ timer_builder::build(systemtap_session & sess,
   if (get_param(parameters, "jiffies", period))
     {
       if (sess.runtime_usermode_p())
-	throw semantic_error (_("jiffies timer probes not available with the dyninst runtime"));
+	throw SEMANTIC_ERROR (_("jiffies timer probes not available with the dyninst runtime"));
 
       // always use basic timers for jiffies
       finished_results.push_back
@@ -548,7 +548,7 @@ timer_builder::build(systemtap_session & sess,
   else if (get_param(parameters, "hz", period))
     {
       if (period <= 0)
-        throw semantic_error (_("frequency must be greater than 0"));
+        throw SEMANTIC_ERROR (_("frequency must be greater than 0"));
       period = (1000000000 + period - 1)/period;
     }
   else if (get_param(parameters, "s", period) ||
@@ -578,7 +578,7 @@ timer_builder::build(systemtap_session & sess,
       // ok
     }
   else
-    throw semantic_error (_("unrecognized timer variant"));
+    throw SEMANTIC_ERROR (_("unrecognized timer variant"));
 
   // Redirect wallclock-time based probes to hrtimer code on recent
   // enough kernels.

@@ -44,7 +44,7 @@ extern "C" {
         autosprintf(_N((format), (format_plural), (count)), __VA_ARGS__)
 #define _STRINGIFY_MORE(s) #s
 #define _STRINGIFY(s) _STRINGIFY_MORE(s)
-#define ERR_SRC (string(__FUNCTION__) + ":" + _STRINGIFY(__LINE__))
+#define ERR_SRC (std::string(__FUNCTION__) + ":" + _STRINGIFY(__LINE__))
 #define SEMANTIC_ERROR(...) semantic_error(ERR_SRC, __VA_ARGS__)
 #define PARSE_ERROR(...) parse_error(ERR_SRC, __VA_ARGS__)
 

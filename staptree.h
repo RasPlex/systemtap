@@ -37,12 +37,12 @@ struct semantic_error: public std::runtime_error
 
   ~semantic_error () throw () {}
 
-  semantic_error (const std::string& msg, const token* t1=0):
-    runtime_error (msg), tok1 (t1), tok2 (0), chain (0), errsrc(msg) {}
+  semantic_error (const std::string& src, const std::string& msg, const token* t1=0):
+    runtime_error (msg), tok1 (t1), tok2 (0), chain (0), errsrc(src) {}
 
-  semantic_error (const std::string& msg, const token* t1,
+  semantic_error (const std::string& src, const std::string& msg, const token* t1,
                   const token* t2):
-    runtime_error (msg), tok1 (t1), tok2 (t2), chain (0), errsrc(msg) {}
+    runtime_error (msg), tok1 (t1), tok2 (t2), chain (0), errsrc(src) {}
 
   std::string errsrc_chain(void) const
     {

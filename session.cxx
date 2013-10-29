@@ -1799,7 +1799,7 @@ systemtap_session::register_library_aliases()
                       probe_point::component * comp = name->components[c];
                       // XXX: alias parameters
                       if (comp->arg)
-                        throw semantic_error(_F("alias component %s contains illegal parameter",
+                        throw SEMANTIC_ERROR(_F("alias component %s contains illegal parameter",
                                                 comp->functor.c_str()));
                       mn = mn->bind(comp->functor);
                     }
@@ -1811,7 +1811,7 @@ systemtap_session::register_library_aliases()
             }
           catch (const semantic_error& e)
             {
-              semantic_error* er = new semantic_error (_("while registering probe alias"),
+              semantic_error* er = new SEMANTIC_ERROR (_("while registering probe alias"),
                                                        alias->tok);
               er->chain = & e;
               print_error (* er);

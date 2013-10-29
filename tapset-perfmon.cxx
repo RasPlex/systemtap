@@ -176,7 +176,7 @@ perf_derived_probe_group::emit_module_decls (systemtap_session& s)
 	      wordexp_t words;
 	      int rc = wordexp(s.cmd.c_str(), &words, WRDE_NOCMD|WRDE_UNDEF);
 	      if (rc || words.we_wordc <= 0)
-		throw semantic_error(_("unspecified process probe is invalid without a -c COMMAND"));
+		throw SEMANTIC_ERROR(_("unspecified process probe is invalid without a -c COMMAND"));
 	      l_process_name = words.we_wordv[0];
 	      wordfree (& words);
 	    }
@@ -327,9 +327,9 @@ perf_builder::build(systemtap_session & sess,
   // XXX need additional version checks too?
   // --- perhaps look for export of perf_event_create_kernel_counter
   if (sess.kernel_exports.find("perf_event_create_kernel_counter") == sess.kernel_exports.end())
-    throw semantic_error (_("perf probes not available without exported perf_event_create_kernel_counter"));
+    throw SEMANTIC_ERROR (_("perf probes not available without exported perf_event_create_kernel_counter"));
   if (sess.kernel_config["CONFIG_PERF_EVENTS"] != "y")
-    throw semantic_error (_("perf probes not available without CONFIG_PERF_EVENTS"));
+    throw SEMANTIC_ERROR (_("perf probes not available without CONFIG_PERF_EVENTS"));
 
   int64_t type;
   bool has_type = get_param(parameters, TOK_TYPE, type);
@@ -344,7 +344,7 @@ perf_builder::build(systemtap_session & sess,
   if (!has_period)
     period = 1000000; // XXX: better parametrize this default
   else if (period < 1)
-    throw semantic_error(_("invalid perf sample period ") + lex_cast(period),
+    throw SEMANTIC_ERROR(_("invalid perf sample period ") + lex_cast(period),
                          parameters.find(TOK_SAMPLE)->second->tok);
   bool proc_p;
   string proc_n;
@@ -356,17 +356,17 @@ perf_builder::build(systemtap_session & sess,
   string var;
   bool has_counter = get_param(parameters, TOK_COUNTER, var);
   if (var.find_first_of("*?[") != string::npos)
-    throw semantic_error(_("wildcard not allowed with perf probe counter component"));
+    throw SEMANTIC_ERROR(_("wildcard not allowed with perf probe counter component"));
   if (has_counter)
     {
       if (var.length() == 0)
-	throw semantic_error(_("missing perf probe counter component name"));
+	throw SEMANTIC_ERROR(_("missing perf probe counter component name"));
 	
       period = 0;		// perf_event_attr.sample_freq should be 0
       map<string, pair<string,derived_probe*> >::iterator it;
       for (it=sess.perf_counters.begin(); it != sess.perf_counters.end(); it++)
 	if ((*it).first == var)
-	  throw semantic_error(_("duplicate counter name"));
+	  throw SEMANTIC_ERROR(_("duplicate counter name"));
 
       struct statement_counter sc;
       base->body->visit(&sc);

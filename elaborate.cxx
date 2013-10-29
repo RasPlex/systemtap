@@ -143,7 +143,7 @@ probe_point*
 derived_probe::sole_location () const
 {
   if (locations.size() == 0 || locations.size() > 1)
-    throw semantic_error (_N("derived_probe with no locations",
+    throw SEMANTIC_ERROR (_N("derived_probe with no locations",
                              "derived_probe with too many locations",
                              locations.size()), this->tok);
   else
@@ -245,7 +245,7 @@ derived_probe_builder::build_with_suffix(systemtap_session & sess,
   //   build (sess, use, location, parameters, finished_results);
   //   return;
   // }
-  throw semantic_error (_("invalid suffix for probe"));
+  throw SEMANTIC_ERROR (_("invalid suffix for probe"));
 }
 
 bool
@@ -394,7 +394,7 @@ match_node *
 match_node::bind(match_key const & k)
 {
   if (k.name == "*")
-    throw semantic_error(_("invalid use of wildcard probe point component"));
+    throw SEMANTIC_ERROR(_("invalid use of wildcard probe point component"));
 
   map<match_key, match_node *>::const_iterator i = sub.find(k);
   if (i != sub.end())
@@ -449,14 +449,14 @@ match_node::find_and_build (systemtap_session& s,
           for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
             alternatives += string(" ") + i->first.str();
 
-          throw semantic_error (_F("probe point truncated (follow: %s)",
+          throw SEMANTIC_ERROR (_F("probe point truncated (follow: %s)",
                                    alternatives.c_str()),
                                    loc->components.back()->tok);
         }
 
       if (! pr_contains (privilege, s.privilege))
 	{
-          throw semantic_error (_F("probe point is not allowed for --privilege=%s",
+          throw SEMANTIC_ERROR (_F("probe point is not allowed for --privilege=%s",
 				   pr_name (s.privilege)),
                                 loc->components.back()->tok);
 	}
@@ -545,7 +545,7 @@ match_node::find_and_build (systemtap_session& s,
           for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
             alternatives += string(" ") + i->first.str();
 
-          throw semantic_error(_F("probe point mismatch (alternatives: %s)",
+          throw SEMANTIC_ERROR(_F("probe point mismatch (alternatives: %s)",
                                   alternatives.c_str()), comp->tok);
         }
     }
@@ -622,7 +622,7 @@ match_node::find_and_build (systemtap_session& s,
           for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
             alternatives += string(" ") + i->first.str();
 
-          throw semantic_error(_F("probe point mismatch %s didn't find any wildcard matches",
+          throw SEMANTIC_ERROR(_F("probe point mismatch %s didn't find any wildcard matches",
                                   (alternatives == "" ? "" : _(" (alternatives: ") +
                                    alternatives + ")").c_str()), loc->components[pos]->tok);
 	}
@@ -661,7 +661,7 @@ match_node::find_and_build (systemtap_session& s,
           for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
             alternatives += string(" ") + i->first.str();
 
-          throw semantic_error(_F("probe point mismatch %s",
+          throw SEMANTIC_ERROR(_F("probe point mismatch %s",
                                   (alternatives == "" ? "" : (_(" (alternatives:") + alternatives +
                                   ")").c_str())),
                                loc->components[pos]->tok);
@@ -717,7 +717,7 @@ match_node::try_suffix_expansion (systemtap_session& s,
             {
               // Adjust source coordinate and re-throw:
               if (! loc->optional)
-                throw semantic_error(e.what(), loc->components[pos]->tok);
+                throw semantic_error(e.errsrc, e.what(), loc->components[pos]->tok);
             }
         }
     }
@@ -777,7 +777,7 @@ struct alias_derived_probe: public derived_probe
                        const vector<probe_point::component *> *suffix = 0);
   ~alias_derived_probe();
 
-  void upchuck () { throw semantic_error (_("inappropriate"), this->tok); }
+  void upchuck () { throw SEMANTIC_ERROR (_("inappropriate"), this->tok); }
 
   // Alias probes are immediately expanded to other derived_probe
   // types, and are not themselves emitted or listed in
@@ -961,7 +961,7 @@ recursion_guard
   recursion_guard(unsigned & i) : i(i)
     {
       if (i > max_recursion)
-	throw semantic_error(_("recursion limit reached"));
+	throw SEMANTIC_ERROR(_("recursion limit reached"));
       ++i;
     }
   ~recursion_guard()
@@ -1013,7 +1013,7 @@ derive_probes (systemtap_session& s,
 
           if (! (loc->optional||optional) && // something required, but
               num_atbegin == num_atend) // nothing new derived!
-            throw semantic_error (_("no match"));
+            throw SEMANTIC_ERROR (_("no match"));
 
           if (loc->sufficient && (num_atend > num_atbegin))
             {
@@ -1049,7 +1049,7 @@ derive_probes (systemtap_session& s,
           else if (!s.listing_mode || (s.listing_mode && s.verbose > 1))
             {
               // XXX: prefer not to print_error at every nest/unroll level
-              semantic_error* er = new semantic_error (_("while resolving probe point"),
+              semantic_error* er = new SEMANTIC_ERROR (_("while resolving probe point"),
                                                        loc->components[0]->tok);
               er->chain = & e;
               s.print_error (* er);
@@ -1103,9 +1103,9 @@ struct symbol_fetcher
   void throwone (const token* t)
   {
     if (t->type == tok_operator && t->content == ".") // guess someone misused . in $foo->bar.baz expression
-      throw semantic_error (_("Expecting symbol or array index expression, try -> instead"), t);
+      throw SEMANTIC_ERROR (_("Expecting symbol or array index expression, try -> instead"), t);
     else
-      throw semantic_error (_("Expecting symbol or array index expression"), t);
+      throw SEMANTIC_ERROR (_("Expecting symbol or array index expression"), t);
   }
 };
 
@@ -1158,7 +1158,7 @@ struct mutated_var_collector
 	if (e->base->is_symbol (sym))
 	  mutated_vars->insert (sym->referent);
 	else
-	  throw semantic_error(_("Assignment to read-only histogram bucket"), e->tok);
+	  throw SEMANTIC_ERROR(_("Assignment to read-only histogram bucket"), e->tok);
       }
     traversing_visitor::visit_arrayindex (e);
   }
@@ -1192,7 +1192,7 @@ struct no_var_mutation_during_iteration_check
 		  {
                     string err = _F("variable '%s' modified during 'foreach' iteration",
                                     v->name.c_str());
-		    session.print_error (semantic_error (err, e->tok));
+		    session.print_error (SEMANTIC_ERROR (err, e->tok));
 		  }
 	      }
 	  }
@@ -1214,7 +1214,7 @@ struct no_var_mutation_during_iteration_check
 	      {
                 string err = _F("function call modifies var '%s' during 'foreach' iteration",
                                 m->name.c_str());
-		session.print_error (semantic_error (err, e->tok));
+		session.print_error (SEMANTIC_ERROR (err, e->tok));
 	      }
 	  }
       }
@@ -1300,7 +1300,7 @@ struct stat_decl_collector
 	    else
 	      {
 		// FIXME: Support multiple co-declared histogram types
-		semantic_error se(_F("multiple histogram types declared on '%s'", sym->name.c_str()), e->tok);
+		semantic_error se(ERR_SRC, _F("multiple histogram types declared on '%s'", sym->name.c_str()), e->tok);
 		session.print_error (se);
 	      }
 	  }
@@ -1328,7 +1328,7 @@ semantic_pass_stats (systemtap_session & sess)
 
 	  if (sess.stat_decls.find(v->name) == sess.stat_decls.end())
 	    {
-              semantic_error se(_F("unable to infer statistic parameters for global '%s'", v->name.c_str()));
+              semantic_error se(ERR_SRC, _F("unable to infer statistic parameters for global '%s'", v->name.c_str()));
 	      sess.print_error (se);
 	    }
 	}
@@ -1410,11 +1410,11 @@ semantic_pass_conditions (systemtap_session & sess)
           if (! vut.written.empty())
             {
               string err = (_("probe condition must not modify any variables"));
-              sess.print_error (semantic_error (err, e->tok));
+              sess.print_error (SEMANTIC_ERROR (err, e->tok));
             }
           else if (vut.embedded_seen)
             {
-              sess.print_error (semantic_error (_("probe condition must not include impure embedded-C"), e->tok));
+              sess.print_error (SEMANTIC_ERROR (_("probe condition must not include impure embedded-C"), e->tok));
             }
 
           // Add the condition expression to the front of the
@@ -1472,7 +1472,7 @@ public:
 
 	// PR15052: stapdyn doesn't have VMA-tracking yet.
 	if (session.runtime_usermode_p())
-	  throw semantic_error(_("VMA-tracking is only supported by the kernel runtime (PR15052)"), c->tok);
+	  throw SEMANTIC_ERROR(_("VMA-tracking is only supported by the kernel runtime (PR15052)"), c->tok);
 
 	enable_vma_tracker(session);
       }
@@ -1594,7 +1594,7 @@ semantic_pass_symbols (systemtap_session& s)
               vardecl* g2 = s.globals[j];
               if (g->name == g2->name)
                 {
-                  s.print_error (semantic_error (_("conflicting global variables"), 
+                  s.print_error (SEMANTIC_ERROR (_("conflicting global variables"),
                                                  g->tok, g2->tok));
                 }
             }
@@ -1607,7 +1607,7 @@ semantic_pass_symbols (systemtap_session& s)
           functiondecl* f2 = s.functions[f->name];
           if (f2 && f != f2)
             {
-              s.print_error (semantic_error (_("conflicting functions"), 
+              s.print_error (SEMANTIC_ERROR (_("conflicting functions"), 
                                              f->tok, f2->tok));
             }
           s.functions[f->name] = f;
@@ -1994,7 +1994,7 @@ semantic_pass (systemtap_session& s)
       if (rc == 0) embeddedcode_info_pass (s);
 
       if (s.num_errors() == 0 && s.probes.size() == 0 && !s.listing_mode)
-        throw semantic_error (_("no probes found"));
+        throw SEMANTIC_ERROR (_("no probes found"));
     }
   catch (const semantic_error& e)
     {
@@ -2061,7 +2061,7 @@ symresolution_info::visit_foreach_loop (foreach_loop* e)
 	      stringstream msg;
               msg << _F("unresolved arity-%zu global array %s, missing global declaration?",
                         e->indexes.size(), array->name.c_str());
-	      throw semantic_error (msg.str(), e->tok);
+	      throw SEMANTIC_ERROR (msg.str(), e->tok);
 	    }
 	}
     }
@@ -2109,7 +2109,7 @@ delete_statement_symresolution_info:
     if (d)
       e->referent = d;
     else
-      throw semantic_error (_("unresolved array in delete statement"), e->tok);
+      throw SEMANTIC_ERROR (_("unresolved array in delete statement"), e->tok);
   }
 };
 
@@ -2143,7 +2143,7 @@ symresolution_info::visit_symbol (symbol* e)
         current_probe->locals.push_back (v);
       else
         // must be probe-condition expression
-        throw semantic_error (_("probe condition must not reference undeclared global"), e->tok);
+        throw SEMANTIC_ERROR (_("probe condition must not reference undeclared global"), e->tok);
       e->referent = v;
     }
 }
@@ -2172,7 +2172,7 @@ symresolution_info::visit_arrayindex (arrayindex* e)
 	  stringstream msg;
           msg << _F("unresolved arity-%zu global array %s, missing global declaration?",
                     e->indexes.size(), array->name.c_str());
-	  throw semantic_error (msg.str(), e->tok);
+	  throw SEMANTIC_ERROR (msg.str(), e->tok);
 	}
     }
   else
@@ -2191,7 +2191,7 @@ symresolution_info::visit_functioncall (functioncall* e)
   if (! (current_function || current_probe))
     {
       // must be probe-condition expression
-      throw semantic_error (_("probe condition must not reference function"), e->tok);
+      throw SEMANTIC_ERROR (_("probe condition must not reference function"), e->tok);
     }
 
   for (unsigned i=0; i<e->args.size(); i++)
@@ -2207,7 +2207,7 @@ symresolution_info::visit_functioncall (functioncall* e)
     {
       stringstream msg;
       msg << _F("unresolved arity-%zu function", e->args.size());
-      throw semantic_error (msg.str(), e->tok);
+      throw SEMANTIC_ERROR (msg.str(), e->tok);
     }
 }
 
@@ -3554,7 +3554,7 @@ const_folder::visit_binary_expression (binary_expression* e)
         value = (left->value == LLONG_MIN && right->value == -1) ? 0 :
                 left->value % right->value;
       else
-        throw semantic_error (_("unsupported binary operator ") + e->op);
+        throw SEMANTIC_ERROR (_("unsupported binary operator ") + e->op);
     }
 
   else if ((left && ((left->value == 0 && (e->op == "*" || e->op == "&" ||
@@ -3640,7 +3640,7 @@ const_folder::visit_unary_expression (unary_expression* e)
       else if (e->op == "~")
         n->value = ~n->value;
       else
-        throw semantic_error (_("unsupported unary operator ") + e->op);
+        throw SEMANTIC_ERROR (_("unsupported unary operator ") + e->op);
       n->visit (this);
     }
 }
@@ -3809,7 +3809,7 @@ const_folder::visit_comparison (comparison* e)
   else if (e->op == ">=")
     value = comp >= 0;
   else
-    throw semantic_error (_("unsupported comparison operator ") + e->op);
+    throw SEMANTIC_ERROR (_("unsupported comparison operator ") + e->op);
 
   literal_number* n = new literal_number(value);
   n->tok = e->tok;
@@ -4174,7 +4174,7 @@ semantic_pass_types (systemtap_session& s)
             ti.unresolved (gd->tok);
           if(gd->arity == 0 && gd->wrap == true)
             {
-              throw semantic_error (_("wrapping not supported for scalars"), gd->tok);
+              throw SEMANTIC_ERROR (_("wrapping not supported for scalars"), gd->tok);
             }
         }
 
@@ -4399,7 +4399,7 @@ typeresolution_info::visit_assignment (assignment *e)
 
     }
   else
-    throw semantic_error (_("unsupported assignment operator ") + e->op);
+    throw SEMANTIC_ERROR (_("unsupported assignment operator ") + e->op);
 }
 
 
@@ -4597,7 +4597,7 @@ typeresolution_info::visit_target_symbol (target_symbol* e)
   if (e->saved_conversion_error)
     throw (* (e->saved_conversion_error));
   else
-    throw semantic_error(_("unresolved target-symbol expression"), e->tok);
+    throw SEMANTIC_ERROR(_("unresolved target-symbol expression"), e->tok);
 }
 
 
@@ -4633,21 +4633,21 @@ typeresolution_info::visit_atvar_op (atvar_op* e)
   if (e->saved_conversion_error)
     throw (* (e->saved_conversion_error));
   else
-    throw semantic_error(_("unresolved @var() expression"), e->tok);
+    throw SEMANTIC_ERROR(_("unresolved @var() expression"), e->tok);
 }
 
 
 void
 typeresolution_info::visit_defined_op (defined_op* e)
 {
-  throw semantic_error(_("unexpected @defined"), e->tok);
+  throw SEMANTIC_ERROR(_("unexpected @defined"), e->tok);
 }
 
 
 void
 typeresolution_info::visit_entry_op (entry_op* e)
 {
-  throw semantic_error(_("@entry is only valid in .return probes"), e->tok);
+  throw SEMANTIC_ERROR(_("@entry is only valid in .return probes"), e->tok);
 }
 
 
@@ -4659,7 +4659,7 @@ typeresolution_info::visit_cast_op (cast_op* e)
   if (e->saved_conversion_error)
     throw (* (e->saved_conversion_error));
   else
-    throw semantic_error(_F("type definition '%s' not found in '%s'",
+    throw SEMANTIC_ERROR(_F("type definition '%s' not found in '%s'",
                             e->type_name.c_str(), e->module.c_str()), e->tok);
 }
 
@@ -4852,7 +4852,7 @@ typeresolution_info::visit_embeddedcode (embeddedcode* s)
       //   clog << _F("Turning on DFA subexpressions, pragma:tagged_dfa found in %s",
       // current_function->name.c_str()) << endl;
       // session.need_tagged_dfa = true;
-      throw semantic_error (_("Tagged DFA support is not yet available"), s->tok);
+      throw SEMANTIC_ERROR (_("Tagged DFA support is not yet available"), s->tok);
     }
 }
 
@@ -5113,7 +5113,7 @@ typeresolution_info::visit_print_format (print_format* e)
       for (size_t i = 0; i < e->components.size(); ++i)
 	{
 	  if (e->components[i].type == print_format::conv_unspecified)
-	    throw semantic_error (_("Unspecified conversion in print operator format string"),
+	    throw SEMANTIC_ERROR (_("Unspecified conversion in print operator format string"),
 				  e->tok);
 	  else if (e->components[i].type == print_format::conv_literal)
 	    continue;
@@ -5129,7 +5129,7 @@ typeresolution_info::visit_print_format (print_format* e)
       // of args agree.
 
       if (expected_num_args != e->args.size())
-	throw semantic_error (_("Wrong number of args to formatted print operator"),
+	throw SEMANTIC_ERROR (_("Wrong number of args to formatted print operator"),
 			      e->tok);
 
       // Then we check that the types of the conversions match the types
@@ -5262,7 +5262,7 @@ typeresolution_info::check_local (vardecl* v)
       num_still_unresolved ++;
       if (assert_resolvability)
         session.print_error
-          (semantic_error (_("array locals not supported, missing global declaration? "), v->tok));
+          (SEMANTIC_ERROR (_("array locals not supported, missing global declaration? "), v->tok));
     }
 
   if (v->type == pe_unknown)
@@ -5272,7 +5272,7 @@ typeresolution_info::check_local (vardecl* v)
       num_still_unresolved ++;
       if (assert_resolvability)
         session.print_error
-          (semantic_error (_("stat locals not supported, missing global declaration? "), v->tok));
+          (SEMANTIC_ERROR (_("stat locals not supported, missing global declaration? "), v->tok));
     }
   else if (!(v->type == pe_long || v->type == pe_string))
     invalid (v->tok, v->type);
@@ -5288,7 +5288,7 @@ typeresolution_info::unresolved (const token* tok)
     {
       stringstream msg;
       msg << _("unresolved type ");
-      session.print_error (semantic_error (msg.str(), tok));
+      session.print_error (SEMANTIC_ERROR (msg.str(), tok));
     }
 }
 
@@ -5305,7 +5305,7 @@ typeresolution_info::invalid (const token* tok, exp_type pe)
         msg << _("invalid operator");
       else
         msg << _("invalid type ") << pe;
-      session.print_error (semantic_error (msg.str(), tok));
+      session.print_error (SEMANTIC_ERROR (msg.str(), tok));
     }
 }
 
@@ -5359,10 +5359,10 @@ typeresolution_info::mismatch (const token* tok, exp_type t1, exp_type t2)
 	      printed_toks.push_back (resolved_toks[i]);
 	      stringstream type_msg;
               type_msg << _F("type was first inferred here (%s)", lex_cast(t2).c_str());
-	      err1 = new semantic_error (type_msg.str(), resolved_toks[i]);
+	      err1 = new SEMANTIC_ERROR (type_msg.str(), resolved_toks[i]);
 	    }
 	}
-      semantic_error err (msg.str(), tok);
+      semantic_error err (ERR_SRC, msg.str(), tok);
       err.chain = err1;
       session.print_error (err);
     }
