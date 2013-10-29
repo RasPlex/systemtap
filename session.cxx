@@ -93,6 +93,7 @@ systemtap_session::systemtap_session ():
   module_cache (0),
   benchmark_sdt_loops(0),
   benchmark_sdt_threads(0),
+  suppressed_warnings(0),
   suppressed_errors(0),
   last_token (0)
 {
@@ -275,6 +276,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   module_cache (0),
   benchmark_sdt_loops(other.benchmark_sdt_loops),
   benchmark_sdt_threads(other.benchmark_sdt_threads),
+  suppressed_warnings(0),
   suppressed_errors(0),
   last_token (0)
 {
@@ -1899,20 +1901,6 @@ systemtap_session::build_error_msg (const semantic_error& e)
   return message.str();
 }
 
-
-void
-systemtap_session::report_suppression()
-{
-  if (this->suppressed_errors > 0)
-    cerr << colorize(_F("Number of suppressed error messages: %d.  "
-                        "Rerun with -v to see them.",
-                        this->suppressed_errors),
-                     "error") << endl;
-
-  // XXX: similar for suppressed warnings
-}
-
-
 void
 systemtap_session::print_error_source (std::ostream& message,
                                        std::string& align, const token* tok)
@@ -1968,12 +1956,12 @@ systemtap_session::print_error_source (std::ostream& message,
 void
 systemtap_session::print_warning (const string& message_str, const token* tok)
 {
-  if(suppress_warnings)
-    return;
+  if (suppress_warnings)
+    return; // NB: don't count towards suppressed_warnings count
 
   // Duplicate elimination
   string align_warning (" ");
-  if (seen_warnings.find (message_str) == seen_warnings.end())
+  if (verbose > 0 || seen_warnings.find (message_str) == seen_warnings.end())
     {
       seen_warnings.insert (message_str);
       clog << colorize(_("WARNING:"), "warning") << ' ' << message_str;
@@ -1981,6 +1969,7 @@ systemtap_session::print_warning (const string& message_str, const token* tok)
       clog << endl;
       if (tok) { print_error_source (clog, align_warning, tok); }
     }
+  else suppressed_warnings++;
 }
 
 
@@ -2048,6 +2037,21 @@ systemtap_session::build_error_msg (const parse_error& pe,
   message << endl;
 
   return message.str();
+}
+
+void
+systemtap_session::report_suppression()
+{
+  if (this->suppressed_errors > 0)
+    cerr << colorize(_F("Number of similar error messages suppressed: %d.",
+                         this->suppressed_errors),
+                      "error") << endl;
+  if (this->suppressed_warnings > 0)
+    cerr << colorize(_F("Number of similar warning messages suppressed: %d.",
+                         this->suppressed_warnings),
+                      "warning") << endl;
+  if (this->suppressed_errors > 0 || this->suppressed_warnings > 0)
+    cerr << "Rerun with -v to see them." << endl;
 }
 
 void

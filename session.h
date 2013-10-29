@@ -383,6 +383,7 @@ public:
   // to be cleared in the systemtap_session ctor (session.cxx).
 
   std::set<std::string> seen_warnings;
+  int suppressed_warnings;
   std::map<std::string, int> seen_errors; // NB: can change to a set if threshold is 1
   int suppressed_errors;
   unsigned num_errors () { return seen_errors.size() + (panic_warnings ? seen_warnings.size() : 0); }
