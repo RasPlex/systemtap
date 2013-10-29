@@ -14,21 +14,8 @@
 #include "util.h"
 #include "translator-output.h"
 
-#ifndef STAPREGEX_STANDALONE
 #include "session.h"
 #include "staptree.h" // needed to use semantic_error
-#else
-#include <string>
-#include <map>
-struct stapdfa;
-struct systemtap_session { // -- placeholder for testing
-  std::map<std::string, stapdfa *> dfas;
-  unsigned dfa_counter;
-  bool need_tagged_dfa;
-  unsigned dfa_maxstate;
-  unsigned dfa_maxtag;
-};
-#endif
 
 #include <iostream>
 #include <cstdlib>
@@ -79,16 +66,11 @@ stapdfa::stapdfa (const string& func_name, const string& re,
     }
   catch (const regex_error &e)
     {
-#ifdef STAPREGEX_STANDALONE
-      cerr << "ERROR: " << e.what() << " (at " << e.pos << ")" << endl;
-      exit (1);
-#else
       if (e.pos >= 0)
         throw SEMANTIC_ERROR(_F("regex compilation error (at position %d): %s",
                                 e.pos, e.what()), tok);
       else
         throw SEMANTIC_ERROR(_F("regex compilation error: %s", e.what()), tok);
-#endif
     }
 }
 
@@ -114,11 +96,7 @@ void
 stapdfa::emit_declaration (translator_output *o) const
 {
   o->newline() << "// DFA for \"" << orig_input << "\"";
-#ifdef STAPREGEX_STANDALONE
-  o->newline() << "int " << func_name << " (const char *str) {";
-#else
   o->newline() << "int " << func_name << " (struct context * __restrict__ c, const char *str) {";
-#endif
   o->indent(1);
   
   // Emit a SystemTap function body (as if an embedded-C snippet) that
@@ -130,10 +108,8 @@ stapdfa::emit_declaration (translator_output *o) const
   o->newline() << "const char *cur = str;";
   o->newline() << "const char *mar;";
 
-#ifndef STAPREGEX_STANDALONE
   if (do_tag)
     o->newline() << "#define YYTAG(t,s,n) {c->last_match.tag_states[(t)][(s)] = (n);}";
-#endif
   o->newline() << "#define YYCTYPE char";
   o->newline() << "#define YYCURSOR cur";
   o->newline() << "#define YYLIMIT cur";
@@ -147,16 +123,11 @@ stapdfa::emit_declaration (translator_output *o) const
     }
   catch (const regex_error &e)
     {
-#ifdef STAPREGEX_STANDALONE
-      cerr << "ERROR: " << e.what() << " (at " << e.pos << ")" << endl;
-      exit (1);
-#else
       if (e.pos >= 0)
         throw SEMANTIC_ERROR(_F("regex compilation error (at position %d): %s",
                                 e.pos, e.what()), tok);
       else
         throw SEMANTIC_ERROR(_F("regex compilation error: %s", e.what()), tok);
-#endif
     }
 
   o->newline() << "#undef YYCTYPE";
@@ -165,24 +136,20 @@ stapdfa::emit_declaration (translator_output *o) const
   o->newline() << "#undef YYMARKER";
 
   o->newline() << "match_success:";
-#ifndef STAPREGEX_STANDALONE
   if (do_tag)
     {
       o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
       o->newline() << "c->last_match.result = 1";
       content->emit_tagsave(o, "c->last_match.tag_states", "c->last_match.tag_vals", "c->last_match.num_final_tags");
     }
-#endif
   o->newline() << "return 1;";
 
   o->newline() << "match_fail:";
-#ifndef STAPREGEX_STANDALONE
   if (do_tag)
     {  
       o->newline() << "strlcpy (c->last_match.matched_str, str, MAXSTRINGLEN);";
       o->newline() << "c->last_match.result = 0;";
     }
-#endif
   o->newline() << "return 0;";
 
   o->newline(-1) << "}";
@@ -191,11 +158,7 @@ stapdfa::emit_declaration (translator_output *o) const
 void
 stapdfa::emit_matchop_start (translator_output *o) const
 {
-#ifdef STAPREGEX_STANDALONE
-  o->line() << "(" << func_name << "((";
-#else
   o->line() << "(" << func_name << "(c, ("; // XXX: assumes context is available
-#endif
 }
 
 void
