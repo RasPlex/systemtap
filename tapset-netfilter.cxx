@@ -187,20 +187,20 @@ netfilter_derived_probe::netfilter_derived_probe (systemtap_session &s, probe* p
         }
       catch (const runtime_error&) 
         {
-          throw semantic_error
+          throw SEMANTIC_ERROR
               (_F("unsupported netfilter priority \"%s\" for protocol family \"%s\"; need stap -g",
               priority.c_str(), pf.c_str()));
         }
 
       // Complain and abort if there were any hook name errors
       if (hook_error)
-            throw semantic_error
+            throw SEMANTIC_ERROR
                 (_F("unsupported netfilter hook \"%s\" for protocol family \"%s\"; need stap -g",
                 hook.c_str(), pf.c_str()));
 
       // Complain and abort if there were any pf errors
       if (pf_error)
-        throw semantic_error
+        throw SEMANTIC_ERROR
             (_F("unsupported netfilter protocol family \"%s\"; need stap -g", pf.c_str()));
     }
 
@@ -397,7 +397,7 @@ netfilter_var_expanding_visitor::visit_target_symbol (target_symbol* e)
       assert(e->name.size() > 0 && e->name[0] == '$');
 
       if (e->addressof)
-        throw semantic_error(_("cannot take address of netfilter hook context variable"), e->tok);
+        throw SEMANTIC_ERROR(_("cannot take address of netfilter hook context variable"), e->tok);
 
       // We map all $context variables to similarly named probe locals.
       // See emit_module_decls for how the parameters & result are handled.
@@ -412,14 +412,14 @@ netfilter_var_expanding_visitor::visit_target_symbol (target_symbol* e)
       else if (e->name == "$verdict") { c_var = "__nf_verdict"; lvalue_ok = true; need_guru = true; }
       // XXX: also support $$vars / $$parms
       else
-        throw semantic_error(_("unsupported context variable"), e->tok);
+        throw SEMANTIC_ERROR(_("unsupported context variable"), e->tok);
 
       if (! lvalue_ok && is_active_lvalue (e))
-        throw semantic_error(_("write to netfilter parameter not permitted"), e->tok);
+        throw SEMANTIC_ERROR(_("write to netfilter parameter not permitted"), e->tok);
 
       // Writing to variables like $verdict requires guru mode, for obvious reasons
       if(need_guru && !sess.guru_mode)
-        throw semantic_error(_("write to netfilter verdict requires guru mode; need stap -g"), e->tok);
+        throw SEMANTIC_ERROR(_("write to netfilter verdict requires guru mode; need stap -g"), e->tok);
 
       context_vars.insert (c_var);
 
@@ -464,10 +464,10 @@ netfilter_builder::build(systemtap_session & sess,
   string priority = "0";      // Default: somewhere in the middle
 
   if(!get_param(parameters, TOK_HOOK, hook))
-    throw semantic_error (_("missing hooknum"));
+    throw SEMANTIC_ERROR (_("missing hooknum"));
 
   if(!get_param(parameters, TOK_PF, pf))
-    throw semantic_error (_("missing protocol family"));
+    throw SEMANTIC_ERROR (_("missing protocol family"));
 
   get_param(parameters, TOK_PRIORITY, priority);
 

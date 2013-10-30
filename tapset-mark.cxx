@@ -96,10 +96,10 @@ mark_var_expanding_visitor::visit_target_symbol_arg (target_symbol* e)
   int argnum = atoi (argnum_s.c_str());
 
   if (argnum < 1 || argnum > (int)mark_args.size())
-    throw semantic_error (_("invalid marker argument number"), e->tok);
+    throw SEMANTIC_ERROR (_("invalid marker argument number"), e->tok);
 
   if (is_active_lvalue (e))
-    throw semantic_error(_("write to marker parameter not permitted"), e->tok);
+    throw SEMANTIC_ERROR(_("write to marker parameter not permitted"), e->tok);
 
   e->assert_no_components("marker");
 
@@ -119,7 +119,7 @@ mark_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
   string sname = e->name;
 
   if (is_active_lvalue (e))
-    throw semantic_error(_F("write to marker '%s' not permitted", sname.c_str()), e->tok);
+    throw SEMANTIC_ERROR(_F("write to marker '%s' not permitted", sname.c_str()), e->tok);
 
   e->assert_no_components("marker");
 
@@ -183,7 +183,7 @@ mark_var_expanding_visitor::visit_target_symbol (target_symbol* e)
   try
     {
       if (e->addressof)
-        throw semantic_error(_("cannot take address of marker variable"), e->tok);
+        throw SEMANTIC_ERROR(_("cannot take address of marker variable"), e->tok);
 
       if (startswith(e->name, "$arg"))
         visit_target_symbol_arg (e);
@@ -191,7 +191,7 @@ mark_var_expanding_visitor::visit_target_symbol (target_symbol* e)
                || e->name == "$$parms" || e->name == "$$vars")
         visit_target_symbol_context (e);
       else
-        throw semantic_error (_("invalid target symbol for marker, $argN, $name, $format, $$parms or $$vars expected"),
+        throw SEMANTIC_ERROR (_("invalid target symbol for marker, $argN, $name, $format, $$parms or $$vars expected"),
                               e->tok);
     }
   catch (const semantic_error &er)
@@ -446,7 +446,7 @@ mark_derived_probe::initialize_probe_context_vars (translator_output* o)
 	  break;
 
 	default:
-	  throw semantic_error (_("cannot expand unknown type"));
+	  throw SEMANTIC_ERROR (_("cannot expand unknown type"));
 	  break;
 	}
     }

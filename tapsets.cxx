@@ -1224,7 +1224,7 @@ dwarf_query::parse_function_spec(const string & spec)
   return;
 
 bad:
-  throw semantic_error(_F("malformed specification '%s'", spec.c_str()),
+  throw SEMANTIC_ERROR(_F("malformed specification '%s'", spec.c_str()),
                        base_probe->tok);
 }
 
@@ -1506,7 +1506,7 @@ query_addr(Dwarf_Addr addr, dwarf_query *q)
             msg << _F(" (no line info found for '%s', in module '%s')",
                       dw.cu_name().c_str(), dw.module_name.c_str());
           if (! q->sess.guru_mode)
-            throw semantic_error(msg.str());
+            throw SEMANTIC_ERROR(msg.str());
           else
            q->sess.print_warning(msg.str());
         }
@@ -2016,7 +2016,7 @@ validate_module_elf (Dwfl_Module *mod, const char *name,  base_query *q)
       msg << _F("ELF machine %s|%s (code %d) mismatch with target %s in '%s'",
                 expect_machine.c_str(), expect_machine2.c_str(), elf_machine,
                 sess_machine.c_str(), debug_filename);
-      throw semantic_error(msg.str ());
+      throw SEMANTIC_ERROR(msg.str ());
     }
 
   if (q->sess.verbose>1)
@@ -2377,7 +2377,7 @@ var_expanding_visitor::rewrite_lvalue(const token* tok, const std::string& eop,
 	  ops.resize(ops.size() - 1);	// chop off the last ','
 
 	  // Throw the error.
-	  throw semantic_error (_NF("Only the following assign operator is implemented on target variables: %s",
+	  throw SEMANTIC_ERROR (_NF("Only the following assign operator is implemented on target variables: %s",
                                             "Only the following assign operators are implemented on target variables: %s",
                                            valid_ops_size, ops.c_str()), tok);
 
@@ -2573,11 +2573,11 @@ dwarf_pretty_print::init_ts (const target_symbol& e)
   ts = new target_symbol (e);
 
   if (ts->addressof)
-    throw semantic_error(_("cannot take address of pretty-printed variable"), ts->tok);
+    throw SEMANTIC_ERROR(_("cannot take address of pretty-printed variable"), ts->tok);
 
   if (ts->components.empty() ||
       ts->components.back().type != target_symbol::comp_pretty_print)
-    throw semantic_error(_("invalid target_symbol for pretty-print"), ts->tok);
+    throw SEMANTIC_ERROR(_("invalid target_symbol for pretty-print"), ts->tok);
   print_full = ts->components.back().member.length() > 1;
   ts->components.pop_back();
 }
@@ -3535,7 +3535,7 @@ dwarf_var_expanding_visitor::gen_kretprobe_saved_return(expression* e)
       getfn = "_get_kretprobe_long";
       break;
     default:
-      throw semantic_error(_("unknown type to save in kretprobe"), e->tok);
+      throw SEMANTIC_ERROR(_("unknown type to save in kretprobe"), e->tok);
     }
 
   // Create the entry code
@@ -3738,7 +3738,7 @@ dwarf_var_expanding_visitor::visit_target_symbol (target_symbol *e)
     {
       bool lvalue = is_active_lvalue(e);
       if (lvalue && !q.sess.guru_mode)
-        throw semantic_error(_("write to target variable not permitted; need stap -g"), e->tok);
+        throw SEMANTIC_ERROR(_("write to target variable not permitted; need stap -g"), e->tok);
 
       // XXX: process $context vars should be writable
 
@@ -3750,7 +3750,7 @@ dwarf_var_expanding_visitor::visit_target_symbol (target_symbol *e)
           && e->name != "$$return") // nor the other special variable handled below
         {
           if (lvalue)
-            throw semantic_error(_("write to target variable not permitted in .return probes"), e->tok);
+            throw SEMANTIC_ERROR(_("write to target variable not permitted in .return probes"), e->tok);
           visit_target_symbol_saved_return(e);
           return;
         }
@@ -3759,10 +3759,10 @@ dwarf_var_expanding_visitor::visit_target_symbol (target_symbol *e)
           || (q.has_return && (e->name == "$$return")))
         {
           if (lvalue)
-            throw semantic_error(_("cannot write to context variable"), e->tok);
+            throw SEMANTIC_ERROR(_("cannot write to context variable"), e->tok);
 
           if (e->addressof)
-            throw semantic_error(_("cannot take address of context variable"), e->tok);
+            throw SEMANTIC_ERROR(_("cannot take address of context variable"), e->tok);
 
           e->assert_no_components("dwarf", true);
 
@@ -3774,7 +3774,7 @@ dwarf_var_expanding_visitor::visit_target_symbol (target_symbol *e)
           e->components.back().type == target_symbol::comp_pretty_print)
         {
           if (lvalue)
-            throw semantic_error(_("cannot write to pretty-printed variable"), e->tok);
+            throw SEMANTIC_ERROR(_("cannot write to pretty-printed variable"), e->tok);
 
           if (q.has_return && (e->name == "$return"))
             {
@@ -3900,7 +3900,7 @@ dwarf_var_expanding_visitor::visit_perf_op (perf_op *e)
       provide (sym);
     }
   else
-    throw semantic_error(_F("perf counter '%s' not defined", e_lit_val.c_str()));
+    throw SEMANTIC_ERROR(_F("perf counter '%s' not defined", e_lit_val.c_str()));
 }
 
 
@@ -3914,7 +3914,7 @@ dwarf_var_expanding_visitor::getscopes(target_symbol *e)
       if (scopes.empty())
         //throw semantic_error (_F("unable to find any scopes containing %d", addr), e->tok);
         //                        ((scope_die == NULL) ? "" : (string (" in ") + (dwarf_diename(scope_die) ?: "<unknown>") + "(" + (dwarf_diename(q.dw.cu) ?: "<unknown>") ")" ))
-        throw semantic_error ("unable to find any scopes containing "
+        throw SEMANTIC_ERROR ("unable to find any scopes containing "
                               + lex_cast_hex(addr)
                               + ((scope_die == NULL) ? ""
                                  : (string (" in ")
@@ -4010,7 +4010,7 @@ dwarf_cast_query::handle_query_module()
           e.components.back().type == target_symbol::comp_pretty_print)
         {
           if (lvalue)
-            throw semantic_error(_("cannot write to pretty-printed variable"), e.tok);
+            throw SEMANTIC_ERROR(_("cannot write to pretty-printed variable"), e.tok);
 
           dwarf_pretty_print dpp(dw, type_die, e.operand, true, userspace_p, e);
           result = dpp.expand();
@@ -4081,7 +4081,7 @@ void dwarf_cast_expanding_visitor::visit_cast_op (cast_op* e)
 {
   bool lvalue = is_active_lvalue(e);
   if (lvalue && !s.guru_mode)
-    throw semantic_error(_("write to @cast context variable not permitted; need stap -g"), e->tok);
+    throw SEMANTIC_ERROR(_("write to @cast context variable not permitted; need stap -g"), e->tok);
 
   if (e->module.empty())
     e->module = "kernel"; // "*" may also be reasonable to search all kernel modules
@@ -4255,7 +4255,7 @@ dwarf_atvar_expanding_visitor::visit_atvar_op (atvar_op* e)
 {
   const bool lvalue = is_active_lvalue(e);
   if (lvalue && !s.guru_mode)
-    throw semantic_error(_("write to @var variable not permitted; "
+    throw SEMANTIC_ERROR(_("write to @var variable not permitted; "
                            "need stap -g"), e->tok);
 
   if (e->module.empty())
@@ -4314,7 +4314,7 @@ dwarf_atvar_expanding_visitor::visit_atvar_op (atvar_op* e)
 
       /* Unable to find the variable in the current module, so we chain
        * an error in atvar_op */
-      semantic_error  er(_F("unable to find global '%s' in %s%s%s",
+      semantic_error  er(ERR_SRC, _F("unable to find global '%s' in %s%s%s",
                             e->sym_name().c_str(), module.c_str(),
                             e->cu_name.empty() ? "" : _(", in "),
                             e->cu_name.c_str()));
@@ -4397,7 +4397,7 @@ check_process_probe_kernel_support(systemtap_session& s)
       && kernel_supports_inode_uprobes(s))
     return;
 
-  throw semantic_error (_("process probes not available without kernel CONFIG_UTRACE or CONFIG_TRACEPOINTS/CONFIG_ARCH_SUPPORTS_UPROBES/CONFIG_UPROBES"));
+  throw SEMANTIC_ERROR (_("process probes not available without kernel CONFIG_UTRACE or CONFIG_TRACEPOINTS/CONFIG_ARCH_SUPPORTS_UPROBES/CONFIG_UPROBES"));
 }
 
 
@@ -4453,9 +4453,9 @@ dwarf_derived_probe::dwarf_derived_probe(const string& funcname,
     {
       // Assert kernel relocation invariants
       if (section == "" && dwfl_addr != addr) // addr should be absolute
-        throw semantic_error (_("missing relocation basis"), tok);
+        throw SEMANTIC_ERROR (_("missing relocation basis"), tok);
       if (section != "" && dwfl_addr == addr) // addr should be an offset
-        throw semantic_error (_("inconsistent relocation address"), tok);
+        throw SEMANTIC_ERROR (_("inconsistent relocation address"), tok);
     }
 
   // XXX: hack for strange g++/gcc's
@@ -4465,7 +4465,7 @@ dwarf_derived_probe::dwarf_derived_probe(const string& funcname,
 
   // Range limit maxactive() value
   if (has_maxactive && (maxactive_val < 0 || maxactive_val > USHRT_MAX))
-    throw semantic_error (_F("maxactive value out of range [0,%s]",
+    throw SEMANTIC_ERROR (_F("maxactive value out of range [0,%s]",
                           lex_cast(USHRT_MAX).c_str()), q.base_loc->components.front()->tok);
 
   // Expand target variables in the probe body
@@ -5650,7 +5650,7 @@ void
 sdt_uprobe_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
 {
   if (e->addressof)
-    throw semantic_error(_("cannot take address of context variable"), e->tok);
+    throw SEMANTIC_ERROR(_("cannot take address of context variable"), e->tok);
 
   if (e->name == "$$name")
     {
@@ -5733,7 +5733,7 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
 	  // both of which get resolved later.
 	  // Throw it now, and it might be resolved by DWARF later.
 	  need_debug_info = true;
-	  throw semantic_error(_("target-symbol requires debuginfo"), e->tok);
+	  throw SEMANTIC_ERROR(_("target-symbol requires debuginfo"), e->tok);
 	}
 
       assert (arg_tokens.size() >= argno);
@@ -6081,7 +6081,7 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
         }
       assert (argexpr == 0);
       need_debug_info = true;
-      throw semantic_error(_("SDT asm not understood, requires debuginfo [man error::sdt]"), e->tok);
+      throw SEMANTIC_ERROR(_("SDT asm not understood, requires debuginfo [man error::sdt]"), e->tok);
 
     matched:
       assert (argexpr != 0);
@@ -6093,7 +6093,7 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
       if (e->components.empty()) // We have a scalar
         {
           if (e->addressof)
-            throw semantic_error(_("cannot take address of sdt variable"), e->tok);
+            throw SEMANTIC_ERROR(_("cannot take address of sdt variable"), e->tok);
           provide (argexpr);
           return;
         }
@@ -6181,7 +6181,7 @@ plt_expanding_visitor::visit_target_symbol (target_symbol *e)
       // variable not found -> throw a semantic error
       // (only to be caught right away, but this may be more complex later...)
       string alternatives = "$$name";
-      throw semantic_error(_F("unable to find plt variable '%s' (alternatives: %s)",
+      throw SEMANTIC_ERROR(_F("unable to find plt variable '%s' (alternatives: %s)",
                               e->name.c_str(), alternatives.c_str()), e->tok);
     }
   catch (const semantic_error &er)
@@ -6862,7 +6862,7 @@ dwarf_builder::build(systemtap_session & sess,
           wordexp_t words;
           int rc = wordexp(sess.cmd.c_str(), &words, WRDE_NOCMD|WRDE_UNDEF);
           if(rc || words.we_wordc <= 0)
-            throw semantic_error(_("unspecified process probe is invalid without a -c COMMAND"));
+            throw SEMANTIC_ERROR(_("unspecified process probe is invalid without a -c COMMAND"));
           module_name = sess.sysroot + words.we_wordv[0];
           filled_parameters[TOK_PROCESS] = new literal_string(module_name);// this needs to be used in place of the blank map
           // in the case of TOK_MARK we need to modify locations as well
@@ -6889,7 +6889,7 @@ dwarf_builder::build(systemtap_session & sess,
           set<string> dupes;
           int rc = glob (module_name.c_str(), 0, NULL, & the_blob);
           if (rc)
-            throw semantic_error (_F("glob %s error (%s)", module_name.c_str(), lex_cast(rc).c_str() ));
+            throw SEMANTIC_ERROR (_F("glob %s error (%s)", module_name.c_str(), lex_cast(rc).c_str() ));
           unsigned results_pre = finished_results.size();
           for (unsigned i = 0; i < the_blob.gl_pathc; ++i)
             {
@@ -6969,7 +6969,7 @@ dwarf_builder::build(systemtap_session & sess,
               string sugs = suggest_functions(sess, func);
               modules_seen.clear();
               if (!sugs.empty())
-                throw semantic_error (_NF("no match (similar function: %s)",
+                throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
                                           "no match (similar functions: %s)",
                                           sugs.find(',') == string::npos,
                                           sugs.c_str()));
@@ -7089,7 +7089,7 @@ dwarf_builder::build(systemtap_session & sess,
         {
           if (kernel_supports_inode_uprobes(sess) &&
               !kernel_supports_inode_uretprobes(sess))
-            throw semantic_error
+            throw SEMANTIC_ERROR
               (_("process return probes not available [man error::inode-uprobes]"));
         }
 
@@ -7128,7 +7128,7 @@ dwarf_builder::build(systemtap_session & sess,
       // assert guru mode for absolute probes
       if (! q.base_probe->privileged)
         {
-          throw semantic_error (_("absolute statement probe in unprivileged script; need stap -g"),
+          throw SEMANTIC_ERROR (_("absolute statement probe in unprivileged script; need stap -g"),
                                 q.base_probe->tok);
         }
 
@@ -7221,7 +7221,7 @@ dwarf_builder::build(systemtap_session & sess,
         // sense since it's possible that the user misspelled the same
         // function in different probes, in which case the first
         // suggestion is sufficient.
-        throw semantic_error (_NF("no match (similar function: %s)",
+        throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
                                   "no match (similar functions: %s)",
                                   sugs.find(',') == string::npos,
                                   sugs.c_str()));
@@ -7663,7 +7663,7 @@ struct uprobe_builder: public derived_probe_builder
     int64_t process, address;
 
     if (kernel_supports_inode_uprobes(sess))
-      throw semantic_error (_("absolute process probes not available [man error::inode-uprobes]"));
+      throw SEMANTIC_ERROR (_("absolute process probes not available [man error::inode-uprobes]"));
 
     bool b1 = get_param (parameters, TOK_PROCESS, process);
     (void) b1;
@@ -8916,7 +8916,7 @@ kprobe_builder::build(systemtap_session & sess,
     {
       // assert guru mode for absolute probes
       if ( has_statement_num && has_absolute && !base->privileged )
-	throw semantic_error (_("absolute statement probe in unprivileged script; need stap -g"), base->tok);
+	throw SEMANTIC_ERROR (_("absolute statement probe in unprivileged script; need stap -g"), base->tok);
 
       finished_results.push_back (new kprobe_derived_probe (sess,
 							    finished_results,
@@ -9282,10 +9282,10 @@ hwbkpt_builder::build(systemtap_session & sess,
   bool has_addr, has_symbol_str, has_write, has_rw, has_len;
 
   if (! (sess.kernel_config["CONFIG_PERF_EVENTS"] == string("y")))
-      throw semantic_error (_("CONFIG_PERF_EVENTS not available on this kernel"),
+      throw SEMANTIC_ERROR (_("CONFIG_PERF_EVENTS not available on this kernel"),
                             location->components[0]->tok);
   if (! (sess.kernel_config["CONFIG_HAVE_HW_BREAKPOINT"] == string("y")))
-      throw semantic_error (_("CONFIG_HAVE_HW_BREAKPOINT not available on this kernel"),
+      throw SEMANTIC_ERROR (_("CONFIG_HAVE_HW_BREAKPOINT not available on this kernel"),
                             location->components[0]->tok);
 
   has_addr = get_param (parameters, TOK_HWBKPT, hwbkpt_address);
@@ -9392,7 +9392,7 @@ tracepoint_var_expanding_visitor::visit_target_symbol_arg (target_symbol* e)
 
       // We hope that this value ends up not being referenced after all, so it
       // can be optimized out quietly.
-      throw semantic_error(_F("unable to find tracepoint variable '%s' (alternatives: %s)",
+      throw SEMANTIC_ERROR(_F("unable to find tracepoint variable '%s' (alternatives: %s)",
                               e->name.c_str(), alternatives.str().c_str()), e->tok);
       // NB: we can have multiple errors, since a target variable
       // may be expanded in several different contexts:
@@ -9406,7 +9406,7 @@ tracepoint_var_expanding_visitor::visit_target_symbol_arg (target_symbol* e)
   // we can only write to dereferenced fields, and only if guru mode is on
   bool lvalue = is_active_lvalue(e);
   if (lvalue && (!dw.sess.guru_mode || e->components.empty()))
-    throw semantic_error(_F("write to tracepoint variable '%s' not permitted; need stap -g", e->name.c_str()), e->tok);
+    throw SEMANTIC_ERROR(_F("write to tracepoint variable '%s' not permitted; need stap -g", e->name.c_str()), e->tok);
 
   // XXX: if a struct/union arg is passed by value, then writing to its fields
   // is also meaningless until you dereference past a pointer member.  It's
@@ -9415,7 +9415,7 @@ tracepoint_var_expanding_visitor::visit_target_symbol_arg (target_symbol* e)
   if (e->components.empty())
     {
       if (e->addressof)
-        throw semantic_error(_("cannot take address of tracepoint variable"), e->tok);
+        throw SEMANTIC_ERROR(_("cannot take address of tracepoint variable"), e->tok);
 
       // Just grab the value from the probe locals
       symbol* sym = new symbol;
@@ -9433,7 +9433,7 @@ tracepoint_var_expanding_visitor::visit_target_symbol_arg (target_symbol* e)
       if (e->components.back().type == target_symbol::comp_pretty_print)
         {
           if (lvalue)
-            throw semantic_error(_("cannot write to pretty-printed variable"), e->tok);
+            throw SEMANTIC_ERROR(_("cannot write to pretty-printed variable"), e->tok);
 
           dwarf_pretty_print dpp(dw, &arg->type_die, e2, arg->isptr, false, *e);
           dpp.expand()->visit (this);
@@ -9470,10 +9470,10 @@ void
 tracepoint_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
 {
   if (e->addressof)
-    throw semantic_error(_("cannot take address of context variable"), e->tok);
+    throw SEMANTIC_ERROR(_("cannot take address of context variable"), e->tok);
 
   if (is_active_lvalue (e))
-    throw semantic_error(_F("write to tracepoint '%s' not permitted", e->name.c_str()), e->tok);
+    throw SEMANTIC_ERROR(_F("write to tracepoint '%s' not permitted", e->name.c_str()), e->tok);
 
   if (e->name == "$$name")
     {
@@ -9579,7 +9579,7 @@ tracepoint_derived_probe::tracepoint_derived_probe (systemtap_session& s,
 #if 0 /* This convention is not enforced. */
   size_t header_pos = decl_file.rfind("trace/");
   if (header_pos == string::npos)
-    throw semantic_error ("cannot parse header location for tracepoint '"
+    throw SEMANTIC_ERROR ("cannot parse header location for tracepoint '"
                                   + tracepoint_name + "' in '"
                                   + decl_file + "'");
   header = decl_file.substr(header_pos);
@@ -9680,7 +9680,7 @@ tracepoint_derived_probe::build_args(dwflpp&, Dwarf_Die& func_die)
           // read the type of this parameter
           if (!dwarf_attr_die (&arg, DW_AT_type, &tparg.type_die)
               || !dwarf_type_name(&tparg.type_die, tparg.c_type))
-            throw semantic_error (_F("cannot get type of parameter '%s' of tracepoint '%s'",
+            throw SEMANTIC_ERROR (_F("cannot get type of parameter '%s' of tracepoint '%s'",
                                      tparg.name.c_str(), tracepoint_name.c_str()));
 
           tparg.usable = resolve_tracepoint_arg_type(tparg);

@@ -164,14 +164,14 @@ vardecl::set_arity (int a, const token* t)
     return;
 
   if (a == 0 && maxsize > 0)
-    throw semantic_error (_("inconsistent arity"), tok);
+    throw SEMANTIC_ERROR (_("inconsistent arity"), tok);
 
   if (arity != a && arity >= 0)
     {
-      semantic_error err (_F("inconsistent arity (%s vs %d)",
+      semantic_error err (ERR_SRC, _F("inconsistent arity (%s vs %d)",
                              lex_cast(arity).c_str(), a), t?:tok);
       if (arity_tok)
-	err.chain = new semantic_error (_F("arity %s first inferred here",
+	err.chain = new SEMANTIC_ERROR (_F("arity %s first inferred here",
                                            lex_cast(arity).c_str()), arity_tok);
       throw err;
     }
@@ -206,9 +206,9 @@ void
 functiondecl::join (systemtap_session& s)
 {
   if (!synthetic)
-    throw semantic_error (_("internal error, joining a non-synthetic function"), tok);
+    throw SEMANTIC_ERROR (_("internal error, joining a non-synthetic function"), tok);
   if (!s.functions.insert (make_pair (name, this)).second)
-    throw semantic_error (_F("synthetic function '%s' conflicts with an existing function",
+    throw SEMANTIC_ERROR (_F("synthetic function '%s' conflicts with an existing function",
                              name.c_str()), tok);
   tok->location.file->functions.push_back (this);
 }
@@ -254,18 +254,18 @@ target_symbol::assert_no_components(const std::string& tapset, bool pretty_ok)
     {
     case comp_literal_array_index:
     case comp_expression_array_index:
-      throw semantic_error(_F("%s variable '%s' may not be used as array",
+      throw SEMANTIC_ERROR(_F("%s variable '%s' may not be used as array",
                               tapset.c_str(), name.c_str()), components[0].tok);
     case comp_struct_member:
-      throw semantic_error(_F("%s variable '%s' may not be used as a structure",
+      throw SEMANTIC_ERROR(_F("%s variable '%s' may not be used as a structure",
                               tapset.c_str(), name.c_str()), components[0].tok);
     case comp_pretty_print:
       if (!pretty_ok)
-        throw semantic_error(_F("%s variable '%s' may not be pretty-printed",
+        throw SEMANTIC_ERROR(_F("%s variable '%s' may not be pretty-printed",
                                 tapset.c_str(), name.c_str()), components[0].tok);
       return;
     default:
-      throw semantic_error (_F("invalid use of %s variable '%s'",
+      throw SEMANTIC_ERROR (_F("invalid use of %s variable '%s'",
                             tapset.c_str(), name.c_str()), components[0].tok);
     }
 }
@@ -900,7 +900,7 @@ print_format::string_to_components(string const & str)
 	}
 
       if (curr.type == conv_unspecified)
-	throw parse_error(_("invalid or missing conversion specifier"));
+	throw PARSE_ERROR(_("invalid or missing conversion specifier"));
 
       ++i;
       res.push_back(curr);
@@ -913,7 +913,7 @@ print_format::string_to_components(string const & str)
       if (curr.type == conv_literal)
 	res.push_back(curr);
       else
-	throw parse_error(_("trailing incomplete print format conversion"));
+	throw PARSE_ERROR(_("trailing incomplete print format conversion"));
     }
 
   return res;
@@ -1601,9 +1601,9 @@ classify_indexable(indexable* ix,
   hist_out = NULL;
   assert(ix != NULL);
   if (!(ix->is_symbol (array_out) || ix->is_hist_op (hist_out)))
-    throw semantic_error(_("Expecting symbol or histogram operator"), ix->tok);
+    throw SEMANTIC_ERROR(_("Expecting symbol or histogram operator"), ix->tok);
   if (!(hist_out || array_out))
-    throw semantic_error(_("Failed to classify indexable"), ix->tok);
+    throw SEMANTIC_ERROR(_("Failed to classify indexable"), ix->tok);
 }
 
 
@@ -1958,13 +1958,13 @@ varuse_collecting_visitor::visit_embeddedcode (embeddedcode *s)
       ! session.runtime_usermode_p () &&
       s->code.find ("/* unprivileged */") == string::npos &&
       s->code.find ("/* myproc-unprivileged */") == string::npos)
-    throw semantic_error (_F("function may not be used when --privilege=%s is specified",
+    throw SEMANTIC_ERROR (_F("function may not be used when --privilege=%s is specified",
 			     pr_name (session.privilege)),
 			  current_function->tok);
 
   // Don't allow /* guru */ functions unless -g is active.
   if (!session.guru_mode && s->code.find ("/* guru */") != string::npos)
-    throw semantic_error (_("function may not be used unless -g is specified"),
+    throw SEMANTIC_ERROR (_("function may not be used unless -g is specified"),
 			  current_function->tok);
 
   // PR14524: Support old-style THIS->local syntax on per-function basis.
@@ -2000,13 +2000,13 @@ varuse_collecting_visitor::visit_embedded_expr (embedded_expr *e)
       ! session.runtime_usermode_p () &&
       e->code.find ("/* unprivileged */") == string::npos &&
       e->code.find ("/* myproc-unprivileged */") == string::npos)
-    throw semantic_error (_F("embedded expression may not be used when --privilege=%s is specified",
+    throw SEMANTIC_ERROR (_F("embedded expression may not be used when --privilege=%s is specified",
 			     pr_name (session.privilege)),
 			  e->tok);
 
   // Don't allow /* guru */ functions unless -g is active.
   if (!session.guru_mode && e->code.find ("/* guru */") != string::npos)
-    throw semantic_error (_("embedded expression may not be used unless -g is specified"),
+    throw SEMANTIC_ERROR (_("embedded expression may not be used unless -g is specified"),
 			  e->tok);
 
   // We want to elide embedded-C functions when possible.  For
@@ -2132,7 +2132,7 @@ void
 varuse_collecting_visitor::visit_symbol (symbol *e)
 {
   if (e->referent == 0)
-    throw semantic_error (_("symbol without referent"), e->tok);
+    throw SEMANTIC_ERROR (_("symbol without referent"), e->tok);
 
   // We could handle initialized globals by marking them as "written".
   // However, this current visitor may be called for a function or
@@ -2313,7 +2313,7 @@ throwing_visitor::throwing_visitor (): msg (_("invalid element")) {}
 void
 throwing_visitor::throwone (const token* t)
 {
-  throw semantic_error (msg, t);
+  throw SEMANTIC_ERROR (msg, t);
 }
 
 void

@@ -27,7 +27,7 @@ void dwfl_assert(const string& desc, int rc)
     msg += (dwfl_errmsg (rc) ?: "?");
   else
     msg += std::strerror (rc);
-  throw semantic_error (msg);
+  throw SEMANTIC_ERROR (msg);
 }
 
 void dwarf_assert(const string& desc, int rc)
@@ -39,7 +39,7 @@ void dwarf_assert(const string& desc, int rc)
     msg += dwarf_errmsg (rc);
   else
     msg += std::strerror (rc);
-  throw semantic_error (msg);
+  throw SEMANTIC_ERROR (msg);
 }
 
 

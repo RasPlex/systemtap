@@ -84,10 +84,10 @@ stapdfa::stapdfa (const string& func_name, const string& re,
       exit (1);
 #else
       if (e.pos >= 0)
-        throw semantic_error(_F("regex compilation error (at position %d): %s",
+        throw SEMANTIC_ERROR(_F("regex compilation error (at position %d): %s",
                                 e.pos, e.what()), tok);
       else
-        throw semantic_error(_F("regex compilation error: %s", e.what()), tok);
+        throw SEMANTIC_ERROR(_F("regex compilation error: %s", e.what()), tok);
 #endif
     }
 }
@@ -152,10 +152,10 @@ stapdfa::emit_declaration (translator_output *o) const
       exit (1);
 #else
       if (e.pos >= 0)
-        throw semantic_error(_F("regex compilation error (at position %d): %s",
+        throw SEMANTIC_ERROR(_F("regex compilation error (at position %d): %s",
                                 e.pos, e.what()), tok);
       else
-        throw semantic_error(_F("regex compilation error: %s", e.what()), tok);
+        throw SEMANTIC_ERROR(_F("regex compilation error: %s", e.what()), tok);
 #endif
     }
 

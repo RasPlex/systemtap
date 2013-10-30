@@ -29,11 +29,11 @@ struct recursive_expansion_error : public semantic_error
 {
   ~recursive_expansion_error () throw () {}
   recursive_expansion_error (const std::string& msg, const token* t1=0):
-    semantic_error (msg, t1) {}
+    SEMANTIC_ERROR (msg, t1) {}
 
   recursive_expansion_error (const std::string& msg, const token* t1,
                              const token* t2):
-    semantic_error (msg, t1, t2) {}
+    SEMANTIC_ERROR (msg, t1, t2) {}
 };
 
 // ------------------------------------------------------------------------

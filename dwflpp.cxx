@@ -147,7 +147,7 @@ dwflpp::get_module_dwarf(bool required, bool report)
       find_debug_rpms(sess, module_name.c_str());
 
       if (required)
-        throw semantic_error (msg);
+        throw SEMANTIC_ERROR (msg);
       else
         sess.print_warning(msg);
     }
@@ -330,7 +330,7 @@ dwflpp::setup_kernel(const string& name, systemtap_session & s, bool debuginfo_n
         string dir = string(sess.sysroot + "/lib/modules/" + sess.kernel_release );
         find_debug_rpms(sess, dir.c_str());
       }
-      throw semantic_error (_F("missing %s kernel/module debuginfo [man warning::debuginfo] under '%s'",
+      throw SEMANTIC_ERROR (_F("missing %s kernel/module debuginfo [man warning::debuginfo] under '%s'",
                                 sess.architecture.c_str(), sess.kernel_build_tree.c_str()));
     }
   Dwfl *dwfl = dwfl_ptr.get()->dwfl;
@@ -368,7 +368,7 @@ dwflpp::setup_kernel(const vector<string> &names, bool debuginfo_needed)
         string dir = string(sess.sysroot + "/lib/modules/" + sess.kernel_release );
         find_debug_rpms(sess, dir.c_str());
       }
-      throw semantic_error (_F("missing %s kernel/module debuginfo [man warning::debuginfo] under '%s'",
+      throw SEMANTIC_ERROR (_F("missing %s kernel/module debuginfo [man warning::debuginfo] under '%s'",
                                sess.architecture.c_str(), sess.kernel_build_tree.c_str()));
     }
 
@@ -1393,7 +1393,7 @@ dwflpp::iterate_over_plt (void *object, void (*callback)(void *object, const cha
   case EM_S390:
   case EM_PPC:
   default:
-    throw semantic_error(".plt is not supported on this architecture");
+    throw SEMANTIC_ERROR(".plt is not supported on this architecture");
   }
 
   scn = NULL;
@@ -1600,7 +1600,7 @@ dwflpp::iterate_over_srcfile_lines (char const * srcfile,
         advice << _("Invalid line range (") << lines[0] << "-" << lines[1] << ")";
         if (start_lineno > lines[1])
           advice << _(", the end line number ") << lines[1] << " < " << start_lineno;
-        throw semantic_error (advice.str());
+        throw SEMANTIC_ERROR (advice.str());
        }
   }
 
@@ -1686,7 +1686,7 @@ dwflpp::iterate_over_srcfile_lines (char const * srcfile,
                 advice << srcfile << ":" << hi_try;
               advice << ")";
             }
-          throw semantic_error (advice.str());
+          throw SEMANTIC_ERROR (advice.str());
         }
 
       for (size_t i = 0; i < nsrcs; ++i)
@@ -2136,7 +2136,7 @@ dwflpp::loc2c_error (void *, const char *fmt, ...)
   else
     msg = tmp;
   va_end (ap);
-  throw semantic_error (msg);
+  throw SEMANTIC_ERROR (msg);
 }
 
 
@@ -2276,7 +2276,7 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
       stringstream alternatives;
       print_locals (scopes, alternatives);
       if (pc)
-        throw semantic_error (_F("unable to find local '%s', [man error::dwarf] dieoffset %s in %s, near pc %s %s %s %s (%s)",
+        throw SEMANTIC_ERROR (_F("unable to find local '%s', [man error::dwarf] dieoffset %s in %s, near pc %s %s %s %s (%s)",
                                  local.c_str(),
                                  lex_cast_hex(dwarf_dieoffset(scope_die)).c_str(),
                                  module_name.c_str(),
@@ -2290,7 +2290,7 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                        + alternatives.str())).c_str()),
                               e->tok);
       else
-        throw semantic_error (_F("unable to find global '%s', [man error::dwarf] dieoffset %s in %s, %s %s %s (%s)",
+        throw SEMANTIC_ERROR (_F("unable to find global '%s', [man error::dwarf] dieoffset %s in %s, %s %s %s (%s)",
                                  local.c_str(),
                                  lex_cast_hex(dwarf_dieoffset(scope_die)).c_str(),
                                  module_name.c_str(),
@@ -2369,7 +2369,7 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
              {
                physcopes = getscopes_die(&scope);
                if (physcopes.empty())
-                 throw semantic_error (_F("unable to get die scopes for '%s' in an inlined subroutine",
+                 throw SEMANTIC_ERROR (_F("unable to get die scopes for '%s' in an inlined subroutine",
                                           local.c_str()), e->tok);
                fbscopes = &physcopes;
                inner = 0; // zero is current scope, for look will increase.
@@ -2430,13 +2430,13 @@ dwflpp::translate_location(struct obstack *pool,
       }
 
       /* FALLTHROUGH */
-      throw semantic_error (_F("not accessible at this address [man error::dwarf] (%s, dieoffset: %s)",
+      throw SEMANTIC_ERROR (_F("not accessible at this address [man error::dwarf] (%s, dieoffset: %s)",
                                lex_cast_hex(pc).c_str(), lex_cast_hex(dwarf_dieoffset(die)).c_str()),
                                e->tok);
 
     default:			/* Shouldn't happen.  */
     case -1:
-      throw semantic_error (_F("dwarf_getlocation_addr failed [man error::dwarf] , %s", dwarf_errmsg(-1)), e->tok);
+      throw SEMANTIC_ERROR (_F("dwarf_getlocation_addr failed [man error::dwarf] , %s", dwarf_errmsg(-1)), e->tok);
     }
 
   Dwarf_Op *cfa_ops;
@@ -2561,7 +2561,7 @@ dwflpp::find_struct_member(const target_symbol::component& c,
           continue;
         case -1:	/* Error.  */
         default:	/* Shouldn't happen */
-          throw semantic_error (dwarf_type_name(&inheritees.front()) + ": "
+          throw SEMANTIC_ERROR (dwarf_type_name(&inheritees.front()) + ": "
                                 + string (dwarf_errmsg (-1)),
                                 c.tok);
         }
@@ -2618,7 +2618,7 @@ success:
   /* Union members don't usually have a location,
    * but just use the containing union's location.  */
   else if (dwarf_tag(parentdie) != DW_TAG_union_type)
-    throw semantic_error (_F("no location for field '%s':%s",
+    throw SEMANTIC_ERROR (_F("no location for field '%s':%s",
                              c.member.c_str(), dwarf_errmsg(-1)), c.tok);
 
   return true;
@@ -2629,7 +2629,7 @@ static inline void
 dwarf_die_type (Dwarf_Die *die, Dwarf_Die *typedie_mem, const token *tok=NULL)
 {
   if (!dwarf_attr_die (die, DW_AT_type, typedie_mem))
-    throw semantic_error (_F("cannot get type of field: %s", dwarf_errmsg(-1)), tok);
+    throw SEMANTIC_ERROR (_F("cannot get type of field: %s", dwarf_errmsg(-1)), tok);
 }
 
 
@@ -2675,7 +2675,7 @@ dwflpp::translate_components(struct obstack *pool,
         case DW_TAG_pointer_type:
           /* A pointer with no type is a void* -- can't dereference it. */
           if (!dwarf_hasattr_integrate (typedie, DW_AT_type))
-            throw semantic_error (_F("invalid access '%s' vs '%s'", lex_cast(c).c_str(),
+            throw SEMANTIC_ERROR (_F("invalid access '%s' vs '%s'", lex_cast(c).c_str(),
                                      dwarf_type_name(typedie).c_str()), c.tok);
 
           if (pool)
@@ -2703,7 +2703,7 @@ dwflpp::translate_components(struct obstack *pool,
                                    index.c_str(), 0);
             }
           else
-            throw semantic_error (_F("invalid access '%s' for array type",
+            throw SEMANTIC_ERROR (_F("invalid access '%s' for array type",
                                      lex_cast(c).c_str()), c.tok);
 
           dwarf_die_type (typedie, typedie, c.tok);
@@ -2715,14 +2715,14 @@ dwflpp::translate_components(struct obstack *pool,
         case DW_TAG_union_type:
         case DW_TAG_class_type:
           if (c.type != target_symbol::comp_struct_member)
-            throw semantic_error (_F("invalid access '%s' for %s",
+            throw SEMANTIC_ERROR (_F("invalid access '%s' for %s",
                                      lex_cast(c).c_str(), dwarf_type_name(typedie).c_str()));
 
           if (dwarf_hasattr(typedie, DW_AT_declaration))
             {
               Dwarf_Die *tmpdie = declaration_resolve(typedie);
               if (tmpdie == NULL)
-                throw semantic_error (_F("unresolved %s", dwarf_type_name(typedie).c_str()), c.tok);
+                throw SEMANTIC_ERROR (_F("unresolved %s", dwarf_type_name(typedie).c_str()), c.tok);
               *typedie = *tmpdie;
             }
 
@@ -2748,7 +2748,7 @@ dwflpp::translate_components(struct obstack *pool,
                   print_members(typedie, members, member_dupes);
                   if (members.str().size() != 0)
                     alternatives = " (alternatives:" + members.str() + ")";
-                  throw semantic_error(_F("unable to find member '%s' for %s%s%s", c.member.c_str(),
+                  throw SEMANTIC_ERROR(_F("unable to find member '%s' for %s%s%s", c.member.c_str(),
                                           dwarf_type_name(typedie).c_str(), source.c_str(),
                                           alternatives.c_str()), c.tok);
                 }
@@ -2765,16 +2765,16 @@ dwflpp::translate_components(struct obstack *pool,
 
         case DW_TAG_enumeration_type:
         case DW_TAG_base_type:
-          throw semantic_error (_F("invalid access '%s' vs. %s", lex_cast(c).c_str(),
+          throw SEMANTIC_ERROR (_F("invalid access '%s' vs. %s", lex_cast(c).c_str(),
                                    dwarf_type_name(typedie).c_str()), c.tok);
           break;
 
         case -1:
-          throw semantic_error (_F("cannot find type: %s", dwarf_errmsg(-1)), c.tok);
+          throw SEMANTIC_ERROR (_F("cannot find type: %s", dwarf_errmsg(-1)), c.tok);
           break;
 
         default:
-          throw semantic_error (_F("%s: unexpected type tag %s", dwarf_type_name(typedie).c_str(),
+          throw SEMANTIC_ERROR (_F("%s: unexpected type tag %s", dwarf_type_name(typedie).c_str(),
                                    lex_cast(dwarf_tag(typedie)).c_str()), c.tok);
           break;
         }
@@ -2794,7 +2794,7 @@ dwflpp::resolve_unqualified_inner_typedie (Dwarf_Die *typedie,
          typetag == DW_TAG_volatile_type)
     {
       if (!dwarf_attr_die (innerdie, DW_AT_type, innerdie))
-        throw semantic_error (_F("cannot get type of pointee: %s", dwarf_errmsg(-1)), e->tok);
+        throw SEMANTIC_ERROR (_F("cannot get type of pointee: %s", dwarf_errmsg(-1)), e->tok);
       typetag = dwarf_tag (innerdie);
     }
 }
@@ -2823,10 +2823,10 @@ dwflpp::translate_final_fetch_or_store (struct obstack *pool,
   if (e->addressof)
     {
       if (lvalue)
-        throw semantic_error (_("cannot write to member address"), e->tok);
+        throw SEMANTIC_ERROR (_("cannot write to member address"), e->tok);
 
       if (dwarf_hasattr_integrate (vardie, DW_AT_bit_offset))
-        throw semantic_error (_("cannot take address of bit-field"), e->tok);
+        throw SEMANTIC_ERROR (_("cannot take address of bit-field"), e->tok);
 
       c_translate_addressof (pool, 1, 0, vardie, typedie, tail, "STAP_RETVALUE");
       ty = pe_long;
@@ -2840,14 +2840,14 @@ dwflpp::translate_final_fetch_or_store (struct obstack *pool,
   switch (typetag)
     {
     default:
-      throw semantic_error (_F("unsupported type tag %s for %s", lex_cast(typetag).c_str(),
+      throw SEMANTIC_ERROR (_F("unsupported type tag %s for %s", lex_cast(typetag).c_str(),
                                dwarf_type_name(typedie).c_str()), e->tok);
       break;
 
     case DW_TAG_structure_type:
     case DW_TAG_class_type:
     case DW_TAG_union_type:
-      throw semantic_error (_F("'%s' is being accessed instead of a member",
+      throw SEMANTIC_ERROR (_F("'%s' is being accessed instead of a member",
                                dwarf_type_name(typedie).c_str()), e->tok);
       break;
 
@@ -2862,7 +2862,7 @@ dwflpp::translate_final_fetch_or_store (struct obstack *pool,
         if (encoding == (Dwarf_Word) -1)
           {
             // clog << "bad type1 " << encoding << " diestr" << endl;
-            throw semantic_error (_F("unsupported type (mystery encoding %s for %s", lex_cast(encoding).c_str(),
+            throw SEMANTIC_ERROR (_F("unsupported type (mystery encoding %s for %s", lex_cast(encoding).c_str(),
                                      dwarf_type_name(typedie).c_str()), e->tok);
           }
 
@@ -2871,7 +2871,7 @@ dwflpp::translate_final_fetch_or_store (struct obstack *pool,
             /* XXX || many others? */)
           {
             // clog << "bad type " << encoding << " diestr" << endl;
-            throw semantic_error (_F("unsupported type (encoding %s) for %s", lex_cast(encoding).c_str(),
+            throw SEMANTIC_ERROR (_F("unsupported type (encoding %s) for %s", lex_cast(encoding).c_str(),
                                      dwarf_type_name(typedie).c_str()), e->tok);
           }
       }
@@ -2896,10 +2896,10 @@ dwflpp::translate_final_fetch_or_store (struct obstack *pool,
           {
             ty = pe_long;
             if (typetag == DW_TAG_array_type)
-              throw semantic_error (_("cannot write to array address"), e->tok);
+              throw SEMANTIC_ERROR (_("cannot write to array address"), e->tok);
             if (typetag == DW_TAG_reference_type ||
                 typetag == DW_TAG_rvalue_reference_type)
-              throw semantic_error (_("cannot write to reference"), e->tok);
+              throw SEMANTIC_ERROR (_("cannot write to reference"), e->tok);
             assert (typetag == DW_TAG_pointer_type);
             c_translate_pointer_store (pool, 1, 0 /* PR9768 */, typedie, tail,
                                        "STAP_ARG_value");
@@ -2945,7 +2945,7 @@ dwflpp::express_as_string (string prelude,
   // Ensure that DWARF keeps loc2c to a "reasonable" stack size
   // 32 intptr_t leads to max 256 bytes on the stack
   if (stack_depth > 32)
-    throw semantic_error("oversized DWARF stack");
+    throw SEMANTIC_ERROR("oversized DWARF stack");
 
   fprintf(memstream, "%s", postlude.c_str());
   fprintf(memstream, "  goto out;\n");
@@ -3056,7 +3056,7 @@ dwflpp::literal_stmt_for_local (vector<Dwarf_Die>& scopes,
 				       NULL, &addr_loc, 1, &tail, NULL, NULL);
 	}
       else
-        throw semantic_error (_F("failed to retrieve location attribute for '%s' [man error::dwarf] (dieoffset: %s)",
+        throw SEMANTIC_ERROR (_F("failed to retrieve location attribute for '%s' [man error::dwarf] (dieoffset: %s)",
                                  local.c_str(), lex_cast_hex(dwarf_dieoffset(&vardie)).c_str()), e->tok);
     }
   else
@@ -3066,7 +3066,7 @@ dwflpp::literal_stmt_for_local (vector<Dwarf_Die>& scopes,
 
   Dwarf_Die typedie;
   if (dwarf_attr_die (&vardie, DW_AT_type, &typedie) == NULL)
-    throw semantic_error(_F("failed to retrieve type attribute for '%s' [man error::dwarf] (dieoffset: %s)", local.c_str(), lex_cast_hex(dwarf_dieoffset(&vardie)).c_str()), e->tok);
+    throw SEMANTIC_ERROR(_F("failed to retrieve type attribute for '%s' [man error::dwarf] (dieoffset: %s)", local.c_str(), lex_cast_hex(dwarf_dieoffset(&vardie)).c_str()), e->tok);
 
   translate_components (&pool, &tail, pc, e, &vardie, &typedie);
 
@@ -3100,7 +3100,7 @@ dwflpp::type_die_for_local (vector<Dwarf_Die>& scopes,
   find_variable_and_frame_base (scopes, pc, local, e, &vardie, &attr_mem);
 
   if (dwarf_attr_die (&vardie, DW_AT_type, typedie) == NULL)
-    throw semantic_error(_F("failed to retrieve type attribute for '%s' [man error::dwarf]", local.c_str()), e->tok);
+    throw SEMANTIC_ERROR(_F("failed to retrieve type attribute for '%s' [man error::dwarf]", local.c_str()), e->tok);
 
   translate_components (NULL, NULL, pc, e, &vardie, typedie);
   return typedie;
@@ -3128,14 +3128,14 @@ dwflpp::literal_stmt_for_return (Dwarf_Die *scope_die,
                                                    &locops);
   if (nlocops < 0)
     {
-      throw semantic_error(_F("failed to retrieve return value location for %s [man error::dwarf] (%s)",
+      throw SEMANTIC_ERROR(_F("failed to retrieve return value location for %s [man error::dwarf] (%s)",
                           (dwarf_diename(scope_die) ?: "<unknown>"),
                           (dwarf_diename(cu) ?: "<unknown>")), e->tok);
     }
   // the function has no return value (e.g. "void" in C)
   else if (nlocops == 0)
     {
-      throw semantic_error(_F("function %s (%s) has no return value",
+      throw SEMANTIC_ERROR(_F("function %s (%s) has no return value",
                              (dwarf_diename(scope_die) ?: "<unknown>"),
                              (dwarf_diename(cu) ?: "<unknown>")), e->tok);
     }
@@ -3150,7 +3150,7 @@ dwflpp::literal_stmt_for_return (Dwarf_Die *scope_die,
 
   Dwarf_Die vardie = *scope_die, typedie;
   if (dwarf_attr_die (&vardie, DW_AT_type, &typedie) == NULL)
-    throw semantic_error(_F("failed to retrieve return value type attribute for %s [man error::dwarf] (%s)",
+    throw SEMANTIC_ERROR(_F("failed to retrieve return value type attribute for %s [man error::dwarf] (%s)",
                            (dwarf_diename(&vardie) ?: "<unknown>"),
                            (dwarf_diename(cu) ?: "<unknown>")), e->tok);
 
@@ -3181,7 +3181,7 @@ dwflpp::type_die_for_return (Dwarf_Die *scope_die,
 {
   Dwarf_Die vardie = *scope_die;
   if (dwarf_attr_die (&vardie, DW_AT_type, typedie) == NULL)
-    throw semantic_error(_F("failed to retrieve return value type attribute for %s [man error::dwarf] (%s)",
+    throw SEMANTIC_ERROR(_F("failed to retrieve return value type attribute for %s [man error::dwarf] (%s)",
                            (dwarf_diename(&vardie) ?: "<unknown>"),
                            (dwarf_diename(cu) ?: "<unknown>")), e->tok);
 
@@ -3517,13 +3517,13 @@ dwflpp::build_blacklist()
     }
 
   int rc = regcomp (& blacklist_func, blfn.c_str(), REG_NOSUB|REG_EXTENDED);
-  if (rc) throw semantic_error (_("blacklist_func regcomp failed"));
+  if (rc) throw SEMANTIC_ERROR (_("blacklist_func regcomp failed"));
   rc = regcomp (& blacklist_func_ret, blfn_ret.c_str(), REG_NOSUB|REG_EXTENDED);
-  if (rc) throw semantic_error (_("blacklist_func_ret regcomp failed"));
+  if (rc) throw SEMANTIC_ERROR (_("blacklist_func_ret regcomp failed"));
   rc = regcomp (& blacklist_file, blfile.c_str(), REG_NOSUB|REG_EXTENDED);
-  if (rc) throw semantic_error (_("blacklist_file regcomp failed"));
+  if (rc) throw SEMANTIC_ERROR (_("blacklist_file regcomp failed"));
   rc = regcomp (& blacklist_section, blsection.c_str(), REG_NOSUB|REG_EXTENDED);
-  if (rc) throw semantic_error (_("blacklist_section regcomp failed"));
+  if (rc) throw SEMANTIC_ERROR (_("blacklist_section regcomp failed"));
 
   blacklist_enabled = true;
 }

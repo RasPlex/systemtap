@@ -95,12 +95,19 @@ struct parse_error: public std::runtime_error
   const token* tok;
   bool skip_some;
   const parse_error *chain;
-  parse_error (const std::string& msg):
-    runtime_error (msg), tok (0), skip_some (true), chain(0) {}
-  parse_error (const std::string& msg, const token* t):
-    runtime_error (msg), tok (t), skip_some (true), chain(0) {}
-  parse_error (const std::string& msg, bool skip):
-    runtime_error (msg), tok (0), skip_some (skip), chain(0) {}
+  const std::string errsrc;
+  ~parse_error () throw () {}
+  parse_error (const std::string& src, const std::string& msg):
+    runtime_error (msg), tok (0), skip_some (true), chain(0), errsrc(src) {}
+  parse_error (const std::string& src, const std::string& msg, const token* t):
+    runtime_error (msg), tok (t), skip_some (true), chain(0), errsrc(src) {}
+  parse_error (const std::string& src, const std::string& msg, bool skip):
+    runtime_error (msg), tok (0), skip_some (skip), chain(0), errsrc(src) {}
+
+  std::string errsrc_chain(void) const
+    {
+      return errsrc + (chain ? "|" + chain->errsrc_chain() : "");
+    }
 };
 
 struct systemtap_session
@@ -375,9 +382,19 @@ public:
   // NB: It is very important for all of the above (and below) fields
   // to be cleared in the systemtap_session ctor (session.cxx).
 
-  std::set<std::string> seen_errors;
   std::set<std::string> seen_warnings;
-  unsigned num_errors () { return seen_errors.size() + (panic_warnings ? seen_warnings.size() : 0); }
+  int suppressed_warnings;
+  std::map<std::string, int> seen_errors; // NB: can change to a set if threshold is 1
+  int suppressed_errors;
+  int warningerr_count; // see comment in systemtap_session::print_error
+
+  // Returns number of critical errors (not counting those part of warnings)
+  unsigned num_errors ()
+    {
+      return (seen_errors.size() // all the errors we've encountered
+        - warningerr_count       // except those considered warningerrs
+        + (panic_warnings ? seen_warnings.size() : 0)); // plus warnings if -W given
+    }
 
   std::set<std::string> rpms_to_install;
 
@@ -386,12 +403,18 @@ public:
   const token* last_token;
   void print_token (std::ostream& o, const token* tok);
   void print_error (const semantic_error& e);
+  std::string build_error_msg (const semantic_error& e);
   void print_error_source (std::ostream&, std::string&, const token* tok);
   void print_error (const parse_error &pe,
-                       const token* tok,
-                       const std::string &input_name);
+                    const token* tok,
+                    const std::string &input_name,
+                    bool is_warningerr = false);
+  std::string build_error_msg (const parse_error &pe,
+                               const token* tok,
+                               const std::string &input_name);
   void print_warning (const std::string& w, const token* tok = 0);
   void printscript(std::ostream& o);
+  void report_suppression();
 
   // NB: It is very important for all of the above (and below) fields
   // to be cleared in the systemtap_session ctor (session.cxx).
