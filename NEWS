@@ -1,5 +1,9 @@
 * What's new in version 2.4
 
+- SystemTap is now smarter about error reporting. Errors from the same
+  source are considered duplicates and suppressed. A message is
+  displayed on exit if any errors/warnings were suppressed.
+
 - Statistics aggregate typed objects are now implemented locklessly,
   if the translator finds that they are only ever read (using the
   foreach / @count / etc. constructs) in a probe-begin/end/error.
