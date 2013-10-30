@@ -64,6 +64,9 @@ keywords: <a href="keyword-index.html#INTERRUPT">INTERRUPT</a> <a href="keyword-
 </li><li><a href="io/io_submit.stp">io/io_submit.stp</a> - Tally Reschedule Reason During AIO io_submit Call<br>
 keywords: <a href="keyword-index.html#IO">IO</a> <a href="keyword-index.html#BACKTRACE">BACKTRACE</a> <br>
 <p>When a reschedule occurs during an AIO io_submit call, accumulate the traceback in a histogram. When the script exits prints out a sorted list from most common to least common backtrace.<p><font size="-2"><pre># stap io_submit.stp -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a href="memory/last_100_frees.stp">memory/last_100_frees.stp</a> - Log recent free(3) calls.<br>
+keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#BACKTRACE">BACKTRACE</a> <br>
+<p>This script reports on the last few free(3) libc calls done by processes (possibly restricted by stap -x/-c), along with a userspace backtrace at those moments.<p><font size="-2"><pre># stap last_100_frees.stp -c &quot;stap -V&quot; -d `which stap` --ldd</pre></font></p>
 </li><li><a href="process/auditbt.stp">process/auditbt.stp</a> - Generate backtraces for kernel audit events<br>
 keywords: <a href="keyword-index.html#MONITORING">MONITORING</a> <a href="keyword-index.html#SECURITY">SECURITY</a> <a href="keyword-index.html#AUDIT">AUDIT</a> <a href="keyword-index.html#BACKTRACE">BACKTRACE</a> <br>
 <p>Attaches to the kernel audit-log paths (also used by libaudit), and log every record being sent, along with a user-space backtrace of the process that caused it.<p><font size="-2"><pre># stap auditbt.stp -d /usr/bin/sudo --ldd -c &quot;sudo true&quot;</pre></font></p>
@@ -191,7 +194,7 @@ keywords: <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-inde
 <p>Blocks ptrace(2) attempts from processes identified by stap -c/-x, as also specifiable from /proc/systemtap/stap_XXX/ control files.  Processes may be added or removed from the blocked list.<p><font size="-2"><pre># stap -g noptrace.stp -c &#39;strace ls || true&#39;</pre></font></p>
 </li><li><a href="process/threadstacks.stp">process/threadstacks.stp</a> - Override default new-pthread stack sizes<br>
 keywords: <a href="keyword-index.html#THREAD">THREAD</a> <a href="keyword-index.html#GURU">GURU</a> <br>
-<p>Overrides default NPTL pthread_create stack size for all new threads created by target processes.  Reports one line per process when the related glibc variable __default_stacksize is updated.  Moot for glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.<p><font size="-2"><pre># stap -g threadstacks.stp -Gsize=65536 -c &quot;sleep 1&quot; -d stap</pre></font></p>
+<p>Overrides default NPTL pthread_create stack size for all new threads created by target processes.  Reports one line per process when the related glibc variable __default_stacksize is updated.  Moot for glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.<p><font size="-2"><pre># stap -g threadstacks.stp -Gsize=65536 -c &quot;sleep 1&quot; -d `which stap`</pre></font></p>
 </li></ul>
 <h3><a name="INTERRUPT"><a href="#INTERRUPT">&para;</a> INTERRUPT</a></h3>
 <ul>
@@ -317,6 +320,9 @@ keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.
 </li><li><a href="memory/kmalloc-top">memory/kmalloc-top</a> - Show Paths to Kernel Malloc Invocations<br>
 keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <br>
 <p>The kmalloc-top perl program runs a small systemtap script to collect stack traces for each call to the kmalloc function and counts the time that each stack trace is observed. When kmalloc-top exits it prints out sorted list. The output can be filtered to print only the first N stack traces (-t), stack traces with a minimum counts (-m), or exclude certain stack traces (-e).<p><font size="-2"><pre># ./kmalloc-top -c &quot;sleep 0.2&quot;</pre></font></p>
+</li><li><a href="memory/last_100_frees.stp">memory/last_100_frees.stp</a> - Log recent free(3) calls.<br>
+keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#BACKTRACE">BACKTRACE</a> <br>
+<p>This script reports on the last few free(3) libc calls done by processes (possibly restricted by stap -x/-c), along with a userspace backtrace at those moments.<p><font size="-2"><pre># stap last_100_frees.stp -c &quot;stap -V&quot; -d `which stap` --ldd</pre></font></p>
 </li><li><a href="memory/mmanonpage.stp">memory/mmanonpage.stp</a> - Track Virtual Memory System Actions on Anonymous Pages<br>
 keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <br>
 <p>The mmanonpage.stp script uses the virtual memory tracepoints available in some kernels to track the number of faults, user space frees, page ins, copy on writes and unmaps for anonymous pages. When the script is terminated the counts are printed for each process that allocated pages while the script was running. This script displays the anonymous page statistics for each process that ran while the script is active.  It&#39;s useful in debugging leaks in the anonymous regions of a process.<p><font size="-2"><pre># stap mmanonpage.stp -c &quot;sleep 0.2&quot;</pre></font></p>
@@ -439,6 +445,9 @@ keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-inde
 <li><a href="general/eventcount.stp">general/eventcount.stp</a> - Count Specified Events<br>
 keywords: <a href="keyword-index.html#STATISTICS">STATISTICS</a> <a href="keyword-index.html#THREAD">THREAD</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <br>
 <p>The script periodically prints a count of specified events and their related tid&#39;s over the course of execution.  Numerous configuration options exist to control filtering / reporting, see the script source.<p><font size="-2"><pre># stap eventcount.stp syscall.* -c &#39;sleep 0.2&#39;</pre></font></p>
+</li><li><a href="memory/last_100_frees.stp">memory/last_100_frees.stp</a> - Log recent free(3) calls.<br>
+keywords: <a href="keyword-index.html#MEMORY">MEMORY</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <a href="keyword-index.html#BACKTRACE">BACKTRACE</a> <br>
+<p>This script reports on the last few free(3) libc calls done by processes (possibly restricted by stap -x/-c), along with a userspace backtrace at those moments.<p><font size="-2"><pre># stap last_100_frees.stp -c &quot;stap -V&quot; -d `which stap` --ldd</pre></font></p>
 </li><li><a href="network/sk_stream_wait_memory.stp">network/sk_stream_wait_memory.stp</a> - Track Start and Stop of Processes Due to Network Buffer Space<br>
 keywords: <a href="keyword-index.html#NETWORK">NETWORK</a> <a href="keyword-index.html#TCP">TCP</a> <a href="keyword-index.html#PROCESS">PROCESS</a> <br>
 <p>The sk_stream-wait_memory.stp prints a time stamp, executable, and pid each time a process blocks due to the send buffer being full. A similar entry is printed each time a process continues because there is room in the buffer.<p><font size="-2"><pre># stap sk_stream_wait_memory.stp -c &quot;sleep 0.2&quot;</pre></font></p>
@@ -745,7 +754,7 @@ keywords: <a href="keyword-index.html#STATISTICS">STATISTICS</a> <a href="keywor
 <p>The script periodically prints a count of specified events and their related tid&#39;s over the course of execution.  Numerous configuration options exist to control filtering / reporting, see the script source.<p><font size="-2"><pre># stap eventcount.stp syscall.* -c &#39;sleep 0.2&#39;</pre></font></p>
 </li><li><a href="process/threadstacks.stp">process/threadstacks.stp</a> - Override default new-pthread stack sizes<br>
 keywords: <a href="keyword-index.html#THREAD">THREAD</a> <a href="keyword-index.html#GURU">GURU</a> <br>
-<p>Overrides default NPTL pthread_create stack size for all new threads created by target processes.  Reports one line per process when the related glibc variable __default_stacksize is updated.  Moot for glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.<p><font size="-2"><pre># stap -g threadstacks.stp -Gsize=65536 -c &quot;sleep 1&quot; -d stap</pre></font></p>
+<p>Overrides default NPTL pthread_create stack size for all new threads created by target processes.  Reports one line per process when the related glibc variable __default_stacksize is updated.  Moot for glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.<p><font size="-2"><pre># stap -g threadstacks.stp -Gsize=65536 -c &quot;sleep 1&quot; -d `which stap`</pre></font></p>
 </li></ul>
 <h3><a name="TIME"><a href="#TIME">&para;</a> TIME</a></h3>
 <ul>

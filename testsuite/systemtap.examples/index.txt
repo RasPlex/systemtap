@@ -463,6 +463,16 @@ keywords: memory
   # ./kmalloc-top -c "sleep 0.2"
 
 
+memory/last_100_frees.stp - Log recent free(3) calls.
+keywords: memory process backtrace
+
+  This script reports on the last few free(3) libc calls done by
+  processes (possibly restricted by stap -x/-c), along with a userspace
+  backtrace at those moments.
+
+  # stap last_100_frees.stp -c "stap -V" -d `which stap` --ldd
+
+
 memory/mmanonpage.stp - Track Virtual Memory System Actions on Anonymous Pages
 keywords: memory
 
@@ -1041,7 +1051,7 @@ keywords: thread guru
   related glibc variable __default_stacksize is updated.  Moot for
   glibc versions that support $LIBC_PTHREAD_DEFAULT_STACKSIZE_NP.
 
-  # stap -g threadstacks.stp -Gsize=65536 -c "sleep 1" -d stap
+  # stap -g threadstacks.stp -Gsize=65536 -c "sleep 1" -d `which stap`
 
 
 process/wait4time.stp - Trace Time Spent in wait4 Syscalls
