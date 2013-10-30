@@ -3,11 +3,12 @@
 global bt%[100]
 global idx
 
-probe process("/lib*/libc.so.*").function("free")
-   { bt[idx++,execname(),tid(),$mem] = sprint_ubacktrace() }
+probe process("/lib*/libc.so.*").function("free") {
+  bt[execname(),tid(),$mem,sprint_ubacktrace()] <<< idx++
+}
 
 probe end,error {
-   foreach ([i+,e,t,p] in bt) // iterate in increasing index order
+  foreach ([e,t,p,b] in bt @max+) // iterate in increasing index order
      printf("free #%d: %s[%d], pointer %p:\n%s\n\n",
-            i, e, t, p, bt[i,e,t,p])
+            @max(bt[e,t,p,b]), e, t, p, b)
 }
