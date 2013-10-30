@@ -1489,8 +1489,8 @@ probe nd_syscall.rt_sigsuspend.return = kprobe.function("compat_sys_rt_sigsuspen
 #		struct compat_siginfo __user *uinfo,
 #		struct compat_timespec __user *uts, compat_size_t sigsetsize)
 #
-probe nd_syscall.rt_sigtimedwait = __nd_syscall.rt_sigtimedwait,
-				   __nd_syscall.compat_rt_sigtimedwait
+probe nd_syscall.rt_sigtimedwait = __nd_syscall.rt_sigtimedwait ?,
+				   __nd_syscall.compat_rt_sigtimedwait ?
 {
 	name = "rt_sigtimedwait"
 	// uthese_uaddr = $uthese
@@ -1504,13 +1504,13 @@ probe nd_syscall.rt_sigtimedwait = __nd_syscall.rt_sigtimedwait,
 	uts_uaddr = pointer_arg(3)
 	argstr = sprintf("%p, %p, %p, %d", uthese_uaddr, uinfo_uaddr, uts_uaddr, sigsetsize)
 }
-probe __nd_syscall.rt_sigtimedwait = kprobe.function("sys_rt_sigtimedwait") ?
+probe __nd_syscall.rt_sigtimedwait = kprobe.function("sys_rt_sigtimedwait")
 {
 	asmlinkage()
 	sigsetsize = ulong_arg(4)
 }
 probe __nd_syscall.compat_rt_sigtimedwait =
-	kprobe.function("compat_sys_rt_sigtimedwait") ?
+	kprobe.function("compat_sys_rt_sigtimedwait")
 {
 	asmlinkage()
 	sigsetsize = u32_arg(4)
@@ -3944,7 +3944,7 @@ probe nd_syscall.tkill.return = kprobe.function("sys_tkill").return ?
 # sys_truncate(const char __user * path, unsigned long length)
 # sys_truncate64(const char __user * path, loff_t length)
 #
-probe nd_syscall.truncate = __nd_syscall.truncate, __nd_syscall.truncate64
+probe nd_syscall.truncate = __nd_syscall.truncate?, __nd_syscall.truncate64?
 {
 	name = "truncate"
 	// path_uaddr = $path
@@ -3956,11 +3956,11 @@ probe nd_syscall.truncate = __nd_syscall.truncate, __nd_syscall.truncate64
 	path = user_string_quoted(path_uaddr)
 	argstr = sprintf("%s, %d", user_string_quoted(path_uaddr), length)
 }
-probe __nd_syscall.truncate = kprobe.function("sys_truncate") ?
+probe __nd_syscall.truncate = kprobe.function("sys_truncate")
 {
 	length = ulong_arg(2)
 }
-probe __nd_syscall.truncate64 = kprobe.function("sys_truncate64") ?
+probe __nd_syscall.truncate64 = kprobe.function("sys_truncate64")
 {
 	length = longlong_arg(2)
 }
