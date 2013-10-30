@@ -95,6 +95,7 @@ systemtap_session::systemtap_session ():
   benchmark_sdt_threads(0),
   suppressed_warnings(0),
   suppressed_errors(0),
+  warningerr_count(0),
   last_token (0)
 {
   struct utsname buf;
@@ -278,6 +279,7 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   benchmark_sdt_threads(other.benchmark_sdt_threads),
   suppressed_warnings(0),
   suppressed_errors(0),
+  warningerr_count(0),
   last_token (0)
 {
   release = kernel_release = kern;
@@ -1976,12 +1978,20 @@ systemtap_session::print_warning (const string& message_str, const token* tok)
 void
 systemtap_session::print_error (const parse_error &pe,
                                 const token* tok,
-                                const std::string &input_name)
+                                const std::string &input_name,
+                                bool is_warningerr)
 {
   // duplicate elimination
   if (verbose > 0 || seen_errors[pe.errsrc_chain()] < 1)
     {
-      seen_errors[pe.errsrc_chain()]++;
+      // Sometimes, we need to print parse errors that should not be considered
+      // critical. For example, when we parse tapsets and macros. In those
+      // cases, is_warningerr is true, and we cancel out the increase in
+      // seen_errors.size() by also increasing warningerr_count, so that the
+      // net num_errors() value is unchanged.
+      seen_errors[pe.errsrc_chain()]++;                         // can be simplified if we
+      if (seen_errors[pe.errsrc_chain()] == 1 && is_warningerr) // change map to a set (and
+        warningerr_count++;                                     // settle on threshold of 1)
       cerr << build_error_msg(pe, tok, input_name);
       for (const parse_error *e = pe.chain; e != NULL; e = e->chain)
         cerr << build_error_msg(*e, e->tok, input_name);

@@ -386,7 +386,15 @@ public:
   int suppressed_warnings;
   std::map<std::string, int> seen_errors; // NB: can change to a set if threshold is 1
   int suppressed_errors;
-  unsigned num_errors () { return seen_errors.size() + (panic_warnings ? seen_warnings.size() : 0); }
+  int warningerr_count; // see comment in systemtap_session::print_error
+
+  // Returns number of critical errors (not counting those part of warnings)
+  unsigned num_errors ()
+    {
+      return (seen_errors.size() // all the errors we've encountered
+        - warningerr_count       // except those considered warningerrs
+        + (panic_warnings ? seen_warnings.size() : 0)); // plus warnings if -W given
+    }
 
   std::set<std::string> rpms_to_install;
 
@@ -399,7 +407,8 @@ public:
   void print_error_source (std::ostream&, std::string&, const token* tok);
   void print_error (const parse_error &pe,
                     const token* tok,
-                    const std::string &input_name);
+                    const std::string &input_name,
+                    bool is_warningerr = false);
   std::string build_error_msg (const parse_error &pe,
                                const token* tok,
                                const std::string &input_name);

@@ -71,8 +71,8 @@ public:
   parser (systemtap_session& s, const string& n, istream& i, bool p);
   ~parser ();
 
-  stapfile* parse ();
-  stapfile* parse_library_macros ();
+  stapfile* parse (bool errs_as_warnings);
+  stapfile* parse_library_macros (bool errs_as_warnings);
 
 private:
   typedef enum {
@@ -152,7 +152,7 @@ private:
   const token* expect_kw_token (string const & expected);
   const token* expect_ident_or_atword (string & target);
 
-  void print_error (const parse_error& pe);
+  void print_error (const parse_error& pe, bool errs_as_warnings = false);
   unsigned num_errors;
 
 private: // nonterminals
@@ -209,15 +209,15 @@ private: // nonterminals
 // ------------------------------------------------------------------------
 
 stapfile*
-parse (systemtap_session& s, istream& i, bool pr)
+parse (systemtap_session& s, istream& i, bool pr, bool errs_as_warnings)
 {
   parser p (s, "<input>", i, pr);
-  return p.parse ();
+  return p.parse (errs_as_warnings);
 }
 
 
 stapfile*
-parse (systemtap_session& s, const string& name, bool pr)
+parse (systemtap_session& s, const string& name, bool pr, bool errs_as_warnings)
 {
   ifstream i(name.c_str(), ios::in);
   if (i.fail())
@@ -230,11 +230,11 @@ parse (systemtap_session& s, const string& name, bool pr)
     }
 
   parser p (s, name, i, pr);
-  return p.parse ();
+  return p.parse (errs_as_warnings);
 }
 
 stapfile*
-parse_library_macros (systemtap_session& s, const string& name)
+parse_library_macros (systemtap_session& s, const string& name, bool errs_as_warnings)
 {
   ifstream i(name.c_str(), ios::in);
   if (i.fail())
@@ -247,7 +247,7 @@ parse_library_macros (systemtap_session& s, const string& name)
     }
 
   parser p (s, name, i, false); // TODOXX pr is ...? should path be full??
-  return p.parse_library_macros ();
+  return p.parse_library_macros (errs_as_warnings);
 }
 
 // ------------------------------------------------------------------------
@@ -313,10 +313,10 @@ operator << (ostream& o, const token& t)
 
 
 void
-parser::print_error  (const parse_error &pe)
+parser::print_error  (const parse_error &pe, bool errs_as_warnings)
 {
   const token *tok = pe.tok ? pe.tok : last_t;
-  session.print_error(pe, tok, input_name);
+  session.print_error(pe, tok, input_name, errs_as_warnings);
   num_errors ++;
 }
 
@@ -692,7 +692,7 @@ parser::slurp_pp1_body (vector<const token*>& body)
 
 // Used for parsing .stpm files.
 stapfile*
-parser::parse_library_macros ()
+parser::parse_library_macros (bool errs_as_warnings)
 {
   stapfile* f = new stapfile;
   input.set_current_file (f);
@@ -732,7 +732,7 @@ parser::parse_library_macros ()
     }
   catch (const parse_error& pe)
     {
-      print_error (pe);
+      print_error (pe, errs_as_warnings);
       delete f;
       return 0;
     }
@@ -1755,7 +1755,7 @@ token::make_junk (const string new_msg)
 // ------------------------------------------------------------------------
 
 stapfile*
-parser::parse ()
+parser::parse (bool errs_as_warnings)
 {
   stapfile* f = new stapfile;
   input.set_current_file (f);
@@ -1800,7 +1800,7 @@ parser::parse ()
 	}
       catch (parse_error& pe)
 	{
-	  print_error (pe);
+	  print_error (pe, errs_as_warnings);
 
           // XXX: do we want tok_junk to be able to force skip_some behaviour?
           if (pe.skip_some) // for recovery

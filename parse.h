@@ -73,10 +73,10 @@ struct macrodecl {
 };
 
 
-stapfile* parse (systemtap_session& s, std::istream& i, bool privileged);
-stapfile* parse (systemtap_session& s, const std::string& n, bool privileged);
+stapfile* parse (systemtap_session& s, std::istream& i, bool privileged, bool errs_as_warnings);
+stapfile* parse (systemtap_session& s, const std::string& n, bool privileged, bool errs_as_warnings);
 
-stapfile* parse_library_macros (systemtap_session& s, const std::string& n);
+stapfile* parse_library_macros (systemtap_session& s, const std::string& n, bool errs_as_warnings);
 
 #endif // PARSE_H
 
