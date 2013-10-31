@@ -107,7 +107,7 @@ probe syscall.add_key = kernel.function("sys_add_key").call ?
 	argstr = sprintf("%s, %s, %s, %d, %d",
 		user_string_quoted($_type),
 		user_string_quoted($_description),
-		user_string_n_quoted($_payload, syscall_string_trunc),
+		user_string_n2_quoted($_payload, $plen, syscall_string_trunc),
 		$plen, $ringid)
 }
 probe syscall.add_key.return = kernel.function("sys_add_key").return ?

@@ -85,7 +85,7 @@ function isinstr:long(s1:string,s2:string) %{ /* pure */ /* unprivileged */
  */
 function text_str:string(input:string) 
 %{ /* pure */ /* unprivileged */
-	if (_stp_text_str(STAP_RETVALUE, STAP_ARG_input, 0, 0, 0) < 0) {
+	if (_stp_text_str(STAP_RETVALUE, STAP_ARG_input, 0, 0, 0, 0) < 0) {
 		STAP_RETVALUE[0] = '\0';
 	}
 %}
@@ -107,7 +107,7 @@ function text_strn:string(input:string, len:long, quoted:long)
 %{ /* pure */ /* unprivileged */
 	int64_t len = clamp_t(int64_t, STAP_ARG_len, 0, MAXSTRINGLEN);
 	if (_stp_text_str(
-			STAP_RETVALUE, STAP_ARG_input, len, STAP_ARG_quoted, 0) < 0) {
+			STAP_RETVALUE, STAP_ARG_input, 0, len, STAP_ARG_quoted, 0) < 0) {
 		STAP_RETVALUE[0] = '\0';
 	}
 %}

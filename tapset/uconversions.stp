@@ -104,7 +104,7 @@ function user_string2_warn:string (addr:long, warn_msg:string) {
  * returned as a string, without double quotes.
  */
 function user_string_quoted:string (addr:long) {
-	return user_string_n_quoted(addr, @MAXSTRINGLEN)
+	return user_string_n2_quoted(addr, @MAXSTRINGLEN, @MAXSTRINGLEN)
 }
 
 /**
@@ -221,10 +221,35 @@ function user_string2_n_warn:string (addr:long, n:long, warn_msg:string)
  * On the rare cases when userspace data is not accessible at the given address,
  * the address itself is returned as a string, without double quotes.
  */
-function user_string_n_quoted:string (addr:long, n:long)
+function user_string_n_quoted:string (addr:long, n:long) {
+%(systemtap_v < "2.4" %?
+	// We used to count n by output characters
+	return user_string_n2_quoted(addr, @MAXSTRINGLEN, n)
+%:
+	return user_string_n2_quoted(addr, n, @MAXSTRINGLEN)
+%)
+}
+
+/**
+ * sfunction user_string_n2_quoted - Retrieves and quotes string from user space
+ *
+ * @addr: the user space address to retrieve the string from
+ * @inlen: the maximum length of the string to read (if not null terminated)
+ * @outlen: the maximum length of the output string
+ *
+ * Description: Reads up to inlen characters of a C string from the given user
+ * space memory address, and returns up to outlen characters, where any ASCII
+ * characters that are not printable are replaced by the corresponding escape
+ * sequence in the returned string. Note that the string will be surrounded by
+ * double quotes.  On the rare cases when userspace data is not accessible at
+ * the given address, the address itself is returned as a string, without
+ * double quotes.
+ */
+function user_string_n2_quoted:string (addr:long, inlen:long, outlen:long)
 %{ /* pure */ /* myproc-unprivileged */
 	// Note the lack of STAP_ARG_n+1 as in other funcs() -- PR15617
-	int64_t len = clamp_t(int64_t, STAP_ARG_n, 0, MAXSTRINGLEN);
+	int64_t inlen = clamp_t(int64_t, STAP_ARG_inlen, 0, MAXSTRINGLEN);
+	int64_t outlen = clamp_t(int64_t, STAP_ARG_outlen, 0, MAXSTRINGLEN);
 	if (STAP_ARG_addr == 0)
 #if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 		strlcpy(STAP_RETVALUE, "NULL", MAXSTRINGLEN);
@@ -233,7 +258,7 @@ function user_string_n_quoted:string (addr:long, n:long)
 #endif
 	else {
 		int rc = _stp_text_str(STAP_RETVALUE,
-			(char *)(uintptr_t)STAP_ARG_addr, len, 1, 1);
+			(char *)(uintptr_t)STAP_ARG_addr, inlen, outlen, 1, 1);
 		if (rc < 0)
 #if STAP_COMPAT_VERSION < STAP_VERSION(2,3) // PR15044
 			strlcpy(STAP_RETVALUE, "<unknown>", MAXSTRINGLEN);

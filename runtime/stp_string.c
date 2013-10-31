@@ -58,20 +58,23 @@ static int _stp_vscnprintf(char *buf, size_t size, const char *fmt, va_list args
  *
  * @param outstr Output string pointer
  * @param in Input string pointer
- * @param len Maximum length of string to return not including terminating 0.
+ * @param inlen Maximum length of string to read not including terminating 0.
+ * @param outlen Maximum length of string to return not including terminating 0.
  * 0 means MAXSTRINGLEN.
  * @param quoted Put double quotes around the string. If input string is truncated
  * in will have "..." after the second quote.
  * @param user Set this to indicate the input string pointer is a userspace pointer.
  */
-static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
+static int _stp_text_str(char *outstr, char *in, int inlen, int outlen, int quoted, int user)
 {
 	char c = '\0', *out = outstr;
 
-	if (len <= 0 || len > MAXSTRINGLEN-1)
-		len = MAXSTRINGLEN-1;
+	if (inlen <= 0 || inlen > MAXSTRINGLEN-1)
+		inlen = MAXSTRINGLEN-1;
+	if (outlen <= 0 || outlen > MAXSTRINGLEN-1)
+		outlen = MAXSTRINGLEN-1;
 	if (quoted) {
-		len = max(len, 5) - 2;
+		outlen = max(outlen, 5) - 2;
 		*out++ = '"';
 	}
 
@@ -81,7 +84,7 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 	} else
 		c = *in;
 
-	while (c && len > 0) {
+	while (c && inlen > 0 && outlen > 0) {
 		int num = 1;
 		if (isprint(c) && isascii(c)
                     && c != '"' && c != '\\') /* quoteworthy characters */
@@ -104,7 +107,7 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 				break;
 			}
 			
-			if (len < num)
+			if (outlen < num)
 				break;
 
 			*out++ = '\\';
@@ -143,7 +146,8 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 				break;
 			}
 		}
-		len -= num;
+		outlen -= num;
+		inlen--;
 		in++;
 		if (user) {
 			if (_stp_read_address(c, in, USER_DS))
@@ -153,8 +157,8 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 	}
 
 	if (quoted) {
-		if (c) {
-			out = out - 3 + len;
+		if (c && inlen > 0) {
+			out = out - 3 + outlen;
 			*out++ = '"';
 			*out++ = '.';
 			*out++ = '.';
@@ -165,7 +169,7 @@ static int _stp_text_str(char *outstr, char *in, int len, int quoted, int user)
 	*out = '\0';
 	return 0;
 bad:
-	strlcpy (outstr, "<unknown>", len);
+	strlcpy (outstr, "<unknown>", outlen);
 	return -1; // PR15044
 }
 

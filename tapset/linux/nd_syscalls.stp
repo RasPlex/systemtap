@@ -135,7 +135,7 @@ probe nd_syscall.add_key = kprobe.function("sys_add_key") ?
 	argstr = sprintf("%s, %s, %s, %d, %d",
 		user_string_quoted(type_uaddr),
 		user_string_quoted(description_uaddr),
-		user_string_n_quoted(payload_uaddr, syscall_string_trunc),
+		user_string_n2_quoted(payload_uaddr, plen, syscall_string_trunc),
 		plen, ringid)
 }
 probe nd_syscall.add_key.return = kprobe.function("sys_add_key").return ?

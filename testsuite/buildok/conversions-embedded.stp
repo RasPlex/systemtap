@@ -20,6 +20,7 @@ probe begin {
 	print (user_string_n2(0, 5, "foobar"))
 	print (user_string_n_warn(0, 0))
 	print (user_string_n_quoted(0, 0))
+	print (user_string_n2_quoted(0, 0, 0))
 	print (user_string_utf32 (0))
 	print (user_string_utf16 (0))
 	print (user_short(0))
