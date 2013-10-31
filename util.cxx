@@ -1103,7 +1103,8 @@ get_self_path()
 // parameter which would abort the operation if we know the final
 // distance will be larger than the maximum. This may entail maintaining
 // another data structure, and thus the cost might outweigh the benefit
-unsigned levenshtein(const string& a, const string& b)
+unsigned
+levenshtein(const string& a, const string& b)
 {
   Array2D<unsigned> d(a.size()+1, b.size()+1);
 
@@ -1127,6 +1128,37 @@ unsigned levenshtein(const string& a, const string& b)
   }
 
   return d(d.width-1, d.height-1);
+}
+
+// Returns comma-separated list of set elements closest to the target string.
+// Print a maximum amount of 'max' elements, with a maximum levenshtein score
+// of 'threshold'.
+string
+levenshtein_suggest(const string& target,        // string to match against
+                    const set<string>& elems,    // elements to suggest from
+                    unsigned max,                // max elements to print
+                    unsigned threshold)          // max leven score to print
+{
+  // calculate leven score for each elem and put in map
+  multimap<unsigned, string> scores;
+  for (set<string>::const_iterator it = elems.begin();
+                                      it != elems.end(); ++it)
+    {
+      unsigned score = levenshtein(target, *it);
+      if (score <= threshold)
+        scores.insert(make_pair(score, *it));
+    }
+
+  string suggestions;
+
+  // Print out the top 'max' elements
+  multimap<unsigned, string>::iterator it = scores.begin();
+  for (unsigned i = 0; it != scores.end() && i < max; ++it, i++)
+    suggestions += it->second + ", ";
+  if (!suggestions.empty())
+    suggestions.erase(suggestions.size()-2);
+
+  return suggestions;
 }
 
 #ifndef HAVE_PPOLL

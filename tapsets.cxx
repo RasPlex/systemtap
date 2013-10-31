@@ -6802,27 +6802,7 @@ string dwarf_builder::suggest_functions(systemtap_session& sess,
   if (funcs.empty())
     return "";
 
-  // Calculate Levenshtein distance for each symbol
-
-  // Sensitivity parameters (open for tweaking)
-  #define MAXFUNCS 5 // maximum number of funcs to suggest
-
-  multimap<unsigned, string> scores;
-  for (set<string>::iterator it=funcs.begin(); it!=funcs.end(); ++it)
-    {
-      unsigned score = levenshtein(func, *it);
-      scores.insert(make_pair(score, *it));
-    }
-
-  // Print out the top MAXFUNCS funcs
-  string suggestions; unsigned i = 0;
-  for (multimap<unsigned, string>::iterator it = scores.begin();
-      it != scores.end() && i < MAXFUNCS; ++it, i++)
-    suggestions += it->second + ", ";
-  if (!suggestions.empty())
-    suggestions.erase(suggestions.size()-2);
-
-  return suggestions;
+  return levenshtein_suggest(func, funcs, 5); // print top 5 funcs only
 }
 
 void
