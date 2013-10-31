@@ -387,8 +387,8 @@ private:
   static void loc2c_emit_address (void *arg, struct obstack *pool,
                                   Dwarf_Addr address);
 
-  void print_locals(std::vector<Dwarf_Die>& scopes, std::ostream &o);
-  void print_locals_die(Dwarf_Die &die, std::ostream &o);
+  void get_locals(std::vector<Dwarf_Die>& scopes, std::set<std::string>& locals);
+  void get_locals_die(Dwarf_Die &die, std::set<std::string>& locals);
   void print_members(Dwarf_Die *vardie, std::ostream &o,
                      std::set<std::string> &dupes);
 

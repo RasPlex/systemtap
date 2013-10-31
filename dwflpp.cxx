@@ -2212,15 +2212,15 @@ dwflpp::loc2c_emit_address (void *arg, struct obstack *pool,
 
 
 void
-dwflpp::print_locals(vector<Dwarf_Die>& scopes, ostream &o)
+dwflpp::get_locals(vector<Dwarf_Die>& scopes, set<string>& locals)
 {
   // XXX Shouldn't this be walking up to outer scopes too?
 
-  print_locals_die(scopes[0], o);
+  get_locals_die(scopes[0], locals);
 }
 
 void
-dwflpp::print_locals_die(Dwarf_Die& die, ostream &o)
+dwflpp::get_locals_die(Dwarf_Die& die, set<string>& locals)
 {
   // Try to get the first child of die.
   Dwarf_Die child, import;
@@ -2237,13 +2237,13 @@ dwflpp::print_locals_die(Dwarf_Die& die, ostream &o)
             case DW_TAG_formal_parameter:
               name = dwarf_diename (&child);
               if (name)
-                o << " $" << name;
+                locals.insert(string("$") + name);
               break;
 	    case DW_TAG_imported_unit:
 	      // Treat the imported unit children as if they are
 	      // children of the given DIE.
 	      if (dwarf_attr_die(&child, DW_AT_import, &import))
-		print_locals_die (import, o);
+		get_locals_die (import, locals);
 	      break;
             default:
               break;
@@ -2273,8 +2273,9 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                            vardie);
   if (declaring_scope < 0)
     {
-      stringstream alternatives;
-      print_locals (scopes, alternatives);
+      set<string> locals;
+      get_locals(scopes, locals);
+      string sugs = levenshtein_suggest(local, locals); // probably not that many, so no limit
       if (pc)
         throw SEMANTIC_ERROR (_F("unable to find local '%s', [man error::dwarf] dieoffset %s in %s, near pc %s %s %s %s (%s)",
                                  local.c_str(),
@@ -2284,10 +2285,9 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                  (scope_die == NULL) ? "" : _("in"),
                                  (dwarf_diename(scope_die) ?: "<unknown>"),
                                  (dwarf_diename(cu) ?: "<unknown>"),
-                                 (alternatives.str() == ""
+                                 (sugs.empty()
                                   ? (_("<no alternatives>"))
-				  : (_("alternatives:")
-                                       + alternatives.str())).c_str()),
+				  : (_("alternatives: ") + sugs + ")")).c_str()),
                               e->tok);
       else
         throw SEMANTIC_ERROR (_F("unable to find global '%s', [man error::dwarf] dieoffset %s in %s, %s %s %s (%s)",
@@ -2297,10 +2297,9 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                  (scope_die == NULL) ? "" : _("in"),
                                  (dwarf_diename(scope_die) ?: "<unknown>"),
                                  cu_name().c_str(),
-                                 (alternatives.str() == ""
+                                 (sugs.empty()
                                   ? (_("<no alternatives>"))
-				  : (_("alternatives:")
-                                       + alternatives.str())).c_str()),
+				  : (_("alternatives: ") + sugs + ")")).c_str()),
                               e->tok);
     }
 
