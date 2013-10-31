@@ -3,6 +3,23 @@
 .SH NAME
 warning::debuginfo \- systemtap missing-debuginfo warnings
 
+.\" macros
+.de SAMPLE
+
+.nr oldin \\n(.i
+.br
+.RS
+.nf
+.nh
+..
+.de ESAMPLE
+.hy
+.fi
+.RE
+.in \\n[oldin]u
+
+..
+
 .SH DESCRIPTION
 For many symbolic probing operations, systemtap needs DWARF debuginfo for
 the relevant binaries.  This often includes resolving function/statement
@@ -15,6 +32,20 @@ environment variable affects where systemtap looks for these files.
 If your operating system came from a distributor, check with them if
 debuginfo packages or variants are available.  If your distributor does
 not have debuginfo-equipped binaries at all, you may need to rebuild it.
+.PP
+Systemtap uses the 
+.IR elfutils
+library to process ELF/DWARF files.  The version of elfutils used by systemtap
+is the number after the slash in the 
+.IR \-V
+output:
+.SAMPLE
+% stap -V
+Systemtap translator/driver (version 2.3/0.156, rpm 2.3-1.fc19)
+Copyright (C) 2005-2013 Red Hat, Inc. and others
+[...]
+.ESAMPLE
+This indicates systemtap version 2.3 with elfutils version 0.156.
 
 .TP
 kernel debuginfo
@@ -40,8 +71,14 @@ minidebuginfo
 On some systems, binaries may be compiled with a subset of debuginfo
 useful for function tracing and backtraces.  This 'Minidebuginfo' is
 a xz compressed section labeled .gnu_debugdata.  Support for
-minidebuginfo relies on elfutils
-version 0.156.
+minidebuginfo relies on elfutils version 0.156 or later.
+
+.TP
+compressed debuginfo
+On some systems, debuginfo may be available, but compressed into
+.IR .zdebug_*
+sections.  Support for compressed debuginfo relies on elfutils
+version 0.153 or later.
 
 .TP
 unnecessary debuginfo
@@ -87,6 +124,8 @@ option, in case such a server is already running.
 .IR stappaths (7),
 .IR stap-server (8),
 .IR strip (1),
+.IR error::dwarf (7stap),
 .IR error::reporting (7stap),
 .IR error::contextvars (7stap),
+.IR http://fedorahosted.org/elfutils ,
 .IR http://fedoraproject.org/wiki/Features/MiniDebugInfo

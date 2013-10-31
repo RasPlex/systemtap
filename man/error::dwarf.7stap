@@ -70,4 +70,5 @@ all without reliance on debuginfo.
 .IR http://dwarfstd.org/ ,
 .IR http://sourceware.org/systemtap/wiki/TipContextVariables ,
 .IR http://gcc.gnu.org/wiki/Var_Tracking_Assignments ,
+.IR warning::debuginfo (7stap),
 .IR error::reporting (7stap)
