@@ -9365,15 +9365,20 @@ tracepoint_var_expanding_visitor::visit_target_symbol_arg (target_symbol* e)
 
   if (arg == NULL)
     {
-      stringstream alternatives;
+      set<string> vars;
       for (unsigned i = 0; i < args.size(); ++i)
-        alternatives << " $" << args[i].name;
-      alternatives << " $$name $$parms $$vars";
+        vars.insert("$" + args[i].name);
+      vars.insert("$$name");
+      vars.insert("$$parms");
+      vars.insert("$$vars");
+      string sugs = levenshtein_suggest(e->name, vars); // no need to limit, there's not that many
 
       // We hope that this value ends up not being referenced after all, so it
       // can be optimized out quietly.
-      throw SEMANTIC_ERROR(_F("unable to find tracepoint variable '%s' (alternatives: %s)",
-                              e->name.c_str(), alternatives.str().c_str()), e->tok);
+      throw SEMANTIC_ERROR(_F("unable to find tracepoint variable '%s'%s",
+                              e->name.c_str(), sugs.empty() ? "" :
+                              (_(" (alternatives: ") + sugs + ")").c_str()), e->tok);
+                              // NB: we use 'alternatives' because we list all
       // NB: we can have multiple errors, since a target variable
       // may be expanded in several different contexts:
       //     trace ("*") { $foo->bar }
