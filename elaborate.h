@@ -330,6 +330,7 @@ match_node
   void find_and_build (systemtap_session& s,
                        probe* p, probe_point *loc, unsigned pos,
                        std::vector<derived_probe *>& results);
+  std::string suggest_functors(std::string functor);
   void try_suffix_expansion (systemtap_session& s,
                              probe *p, probe_point *loc, unsigned pos,
                              std::vector<derived_probe *>& results);

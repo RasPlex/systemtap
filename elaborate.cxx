@@ -541,12 +541,10 @@ match_node::find_and_build (systemtap_session& s,
         {
           // We didn't find any wildcard matches (since the size of
           // the result vector didn't change).  Throw an error.
-          string alternatives;
-          for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
-            alternatives += string(" ") + i->first.str();
-
-          throw SEMANTIC_ERROR(_F("probe point mismatch (alternatives: %s)",
-                                  alternatives.c_str()), comp->tok);
+          string sugs = suggest_functors(functor);
+          throw SEMANTIC_ERROR (_F("probe point mismatch: didn't find any wildcard matches%s",
+                                   sugs.empty() ? "" : (" (similar: " + sugs + ")").c_str()),
+                                comp->tok);
         }
     }
   else if (isglob(loc->components[pos]->functor)) // wildcard?
@@ -618,13 +616,10 @@ match_node::find_and_build (systemtap_session& s,
         {
 	  // We didn't find any wildcard matches (since the size of
 	  // the result vector didn't change).  Throw an error.
-          string alternatives;
-          for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
-            alternatives += string(" ") + i->first.str();
-
-          throw SEMANTIC_ERROR(_F("probe point mismatch %s didn't find any wildcard matches",
-                                  (alternatives == "" ? "" : _(" (alternatives: ") +
-                                   alternatives + ")").c_str()), loc->components[pos]->tok);
+          string sugs = suggest_functors(loc->components[pos]->functor);
+          throw SEMANTIC_ERROR (_F("probe point mismatch: didn't find any wildcard matches%s",
+                                   sugs.empty() ? "" : (" (similar: " + sugs + ")").c_str()),
+                                loc->components[pos]->tok);
 	}
     }
   else
@@ -657,18 +652,34 @@ match_node::find_and_build (systemtap_session& s,
         {
           // We didn't find any alias suffixes (since the size of the
           // result vector didn't change).  Throw an error.
-          string alternatives;
-          for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
-            alternatives += string(" ") + i->first.str();
-
-          throw SEMANTIC_ERROR(_F("probe point mismatch %s",
-                                  (alternatives == "" ? "" : (_(" (alternatives:") + alternatives +
-                                  ")").c_str())),
-                               loc->components[pos]->tok);
+          string sugs = suggest_functors(loc->components[pos]->functor);
+          throw SEMANTIC_ERROR (_F("probe point mismatch%s",
+                                   sugs.empty() ? "" : (" (similar: " + sugs + ")").c_str()),
+                                loc->components[pos]->tok);
         }
     }
 }
 
+string
+match_node::suggest_functors(string functor)
+{
+  // only use prefix if globby (and prefix is non-empty)
+  size_t glob = functor.find('*');
+  if (glob != string::npos && glob != 0)
+    functor.erase(glob);
+  if (functor.empty())
+    return "";
+
+  set<string> functors;
+  for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
+    {
+      string ftor = i->first.str();
+      if (ftor.find('(') != string::npos)  // trim any parameter
+        ftor.erase(ftor.find('('));
+      functors.insert(ftor);
+    }
+  return levenshtein_suggest(functor, functors, 5); // print top 5
+}
 
 void
 match_node::try_suffix_expansion (systemtap_session& s,
