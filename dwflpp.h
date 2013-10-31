@@ -389,7 +389,7 @@ private:
 
   void get_locals(std::vector<Dwarf_Die>& scopes, std::set<std::string>& locals);
   void get_locals_die(Dwarf_Die &die, std::set<std::string>& locals);
-  void print_members(Dwarf_Die *vardie, std::ostream &o,
+  void get_members(Dwarf_Die *vardie, std::set<std::string>& members,
                      std::set<std::string> &dupes);
 
   Dwarf_Attribute *find_variable_and_frame_base (std::vector<Dwarf_Die>& scopes,
