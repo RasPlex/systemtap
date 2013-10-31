@@ -2429,20 +2429,20 @@ void semantic_pass_opt2 (systemtap_session& s, bool& relaxed_p, unsigned iterati
           {
             if (vut.written.find (l) == vut.written.end())
               if (iterations == 0 && ! s.suppress_warnings)
-		  {
-		    stringstream o;
-		    vector<vardecl*>::iterator it;
-		    for (it = s.probes[i]->locals.begin(); it != s.probes[i]->locals.end(); it++)
-		      if (l->name != (*it)->name)
-			o << " " <<  (*it)->name;
-		    for (it = s.globals.begin(); it != s.globals.end(); it++)
-		      if (l->name != (*it)->name)
-			o << " " <<  (*it)->name;
+                {
+                  set<string> vars;
+                  vector<vardecl*>::iterator it;
+                  for (it = s.probes[i]->locals.begin(); it != s.probes[i]->locals.end(); it++)
+                    vars.insert((*it)->name);
+                  for (it = s.globals.begin(); it != s.globals.end(); it++)
+                    vars.insert((*it)->name);
 
-                    s.print_warning (_F("never-assigned local variable '%s' %s",
-                                     l->name.c_str(), (o.str() == "" ? "" :
-                                     (_("(alternatives:") + o.str() + ")")).c_str()), l->tok);
-		  }
+                  vars.erase(l->name);
+                  string sugs = levenshtein_suggest(l->name, vars, 5); // suggest top 5 vars
+                  s.print_warning (_F("never-assigned local variable '%s'%s",
+                                      l->name.c_str(), (sugs.empty() ? "" :
+                                      (_(" (similar: ") + sugs + ")")).c_str()), l->tok);
+                }
             j++;
           }
       }
@@ -2470,22 +2470,21 @@ void semantic_pass_opt2 (systemtap_session& s, bool& relaxed_p, unsigned iterati
               if (vut.written.find (l) == vut.written.end())
                 if (iterations == 0 && ! s.suppress_warnings)
                   {
-                    stringstream o;
+                    set<string> vars;
                     vector<vardecl*>::iterator it;
                     for (it = fd->formal_args.begin() ;
                          it != fd->formal_args.end(); it++)
-                      if (l->name != (*it)->name)
-                        o << " " << (*it)->name;
+                        vars.insert((*it)->name);
                     for (it = fd->locals.begin(); it != fd->locals.end(); it++)
-                      if (l->name != (*it)->name)
-                        o << " " << (*it)->name;
+                        vars.insert((*it)->name);
                     for (it = s.globals.begin(); it != s.globals.end(); it++)
-                      if (l->name != (*it)->name)
-                        o << " " << (*it)->name;
+                        vars.insert((*it)->name);
 
-                    s.print_warning (_F("never-assigned local variable '%s' %s",
-                                        l->name.c_str(), (o.str() == "" ? "" :
-                                        (_("(alternatives:") + o.str() + ")")).c_str()), l->tok);
+                    vars.erase(l->name);
+                    string sugs = levenshtein_suggest(l->name, vars, 5); // suggest top 5 vars
+                    s.print_warning (_F("never-assigned local variable '%s'%s",
+                                        l->name.c_str(), (sugs.empty() ? "" :
+                                        (_(" (similar: ") + sugs + ")")).c_str()), l->tok);
                   }
 
               j++;
@@ -2512,14 +2511,16 @@ void semantic_pass_opt2 (systemtap_session& s, bool& relaxed_p, unsigned iterati
           if (vut.written.find (l) == vut.written.end() && ! l->init) // no initializer
             if (iterations == 0 && ! s.suppress_warnings)
               {
-                stringstream o;
+                set<string> vars;
                 vector<vardecl*>::iterator it;
                 for (it = s.globals.begin(); it != s.globals.end(); it++)
                   if (l->name != (*it)->name)
-                    o << " " << (*it)->name;
+                    vars.insert((*it)->name);
 
-                s.print_warning (_F("never assigned global variable '%s' %s", l->name.c_str(),
-                                   (o.str() == "" ? "" : (_("(alternatives:") + o.str() + ")")).c_str()), l->tok);
+                string sugs = levenshtein_suggest(l->name, vars, 5); // suggest top 5 vars
+                s.print_warning (_F("never-assigned global variable '%s'%s",
+                                    l->name.c_str(), (sugs.empty() ? "" :
+                                    (_(" (similar: ") + sugs + ")")).c_str()), l->tok);
               }
 
           i++;
