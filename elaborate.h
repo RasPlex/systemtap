@@ -53,6 +53,7 @@ public:
 
   vardecl* find_var (const std::string& name, int arity, const token *tok);
   functiondecl* find_function (const std::string& name, unsigned arity, const token *tok);
+  std::set<std::string> collect_functions(void);
 
   void visit_block (block *s);
   void visit_symbol (symbol* e);

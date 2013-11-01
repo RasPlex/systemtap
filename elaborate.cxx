@@ -2216,9 +2216,10 @@ symresolution_info::visit_functioncall (functioncall* e)
     e->referent = d;
   else
     {
-      stringstream msg;
-      msg << _F("unresolved function", e->args.size());
-      throw SEMANTIC_ERROR (msg.str(), e->tok);
+      string sugs = levenshtein_suggest(e->function, collect_functions(), 5); // print 5 funcs
+      throw SEMANTIC_ERROR(_F("unresolved function%s",
+                              sugs.empty() ? "" : (_(" (similar: ") + sugs + ")").c_str()),
+                           e->tok);
     }
 }
 
@@ -2342,7 +2343,25 @@ symresolution_info::find_function (const string& name, unsigned arity, const tok
   return 0;
 }
 
+set<string>
+symresolution_info::collect_functions(void)
+{
+  set<string> funcs;
 
+  for (map<string,functiondecl*>::const_iterator it = session.functions.begin();
+       it != session.functions.end(); ++it)
+    funcs.insert(it->first);
+
+  // search library functions
+  for (unsigned i=0; i<session.library_files.size(); i++)
+    {
+      stapfile* f = session.library_files[i];
+      for (unsigned j=0; j<f->functions.size(); j++)
+        funcs.insert(f->functions[j]->name);
+    }
+
+  return funcs;
+}
 
 // ------------------------------------------------------------------------
 // optimization
