@@ -52,7 +52,7 @@ public:
   symresolution_info (systemtap_session& s);
 
   vardecl* find_var (const std::string& name, int arity, const token *tok);
-  functiondecl* find_function (const std::string& name, unsigned arity);
+  functiondecl* find_function (const std::string& name, unsigned arity, const token *tok);
 
   void visit_block (block *s);
   void visit_symbol (symbol* e);

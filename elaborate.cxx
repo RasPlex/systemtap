@@ -2211,13 +2211,13 @@ symresolution_info::visit_functioncall (functioncall* e)
   if (e->referent)
     return;
 
-  functiondecl* d = find_function (e->function, e->args.size ());
+  functiondecl* d = find_function (e->function, e->args.size (), e->tok);
   if (d)
     e->referent = d;
   else
     {
       stringstream msg;
-      msg << _F("unresolved arity-%zu function", e->args.size());
+      msg << _F("unresolved function", e->args.size());
       throw SEMANTIC_ERROR (msg.str(), e->tok);
     }
 }
@@ -2297,7 +2297,7 @@ symresolution_info::find_var (const string& name, int arity, const token* tok)
 
 
 functiondecl*
-symresolution_info::find_function (const string& name, unsigned arity)
+symresolution_info::find_function (const string& name, unsigned arity, const token *tok)
 {
   // the common path
   if (session.functions.find(name) != session.functions.end())
@@ -2307,9 +2307,8 @@ symresolution_info::find_function (const string& name, unsigned arity)
       if (fd->formal_args.size() == arity)
         return fd;
 
-      session.print_warning (_F("mismatched arity-%zu function found", fd->formal_args.size()),
-                             fd->tok);
-      // and some semantic_error will shortly follow
+      throw SEMANTIC_ERROR(_F("arity mismatch found (function '%s' takes %zu args)",
+                              name.c_str(), fd->formal_args.size()), tok, fd->tok);
     }
 
   // search library functions
@@ -2317,20 +2316,26 @@ symresolution_info::find_function (const string& name, unsigned arity)
     {
       stapfile* f = session.library_files[i];
       for (unsigned j=0; j<f->functions.size(); j++)
-        if (f->functions[j]->name == name &&
-            f->functions[j]->formal_args.size() == arity)
+        if (f->functions[j]->name == name)
           {
-            // put library into the queue if not already there
-            if (0) // session.verbose_resolution
-              cerr << _F("      function %s is defined from %s",
-                         name.c_str(), f->name.c_str()) << endl;
+            if (f->functions[j]->formal_args.size() == arity)
+              {
+                // put library into the queue if not already there
+                if (0) // session.verbose_resolution
+                  cerr << _F("      function %s is defined from %s",
+                             name.c_str(), f->name.c_str()) << endl;
 
-            if (find (session.files.begin(), session.files.end(), f)
-                == session.files.end())
-              session.files.push_back (f);
-            // else .. print different message?
+                if (find (session.files.begin(), session.files.end(), f)
+                    == session.files.end())
+                  session.files.push_back (f);
+                // else .. print different message?
 
-            return f->functions[j];
+                return f->functions[j];
+              }
+
+            throw SEMANTIC_ERROR(_F("arity mismatch found (function '%s' takes %zu args)",
+                                    name.c_str(), f->functions[j]->formal_args.size()),
+                                    tok, f->functions[j]->tok);
           }
     }
 
