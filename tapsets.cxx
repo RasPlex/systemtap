@@ -7523,7 +7523,7 @@ symbol_table::purge_syscall_stubs()
 }
 
 void
-module_info::get_symtab(dwarf_query *q)
+module_info::get_symtab(base_query *q)
 {
   if (symtab_status != info_unknown)
     return;
@@ -10066,6 +10066,7 @@ int
 tracepoint_query::handle_query_cu(Dwarf_Die * cudie)
 {
   dw.focus_on_cu (cudie);
+  dw.mod_info->get_symtab(this);
 
   // look at each function to see if it's a tracepoint
   string function = "stapprobe_" + tracepoint;
@@ -10406,7 +10407,23 @@ tracepoint_builder::build(systemtap_session& s,
   assert(get_param (parameters, TOK_TRACE, tracepoint));
 
   tracepoint_query q(*dw, tracepoint, base, location, finished_results);
+  unsigned results_pre = finished_results.size();
   dw->iterate_over_modules(&query_module, &q);
+  unsigned results_post = finished_results.size();
+
+  // Did we fail to find a match? Let's suggest something!
+  if (results_pre == results_post)
+    {
+      size_t pos;
+      string sugs = suggest_dwarf_functions(s, q.visited_modules, tracepoint);
+      while ((pos = sugs.find("stapprobe_")) != string::npos)
+        sugs.erase(pos, string("stapprobe_").size());
+      if (!sugs.empty())
+        throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
+                                  "no match (similar functions: %s)",
+                                  sugs.find(',') == string::npos,
+                                  sugs.c_str()));
+    }
 }
 
 

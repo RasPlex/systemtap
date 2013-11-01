@@ -99,7 +99,7 @@ module_info
   std::set<std::string> sym_seen;
   std::set<std::string> plt_funcs;
 
-  void get_symtab(dwarf_query *q);
+  void get_symtab(base_query *q);
   void update_symtab(cu_function_cache_t *funcs);
 
   module_info(const char *name) :
