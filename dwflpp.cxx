@@ -2212,15 +2212,15 @@ dwflpp::loc2c_emit_address (void *arg, struct obstack *pool,
 
 
 void
-dwflpp::print_locals(vector<Dwarf_Die>& scopes, ostream &o)
+dwflpp::get_locals(vector<Dwarf_Die>& scopes, set<string>& locals)
 {
   // XXX Shouldn't this be walking up to outer scopes too?
 
-  print_locals_die(scopes[0], o);
+  get_locals_die(scopes[0], locals);
 }
 
 void
-dwflpp::print_locals_die(Dwarf_Die& die, ostream &o)
+dwflpp::get_locals_die(Dwarf_Die& die, set<string>& locals)
 {
   // Try to get the first child of die.
   Dwarf_Die child, import;
@@ -2237,13 +2237,13 @@ dwflpp::print_locals_die(Dwarf_Die& die, ostream &o)
             case DW_TAG_formal_parameter:
               name = dwarf_diename (&child);
               if (name)
-                o << " $" << name;
+                locals.insert(string("$") + name);
               break;
 	    case DW_TAG_imported_unit:
 	      // Treat the imported unit children as if they are
 	      // children of the given DIE.
 	      if (dwarf_attr_die(&child, DW_AT_import, &import))
-		print_locals_die (import, o);
+		get_locals_die (import, locals);
 	      break;
             default:
               break;
@@ -2273,8 +2273,9 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                            vardie);
   if (declaring_scope < 0)
     {
-      stringstream alternatives;
-      print_locals (scopes, alternatives);
+      set<string> locals;
+      get_locals(scopes, locals);
+      string sugs = levenshtein_suggest(local, locals); // probably not that many, so no limit
       if (pc)
         throw SEMANTIC_ERROR (_F("unable to find local '%s', [man error::dwarf] dieoffset %s in %s, near pc %s %s %s %s (%s)",
                                  local.c_str(),
@@ -2284,10 +2285,9 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                  (scope_die == NULL) ? "" : _("in"),
                                  (dwarf_diename(scope_die) ?: "<unknown>"),
                                  (dwarf_diename(cu) ?: "<unknown>"),
-                                 (alternatives.str() == ""
+                                 (sugs.empty()
                                   ? (_("<no alternatives>"))
-				  : (_("alternatives:")
-                                       + alternatives.str())).c_str()),
+				  : (_("alternatives: ") + sugs + ")")).c_str()),
                               e->tok);
       else
         throw SEMANTIC_ERROR (_F("unable to find global '%s', [man error::dwarf] dieoffset %s in %s, %s %s %s (%s)",
@@ -2297,10 +2297,9 @@ dwflpp::find_variable_and_frame_base (vector<Dwarf_Die>& scopes,
                                  (scope_die == NULL) ? "" : _("in"),
                                  (dwarf_diename(scope_die) ?: "<unknown>"),
                                  cu_name().c_str(),
-                                 (alternatives.str() == ""
+                                 (sugs.empty()
                                   ? (_("<no alternatives>"))
-				  : (_("alternatives:")
-                                       + alternatives.str())).c_str()),
+				  : (_("alternatives: ") + sugs + ")")).c_str()),
                               e->tok);
     }
 
@@ -2459,7 +2458,7 @@ dwflpp::translate_location(struct obstack *pool,
 
 
 void
-dwflpp::print_members(Dwarf_Die *typedie, ostream &o, set<string> &dupes)
+dwflpp::get_members(Dwarf_Die *typedie, set<string>& members, set<string> &dupes)
 {
   const int typetag = dwarf_tag (typedie);
 
@@ -2471,9 +2470,8 @@ dwflpp::print_members(Dwarf_Die *typedie, ostream &o, set<string> &dupes)
       typetag != DW_TAG_compile_unit &&
       typetag != DW_TAG_partial_unit)
     {
-      o << _F(" Error: %s isn't a struct/class/union",
-	      dwarf_type_name(typedie).c_str());
-      return;
+      throw SEMANTIC_ERROR(_F("Type %s isn't a struct/class/union",
+                              dwarf_type_name(typedie).c_str()));
     }
 
   // Try to get the first child of vardie.
@@ -2482,20 +2480,18 @@ dwflpp::print_members(Dwarf_Die *typedie, ostream &o, set<string> &dupes)
   switch (dwarf_child (typedie, die))
     {
     case 1:				// No children.
-      o << _F("%s is empty", dwarf_type_name(typedie).c_str());
-      return;
+      throw SEMANTIC_ERROR(_F("Type %s is empty", dwarf_type_name(typedie).c_str()));
 
     case -1:				// Error.
     default:				// Shouldn't happen.
-      o << dwarf_type_name(typedie)
-        << ": " << dwarf_errmsg (-1);
-      return;
+      throw SEMANTIC_ERROR(_F("Type %s: %s", dwarf_type_name(typedie).c_str(),
+                                             dwarf_errmsg(-1)));
 
     case 0:				// Success.
       break;
     }
 
-  // Output each sibling's name to 'o'.
+  // Add each sibling's name to members set
   do
     {
       int tag = dwarf_tag(die);
@@ -2503,7 +2499,7 @@ dwflpp::print_members(Dwarf_Die *typedie, ostream &o, set<string> &dupes)
       /* The children of an imported_unit should be treated as members too. */
       if (tag == DW_TAG_imported_unit
           && dwarf_attr_die(die, DW_AT_import, &import))
-        print_members(&import, o, dupes);
+        get_members(&import, members, dupes);
 
       if (tag != DW_TAG_member && tag != DW_TAG_inheritance)
         continue;
@@ -2514,7 +2510,7 @@ dwflpp::print_members(Dwarf_Die *typedie, ostream &o, set<string> &dupes)
         {
           // Only output if this is new, to avoid inheritance dupes.
           if (dupes.insert(member).second)
-            o << " " << member;
+            members.insert(member);
         }
       else
         {
@@ -2524,12 +2520,11 @@ dwflpp::print_members(Dwarf_Die *typedie, ostream &o, set<string> &dupes)
               string source = dwarf_decl_file(die) ?: "<unknown source>";
               int line = -1;
               dwarf_decl_line(die, &line);
-              clog << _F("\n Error in obtaining type attribute for anonymous "
-                         "member at %s:%d", source.c_str(), line);
-              return;
+              throw SEMANTIC_ERROR(_F("Couldn't obtain type attribute for anonymous "
+                                      "member at %s:%d", source.c_str(), line));
             }
 
-          print_members(&temp_die, o, dupes);
+          get_members(&temp_die, members, dupes);
         }
 
     }
@@ -2742,15 +2737,14 @@ dwflpp::translate_components(struct obstack *pool,
                                  + lex_cast(line) + ")";
                     }
 
-                  string alternatives;
-                  stringstream members;
-                  set<string> member_dupes;
-                  print_members(typedie, members, member_dupes);
-                  if (members.str().size() != 0)
-                    alternatives = " (alternatives:" + members.str() + ")";
+                  set<string> members, member_dupes;
+                  get_members(typedie, members, member_dupes);
+                  string sugs = levenshtein_suggest(c.member, members);
+                  if (!sugs.empty())
+                    sugs = " (alternatives: " + sugs + ")";
                   throw SEMANTIC_ERROR(_F("unable to find member '%s' for %s%s%s", c.member.c_str(),
                                           dwarf_type_name(typedie).c_str(), source.c_str(),
-                                          alternatives.c_str()), c.tok);
+                                          sugs.c_str()), c.tok);
                 }
 
               for (unsigned j = 0; j < locs.size(); ++j)

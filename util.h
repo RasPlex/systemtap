@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <map>
 #include <algorithm>
+#include <limits>
 
 extern "C" {
 #if ENABLE_NLS
@@ -327,6 +328,14 @@ class Array2D
 
 // String sorter using the Levenshtein algorithm
 unsigned levenshtein(const std::string& a, const std::string& b);
+
+// Returns comma-separated list of set elements closest to the target string.
+// Print a maximum amount of 'max' elements, with a maximum levenshtein score
+// of 'threshold'.
+std::string levenshtein_suggest(const std::string& target,
+                                const std::set<std::string>& elems,
+                                unsigned max = std::numeric_limits<unsigned>::max(),
+                                unsigned threshold = std::numeric_limits<unsigned>::max());
 
 #ifndef HAVE_PPOLL
 // This is a poor-man's ppoll; see the implementation for more details...

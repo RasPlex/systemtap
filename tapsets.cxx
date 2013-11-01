@@ -607,6 +607,10 @@ struct base_query
   systemtap_session & sess;
   dwflpp & dw;
 
+  // Used to keep track of which modules were visited during
+  // iterate_over_modules()
+  set<string> visited_modules;
+
   // Parameter extractors.
   static bool has_null_param(literal_map_t const & params,
                              string const & k);
@@ -757,10 +761,6 @@ struct dwarf_query : public base_query
   string user_path;
   string user_lib;
 
-  // Used to keep track of which modules were visited during
-  // iterate_over_modules()
-  set<string> visited_modules;
-
   virtual void handle_query_module();
   void query_module_dwarf();
   void query_module_symtab();
@@ -863,8 +863,6 @@ struct dwarf_builder: public derived_probe_builder
       user_dw[module] = new dwflpp(sess, module, false); // might throw
     return user_dw[module];
   }
-
-  string suggest_functions(systemtap_session& sess, string func);
 
   /* NB: not virtual, so can be called from dtor too: */
   void dwarf_build_no_more (bool)
@@ -1096,11 +1094,6 @@ dwarf_query::handle_query_module()
   // or if we want to check the .gnu_debugdata section
   if ((sess.consult_symtab || dw.has_gnu_debugdata()) && !query_done)
     query_module_symtab();
-
-  // Add to list of visited modules
-  // Use mod_info->name rather than dw.module_name since the former is
-  // what's actually used in the sess.module_cache->cache map
-  visited_modules.insert(dw.mod_info->name);
 }
 
 
@@ -2126,10 +2119,16 @@ query_module (Dwfl_Module *mod,
       // .plt is translated to .plt.statement(N).  We only want to iterate for the
       // .plt case
       else if (q->has_plt && ! q->has_statement)
-        q->dw.iterate_over_plt (q, &q->query_plt_callback);
+        {
+          q->dw.iterate_over_plt (q, &q->query_plt_callback);
+          q->visited_modules.insert(name);
+        }
       else
-        // search the module for matches of the probe point.
-        q->handle_query_module();
+        {
+          // search the module for matches of the probe point.
+          q->handle_query_module();
+          q->visited_modules.insert(name);
+        }
 
       // If we know that there will be no more matches, abort early.
       if (q->dw.module_name_final_match(q->module_val) || pending_interrupts)
@@ -2213,6 +2212,7 @@ base_query::query_plt_callback (void *q, const char *entry, size_t address)
   base_query *me = (base_query*)q;
   if (me->dw.function_name_matches_pattern (entry, me->plt_val))
     me->query_plt (entry, address);
+  me->dw.mod_info->plt_funcs.insert(entry);
 }
 
 
@@ -6771,24 +6771,54 @@ sdt_query::query_library (const char *library)
     query_one_library (library, dw, user_lib, base_probe, base_loc, results);
 }
 
+string
+suggest_plt_functions(systemtap_session& sess,
+                      const set<string>& modules,
+                      const string& func)
+{
+  if (func.empty() || modules.empty() || sess.module_cache == NULL)
+    return "";
 
-string dwarf_builder::suggest_functions(systemtap_session& sess,
-                                        string func)
+  set<string> funcs;
+  const map<string, module_info*> &cache = sess.module_cache->cache;
+
+  for (set<string>::iterator itmod = modules.begin();
+       itmod != modules.end(); ++itmod)
+    {
+      map<string, module_info*>::const_iterator itcache;
+      if ((itcache = cache.find(*itmod)) != cache.end())
+        funcs.insert(itcache->second->plt_funcs.begin(),
+                     itcache->second->plt_funcs.end());
+    }
+
+  if (sess.verbose > 2)
+    clog << "suggesting from " << funcs.size() << " functions" << endl;
+
+  if (funcs.empty())
+    return "";
+
+  return levenshtein_suggest(func, funcs, 5); // print top 5 funcs only
+}
+
+string
+suggest_dwarf_functions(systemtap_session& sess,
+                        const set<string>& modules,
+                        string func)
 {
   // Trim any @ component
   size_t pos = func.find('@');
   if (pos != string::npos)
     func.erase(pos);
 
-  if (func.empty() || modules_seen.empty() || sess.module_cache == NULL)
+  if (func.empty() || modules.empty() || sess.module_cache == NULL)
     return "";
 
   // We must first aggregate all the functions from the cache
   set<string> funcs;
   const map<string, module_info*> &cache = sess.module_cache->cache;
 
-  for (set<string>::iterator itmod = modules_seen.begin();
-      itmod != modules_seen.end(); ++itmod)
+  for (set<string>::iterator itmod = modules.begin();
+      itmod != modules.end(); ++itmod)
     {
       map<string, module_info*>::const_iterator itcache;
       if ((itcache = cache.find(*itmod)) != cache.end())
@@ -6802,27 +6832,7 @@ string dwarf_builder::suggest_functions(systemtap_session& sess,
   if (funcs.empty())
     return "";
 
-  // Calculate Levenshtein distance for each symbol
-
-  // Sensitivity parameters (open for tweaking)
-  #define MAXFUNCS 5 // maximum number of funcs to suggest
-
-  multimap<unsigned, string> scores;
-  for (set<string>::iterator it=funcs.begin(); it!=funcs.end(); ++it)
-    {
-      unsigned score = levenshtein(func, *it);
-      scores.insert(make_pair(score, *it));
-    }
-
-  // Print out the top MAXFUNCS funcs
-  string suggestions; unsigned i = 0;
-  for (multimap<unsigned, string>::iterator it = scores.begin();
-      it != scores.end() && i < MAXFUNCS; ++it, i++)
-    suggestions += it->second + ", ";
-  if (!suggestions.empty())
-    suggestions.erase(suggestions.size()-2);
-
-  return suggestions;
+  return levenshtein_suggest(func, funcs, 5); // print top 5 funcs only
 }
 
 void
@@ -6966,7 +6976,19 @@ dwarf_builder::build(systemtap_session & sess,
                       clog << *it << endl;
                     }
                 }
-              string sugs = suggest_functions(sess, func);
+              string sugs = suggest_dwarf_functions(sess, modules_seen, func);
+              modules_seen.clear();
+              if (!sugs.empty())
+                throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
+                                          "no match (similar functions: %s)",
+                                          sugs.find(',') == string::npos,
+                                          sugs.c_str()));
+            }
+          else if (results_pre == results_post
+                   && get_param(filled_parameters, TOK_PLT, func)
+                   && !func.empty())
+            {
+              string sugs = suggest_plt_functions(sess, modules_seen, func);
               modules_seen.clear();
               if (!sugs.empty())
                 throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
@@ -7212,7 +7234,7 @@ dwarf_builder::build(systemtap_session & sess,
               it != modules_seen.end(); ++it)
             clog << *it << endl;
         }
-      string sugs = suggest_functions(sess, func);
+      string sugs = suggest_dwarf_functions(sess, modules_seen, func);
       modules_seen.clear();
       if (!sugs.empty())
         // Note that this error will not even be printed out if it is
@@ -7221,6 +7243,18 @@ dwarf_builder::build(systemtap_session & sess,
         // sense since it's possible that the user misspelled the same
         // function in different probes, in which case the first
         // suggestion is sufficient.
+        throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
+                                  "no match (similar functions: %s)",
+                                  sugs.find(',') == string::npos,
+                                  sugs.c_str()));
+    }
+  else if (results_pre == results_post && !location->optional
+           && get_param(filled_parameters, TOK_PLT, func)
+           && !func.empty())
+    {
+      string sugs = suggest_plt_functions(sess, modules_seen, func);
+      modules_seen.clear();
+      if (!sugs.empty())
         throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
                                   "no match (similar functions: %s)",
                                   sugs.find(',') == string::npos,
@@ -7489,7 +7523,7 @@ symbol_table::purge_syscall_stubs()
 }
 
 void
-module_info::get_symtab(dwarf_query *q)
+module_info::get_symtab(base_query *q)
 {
   if (symtab_status != info_unknown)
     return;
@@ -9385,15 +9419,20 @@ tracepoint_var_expanding_visitor::visit_target_symbol_arg (target_symbol* e)
 
   if (arg == NULL)
     {
-      stringstream alternatives;
+      set<string> vars;
       for (unsigned i = 0; i < args.size(); ++i)
-        alternatives << " $" << args[i].name;
-      alternatives << " $$name $$parms $$vars";
+        vars.insert("$" + args[i].name);
+      vars.insert("$$name");
+      vars.insert("$$parms");
+      vars.insert("$$vars");
+      string sugs = levenshtein_suggest(e->name, vars); // no need to limit, there's not that many
 
       // We hope that this value ends up not being referenced after all, so it
       // can be optimized out quietly.
-      throw SEMANTIC_ERROR(_F("unable to find tracepoint variable '%s' (alternatives: %s)",
-                              e->name.c_str(), alternatives.str().c_str()), e->tok);
+      throw SEMANTIC_ERROR(_F("unable to find tracepoint variable '%s'%s",
+                              e->name.c_str(), sugs.empty() ? "" :
+                              (_(" (alternatives: ") + sugs + ")").c_str()), e->tok);
+                              // NB: we use 'alternatives' because we list all
       // NB: we can have multiple errors, since a target variable
       // may be expanded in several different contexts:
       //     trace ("*") { $foo->bar }
@@ -10027,6 +10066,7 @@ int
 tracepoint_query::handle_query_cu(Dwarf_Die * cudie)
 {
   dw.focus_on_cu (cudie);
+  dw.mod_info->get_symtab(this);
 
   // look at each function to see if it's a tracepoint
   string function = "stapprobe_" + tracepoint;
@@ -10367,7 +10407,23 @@ tracepoint_builder::build(systemtap_session& s,
   assert(get_param (parameters, TOK_TRACE, tracepoint));
 
   tracepoint_query q(*dw, tracepoint, base, location, finished_results);
+  unsigned results_pre = finished_results.size();
   dw->iterate_over_modules(&query_module, &q);
+  unsigned results_post = finished_results.size();
+
+  // Did we fail to find a match? Let's suggest something!
+  if (results_pre == results_post)
+    {
+      size_t pos;
+      string sugs = suggest_dwarf_functions(s, q.visited_modules, tracepoint);
+      while ((pos = sugs.find("stapprobe_")) != string::npos)
+        sugs.erase(pos, string("stapprobe_").size());
+      if (!sugs.empty())
+        throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
+                                  "no match (similar functions: %s)",
+                                  sugs.find(',') == string::npos,
+                                  sugs.c_str()));
+    }
 }
 
 

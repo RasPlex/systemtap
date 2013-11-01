@@ -541,12 +541,10 @@ match_node::find_and_build (systemtap_session& s,
         {
           // We didn't find any wildcard matches (since the size of
           // the result vector didn't change).  Throw an error.
-          string alternatives;
-          for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
-            alternatives += string(" ") + i->first.str();
-
-          throw SEMANTIC_ERROR(_F("probe point mismatch (alternatives: %s)",
-                                  alternatives.c_str()), comp->tok);
+          string sugs = suggest_functors(functor);
+          throw SEMANTIC_ERROR (_F("probe point mismatch: didn't find any wildcard matches%s",
+                                   sugs.empty() ? "" : (" (similar: " + sugs + ")").c_str()),
+                                comp->tok);
         }
     }
   else if (isglob(loc->components[pos]->functor)) // wildcard?
@@ -618,13 +616,10 @@ match_node::find_and_build (systemtap_session& s,
         {
 	  // We didn't find any wildcard matches (since the size of
 	  // the result vector didn't change).  Throw an error.
-          string alternatives;
-          for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
-            alternatives += string(" ") + i->first.str();
-
-          throw SEMANTIC_ERROR(_F("probe point mismatch %s didn't find any wildcard matches",
-                                  (alternatives == "" ? "" : _(" (alternatives: ") +
-                                   alternatives + ")").c_str()), loc->components[pos]->tok);
+          string sugs = suggest_functors(loc->components[pos]->functor);
+          throw SEMANTIC_ERROR (_F("probe point mismatch: didn't find any wildcard matches%s",
+                                   sugs.empty() ? "" : (" (similar: " + sugs + ")").c_str()),
+                                loc->components[pos]->tok);
 	}
     }
   else
@@ -657,18 +652,34 @@ match_node::find_and_build (systemtap_session& s,
         {
           // We didn't find any alias suffixes (since the size of the
           // result vector didn't change).  Throw an error.
-          string alternatives;
-          for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
-            alternatives += string(" ") + i->first.str();
-
-          throw SEMANTIC_ERROR(_F("probe point mismatch %s",
-                                  (alternatives == "" ? "" : (_(" (alternatives:") + alternatives +
-                                  ")").c_str())),
-                               loc->components[pos]->tok);
+          string sugs = suggest_functors(loc->components[pos]->functor);
+          throw SEMANTIC_ERROR (_F("probe point mismatch%s",
+                                   sugs.empty() ? "" : (" (similar: " + sugs + ")").c_str()),
+                                loc->components[pos]->tok);
         }
     }
 }
 
+string
+match_node::suggest_functors(string functor)
+{
+  // only use prefix if globby (and prefix is non-empty)
+  size_t glob = functor.find('*');
+  if (glob != string::npos && glob != 0)
+    functor.erase(glob);
+  if (functor.empty())
+    return "";
+
+  set<string> functors;
+  for (sub_map_iterator_t i = sub.begin(); i != sub.end(); i++)
+    {
+      string ftor = i->first.str();
+      if (ftor.find('(') != string::npos)  // trim any parameter
+        ftor.erase(ftor.find('('));
+      functors.insert(ftor);
+    }
+  return levenshtein_suggest(functor, functors, 5); // print top 5
+}
 
 void
 match_node::try_suffix_expansion (systemtap_session& s,
@@ -2061,7 +2072,7 @@ symresolution_info::visit_foreach_loop (foreach_loop* e)
 	      stringstream msg;
               msg << _F("unresolved arity-%zu global array %s, missing global declaration?",
                         e->indexes.size(), array->name.c_str());
-	      throw SEMANTIC_ERROR (msg.str(), e->tok);
+	      throw SEMANTIC_ERROR (msg.str(), array->tok);
 	    }
 	}
     }
@@ -2200,14 +2211,15 @@ symresolution_info::visit_functioncall (functioncall* e)
   if (e->referent)
     return;
 
-  functiondecl* d = find_function (e->function, e->args.size ());
+  functiondecl* d = find_function (e->function, e->args.size (), e->tok);
   if (d)
     e->referent = d;
   else
     {
-      stringstream msg;
-      msg << _F("unresolved arity-%zu function", e->args.size());
-      throw SEMANTIC_ERROR (msg.str(), e->tok);
+      string sugs = levenshtein_suggest(e->function, collect_functions(), 5); // print 5 funcs
+      throw SEMANTIC_ERROR(_F("unresolved function%s",
+                              sugs.empty() ? "" : (_(" (similar: ") + sugs + ")").c_str()),
+                           e->tok);
     }
 }
 
@@ -2286,7 +2298,7 @@ symresolution_info::find_var (const string& name, int arity, const token* tok)
 
 
 functiondecl*
-symresolution_info::find_function (const string& name, unsigned arity)
+symresolution_info::find_function (const string& name, unsigned arity, const token *tok)
 {
   // the common path
   if (session.functions.find(name) != session.functions.end())
@@ -2296,9 +2308,8 @@ symresolution_info::find_function (const string& name, unsigned arity)
       if (fd->formal_args.size() == arity)
         return fd;
 
-      session.print_warning (_F("mismatched arity-%zu function found", fd->formal_args.size()),
-                             fd->tok);
-      // and some semantic_error will shortly follow
+      throw SEMANTIC_ERROR(_F("arity mismatch found (function '%s' takes %zu args)",
+                              name.c_str(), fd->formal_args.size()), tok, fd->tok);
     }
 
   // search library functions
@@ -2306,27 +2317,51 @@ symresolution_info::find_function (const string& name, unsigned arity)
     {
       stapfile* f = session.library_files[i];
       for (unsigned j=0; j<f->functions.size(); j++)
-        if (f->functions[j]->name == name &&
-            f->functions[j]->formal_args.size() == arity)
+        if (f->functions[j]->name == name)
           {
-            // put library into the queue if not already there
-            if (0) // session.verbose_resolution
-              cerr << _F("      function %s is defined from %s",
-                         name.c_str(), f->name.c_str()) << endl;
+            if (f->functions[j]->formal_args.size() == arity)
+              {
+                // put library into the queue if not already there
+                if (0) // session.verbose_resolution
+                  cerr << _F("      function %s is defined from %s",
+                             name.c_str(), f->name.c_str()) << endl;
 
-            if (find (session.files.begin(), session.files.end(), f)
-                == session.files.end())
-              session.files.push_back (f);
-            // else .. print different message?
+                if (find (session.files.begin(), session.files.end(), f)
+                    == session.files.end())
+                  session.files.push_back (f);
+                // else .. print different message?
 
-            return f->functions[j];
+                return f->functions[j];
+              }
+
+            throw SEMANTIC_ERROR(_F("arity mismatch found (function '%s' takes %zu args)",
+                                    name.c_str(), f->functions[j]->formal_args.size()),
+                                    tok, f->functions[j]->tok);
           }
     }
 
   return 0;
 }
 
+set<string>
+symresolution_info::collect_functions(void)
+{
+  set<string> funcs;
 
+  for (map<string,functiondecl*>::const_iterator it = session.functions.begin();
+       it != session.functions.end(); ++it)
+    funcs.insert(it->first);
+
+  // search library functions
+  for (unsigned i=0; i<session.library_files.size(); i++)
+    {
+      stapfile* f = session.library_files[i];
+      for (unsigned j=0; j<f->functions.size(); j++)
+        funcs.insert(f->functions[j]->name);
+    }
+
+  return funcs;
+}
 
 // ------------------------------------------------------------------------
 // optimization
@@ -2418,20 +2453,20 @@ void semantic_pass_opt2 (systemtap_session& s, bool& relaxed_p, unsigned iterati
           {
             if (vut.written.find (l) == vut.written.end())
               if (iterations == 0 && ! s.suppress_warnings)
-		  {
-		    stringstream o;
-		    vector<vardecl*>::iterator it;
-		    for (it = s.probes[i]->locals.begin(); it != s.probes[i]->locals.end(); it++)
-		      if (l->name != (*it)->name)
-			o << " " <<  (*it)->name;
-		    for (it = s.globals.begin(); it != s.globals.end(); it++)
-		      if (l->name != (*it)->name)
-			o << " " <<  (*it)->name;
+                {
+                  set<string> vars;
+                  vector<vardecl*>::iterator it;
+                  for (it = s.probes[i]->locals.begin(); it != s.probes[i]->locals.end(); it++)
+                    vars.insert((*it)->name);
+                  for (it = s.globals.begin(); it != s.globals.end(); it++)
+                    vars.insert((*it)->name);
 
-                    s.print_warning (_F("never-assigned local variable '%s' %s",
-                                     l->name.c_str(), (o.str() == "" ? "" :
-                                     (_("(alternatives:") + o.str() + ")")).c_str()), l->tok);
-		  }
+                  vars.erase(l->name);
+                  string sugs = levenshtein_suggest(l->name, vars, 5); // suggest top 5 vars
+                  s.print_warning (_F("never-assigned local variable '%s'%s",
+                                      l->name.c_str(), (sugs.empty() ? "" :
+                                      (_(" (similar: ") + sugs + ")")).c_str()), l->tok);
+                }
             j++;
           }
       }
@@ -2459,22 +2494,21 @@ void semantic_pass_opt2 (systemtap_session& s, bool& relaxed_p, unsigned iterati
               if (vut.written.find (l) == vut.written.end())
                 if (iterations == 0 && ! s.suppress_warnings)
                   {
-                    stringstream o;
+                    set<string> vars;
                     vector<vardecl*>::iterator it;
                     for (it = fd->formal_args.begin() ;
                          it != fd->formal_args.end(); it++)
-                      if (l->name != (*it)->name)
-                        o << " " << (*it)->name;
+                        vars.insert((*it)->name);
                     for (it = fd->locals.begin(); it != fd->locals.end(); it++)
-                      if (l->name != (*it)->name)
-                        o << " " << (*it)->name;
+                        vars.insert((*it)->name);
                     for (it = s.globals.begin(); it != s.globals.end(); it++)
-                      if (l->name != (*it)->name)
-                        o << " " << (*it)->name;
+                        vars.insert((*it)->name);
 
-                    s.print_warning (_F("never-assigned local variable '%s' %s",
-                                        l->name.c_str(), (o.str() == "" ? "" :
-                                        (_("(alternatives:") + o.str() + ")")).c_str()), l->tok);
+                    vars.erase(l->name);
+                    string sugs = levenshtein_suggest(l->name, vars, 5); // suggest top 5 vars
+                    s.print_warning (_F("never-assigned local variable '%s'%s",
+                                        l->name.c_str(), (sugs.empty() ? "" :
+                                        (_(" (similar: ") + sugs + ")")).c_str()), l->tok);
                   }
 
               j++;
@@ -2501,14 +2535,16 @@ void semantic_pass_opt2 (systemtap_session& s, bool& relaxed_p, unsigned iterati
           if (vut.written.find (l) == vut.written.end() && ! l->init) // no initializer
             if (iterations == 0 && ! s.suppress_warnings)
               {
-                stringstream o;
+                set<string> vars;
                 vector<vardecl*>::iterator it;
                 for (it = s.globals.begin(); it != s.globals.end(); it++)
                   if (l->name != (*it)->name)
-                    o << " " << (*it)->name;
+                    vars.insert((*it)->name);
 
-                s.print_warning (_F("never assigned global variable '%s' %s", l->name.c_str(),
-                                   (o.str() == "" ? "" : (_("(alternatives:") + o.str() + ")")).c_str()), l->tok);
+                string sugs = levenshtein_suggest(l->name, vars, 5); // suggest top 5 vars
+                s.print_warning (_F("never-assigned global variable '%s'%s",
+                                    l->name.c_str(), (sugs.empty() ? "" :
+                                    (_(" (similar: ") + sugs + ")")).c_str()), l->tok);
               }
 
           i++;

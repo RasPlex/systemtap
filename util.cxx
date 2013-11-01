@@ -1103,7 +1103,8 @@ get_self_path()
 // parameter which would abort the operation if we know the final
 // distance will be larger than the maximum. This may entail maintaining
 // another data structure, and thus the cost might outweigh the benefit
-unsigned levenshtein(const string& a, const string& b)
+unsigned
+levenshtein(const string& a, const string& b)
 {
   Array2D<unsigned> d(a.size()+1, b.size()+1);
 
@@ -1116,7 +1117,7 @@ unsigned levenshtein(const string& a, const string& b)
   // the meat
   for (unsigned i = 1; i < d.width; i++) {
     for (unsigned j = 1; j < d.height; j++) {
-      if (a[i] == b[j]) // match
+      if (a[i-1] == b[j-1]) // match
         d(i,j) = d(i-1, j-1);
       else // penalties open for adjustments
         d(i,j) = min(min(
@@ -1127,6 +1128,77 @@ unsigned levenshtein(const string& a, const string& b)
   }
 
   return d(d.width-1, d.height-1);
+}
+
+// Returns comma-separated list of set elements closest to the target string.
+// Print a maximum amount of 'max' elements, with a maximum levenshtein score
+// of 'threshold'.
+string
+levenshtein_suggest(const string& target,        // string to match against
+                    const set<string>& elems,    // elements to suggest from
+                    unsigned max,                // max elements to print
+                    unsigned threshold)          // max leven score to print
+{
+  // calculate leven score for each elem and put in map
+  multimap<unsigned, string> scores;
+  for (set<string>::const_iterator it = elems.begin();
+                                      it != elems.end(); ++it)
+    {
+      // Approximate levenshtein by size-difference only; real score
+      // is at least this high
+      unsigned min_score = labs(target.size() - it->size());
+
+      if (min_score > threshold) // min-score too high for threshold
+        continue;
+
+      /* Check if we can skip calculating the score for this element. This works
+       * on knowing two facts:
+       * (1) We will only print the 'max' number of the top elements. The
+       *     current top 'max' candidates reside in the scores map already.
+       * (2) The score will be AT LEAST the difference between the lengths of
+       *     the two strings.
+       * So what we do is retrieve the WORST score of the current best
+       * candidates by iterating through the map (which is ordered) and
+       * retrieving the 'max-th' item and check if that's still better than the
+       * BEST score we could possibly get from the two strings (by comparing
+       * their lengths). If the 'max-th' item is indeed better, then we know
+       * this element will NEVER make it to the terminal. So we just skip it and
+       * move on. Quite tragic if you ask me...
+       */
+      unsigned maxth_score = std::numeric_limits<unsigned>::max();
+      if (scores.size() >= max) // do we have at least 'max' items?
+        {
+          // retrieve 'max-th' item
+          multimap<unsigned, string>::iterator itt = scores.begin();
+          for (unsigned i = 0; i < max-1; i++) itt++; // will not go to .end()
+          maxth_score = itt->first;
+        }
+
+      if (min_score > maxth_score) // min-score too high for known candidates
+        continue;
+
+      unsigned score = levenshtein(target, *it);
+
+      if (score > maxth_score) // actual score too high for known candidates
+        continue;
+
+      if (score > threshold) // actual score too high for threshold
+        continue;
+
+      // a candidate!
+      scores.insert(make_pair(score, *it));
+    }
+
+  string suggestions;
+
+  // Print out the top 'max' elements
+  multimap<unsigned, string>::iterator it = scores.begin();
+  for (unsigned i = 0; it != scores.end() && i < max; ++it, i++)
+    suggestions += it->second + ", ";
+  if (!suggestions.empty())
+    suggestions.erase(suggestions.size()-2);
+
+  return suggestions;
 }
 
 #ifndef HAVE_PPOLL

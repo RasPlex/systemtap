@@ -97,8 +97,9 @@ module_info
 
   // set of all symbols in module (includes inlines)
   std::set<std::string> sym_seen;
+  std::set<std::string> plt_funcs;
 
-  void get_symtab(dwarf_query *q);
+  void get_symtab(base_query *q);
   void update_symtab(cu_function_cache_t *funcs);
 
   module_info(const char *name) :
@@ -387,9 +388,9 @@ private:
   static void loc2c_emit_address (void *arg, struct obstack *pool,
                                   Dwarf_Addr address);
 
-  void print_locals(std::vector<Dwarf_Die>& scopes, std::ostream &o);
-  void print_locals_die(Dwarf_Die &die, std::ostream &o);
-  void print_members(Dwarf_Die *vardie, std::ostream &o,
+  void get_locals(std::vector<Dwarf_Die>& scopes, std::set<std::string>& locals);
+  void get_locals_die(Dwarf_Die &die, std::set<std::string>& locals);
+  void get_members(Dwarf_Die *vardie, std::set<std::string>& members,
                      std::set<std::string> &dupes);
 
   Dwarf_Attribute *find_variable_and_frame_base (std::vector<Dwarf_Die>& scopes,

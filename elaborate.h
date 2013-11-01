@@ -52,7 +52,8 @@ public:
   symresolution_info (systemtap_session& s);
 
   vardecl* find_var (const std::string& name, int arity, const token *tok);
-  functiondecl* find_function (const std::string& name, unsigned arity);
+  functiondecl* find_function (const std::string& name, unsigned arity, const token *tok);
+  std::set<std::string> collect_functions(void);
 
   void visit_block (block *s);
   void visit_symbol (symbol* e);
@@ -330,6 +331,7 @@ match_node
   void find_and_build (systemtap_session& s,
                        probe* p, probe_point *loc, unsigned pos,
                        std::vector<derived_probe *>& results);
+  std::string suggest_functors(std::string functor);
   void try_suffix_expansion (systemtap_session& s,
                              probe *p, probe_point *loc, unsigned pos,
                              std::vector<derived_probe *>& results);

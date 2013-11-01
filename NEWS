@@ -1,5 +1,10 @@
 * What's new in version 2.4
 
+- Better suggestions are given in many of the semantic errors in which
+  alternatives are provided. Additionally, suggestions are now provided
+  when plt and trace probes could not be resolved. For example,
+  kernel.trace("sched_siwtch") will suggest 'sched_switch'.
+
 - SystemTap is now smarter about error reporting. Errors from the same
   source are considered duplicates and suppressed. A message is
   displayed on exit if any errors/warnings were suppressed.
