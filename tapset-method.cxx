@@ -40,17 +40,6 @@ static const string TOK_BEGIN ("begin");
 static const string TOK_END ("end");
 static const string TOK_ERROR ("error");
 
-/* Escape all double quotes with a backslash in the string s: */
-string bmoption_escape (string s) {
-  size_t n = 0;
-  for (;;) {
-    n = s.find('"', n);
-    if (n == string::npos) break;
-    s.insert(n, 1, '\\'); n++;
-  }
-  return s;
-}
-
 // --------------------------------------------------------------------------
 
 struct java_builder: public derived_probe_builder
