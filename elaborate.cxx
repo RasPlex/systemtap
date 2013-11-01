@@ -2072,7 +2072,7 @@ symresolution_info::visit_foreach_loop (foreach_loop* e)
 	      stringstream msg;
               msg << _F("unresolved arity-%zu global array %s, missing global declaration?",
                         e->indexes.size(), array->name.c_str());
-	      throw SEMANTIC_ERROR (msg.str(), e->tok);
+	      throw SEMANTIC_ERROR (msg.str(), array->tok);
 	    }
 	}
     }
