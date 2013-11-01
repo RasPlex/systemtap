@@ -97,6 +97,7 @@ module_info
 
   // set of all symbols in module (includes inlines)
   std::set<std::string> sym_seen;
+  std::set<std::string> plt_funcs;
 
   void get_symtab(dwarf_query *q);
   void update_symtab(cu_function_cache_t *funcs);

@@ -2214,6 +2214,7 @@ base_query::query_plt_callback (void *q, const char *entry, size_t address)
   base_query *me = (base_query*)q;
   if (me->dw.function_name_matches_pattern (entry, me->plt_val))
     me->query_plt (entry, address);
+  me->dw.mod_info->plt_funcs.insert(entry);
 }
 
 
