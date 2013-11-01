@@ -864,8 +864,6 @@ struct dwarf_builder: public derived_probe_builder
     return user_dw[module];
   }
 
-  string suggest_functions(systemtap_session& sess, string func);
-
   /* NB: not virtual, so can be called from dtor too: */
   void dwarf_build_no_more (bool)
   {
@@ -6774,23 +6772,25 @@ sdt_query::query_library (const char *library)
 }
 
 
-string dwarf_builder::suggest_functions(systemtap_session& sess,
-                                        string func)
+string
+suggest_dwarf_functions(systemtap_session& sess,
+                        const set<string>& modules,
+                        string func)
 {
   // Trim any @ component
   size_t pos = func.find('@');
   if (pos != string::npos)
     func.erase(pos);
 
-  if (func.empty() || modules_seen.empty() || sess.module_cache == NULL)
+  if (func.empty() || modules.empty() || sess.module_cache == NULL)
     return "";
 
   // We must first aggregate all the functions from the cache
   set<string> funcs;
   const map<string, module_info*> &cache = sess.module_cache->cache;
 
-  for (set<string>::iterator itmod = modules_seen.begin();
-      itmod != modules_seen.end(); ++itmod)
+  for (set<string>::iterator itmod = modules.begin();
+      itmod != modules.end(); ++itmod)
     {
       map<string, module_info*>::const_iterator itcache;
       if ((itcache = cache.find(*itmod)) != cache.end())
@@ -6948,7 +6948,7 @@ dwarf_builder::build(systemtap_session & sess,
                       clog << *it << endl;
                     }
                 }
-              string sugs = suggest_functions(sess, func);
+              string sugs = suggest_dwarf_functions(sess, modules_seen, func);
               modules_seen.clear();
               if (!sugs.empty())
                 throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
@@ -7194,7 +7194,7 @@ dwarf_builder::build(systemtap_session & sess,
               it != modules_seen.end(); ++it)
             clog << *it << endl;
         }
-      string sugs = suggest_functions(sess, func);
+      string sugs = suggest_dwarf_functions(sess, modules_seen, func);
       modules_seen.clear();
       if (!sugs.empty())
         // Note that this error will not even be printed out if it is
