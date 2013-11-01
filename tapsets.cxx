@@ -607,6 +607,10 @@ struct base_query
   systemtap_session & sess;
   dwflpp & dw;
 
+  // Used to keep track of which modules were visited during
+  // iterate_over_modules()
+  set<string> visited_modules;
+
   // Parameter extractors.
   static bool has_null_param(literal_map_t const & params,
                              string const & k);
@@ -756,10 +760,6 @@ struct dwarf_query : public base_query
   probe_point * base_loc;
   string user_path;
   string user_lib;
-
-  // Used to keep track of which modules were visited during
-  // iterate_over_modules()
-  set<string> visited_modules;
 
   virtual void handle_query_module();
   void query_module_dwarf();
@@ -1096,11 +1096,6 @@ dwarf_query::handle_query_module()
   // or if we want to check the .gnu_debugdata section
   if ((sess.consult_symtab || dw.has_gnu_debugdata()) && !query_done)
     query_module_symtab();
-
-  // Add to list of visited modules
-  // Use mod_info->name rather than dw.module_name since the former is
-  // what's actually used in the sess.module_cache->cache map
-  visited_modules.insert(dw.mod_info->name);
 }
 
 
@@ -2126,10 +2121,16 @@ query_module (Dwfl_Module *mod,
       // .plt is translated to .plt.statement(N).  We only want to iterate for the
       // .plt case
       else if (q->has_plt && ! q->has_statement)
-        q->dw.iterate_over_plt (q, &q->query_plt_callback);
+        {
+          q->dw.iterate_over_plt (q, &q->query_plt_callback);
+          q->visited_modules.insert(name);
+        }
       else
-        // search the module for matches of the probe point.
-        q->handle_query_module();
+        {
+          // search the module for matches of the probe point.
+          q->handle_query_module();
+          q->visited_modules.insert(name);
+        }
 
       // If we know that there will be no more matches, abort early.
       if (q->dw.module_name_final_match(q->module_val) || pending_interrupts)
