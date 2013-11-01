@@ -6771,6 +6771,34 @@ sdt_query::query_library (const char *library)
     query_one_library (library, dw, user_lib, base_probe, base_loc, results);
 }
 
+string
+suggest_plt_functions(systemtap_session& sess,
+                      const set<string>& modules,
+                      const string& func)
+{
+  if (func.empty() || modules.empty() || sess.module_cache == NULL)
+    return "";
+
+  set<string> funcs;
+  const map<string, module_info*> &cache = sess.module_cache->cache;
+
+  for (set<string>::iterator itmod = modules.begin();
+       itmod != modules.end(); ++itmod)
+    {
+      map<string, module_info*>::const_iterator itcache;
+      if ((itcache = cache.find(*itmod)) != cache.end())
+        funcs.insert(itcache->second->plt_funcs.begin(),
+                     itcache->second->plt_funcs.end());
+    }
+
+  if (sess.verbose > 2)
+    clog << "suggesting from " << funcs.size() << " functions" << endl;
+
+  if (funcs.empty())
+    return "";
+
+  return levenshtein_suggest(func, funcs, 5); // print top 5 funcs only
+}
 
 string
 suggest_dwarf_functions(systemtap_session& sess,
@@ -6949,6 +6977,18 @@ dwarf_builder::build(systemtap_session & sess,
                     }
                 }
               string sugs = suggest_dwarf_functions(sess, modules_seen, func);
+              modules_seen.clear();
+              if (!sugs.empty())
+                throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
+                                          "no match (similar functions: %s)",
+                                          sugs.find(',') == string::npos,
+                                          sugs.c_str()));
+            }
+          else if (results_pre == results_post
+                   && get_param(filled_parameters, TOK_PLT, func)
+                   && !func.empty())
+            {
+              string sugs = suggest_plt_functions(sess, modules_seen, func);
               modules_seen.clear();
               if (!sugs.empty())
                 throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
@@ -7203,6 +7243,18 @@ dwarf_builder::build(systemtap_session & sess,
         // sense since it's possible that the user misspelled the same
         // function in different probes, in which case the first
         // suggestion is sufficient.
+        throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
+                                  "no match (similar functions: %s)",
+                                  sugs.find(',') == string::npos,
+                                  sugs.c_str()));
+    }
+  else if (results_pre == results_post && !location->optional
+           && get_param(filled_parameters, TOK_PLT, func)
+           && !func.empty())
+    {
+      string sugs = suggest_plt_functions(sess, modules_seen, func);
+      modules_seen.clear();
+      if (!sugs.empty())
         throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
                                   "no match (similar functions: %s)",
                                   sugs.find(',') == string::npos,
