@@ -1117,7 +1117,7 @@ levenshtein(const string& a, const string& b)
   // the meat
   for (unsigned i = 1; i < d.width; i++) {
     for (unsigned j = 1; j < d.height; j++) {
-      if (a[i] == b[j]) // match
+      if (a[i-1] == b[j-1]) // match
         d(i,j) = d(i-1, j-1);
       else // penalties open for adjustments
         d(i,j) = min(min(
