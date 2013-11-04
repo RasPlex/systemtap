@@ -13,10 +13,13 @@
 #define _STP_PROCFS_C_
 
 #if (!defined(STAPCONF_PATH_LOOKUP) && !defined(STAPCONF_KERN_PATH_PARENT) \
-     && !defined(STAPCONF_VFS_PATH_LOOKUP))
-#error "Either path_lookup(), kern_path_parent(), or vfs_path_lookup() must be exported by the kernel."
+     && !defined(STAPCONF_VFS_PATH_LOOKUP) && !defined(STAPCONF_KERN_PATH))
+#error "Either path_lookup(), kern_path_parent(), vfs_path_lookup(), or kern_path() must be exported by the kernel."
 #endif
 
+#ifdef STAPCONF_KERN_PATH
+#include <linux/namei.h>
+#endif
 #ifdef STAPCONF_VFS_PATH_LOOKUP
 #include <linux/mount.h>
 #include <linux/pid_namespace.h>
@@ -87,11 +90,13 @@ static int _stp_mkdir_proc_module(void)
 	static char proc_root_name[STP_MODULE_NAME_LEN + sizeof("systemtap/")];
 #if defined(STAPCONF_PATH_LOOKUP) || defined(STAPCONF_KERN_PATH_PARENT)
 	struct nameidata nd;
-#else  /* STAPCONF_VFS_PATH_LOOKUP */
+#else  /* STAPCONF_VFS_PATH_LOOKUP or STAPCONF_KERN_PATH */
 	struct path path;
+#if defined(STAPCONF_VFS_PATH_LOOKUP)
 	struct vfsmount *mnt;
+#endif
 	int rc;
-#endif	/* STAPCONF_VFS_PATH_LOOKUP */
+#endif	/* STAPCONF_VFS_PATH_LOOKUP or STAPCONF_KERN_PATH */
 
         if (_stp_proc_root != NULL)
 		return 0;
@@ -116,6 +121,19 @@ static int _stp_mkdir_proc_module(void)
 		path_release(&nd);
 #endif	/* !STAPCONF_NAMEIDATA_CLEANUP */
 	}
+
+#elif defined(STAPCONF_KERN_PATH)
+	/* Prefer kern_path() over vfs_path_lookup(), since on some
+	 * kernels the declaration for vfs_path_lookup() was moved to
+	 * a private header. */
+
+	/* See if '/proc/systemtap' exists. */
+	rc = kern_path("/proc/systemtap", 0, &path);
+	if (rc == 0) {
+		found = 1;
+		path_put (&path);
+	}
+
 #else  /* STAPCONF_VFS_PATH_LOOKUP */
 	/* See if '/proc/systemtap' exists. */
 	if (! init_pid_ns.proc_mnt) {
