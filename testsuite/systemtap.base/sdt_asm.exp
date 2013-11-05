@@ -2,6 +2,8 @@
 # the same test name for result comparisons.
 set test "sdt_misc"
 
+if {! [installtest_p]} { untested "$test"; return }
+
 # Test V3 asm support
 
 proc cleanup_handler { verbose } {
