@@ -758,8 +758,8 @@ static int _stp_transport_data_fs_init(void)
 			return rc;
 		}
 
-		__stp_entry[cpu]->d_inode->i_uid = _stp_uid;
-		__stp_entry[cpu]->d_inode->i_gid = _stp_gid;
+		__stp_entry[cpu]->d_inode->i_uid = KUIDT_INIT(_stp_uid);
+		__stp_entry[cpu]->d_inode->i_gid = KGIDT_INIT(_stp_gid);
 		__stp_entry[cpu]->d_inode->i_private = &_stp_relay_data.iter[cpu];
 
 #ifndef STP_BULKMODE

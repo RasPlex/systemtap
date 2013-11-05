@@ -1,5 +1,5 @@
 // context tapset
-// Copyright (C) 2005-2011 Red Hat Inc.
+// Copyright (C) 2005-2013 Red Hat Inc.
 // Copyright (C) 2006 Intel Corporation.
 //
 // This file is part of systemtap, and is free software.  You can
@@ -113,7 +113,11 @@ function gid:long ()
 #ifdef STAPCONF_TASK_UID
 	STAP_RETVALUE = current->gid;
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+	STAP_RETVALUE = from_kgid_munged(current_user_ns(), current_gid());
+#else
 	STAP_RETVALUE = current_gid();
+#endif
 #endif
 %}
 
@@ -127,7 +131,11 @@ function egid:long ()
 #ifdef STAPCONF_TASK_UID
 	STAP_RETVALUE = current->egid;
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+	STAP_RETVALUE = from_kgid_munged(current_user_ns(), current_egid());
+#else
 	STAP_RETVALUE = current_egid();
+#endif
 #endif
 %}
 
@@ -141,7 +149,11 @@ function uid:long ()
 #ifdef STAPCONF_TASK_UID
 	STAP_RETVALUE = current->uid;
 #else
-	STAP_RETVALUE = current_uid();
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+        STAP_RETVALUE = from_kuid_munged(current_user_ns(), current_uid());
+#else
+        STAP_RETVALUE = current_uid();
+#endif
 #endif
 %}
 
@@ -155,7 +167,11 @@ function euid:long ()
 #ifdef STAPCONF_TASK_UID
 	STAP_RETVALUE = current->euid;
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+        STAP_RETVALUE = from_kuid_munged(current_user_ns(), current_euid());
+#else
 	STAP_RETVALUE = current_euid();
+#endif
 #endif
 %}
 

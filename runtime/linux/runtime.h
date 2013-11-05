@@ -87,7 +87,11 @@ static void _stp_exit(void);
 #ifdef STAPCONF_TASK_UID
 #define STP_CURRENT_EUID (current->euid)
 #else
+#ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+#define STP_CURRENT_EUID (from_kuid_munged(current_user_ns(), task_euid(current)))
+#else
 #define STP_CURRENT_EUID (task_euid(current))
+#endif
 #endif
 
 #define is_myproc() (STP_CURRENT_EUID == _stp_uid)
