@@ -27,7 +27,7 @@ program's text segment, and add an ELF note to the binary with
 metadata.  This metadata describes the marker's name and parameters.
 This encoding is designed to be parseable by multiple tools (not just
 systemtap: GDB, the GNU Debugger, also contains support).  These allow
-the tools to find parameters and their types, whereever they happen to
+the tools to find parameters and their types, wherever they happen to
 reside, even without DWARF debuginfo.
 
 .PP
