@@ -61,8 +61,9 @@ proc inode_uprobes_p {} {
     #
     # Note we're looking for " uprobe_register" to avoid finding
     # 'kallsyms_uprobe_register' from a loaded systemtap module.
-    return [expr [grep_kallsyms register_uprobe]        \
-              || [grep_kallsyms " uprobe_register"]     \
+    return [expr ([grep_kallsyms register_uprobe]        \
+                  || [grep_kallsyms " uprobe_register"]) \
+              && ! [classic_uprobes_p]                   \
            ]
 }
 

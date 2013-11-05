@@ -16,8 +16,8 @@ set test "uprobes_filtering"
 # We need to actually run things
 if {! [installtest_p]} { untested $test; return }
 
-# If we're not using built-in inode uprobes, don't bother testing.
-if {! [inode_uprobes_p] || [classic_uprobes_p]} { untested $test; return }
+# If we're not using inode uprobes, don't bother testing.
+if {! [inode_uprobes_p]} { untested $test; return }
 
 # So that sudo stap works in case we're not running the test as root
 set installed_stap "$env(SYSTEMTAP_PATH)/stap"
