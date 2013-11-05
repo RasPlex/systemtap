@@ -14,6 +14,8 @@ proc checker { TEST EXE EXP } {
 		set STR "parse error:"
 	} else {
 		set cmd "staprun -C always"
+		# build-tree staprun is not in $PATH
+		if {![installtest_p]} then { untested $test; return }
 		set STR "ERROR:"
 	}
 
