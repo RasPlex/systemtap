@@ -1,9 +1,18 @@
-# Ensure that user_string_n_quoted truncates properly and there's no
-# off-by-one error... PR15617
+# Ensure that user_string_n_quoted truncates properly by input length and
+# there's no off-by-one error (see PR15617). Also ensures that
+# user_string_n2_quoted properly truncates by output length.
+# We avoid using @MAXSTRINGLEN to not have to require -g
 
 probe syscall.write {
 	if (pid() == target()) {
 		printf("%s\n", user_string_n_quoted(buf_uaddr, 15))
+		printf("%s\n", user_string_n_quoted(buf_uaddr, 14))
+		printf("%s\n", user_string_n_quoted(buf_uaddr, 13))
+		printf("%s\n", user_string_n2_quoted(buf_uaddr, 99, 18))
+		printf("%s\n", user_string_n2_quoted(buf_uaddr, 99, 17))
+		printf("%s\n", user_string_n2_quoted(buf_uaddr, 99, 16))
+		printf("%s\n", user_string_n2_quoted(buf_uaddr, 99, 15))
+		printf("%s\n", user_string_n2_quoted(buf_uaddr, 99, 14))
 		exit()
 	}
 }

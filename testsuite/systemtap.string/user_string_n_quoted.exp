@@ -1,15 +1,12 @@
 set test "user_string_n_quoted"
 if {![installtest_p]} { untested $test; return }
 
-spawn stap $srcdir/$subdir/user_string_n_quoted.stp -c "echo this_is_a_test > /dev/null"
-expect {
-	-timeout 60
-	{"this_is_a_"...} { pass $test }
-	eof { fail $test }
-	timeout {
-		fail "$test (timeout)"
-		catch { exec kill -INT -- -[exp_pid] }
-	}
-}
-
-catch { close }; catch { wait }
+set ::result_string {"this_is_a_test\n"
+"this_is_a_test"
+"this_is_a_tes"
+"this_is_a_test\n"
+"this_is_a_te"...
+"this_is_a_t"...
+"this_is_a_"...
+"this_is_a"...}
+stap_run2 $srcdir/$subdir/$test.stp -c "echo this_is_a_test > /dev/null"
