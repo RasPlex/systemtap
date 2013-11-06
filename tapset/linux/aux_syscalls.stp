@@ -1716,6 +1716,7 @@ static const _stp_val_array const _stp_signal_list[] = {
 	V(SIGVTALRM),
 	{SIGIO,"SIGIO/SIGPOLL"},
 	V(SIGPWR),
+	{SIGTRAP|0x80,"TRACESYSGOOD"},
 	{0, NULL}
 };
 
