@@ -1262,9 +1262,9 @@ compile_server_client::compile_using_server (
 	  continue; // try next database
 	}
 
-      // Enable cipher suites which are allowed by U.S. export regulations.
+      // Enable all cipher suites.
       // SSL_ClearSessionCache is required for the new settings to take effect.
-      secStatus = NSS_SetExportPolicy ();
+      secStatus = NSS_SetDomesticPolicy ();
       SSL_ClearSessionCache ();
       if (secStatus != SECSuccess)
 	{
@@ -1705,9 +1705,9 @@ add_server_trust (
       goto cleanup;
     }
 
-  // Enable cipher suites which are allowed by U.S. export regulations.
+  // Enable all cipher suites.
   // SSL_ClearSessionCache is required for the new settings to take effect.
-  secStatus = NSS_SetExportPolicy ();
+  secStatus = NSS_SetDomesticPolicy ();
   SSL_ClearSessionCache ();
   if (secStatus != SECSuccess)
     {

@@ -1735,13 +1735,13 @@ server_main (PRFileDesc *listenSocket)
   CERTCertificate *cert = NULL;
   bool serverCacheConfigured = false;
 
-  // Enable cipher suites which are allowed by U.S. export regulations.
+  // Enable all cipher suites.
   // NB: The NSS docs say that SSL_ClearSessionCache is required for the new settings to take
   // effect, however, calling it puts NSS in a state where it will not shut down cleanly.
   // We need to be able to shut down NSS cleanly if we are to generate a new certificate when
   // ours expires. It should be noted however, thet SSL_ClearSessionCache only clears the
   // client cache, and we are a server.
-  secStatus = NSS_SetExportPolicy ();
+  secStatus = NSS_SetDomesticPolicy ();
   //      SSL_ClearSessionCache ();
   if (secStatus != SECSuccess)
     {
