@@ -970,6 +970,9 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Wed Nov 06 2013 Frank Ch. Eigler <fche@redhat.com> - 2.4-1
+- Upstream release.
+
 * Wed Oct 09 2013 Jonathan Lebon <jlebon@redhat.com>
 - Added runtime-virthost and runtime-virtguest packages.
 
