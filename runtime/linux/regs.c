@@ -189,6 +189,33 @@ static void _stp_print_regs(struct pt_regs * regs)
 	_stp_printf("LR [%016lx]\n", regs->link);
 }
 
+#elif defined (__aarch64__)
+static void _stp_print_regs(struct pt_regs * regs)
+{
+	int i, top_reg;
+	u64 lr, sp;
+
+	if (compat_user_mode(regs)) {
+		lr = regs->compat_lr;
+		sp = regs->compat_sp;
+		top_reg = 12;
+	} else {
+		lr = regs->regs[30];
+		sp = regs->sp;
+		top_reg = 29;
+	}
+
+	_stp_printf("pc : [<%016llx>] lr : [<%016llx>] pstate: %08llx\n",
+	       regs->pc, lr, regs->pstate);
+	_stp_printf("sp : %016llx\n", sp);
+	for (i = top_reg; i >= 0; i--) {
+		_stp_printf("x%-2d: %016llx ", i, regs->regs[i]);
+		if (i % 2 == 0)
+			_stp_printf("\n");
+	}
+	_stp_printf("\n");
+}
+
 #elif defined (__arm__)
 
 static const char *processor_modes[]=
