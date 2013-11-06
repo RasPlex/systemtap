@@ -1741,14 +1741,13 @@ server_main (PRFileDesc *listenSocket)
   // We need to be able to shut down NSS cleanly if we are to generate a new certificate when
   // ours expires. It should be noted however, thet SSL_ClearSessionCache only clears the
   // client cache, and we are a server.
-  secStatus = NSS_SetDomesticPolicy ();
+  /* Some NSS versions don't do this correctly in NSS_SetDomesticPolicy. */
+  do {
+    const PRUint16 *cipher;
+    for (cipher = SSL_ImplementedCiphers; *cipher != 0; ++cipher)
+      SSL_CipherPolicySet(*cipher, SSL_ALLOWED);
+  } while (0);
   //      SSL_ClearSessionCache ();
-  if (secStatus != SECSuccess)
-    {
-      server_error (_("Unable to set NSS export policy"));
-      nssError ();
-      goto done;
-    }
 
   // Configure the SSL session cache for a single process server with the default settings.
   secStatus = SSL_ConfigServerSessionIDCache (0, 0, 0, NULL);
