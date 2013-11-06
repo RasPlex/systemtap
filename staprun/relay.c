@@ -7,7 +7,7 @@
  * Public License (GPL); either version 2, or (at your option) any
  * later version.
  *
- * Copyright (C) 2007-2012 Red Hat Inc.
+ * Copyright (C) 2007-2013 Red Hat Inc.
  */
 
 #include "staprun.h"
@@ -236,9 +236,8 @@ static void switchfile_handler(int sig)
 int init_relayfs(void)
 {
 	int i, len;
-	struct statfs st;
 	char rqbuf[128];
-	char buf[PATH_MAX], relay_filebase[PATH_MAX];
+        char buf[PATH_MAX];
         struct sigaction sa;
         
 	dbug(2, "initializing relayfs\n");
@@ -247,33 +246,32 @@ int init_relayfs(void)
 	relay_fd[0] = 0;
 	out_fd[0] = 0;
 
-        if (relay_basedir_fd >= 0)
-                strcpy(relay_filebase, "\0");
- 	else if (statfs("/sys/kernel/debug", &st) == 0
-	    && (int) st.f_type == (int) DEBUGFS_MAGIC) {
-		if (sprintf_chk(relay_filebase,
-				"/sys/kernel/debug/systemtap/%s/",
-				modname))
-			return -1;
-	} else {
-		err("Cannot find relayfs or debugfs mount point.\n");
-		return -1;
-	}
-
+        /* Find out whether probe module was compiled with STP_BULKMODE. */
 	if (send_request(STP_BULK, rqbuf, sizeof(rqbuf)) == 0)
 		bulkmode = 1;
 
+        /* Try to open a slew of per-cpu trace%d files.  This will fail early;
+           for bulkmode, it should pass only for "trace0"; for non-bulkmode,
+           it will fail at some actual-number-of-CPUs that we XXX hope is less
+           than NR_CPUS. */
 	for (i = 0; i < NR_CPUS; i++) {
-		if (sprintf_chk(buf, "%strace%d", relay_filebase, i))
-			return -1;
-		dbug(2, "attempting to open %s\n", buf);
                 relay_fd[i] = -1;
+
 #ifdef HAVE_OPENAT
-                if (relay_basedir_fd >= 0)
+                if (relay_basedir_fd >= 0) {
+                        if (sprintf_chk(buf, "trace%d", i))
+                                return -1;
+                        dbug(2, "attempting to openat %s\n", buf);
                         relay_fd[i] = openat(relay_basedir_fd, buf, O_RDONLY | O_NONBLOCK);
+                }
 #endif
-                if (relay_fd[i] < 0)
+                if (relay_fd[i] < 0) {
+                        if (sprintf_chk(buf, "/sys/kernel/debug/systemtap/%s/trace%d",
+                                        modname, i))
+                                return -1;
+                        dbug(2, "attempting to open %s\n", buf);
                         relay_fd[i] = open(buf, O_RDONLY | O_NONBLOCK);
+                }
 		if (relay_fd[i] < 0 || set_clexec(relay_fd[i]) < 0)
 			break;
 	}
