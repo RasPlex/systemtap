@@ -38,6 +38,9 @@
   signed with the kernel's build-time keys).  This protection may
   be suppressed with the $STAP_FIPS_OVERRIDE environment variable.
 
+- The stap-server client & server code now enable all SSL/TLS
+  ciphers rather than just the "export" subset.
+
 - For systems with in-kernel utrace, 'process.end' and 'thread.end'
   probes will hit before the target's parent process is notified of
   the target's death. This matches the behavior of newer kernels
