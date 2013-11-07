@@ -251,7 +251,7 @@ int init_relayfs(void)
 		bulkmode = 1;
 
         /* Try to open a slew of per-cpu trace%d files.  This will fail early;
-           for bulkmode, it should pass only for "trace0"; for non-bulkmode,
+           for !bulkmode, it should pass only for "trace0"; for bulkmode,
            it will fail at some actual-number-of-CPUs that we XXX hope is less
            than NR_CPUS. */
 	for (i = 0; i < NR_CPUS; i++) {
