@@ -40,10 +40,14 @@
 %endif
 
 %if %{with_virtguest}
-   %if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
-      %define udevrulesdir /lib/udev/rules.d
+   %if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
+      %define udevrulesdir /usr/lib/udev/rules.d
    %else
-      %define udevrulesdir /etc/udev/rules.d
+      %if 0%{?rhel} >= 6
+         %define udevrulesdir /lib/udev/rules.d
+      %else # RHEL5
+         %define udevrulesdir /etc/udev/rules.d
+      %endif
    %endif
 %endif
 
