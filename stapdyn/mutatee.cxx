@@ -280,6 +280,7 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
   staplog(1) << "found target \"" << target.path << "\", inserting "
              << target.probes.size() << " probes" << endl;
 
+  process->beginInsertionSet();
   for (size_t j = 0; j < target.probes.size(); ++j)
     {
       const dynprobe_location& probe = target.probes[j];
@@ -402,6 +403,7 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
             }
         }
     }
+  process->finalizeInsertionSet(false);
 }
 
 
@@ -441,7 +443,6 @@ mutatee::instrument_object_dynprobes(BPatch_object* object,
   size_t semaphore_start = semaphores.size();
 
   // Match the object to our targets, and instrument matches.
-  process->beginInsertionSet();
   for (size_t i = 0; i < targets.size(); ++i)
     {
       const dynprobe_target& target = targets[i];
@@ -450,7 +451,6 @@ mutatee::instrument_object_dynprobes(BPatch_object* object,
       if (path == target.path)
         instrument_dynprobe_target(object, target);
     }
-  process->finalizeInsertionSet(false);
 
   // Increment new semaphores
   update_semaphores(1, semaphore_start);
