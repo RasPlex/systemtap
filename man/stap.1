@@ -805,7 +805,7 @@ probe kernel.function (
 %)
 .ESAMPLE
 
-.SS PREPROCESSOR MACROS (EXPERIMENTAL)
+.SS PREPROCESSOR MACROS
 The preprocessor also supports a simple macro facility, run as a
 separate pass before conditional preprocessing.
 .PP
@@ -1050,9 +1050,9 @@ array membership check
 .br
 .BR "[" exp1 ", " exp2 ", " ... "] in " array
 
-.SS REGULAR EXPRESSION MATCHING (experimental)
-The scripting language has proof-of-concept support for regular
-expression matching. The basic syntax is as follows:
+.SS REGULAR EXPRESSION MATCHING
+The scripting language supports regular expression matching.
+The basic syntax is as follows:
 .SAMPLE
 .BR exp " =~ " regex
 .BR exp " !~ " regex
