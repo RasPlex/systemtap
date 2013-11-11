@@ -4249,7 +4249,7 @@ typeresolution_info::visit_literal_number (literal_number* e)
   if ((t == e->type) || (t == pe_unknown))
     return;
 
-  mismatch (e->tok, e->type, t);
+  mismatch (e->tok, t, e->type);
 }
 
 
@@ -4260,7 +4260,7 @@ typeresolution_info::visit_literal_string (literal_string* e)
   if ((t == e->type) || (t == pe_unknown))
     return;
 
-  mismatch (e->tok, e->type, t);
+  mismatch (e->tok, t, e->type);
 }
 
 
@@ -4312,7 +4312,7 @@ typeresolution_info::visit_comparison (comparison *e)
   if (e->left->type != pe_unknown &&
       e->right->type != pe_unknown &&
       e->left->type != e->right->type)
-    mismatch (e->tok, e->left->type, e->right->type);
+    mismatch (e);
 
   if (e->type == pe_unknown)
     {
@@ -4432,7 +4432,7 @@ typeresolution_info::visit_assignment (assignment *e)
       if (e->left->type != pe_unknown &&
           e->right->type != pe_unknown &&
           e->left->type != e->right->type)
-        mismatch (e->tok, e->left->type, e->right->type);
+        mismatch (e);
 
     }
   else
@@ -4469,7 +4469,7 @@ typeresolution_info::visit_binary_expression (binary_expression* e)
   if (e->left->type != pe_unknown &&
       e->right->type != pe_unknown &&
       e->left->type != e->right->type)
-    mismatch (e->tok, e->left->type, e->right->type);
+    mismatch (e);
 
   if (e->type == pe_unknown)
     {
@@ -4556,18 +4556,17 @@ void resolve_2types (Referrer* referrer, Referent* referent,
   exp_type& re_type = referrer->type;
   const token* re_tok = referrer->tok;
   exp_type& te_type = referent->type;
-  const token* te_tok = referent->tok;
 
   if (t != pe_unknown && re_type == t && re_type == te_type)
     ; // do nothing: all three e->types in agreement
   else if (t == pe_unknown && re_type != pe_unknown && re_type == te_type)
     ; // do nothing: two known e->types in agreement
   else if (re_type != pe_unknown && te_type != pe_unknown && re_type != te_type)
-    r->mismatch (re_tok, re_type, te_type);
+    r->mismatch (re_tok, re_type, referent); // referrer-referent
   else if (re_type != pe_unknown && t != pe_unknown && re_type != t)
-    r->mismatch (re_tok, re_type, t);
+    r->mismatch (re_tok, t, referent); // referrer-t
   else if (te_type != pe_unknown && t != pe_unknown && te_type != t)
-    r->mismatch (te_tok, te_type, t);
+    r->mismatch (re_tok, t, referent); // referent-t
   else if (re_type == pe_unknown && t != pe_unknown)
     {
       // propagate from upstream
@@ -4586,7 +4585,7 @@ void resolve_2types (Referrer* referrer, Referent* referent,
     {
       // propagate to referent
       te_type = re_type;
-      r->resolved (te_tok, te_type);
+      r->resolved (re_tok, re_type, referent);
       // catch re_type/t mismatch later
     }
   else if (! accept_unknown)
@@ -4742,7 +4741,7 @@ typeresolution_info::visit_arrayindex (arrayindex* e)
       if (e->type != pe_long)
 	{
 	  e->type = pe_long;
-	  resolved (e->tok, pe_long);
+	  resolved (e->tok, e->type);
 	}
       return;
     }
@@ -4773,15 +4772,14 @@ typeresolution_info::visit_arrayindex (arrayindex* e)
         {
           // propagate to formal type
           ft = at;
-          resolved (array->referent->tok, ft);
-          // uses array decl as there is no token for "formal type"
+          resolved (ee->tok, ft, array->referent, i);
         }
       if (at == pe_stats)
         invalid (ee->tok, at);
       if (ft == pe_stats)
         invalid (ee->tok, ft);
       if (at != pe_unknown && ft != pe_unknown && ft != at)
-        mismatch (e->tok, at, ft);
+        mismatch (ee->tok, ee->type, array->referent, i);
       if (at == pe_unknown)
 	  unresolved (ee->tok);
     }
@@ -4814,14 +4812,14 @@ typeresolution_info::visit_functioncall (functioncall* e)
         {
           // propagate to formal arg
           ft = at;
-          resolved (e->referent->formal_args[i]->tok, ft);
+          resolved (ee->tok, ft, e->referent->formal_args[i], i);
         }
       if (at == pe_stats)
         invalid (e->tok, at);
       if (ft == pe_stats)
         invalid (fe_tok, ft);
       if (at != pe_unknown && ft != pe_unknown && ft != at)
-        mismatch (e->tok, at, ft);
+        mismatch (ee->tok, ee->type, e->referent->formal_args[i], i);
       if (at == pe_unknown)
         unresolved (e->tok);
     }
@@ -4969,15 +4967,14 @@ typeresolution_info::visit_foreach_loop (foreach_loop* e)
 	    {
 	      // propagate to formal type
 	      ft = at;
-	      resolved (array->referent->tok, ft);
-	      // uses array decl as there is no token for "formal type"
+	      resolved (ee->tok, ee->type, array->referent, i);
 	    }
 	  if (at == pe_stats)
 	    invalid (ee->tok, at);
 	  if (ft == pe_stats)
 	    invalid (ee->tok, ft);
 	  if (at != pe_unknown && ft != pe_unknown && ft != at)
-	    mismatch (e->tok, at, ft);
+	    mismatch (ee->tok, ee->type, array->referent, i);
 	  if (at == pe_unknown)
 	    unresolved (ee->tok);
 	}
@@ -5115,13 +5112,13 @@ typeresolution_info::visit_return_statement (return_statement* e)
 
   if (e_type != pe_unknown && e->value->type != pe_unknown
       && e_type != e->value->type)
-    mismatch (current_function->tok, e_type, e->value->type);
+    mismatch (e->value->tok, e->value->type, current_function);
   if (e_type == pe_unknown &&
       (e->value->type == pe_long || e->value->type == pe_string))
     {
       // propagate non-statistics from value
       e_type = e->value->type;
-      resolved (current_function->tok, e->value->type);
+      resolved (e->value->tok, e_type, current_function);
     }
   if (e->value->type == pe_stats)
     invalid (e->value->tok, e->value->type);
@@ -5262,7 +5259,7 @@ typeresolution_info::visit_stat_op (stat_op* e)
       resolved (e->tok, e->type);
     }
   else if (e->type != pe_long)
-    mismatch (e->tok, e->type, pe_long);
+    mismatch (e->tok, pe_long, e->type);
 }
 
 void
@@ -5282,11 +5279,11 @@ typeresolution_info::check_arg_type (exp_type wanted, expression* arg)
   if (arg->type == pe_unknown)
     {
       arg->type = wanted;
-      resolved (arg->tok, wanted);
+      resolved (arg->tok, arg->type);
     }
   else if (arg->type != wanted)
     {
-      mismatch (arg->tok, arg->type, wanted);
+      mismatch (arg->tok, wanted, arg->type);
     }
 }
 
@@ -5392,8 +5389,60 @@ typeresolution_info::mismatch (const token *tok, exp_type type,
 
   if (assert_resolvability)
     {
-      cerr << "A mismatch occurred" << endl;
-      // TODO: retrieve from resolved_types vector
+      assert(decl != NULL);
+
+      // If mismatch is against a function parameter from within the function
+      // itself (rather than a function call), then the index will be -1. We
+      // check here if the decl corresponds to one of the params and if so,
+      // adjust the index.
+      if (current_function != NULL && index == -1)
+        {
+          vector<vardecl*>& args = current_function->formal_args;
+          for (unsigned i = 0; i < args.size() && index < 0; i++)
+            if (args[i] == decl)
+              index = i;
+        }
+
+      // get the declaration's original type and token
+      const resolved_type *original = NULL;
+      for (vector<resolved_type>::const_iterator it = resolved_types.begin();
+           it != resolved_types.end() && original == NULL; ++it)
+        {
+          if (it->decl == decl && it->index == index)
+            original = &(*it);
+        }
+
+      // print basic mismatch msg if we couldn't find the decl (this can happen
+      // for fabricated (already resolved) decls e.g. __perf_read_*)
+      if (original == NULL)
+        {
+          session.print_error (SEMANTIC_ERROR (
+            _F("type mismatch: expected %s but found %s",
+               lex_cast(type).c_str(),
+               lex_cast(decl->type).c_str()),
+            tok));
+          return;
+        }
+
+      // print where mismatch happened and chain with origin of decl type
+      // resolution
+      stringstream msg;
+
+      if (index >= 0)
+        msg << _F("index %d ", index);
+      msg << _F("type mismatch (%s)", lex_cast(type).c_str());
+      semantic_error err(ERR_SRC, msg.str(), tok);
+
+      stringstream chain_msg;
+      chain_msg << _("type");
+      if (index >= 0)
+        chain_msg << _F(" of index %d ", index);
+      chain_msg << _F(" was first inferred here (%s)",
+                      lex_cast(decl->type).c_str());
+      err.chain = new SEMANTIC_ERROR(chain_msg.str(), original->tok);
+
+      session.print_error (err);
+      if (err.chain) delete err.chain;
     }
 }
 
@@ -5408,7 +5457,28 @@ typeresolution_info::resolved (const token *tok, exp_type type,
                                const symboldecl* decl, int index)
 {
   num_newly_resolved ++;
-  // TODO: add to resolved_types vector
+
+  // We only use the resolved_types vector to give better mismatch messages
+  // involving symbols. So don't bother adding it if we're not given a decl
+  if (decl != NULL)
+    {
+      // As a fail-safe, if the decl & index is already in the vector, then
+      // modify it instead of adding another one to ensure uniqueness. This
+      // should never happen since we only call resolved once for each decl &
+      // index, but better safe than sorry. (IE. if it does happen, better have
+      // the latest resolution info for better mismatch reporting later).
+      for (unsigned i = 0; i < resolved_types.size(); i++)
+        {
+          if (resolved_types[i].decl == decl
+              && resolved_types[i].index == index)
+            {
+              resolved_types[i].tok = tok;
+              return;
+            }
+        }
+      resolved_type res(tok, decl, index);
+      resolved_types.push_back(res);
+    }
 }
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */
