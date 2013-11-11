@@ -4220,13 +4220,19 @@ semantic_pass_types (systemtap_session& s)
           if (ti.num_still_unresolved == 0)
             break; // successfully
           else if (! ti.assert_resolvability)
-            ti.assert_resolvability = true; // last pass, with error msgs
+            {
+              ti.assert_resolvability = true; // last pass, with error msgs
+              if (s.verbose > 0)
+                ti.mismatch_complexity = 0; // print every kind of mismatch
+            }
           else
             { // unsuccessful conclusion
               rc ++;
               break;
             }
         }
+      else
+        ti.mismatch_complexity = 0; // reset for next pass
     }
 
   return rc + s.num_errors();
@@ -4236,8 +4242,8 @@ semantic_pass_types (systemtap_session& s)
 
 typeresolution_info::typeresolution_info (systemtap_session& s):
   session(s), num_newly_resolved(0), num_still_unresolved(0),
-  assert_resolvability(false), current_function(0), current_probe(0),
-  t(pe_unknown)
+  assert_resolvability(false), mismatch_complexity(0),
+  current_function(0), current_probe(0), t(pe_unknown)
 {
 }
 
@@ -5318,7 +5324,7 @@ typeresolution_info::unresolved (const token* tok)
 {
   num_still_unresolved ++;
 
-  if (assert_resolvability)
+  if (assert_resolvability && mismatch_complexity <= 0)
     {
       stringstream msg;
       msg << _("unresolved type ");
@@ -5348,13 +5354,15 @@ typeresolution_info::mismatch (const binary_expression* e)
 {
   num_still_unresolved ++;
 
-  if (assert_resolvability)
+  if (assert_resolvability && mismatch_complexity <= 1)
     {
       stringstream msg;
       msg << _F("type mismatch: left and right sides don't agree (%s vs %s)",
                 lex_cast(e->left->type).c_str(), lex_cast(e->right->type).c_str());
       session.print_error (SEMANTIC_ERROR (msg.str(), e->tok));
     }
+  else if (!assert_resolvability)
+    mismatch_complexity = max(1, mismatch_complexity);
 }
 
 /* tok   token where mismatch occurred
@@ -5366,7 +5374,7 @@ typeresolution_info::mismatch (const token* tok, exp_type t1, exp_type t2)
 {
   num_still_unresolved ++;
 
-  if (assert_resolvability)
+  if (assert_resolvability && mismatch_complexity <= 2)
     {
       stringstream msg;
       msg << _F("type mismatch: expected %s", lex_cast(t1).c_str());
@@ -5374,6 +5382,8 @@ typeresolution_info::mismatch (const token* tok, exp_type t1, exp_type t2)
         msg << _F(" but found %s", lex_cast(t2).c_str());
       session.print_error (SEMANTIC_ERROR (msg.str(), tok));
     }
+  else if (!assert_resolvability)
+    mismatch_complexity = max(2, mismatch_complexity);
 }
 
 /* tok   token where the mismatch happened
@@ -5387,7 +5397,7 @@ typeresolution_info::mismatch (const token *tok, exp_type type,
 {
   num_still_unresolved ++;
 
-  if (assert_resolvability)
+  if (assert_resolvability && mismatch_complexity <= 3)
     {
       assert(decl != NULL);
 
@@ -5444,6 +5454,8 @@ typeresolution_info::mismatch (const token *tok, exp_type type,
       session.print_error (err);
       if (err.chain) delete err.chain;
     }
+  else if (!assert_resolvability)
+    mismatch_complexity = max(3, mismatch_complexity);
 }
 
 

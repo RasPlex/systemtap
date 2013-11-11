@@ -71,6 +71,7 @@ struct typeresolution_info: public visitor
   unsigned num_newly_resolved;
   unsigned num_still_unresolved;
   bool assert_resolvability;
+  int mismatch_complexity;
   functiondecl* current_function;
   derived_probe* current_probe;
 
