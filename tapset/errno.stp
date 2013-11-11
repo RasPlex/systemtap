@@ -386,6 +386,8 @@ static long _stp_returnval(struct pt_regs *regs) {
 		return regs->u_regs[UREG_RETPC];
 #elif defined (__s390x__)
 		return regs->gprs[2];
+#elif defined (__aarch64__)
+		return regs->regs[0];
 #elif defined (__arm__)
 		return regs->ARM_r0;
 #else
