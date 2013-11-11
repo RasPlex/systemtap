@@ -5346,6 +5346,19 @@ typeresolution_info::invalid (const token* tok, exp_type pe)
     }
 }
 
+void
+typeresolution_info::mismatch (const binary_expression* e)
+{
+  num_still_unresolved ++;
+
+  if (assert_resolvability)
+    {
+      stringstream msg;
+      msg << _F("type mismatch: left and right sides don't agree (%s vs %s)",
+                lex_cast(e->left->type).c_str(), lex_cast(e->right->type).c_str());
+      session.print_error (SEMANTIC_ERROR (msg.str(), e->tok));
+    }
+}
 
 /* tok   token where mismatch occurred
  * t1    type we expected (the 'good' type)
@@ -5366,11 +5379,36 @@ typeresolution_info::mismatch (const token* tok, exp_type t1, exp_type t2)
     }
 }
 
-
+/* tok   token where the mismatch happened
+ * type  type we received (the 'bad' type)
+ * decl  declaration of mismatched symbol
+ * index if index-based (array index or function arg)
+ * */
 void
-typeresolution_info::resolved (const token*, exp_type)
+typeresolution_info::mismatch (const token *tok, exp_type type,
+                               const symboldecl* decl, int index)
+{
+  num_still_unresolved ++;
+
+  if (assert_resolvability)
+    {
+      cerr << "A mismatch occurred" << endl;
+      // TODO: retrieve from resolved_types vector
+    }
+}
+
+
+/* tok   token where resolution occurred
+ * type  type to which we resolved
+ * decl  declaration of resolved symbol
+ * index if index-based (array index or function arg)
+ * */
+void
+typeresolution_info::resolved (const token *tok, exp_type type,
+                               const symboldecl* decl, int index)
 {
   num_newly_resolved ++;
+  // TODO: add to resolved_types vector
 }
 
 /* vim: set sw=2 ts=8 cino=>4,n-2,{2,^-2,t0,(0,u0,w1,M1 : */
