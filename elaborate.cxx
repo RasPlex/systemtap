@@ -4162,7 +4162,8 @@ semantic_pass_types (systemtap_session& s)
       ti.num_newly_resolved = 0;
       ti.num_still_unresolved = 0;
 
-  for (map<string,functiondecl*>::iterator it = s.functions.begin(); it != s.functions.end(); it++)
+      for (map<string,functiondecl*>::iterator it = s.functions.begin();
+                                               it != s.functions.end(); it++)
         {
           assert_no_interrupts();
 
@@ -5346,69 +5347,29 @@ typeresolution_info::invalid (const token* tok, exp_type pe)
 }
 
 
+/* tok   token where mismatch occurred
+ * t1    type we expected (the 'good' type)
+ * t2    type we received (the 'bad' type)
+ * */
 void
 typeresolution_info::mismatch (const token* tok, exp_type t1, exp_type t2)
 {
-  bool tok_resolved = false;
-  size_t i;
-  semantic_error* err1 = 0;
   num_still_unresolved ++;
-
-  //BZ 9719: for improving type mismatch messages, a semantic error is
-  //generated with the token where type was first resolved. All such 
-  //resolved tokens, stored in a vector, are matched against their 
-  //content. If an error for the matching token hasn't been printed out
-  //already, it is and the token pushed in another printed_toks vector
 
   if (assert_resolvability)
     {
       stringstream msg;
-      for (i=0; i<resolved_toks.size(); i++)
-	{
-	  if (resolved_toks[i]->content == tok->content)
-	    {
-	      tok_resolved = true;
-	      break;
-	    }
-	}
-      if (!tok_resolved)
-	{
-          msg << _F("type mismatch (%s vs. %s)",
-                    lex_cast(t1).c_str(), lex_cast(t2).c_str());
-	}
-      else
-	{
-	  bool tok_printed = false;
-	  for (size_t j=0; j<printed_toks.size(); j++)
-	    {
-	      if (printed_toks[j] == resolved_toks[i])
-		{
-		  tok_printed = true;
-		  break;
-		}
-	    }
-          msg << _F("type mismatch (%s vs. %s)",
-                    lex_cast(t1).c_str(), lex_cast(t2).c_str());
-	  if (!tok_printed)
-	    {
-	      //error for possible mismatch in the earlier resolved token
-	      printed_toks.push_back (resolved_toks[i]);
-	      stringstream type_msg;
-              type_msg << _F("type was first inferred here (%s)", lex_cast(t2).c_str());
-	      err1 = new SEMANTIC_ERROR (type_msg.str(), resolved_toks[i]);
-	    }
-	}
-      semantic_error err (ERR_SRC, msg.str(), tok);
-      err.chain = err1;
-      session.print_error (err);
+      msg << _F("type mismatch: expected %s", lex_cast(t1).c_str());
+      if (t2 != pe_unknown)
+        msg << _F(" but found %s", lex_cast(t2).c_str());
+      session.print_error (SEMANTIC_ERROR (msg.str(), tok));
     }
 }
 
 
 void
-typeresolution_info::resolved (const token* tok, exp_type)
+typeresolution_info::resolved (const token*, exp_type)
 {
-  resolved_toks.push_back (tok);
   num_newly_resolved ++;
 }
 

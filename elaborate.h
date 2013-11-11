@@ -73,8 +73,6 @@ struct typeresolution_info: public visitor
   bool assert_resolvability;
   functiondecl* current_function;
   derived_probe* current_probe;
-  std::vector <const token*> resolved_toks; // account for type mis-
-  std::vector <const token*> printed_toks;  // matches (BZ 9719)
 
   void check_arg_type (exp_type wanted, expression* arg);
   void check_local (vardecl* v);
