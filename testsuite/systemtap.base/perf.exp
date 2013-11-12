@@ -190,7 +190,7 @@ if {! [uprobes_p]} {
     set ok 0
     expect {
 	-timeout 180
-	-re {semantic error:.*type mismatch.*long vs. string} {
+	-re {semantic error:.*type mismatch.*string.*long} {
 	    incr ok; exp_continue }
 	timeout { fail "$test (timeout)" }
 	eof { }
