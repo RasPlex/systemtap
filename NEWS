@@ -1,5 +1,8 @@
 * What's new in version 2.5
 
+- SystemTap now reports more accurate and succinct errors on type
+  mismatches.
+
 * What's new in version 2.4, 2013-11-06
 
 - Better suggestions are given in many of the semantic errors in which
