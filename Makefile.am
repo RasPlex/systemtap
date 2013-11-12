@@ -390,6 +390,11 @@ dist-gzip:
 
 rpm: dist-gzip
 	if [ `id -u` = 0 ]; then echo NOTE: do not run this as root; exit 1; fi
+	if [ ! -w `rpm --eval %_topdir` ]; then \
+	  echo WARNING: you do not have access to `rpm --eval %_topdir`; \
+	  echo WARNING: you may receive a permission denied error; \
+	  echo WARNING: consider adding \'%_topdir $(HOME)/rpmbuild\' to $(HOME)/.rpmmacros; \
+	fi
 	mkdir -p `rpm --eval %_specdir`
 	mkdir -p `rpm --eval %_srcrpmdir`
 	mkdir -p `rpm --eval %_rpmdir`
