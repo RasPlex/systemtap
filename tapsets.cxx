@@ -3872,13 +3872,8 @@ dwarf_var_expanding_visitor::visit_entry_op (entry_op *e)
 void
 dwarf_var_expanding_visitor::visit_perf_op (perf_op *e)
 {
-  token* t = new token;
   string e_lit_val = e->operand->value;
   
-  t->location = e->tok->location;
-  t->type = tok_identifier;
-  t->content = e_lit_val;
-
   add_block = new block;
   add_block->tok = e->tok;
 
@@ -3902,7 +3897,7 @@ dwarf_var_expanding_visitor::visit_perf_op (perf_op *e)
       perf_counter_refs.insert((*it).second.second);
       // __perf_read_N is assigned in the probe prologue
       symbol* sym = new symbol;
-      sym->tok = t;
+      sym->tok = e->tok;
       sym->name = "__perf_read_" + (*it).first;
       provide (sym);
     }
