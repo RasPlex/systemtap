@@ -3880,6 +3880,7 @@ dwarf_var_expanding_visitor::visit_perf_op (perf_op *e)
   t->content = e_lit_val;
 
   add_block = new block;
+  add_block->tok = e->tok;
 
   systemtap_session &s = this->q.sess;
   map<string, pair<string,derived_probe*> >::iterator it;
