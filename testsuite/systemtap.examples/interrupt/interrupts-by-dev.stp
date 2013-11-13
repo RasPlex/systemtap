@@ -19,12 +19,15 @@
 
 global devices
 
+probe begin {
+        printf("\t  DEVICE \t NUMBER OF INTERRUPTS \n");
+}
+
 probe irq_handler.entry {
         devices[dev_name]++;
 }
 
 probe timer.ms(100) {
-        printf("\t  DEVICE \t NUMBER OF INTERRUPTS \n");
         foreach ( devname in devices )
                 printf(" %20s :  %5d\n",kernel_string(devname),devices[devname]);
         delete devices
