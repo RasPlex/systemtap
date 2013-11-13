@@ -63,6 +63,11 @@ extern "C" {
 #include <inttypes.h>
 }
 
+// Old elf.h doesn't know about this machine type.
+#ifndef EM_AARCH64
+#define EM_AARCH64 183
+#endif
+
 
 using namespace std;
 using namespace __gnu_cxx;
