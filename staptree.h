@@ -437,16 +437,17 @@ struct print_format: public expression
 
   static std::string components_to_string(std::vector<format_component> const & components);
   static std::vector<format_component> string_to_components(std::string const & str);
-  static print_format* create(const token *t);
+  static print_format* create(const token *t, const char *n = NULL);
 
   void print (std::ostream& o) const;
   void visit (visitor* u);
 
 private:
-  print_format(bool stream, bool format, bool delim, bool newline, bool _char):
+  std::string print_format_type;
+  print_format(bool stream, bool format, bool delim, bool newline, bool _char, std::string type):
     print_to_stream(stream), print_with_format(format),
     print_with_delim(delim), print_with_newline(newline),
-    print_char(_char), hist(NULL)
+    print_char(_char), hist(NULL), print_format_type(type)
   {}
 };
 

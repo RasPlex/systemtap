@@ -2662,9 +2662,7 @@ dwarf_pretty_print::expand ()
       }
 
   // Create the return sprintf.
-  token* pf_tok = new token(*ts->tok);
-  pf_tok->content = "sprintf";
-  print_format* pf = print_format::create(pf_tok);
+  print_format* pf = print_format::create(ts->tok, "sprintf");
   return_statement* rs = new return_statement;
   rs->tok = ts->tok;
   rs->value = pf;
@@ -3606,14 +3604,7 @@ dwarf_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
   // Convert $$parms to sprintf of a list of parms and active local vars
   // which we recursively evaluate
 
-  // NB: we synthesize a new token here rather than reusing
-  // e->tok, because print_format::print likes to use
-  // its tok->content.
-  token* pf_tok = new token(*e->tok);
-  pf_tok->type = tok_identifier;
-  pf_tok->content = "sprintf";
-
-  print_format* pf = print_format::create(pf_tok);
+  print_format* pf = print_format::create(e->tok, "sprintf");
 
   if (q.has_return && (e->name == "$$return"))
     {
@@ -5720,13 +5711,8 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
       e->assert_no_components("sdt", true);
 
       // Convert $$vars to sprintf of a list of vars which we recursively evaluate
-      // NB: we synthesize a new token here rather than reusing
-      // e->tok, because print_format::print likes to use
-      // its tok->content.
-      token* pf_tok = new token(*e->tok);
-      pf_tok->content = "sprintf";
 
-      print_format* pf = print_format::create(pf_tok);
+      print_format* pf = print_format::create(e->tok, "sprintf");
 
       for (unsigned i = 1; i <= arg_count; ++i)
         {
@@ -9576,10 +9562,7 @@ tracepoint_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
     {
       e->assert_no_components("tracepoint", true);
 
-      token* pf_tok = new token(*e->tok);
-      pf_tok->content = "sprintf";
-
-      print_format* pf = print_format::create(pf_tok);
+      print_format* pf = print_format::create(e->tok, "sprintf");
 
       for (unsigned i = 0; i < args.size(); ++i)
         {

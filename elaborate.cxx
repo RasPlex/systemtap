@@ -1784,11 +1784,7 @@ void add_global_var_display (systemtap_session& s)
       g_sym->type = l->type;
       g_sym->referent = l;
 
-      token* print_tok = new token(*l->tok);
-      print_tok->type = tok_identifier;
-      print_tok->content = "printf";
-
-      print_format* pf = print_format::create(print_tok);
+      print_format* pf = print_format::create(l->tok, "printf");
       pf->raw_components += l->name;
 
       if (l->index_types.size() == 0) // Scalar
@@ -1805,7 +1801,7 @@ void add_global_var_display (systemtap_session& s)
 	  pf->components = print_format::string_to_components(pf->raw_components);
 	  expr_statement* feb = new expr_statement;
 	  feb->value = pf;
-	  feb->tok = print_tok;
+	  feb->tok = pf->tok;
 	  if (l->type == pe_stats)
 	    {
 	      struct stat_op* so [5];
@@ -1840,13 +1836,13 @@ void add_global_var_display (systemtap_session& s)
               be->right = new literal_number(0);
 
               /* Create printf @count=0x0 in else block */
-              print_format* pf_0 = print_format::create(print_tok);
+              print_format* pf_0 = print_format::create(pf->tok, "printf");
               pf_0->raw_components += l->name;
               pf_0->raw_components += " @count=0x0\\n";
               pf_0->components = print_format::string_to_components(pf_0->raw_components);
               expr_statement* feb_else = new expr_statement;
               feb_else->value = pf_0;
-              feb_else->tok = print_tok;
+              feb_else->tok = pf->tok;
               if_statement *ifs = new if_statement;
               ifs->tok = l->tok;
               ifs->condition = be;

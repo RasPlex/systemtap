@@ -543,10 +543,11 @@ void functioncall::print (ostream& o) const
 
 
 print_format*
-print_format::create(const token *t)
+print_format::create(const token *t, const char *n)
 {
   bool stream, format, delim, newline, _char;
-  const char *n = t->content.c_str();
+  if (n == NULL) n = t->content.c_str();
+  const char *o = n;
 
   stream = true;
   format = delim = newline = _char = false;
@@ -589,7 +590,7 @@ print_format::create(const token *t)
 	return NULL;
     }
 
-  print_format *pf = new print_format(stream, format, delim, newline, _char);
+  print_format *pf = new print_format(stream, format, delim, newline, _char, o);
   pf->tok = t;
   return pf;
 }
@@ -922,7 +923,7 @@ print_format::string_to_components(string const & str)
 
 void print_format::print (ostream& o) const
 {
-  o << tok->content << "(";
+  o << print_format_type << "(";
   if (print_with_format)
     o << lex_cast_qstring (raw_components);
   if (print_with_delim)

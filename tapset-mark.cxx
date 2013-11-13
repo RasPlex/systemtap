@@ -140,9 +140,7 @@ mark_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
  else if (e->name == "$$vars" || e->name == "$$parms")
   {
      //copy from tracepoint
-     token* pf_tok = new token(*e->tok);
-     pf_tok->content = "sprintf";
-     print_format* pf = print_format::create(pf_tok);
+     print_format* pf = print_format::create(e->tok, "sprintf");
 
      for (unsigned i = 0; i < mark_args.size(); ++i)
         {
