@@ -345,7 +345,19 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
           continue;
         }
 
-      // TODO check each point->getFunction()->isInstrumentable()
+      // Check that the functions containing each point are actually
+      // instrumentable.  Unfortunately, findPoints doesn't make any
+      // distinction, and insertSnippet doesn't tell us either, so this
+      // is the best way we have to let the user know.
+      vector<BPatch_point*> instrumentable_points;
+      for (size_t i = 0; i < points.size(); ++i)
+        if (points[i]->getFunction()->isInstrumentable())
+          instrumentable_points.push_back(points[i]);
+        else
+          stapwarn() << "Couldn't instrument the function containing "
+                     << lex_cast_hex(address) << ", " << target.path
+                     << "+" << lex_cast_hex(probe.offset) << endl;
+      points.swap(instrumentable_points);
 
       if (probe.return_p)
         {
@@ -367,6 +379,9 @@ mutatee::instrument_dynprobe_target(BPatch_object* object,
             }
           points.swap(return_points);
         }
+
+      if (points.empty())
+        continue;
 
       // The entry function needs the index of this particular probe, then
       // the registers in whatever form we chose above.
