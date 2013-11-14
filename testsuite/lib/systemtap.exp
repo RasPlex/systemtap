@@ -618,3 +618,41 @@ proc stripped_p { EXE } {
     }
     return 0
 }
+
+proc prelink_p {} {
+  global prelink_bin
+  set prelink_bin "/usr/sbin/prelink"
+  return [file exists "$prelink_bin"]
+}
+
+# Run prelink via a temp file, so it can succeed even when running from an nfs
+# $HOME, for instance.  Otherwise, prelink complains that it can't restore context.
+proc prelink { FILE ADDR } {
+  global prelink_bin
+  if {![prelink_p]} {
+    verbose -log "Prelink is not found on this system"
+    return 0
+  }
+  if {[catch {exec mktemp -t staptestXXXXXX} tmpfile]} {
+    verbose -log "Failed to create prelink temporary file: $tmpfile"
+    return 0
+  }
+  if {[catch {exec cp -a "$FILE" "$tmpfile"} result]} {
+    verbose -log "Failed to copy file for prelink: $result"
+    catch {exec rm -rf "$tmpfile"}
+    return 0
+  }
+  set prelink_cmd [concat "$prelink_bin" -vfNR -r "$ADDR" "$tmpfile"]
+  send_log "Executing: $prelink_cmd\n"
+  if {[catch {eval exec $prelink_cmd} result]} {
+    verbose -log "Prelink failed: $result"
+    catch {exec rm -rf "$tmpfile"}
+    return 0
+  }
+  if {[catch {exec mv "$tmpfile" "$FILE"} result]} {
+    verbose -log "Failed to move prelinked file back: $result"
+    catch {exec rm -rf "$tmpfile"}
+    return 0
+  }
+  return 1
+}

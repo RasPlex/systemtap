@@ -88,18 +88,12 @@ stap_run3 "plt library" "$script" "$pp" -c "$exepath >/dev/null"
 # test process.library.plt prelinked
 
 set prelink_bin "/usr/sbin/prelink"
-if {[file exists $prelink_bin]} {
-    set addr "-r 0x6400000"
-    set prelink_cmd [concat $prelink_bin -vfNR $addr libplt1.so]
-    send_log "Executing: $prelink_cmd\n"
-    catch {eval exec $prelink_cmd} result
-    if { $result != "" } {
-        verbose -log "prelink failed: $result"
+if {[prelink_p]} {
+    if {![prelink libplt1.so 0x6400000]} {
         fail "plt prelink libplt1.so"
         untested "plt prelinked library"
     } else {
         pass "plt prelink libplt1.so"
-
         set pp {process("./plt.x").plt, process("./plt.x").library("libplt*").plt}
         stap_run3 "plt prelinked library" "$script" "$pp" -c "$exepath >/dev/null"
     }

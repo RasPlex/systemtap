@@ -61,8 +61,7 @@ foreach arch $arches {
 	foreach opt {-O3} {
 
 	    # Only use prelink if it exists on this platform
-	    set prelink_bin "/usr/sbin/prelink"
-	    if {[file exists $prelink_bin]} {
+	    if {[prelink_p]} {
 		set libprelink_opts {no yes}
 	    } else {
 		set libprelink_opts {no}
@@ -126,12 +125,7 @@ foreach arch $arches {
 		    }
 
 		    if {$libprelink == "yes"} {
-			set addr "-r 0x6400000"
-			set prelink_cmd [concat $prelink_bin -vfNR $addr $testso]
-			send_log "Executing: $prelink_cmd\n"
-			catch {eval exec $prelink_cmd} result
-			if { $result != "" } {
-			    verbose -log "prelink failed: $result"
+			if {![prelink $testso 0x6400000]} {
 			    fail "$libname prelink $testso"
 			} else {
 			    pass "$libname prelink $testso"
