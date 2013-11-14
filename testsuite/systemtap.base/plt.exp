@@ -1,4 +1,5 @@
 set test "plt"
+set script "$srcdir/$subdir/$test.stp"
 
 proc cleanup_handler { verbose } {
     if { $verbose == 0 } {
@@ -20,127 +21,99 @@ proc error_handler { res test message } {
     }
 }
 
+set ::result_string \
+{__cxa_finalize 2
+__libc_start_main 1
+__xpg_basename 1
+asctime 1
+asprintf 3
+basename2 1
+bsearch 3
+critters 1
+datetime 1
+find_critter 3
+fprintf 3
+fputs 3
+free 4
+localtime 1
+malloc 3
+memcpy 1
+open 2
+open2 1
+open3 1
+print_critter 32
+printf 38
+qsort 1
+register_printf_function 1
+savestring 1
+stpcpy 4
+strcmp 51
+strftime 2
+strlen 4
+time 1
+widgets 1
+xmalloc 2
+zenme 1}
+
 if {![installtest_p]} { untested $test; return }
 if {![plt_probes_p]} { untested $test; return }
 
-set stap_path $env(SYSTEMTAP_PATH)/stap
-
 set exepath "./plt.x"
 
+
 set F additional_flags
-set flags "$F=-I. $F=-shared $F=-fPIC $F=-DLIBPLT1 $F=-g $F=-Wno-deprecated-declarations $F=-Wno-format"
+set common_flags "$F=-g $F=-Wno-deprecated-declarations $F=-Wno-format $F=-fno-builtin"
+set flags "$F=-I. $F=-shared $F=-fPIC $F=-DLIBPLT1 $common_flags"
 set res [target_compile $srcdir/$subdir/plt.c ./libplt1.so executable $flags ]
 if { [error_handler [expr {$res == ""}] "target_compile libplt1.so" ""] } { return }
 
-set flags "$F=-I. $F=-shared $F=-fPIC $F=-DLIBPLT2 $F=-g $F=-Wno-deprecated-declarations $F=-Wno-format"
+set flags "$F=-I. $F=-shared $F=-fPIC $F=-DLIBPLT2 $common_flags"
 set res [target_compile $srcdir/$subdir/plt.c ./libplt2.so executable $flags ]
 if { [error_handler [expr {$res == ""}] "target_compile libplt2.so" ""] } { return }
 
-set flags "$F=-Wl,-rpath,[pwd] $F=-L[pwd] $F=-lplt1 $F=-lplt2 $F=-DONLY_MAIN $F=-g $F=-Wno-deprecated-declarations $F=-Wno-format"
+set flags "$F=-Wl,-rpath,[pwd] $F=-L[pwd] $F=-lplt1 $F=-lplt2 $F=-DONLY_MAIN $common_flags"
 set res [target_compile $srcdir/$subdir/plt.c $exepath executable $flags ]
 if { [error_handler [expr {$res == ""}] "target_compile plt.x" ""] } { return }
 
 # test process.plt
 
-set ok 0
-spawn $stap_path -c $exepath -e "global calls probe process(\"./plt.x\").plt {calls\[\$\$name\] += 1} probe process(\"./libplt1.so\").plt {calls\[\$\$name\] += 1} probe process(\"./libplt2.so\").plt {calls\[\$\$name\] += 1} probe end {foreach (x in calls) printf (\"%s %d\\n\", x, calls\[x\])}"
-
-expect {
-    -timeout 180
-    -re {__libc_start_main 1\r\n} { incr ok; exp_continue }
-    -re {xmalloc 2\r\n} { incr ok; exp_continue }
-    -re {savestring 1\r\n} { incr ok; exp_continue }
-    -re {memcpy 1\r\n} { incr ok; exp_continue }
-    -re {open2 1\r\n} { incr ok; exp_continue }
-    -re {stpcpy 4\r\n} { incr ok; exp_continue }
-    -re {open 2\r\n} { incr ok; exp_continue }
-    -re {open3 1\r\n} { incr ok; exp_continue }
-    -re {basename2 1\r\n} { incr ok; exp_continue }
-    -re {__xpg_basename 1\r\n} { incr ok; exp_continue }
-    -re {critters 1\r\n} { incr ok; exp_continue }
-    -re {print_critter 32\r\n} { incr ok; exp_continue }
-    -re {printf 36\r\n} { incr ok; exp_continue }
-    -re {putchar 2\r\n} { incr ok; exp_continue }
-    -re {qsort 1\r\n} { incr ok; exp_continue }
-    -re {strcmp 51\r\n} { incr ok; exp_continue }
-    -re {find_critter 3\r\n} { incr ok; exp_continue }
-    -re {bsearch 3\r\n} { incr ok; exp_continue }
-    -re {widgets 1\r\n} { incr ok; exp_continue }
-    -re {register_printf_function 1\r\n} { incr ok; exp_continue }
-    -re {asprintf 3\r\n} { incr ok; exp_continue }
-    -re {fprintf 3\r\n} { incr ok; exp_continue }
-    -re {datetime 1\r\n} { incr ok; exp_continue }
-    -re {time 1\r\n} { incr ok; exp_continue }
-    -re {localtime 1\r\n} { incr ok; exp_continue }
-    -re {asctime 1\r\n} { incr ok; exp_continue }
-    -re {fputs 3\r\n} { incr ok; exp_continue }
-    -re {strftime 2\r\n} { incr ok; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof {  }
-}
-
-catch { close}; catch { wait}
-
-error_handler [expr {$ok == 28}] "plt" "($ok != 28)"
+set pp {process("./plt.x").plt, process("./libplt1.so").plt, process("./libplt2.so").plt}
+stap_run3 "plt" "$script" "$pp" -c "$exepath >/dev/null"
 
 # test process.library.plt
 
-set ok 0
-spawn $stap_path -c $exepath -e "global calls probe process(\"./plt.x\").plt {calls\[\$\$name\] += 1} probe process(\"./plt.x\").library(\"*\").plt {calls\[\$\$name\] += 1} probe end {foreach (x in calls) printf (\"%s %d\\n\", x, calls\[x\])}"
+set pp {process("./plt.x").plt, process("./plt.x").library("libplt*").plt}
+stap_run3 "plt library" "$script" "$pp" -c "$exepath >/dev/null"
 
-expect {
-    -timeout 180
-    -re {__libc_start_main 1\r\n} { incr ok; exp_continue }
-    -re {xmalloc 2\r\n} { incr ok; exp_continue }
-    -re {savestring 1\r\n} { incr ok; exp_continue }
-    -re {memcpy 1\r\n} { incr ok; exp_continue }
-    -re {open2 1\r\n} { incr ok; exp_continue }
-    -re {stpcpy 4\r\n} { incr ok; exp_continue }
-    -re {open 2\r\n} { incr ok; exp_continue }
-    -re {open3 1\r\n} { incr ok; exp_continue }
-    -re {basename2 1\r\n} { incr ok; exp_continue }
-    -re {__xpg_basename 1\r\n} { incr ok; exp_continue }
-    -re {critters 1\r\n} { incr ok; exp_continue }
-    -re {print_critter 32\r\n} { incr ok; exp_continue }
-    -re {printf 36\r\n} { incr ok; exp_continue }
-    -re {putchar 2\r\n} { incr ok; exp_continue }
-    -re {qsort 1\r\n} { incr ok; exp_continue }
-    -re {strcmp 51\r\n} { incr ok; exp_continue }
-    -re {find_critter 3\r\n} { incr ok; exp_continue }
-    -re {bsearch 3\r\n} { incr ok; exp_continue }
-    -re {widgets 1\r\n} { incr ok; exp_continue }
-    -re {register_printf_function 1\r\n} { incr ok; exp_continue }
-    -re {asprintf 3\r\n} { incr ok; exp_continue }
-    -re {fprintf 3\r\n} { incr ok; exp_continue }
-    -re {datetime 1\r\n} { incr ok; exp_continue }
-    -re {time 1\r\n} { incr ok; exp_continue }
-    -re {localtime 1\r\n} { incr ok; exp_continue }
-    -re {asctime 1\r\n} { incr ok; exp_continue }
-    -re {fputs 3\r\n} { incr ok; exp_continue }
-    -re {strftime 2\r\n} { incr ok; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof {  }
+# test process.library.plt prelinked
+
+set prelink_bin "/usr/sbin/prelink"
+if {[file exists $prelink_bin]} {
+    set addr "-r 0x6400000"
+    set prelink_cmd [concat $prelink_bin -vfNR $addr libplt1.so]
+    send_log "Executing: $prelink_cmd\n"
+    catch {eval exec $prelink_cmd} result
+    if { $result != "" } {
+        verbose -log "prelink failed: $result"
+        fail "plt prelink libplt1.so"
+        untested "plt prelinked library"
+    } else {
+        pass "plt prelink libplt1.so"
+
+        set pp {process("./plt.x").plt, process("./plt.x").library("libplt*").plt}
+        stap_run3 "plt prelinked library" "$script" "$pp" -c "$exepath >/dev/null"
+    }
+} else {
+    untested "plt prelink libplt1.so"
+    untested "plt prelinked library"
 }
-
-catch { close}; catch { wait}
-
-error_handler [expr {$ok == 28}] "plt library" "($ok != 28)"
 
 # test process.plt("glob")
 
 set ok 0
-spawn $stap_path -c $exepath -e "global calls probe process(\"./libplt2.so\").plt(\"strcmp\") {calls\[\$\$name\] += 1} probe end {foreach (x in calls) printf (\"%s %d\\n\", x, calls\[x\])}"
+set ::result_string {strcmp 51}
+set pp {process("./libplt2.so").plt("strcmp")}
+stap_run3 "plt glob" "$script" "$pp" -c "$exepath >/dev/null"
 
-expect {
-    -timeout 180
-    -re {strcmp 51\r\n} { incr ok; exp_continue }
-    -re {printf 36\r\n} { incr ok; exp_continue }
-    timeout { fail "$test (timeout)" }
-    eof {  }
-}
-
-catch { close}; catch { wait}
-
-error_handler [expr {$ok == 1}] "plt glob" "($ok != 1)"
 
 cleanup_handler $verbose

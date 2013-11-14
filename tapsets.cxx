@@ -405,6 +405,7 @@ static const string TOK_CLASS("class");;
 
 static int query_cu (Dwarf_Die * cudie, void * arg);
 static void query_addr(Dwarf_Addr addr, dwarf_query *q);
+static void query_plt_statement(dwarf_query *q);
 
 // Can we handle this query with just symbol-table info?
 enum dbinfo_reqt
@@ -665,8 +666,6 @@ base_query::base_query(dwflpp & dw, literal_map_t const & params):
       if ((has_plt = has_null_param (params, TOK_PLT)))
         plt_val = "*";
       else has_plt = get_string_param (params, TOK_PLT, plt_val);
-      if (has_plt)
-	sess.consult_symtab = true;
       has_statement = get_number_param(params, TOK_STATEMENT, statement_num_val);
 
       if (has_process)
@@ -1049,14 +1048,7 @@ dwarf_query::query_module_symtab()
       // Find the "function" in which the indicated address resides.
       Dwarf_Addr addr =
       		(has_function_num ? function_num_val : statement_num_val);
-      if (has_plt)
-        {
-          // Use the raw address from the .plt
-          fi = sym_table->get_first_func();
-          fi->addr = addr;
-        }
-      else
-        fi = sym_table->get_func_containing_address(addr);
+      fi = sym_table->get_func_containing_address(addr);
 
       if (!fi)
         {
@@ -1081,6 +1073,12 @@ dwarf_query::query_module_symtab()
 void
 dwarf_query::handle_query_module()
 {
+  if (has_plt && has_statement_num)
+    {
+      query_plt_statement (this);
+      return;
+    }
+
   bool report = dbinfo_reqt == dbr_need_dwarf || !sess.consult_symtab;
   dw.get_module_dwarf(false, report);
 
@@ -1250,14 +1248,7 @@ dwarf_query::add_probe_point(const string& dw_funcname,
 
   assert (! has_absolute); // already handled in dwarf_builder::build()
 
-  if (!has_plt)
-    reloc_addr = dw.relocate_address(addr, reloc_section);
-  else
-    {
-      // Set the reloc_section but use the plt entry for reloc_addr
-      dw.relocate_address(addr, reloc_section);
-      reloc_addr = addr;
-    }
+  reloc_addr = dw.relocate_address(addr, reloc_section);
 
   // If we originally used the linkage name, then let's call it that way
   const char* linkage_name;
@@ -1512,6 +1503,29 @@ query_addr(Dwarf_Addr addr, dwarf_query *q)
 
   // Build a probe at this point
   query_statement(dw.function_name, file, line, scope, addr, q);
+}
+
+static void
+query_plt_statement(dwarf_query *q)
+{
+  assert (q->has_plt && q->has_statement_num);
+
+  Dwarf_Addr addr = q->statement_num_val;
+  if (q->sess.verbose > 2)
+    clog << "query_plt_statement 0x" << hex << addr << dec << endl;
+
+  // First adjust the raw address to dwfl's elf bias.
+  Dwarf_Addr elf_bias;
+  Elf *elf = dwfl_module_getelf (q->dw.module, &elf_bias);
+  assert(elf);
+  addr += elf_bias;
+
+  // Now compensate for the dw bias
+  q->dw.get_module_dwarf(false, false);
+  addr -= q->dw.module_bias;
+
+  // Build a probe at this point
+  query_statement(q->plt_val, NULL, -1, NULL, addr, q);
 }
 
 static void
@@ -2233,8 +2247,6 @@ query_one_plt (const char *entry, long addr, dwflpp & dw,
       if (dw.sess.verbose > 2)
         clog << _F("plt entry=%s\n", entry);
 
-      // query_module_symtab requires .plt to recognize that it can set the probe at
-      // a plt entry so we convert process.plt to process.plt.statement
       vector<probe_point::component*>::iterator it;
       for (it = specific_loc->components.begin();
           it != specific_loc->components.end(); ++it)

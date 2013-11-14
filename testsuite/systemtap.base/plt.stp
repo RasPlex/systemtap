@@ -1,0 +1,9 @@
+global calls
+probe $1 {
+  calls[$$name] += 1
+}
+probe end {
+  foreach (x+ in calls)
+    printf ("%s %d\n", x, calls[x])
+}
+
