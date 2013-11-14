@@ -48,6 +48,13 @@ struct token
   std::string msg; // for tok_junk
   void make_junk (std::string msg);
   const token* chain; // macro invocation that produced this token
+  friend class parser;
+  friend class lexer;
+private:
+  token() {}
+  token(const token& other):
+    location(other.location), type(other.type), content(other.content),
+    msg(other.msg), chain(other.chain) {}
 };
 
 
