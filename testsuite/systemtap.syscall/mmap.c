@@ -16,11 +16,14 @@ int main()
 	fd = open("foobar",O_WRONLY|O_CREAT|O_TRUNC, 0600);
 	//staptest// open ("foobar", O_WRONLY|O_CREAT[[[[.O_LARGEFILE]]]]?|O_TRUNC, 0600) = NNNN
 
-	// Why 16k? ia64 has 16k pages (unlike everything else that
-	// has 4k pages). We need to make sure we can specify an
-	// offset to mmap(), which must be a multiple of the page
-	// size.
-	lseek(fd, 16384, SEEK_SET);
+	// Why 64k? ppc64 has 64K pages. ia64 has 16k
+	// pages. x86_64/i686 has 4k pages. When we specify an offset
+	// to mmap(), it must be a multiple of the page size, so we
+	// use the biggest.
+	//
+	// Note that on x86_64/i686, mmap() MAP_PRIVATE calls can fail
+	// when attempting to map 64k, unless the caller is root.
+	lseek(fd, 65536, SEEK_SET);
 	write(fd, "abcdef", 6);
 	close(fd);
 	//staptest// close (NNNN) = 0
@@ -33,16 +36,16 @@ int main()
 	//staptest// fstat (NNNN, XXXX) = 0
 
 	r = mmap(NULL, fs.st_size, PROT_READ, MAP_SHARED, fd, 0);
-	//staptest// mmap[2]* (XXXX, 16390, PROT_READ, MAP_SHARED, NNNN, XXXX) = XXXX
+	//staptest// mmap[2]* (XXXX, 65542, PROT_READ, MAP_SHARED, NNNN, XXXX) = XXXX
 
 	mlock(r, fs.st_size);
-	//staptest// mlock (XXXX, 16390) = 0
+	//staptest// mlock (XXXX, 65542) = 0
 
 	msync(r, fs.st_size, MS_SYNC);	
-	//staptest// msync (XXXX, 16390, MS_SYNC) = 0
+	//staptest// msync (XXXX, 65542, MS_SYNC) = 0
 
 	munlock(r, fs.st_size);
-	//staptest// munlock (XXXX, 16390) = 0
+	//staptest// munlock (XXXX, 65542) = 0
 
 	mlockall(MCL_CURRENT);
 	//staptest// mlockall (MCL_CURRENT) = 
@@ -51,11 +54,11 @@ int main()
 	//staptest// munlockall () = 0
 
 	munmap(r, fs.st_size);
-	//staptest// munmap (XXXX, 16390) = 0
+	//staptest// munmap (XXXX, 65542) = 0
 
 	// Ensure the 6th argument is handled correctly..
-	r = mmap(NULL, 6, PROT_READ, MAP_PRIVATE, fd, 16384);
-	//staptest// mmap[2]* (XXXX, 6, PROT_READ, MAP_PRIVATE, NNNN, 16384) = XXXX
+	r = mmap(NULL, 6, PROT_READ, MAP_PRIVATE, fd, 65536);
+	//staptest// mmap[2]* (XXXX, 6, PROT_READ, MAP_PRIVATE, NNNN, 65536) = XXXX
 
 	munmap(r, 6);
 	//staptest// munmap (XXXX, 6) = 0
