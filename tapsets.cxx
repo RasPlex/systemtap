@@ -317,7 +317,7 @@ common_probe_entryfn_epilogue (systemtap_session& s,
   s.op->newline() << "if (unlikely (c->last_error && c->last_error[0])) {";
   s.op->indent(1);
   if (s.suppress_handler_errors) // PR 13306
-    { 
+    {
       s.op->newline() << "atomic_inc (error_count());";
     }
   else
@@ -1868,7 +1868,7 @@ query_cu (Dwarf_Die * cudie, void * arg)
           // .statement(...:NN) often gets mixed up with .function(...:NN)
           if (q->has_function_str)
             q->sess.print_warning (_("For probing a particular line, use a "
-                                   ".statement() probe, not .function()"), 
+                                   ".statement() probe, not .function()"),
                                    q->base_probe->tok);
 
           // If we have a pattern string with target *line*, we
@@ -2033,7 +2033,7 @@ validate_module_elf (Dwfl_Module *mod, const char *name,  base_query *q)
     }
 
   if (q->sess.verbose>1)
-    clog << _F("focused on module '%s' = [%#" PRIx64 "-%#" PRIx64 ", bias %#" PRIx64 
+    clog << _F("focused on module '%s' = [%#" PRIx64 "-%#" PRIx64 ", bias %#" PRIx64
                " file %s ELF machine %s|%s (code %d)\n",
                q->dw.module_name.c_str(), q->dw.module_start, q->dw.module_end,
                q->dw.module_bias, debug_filename, expect_machine.c_str(),
@@ -3592,8 +3592,14 @@ dwarf_var_expanding_visitor::gen_kretprobe_saved_return(expression* e)
 void
 dwarf_var_expanding_visitor::visit_target_symbol_context (target_symbol* e)
 {
-  if (null_die(scope_die))
+  if (null_die(scope_die)) {
+    print_format* pf = print_format::create(e->tok, "sprintf");
+    pf->raw_components = "";
+    pf->components = print_format::string_to_components(pf->raw_components);
+    pf->type = pe_string;
+    provide (pf);
     return;
+  }
 
   target_symbol *tsym = new target_symbol(*e);
 
@@ -3876,7 +3882,7 @@ void
 dwarf_var_expanding_visitor::visit_perf_op (perf_op *e)
 {
   string e_lit_val = e->operand->value;
-  
+
   add_block = new block;
   add_block->tok = e->tok;
 
@@ -4474,7 +4480,7 @@ dwarf_derived_probe::dwarf_derived_probe(const string& funcname,
                           lex_cast(USHRT_MAX).c_str()), q.base_loc->components.front()->tok);
 
   // Expand target variables in the probe body
-  if (!null_die(scope_die))
+  if (!null_die(scope_die) || (!q.has_kernel && q.dw.has_gnu_debugdata()))
     {
       // XXX: user-space deref's for q.has_process!
       dwarf_var_expanding_visitor v (q, scope_die, dwfl_addr);
@@ -4933,7 +4939,7 @@ dwarf_derived_probe::emit_probe_local_init(systemtap_session& s, translator_outp
 	+ " = (((int64_t) (_stp_perf_read(smp_processor_id(),"
 	+ lex_cast(i) + "))));";
     }
-  
+
   if (access_vars)
     {
       // if accessing $variables, emit bsp cache setup for speeding up
@@ -5469,15 +5475,15 @@ struct sdt_uprobe_var_expanding_visitor: public var_expanding_visitor
 
 #define DRI(name,num,width)  dwarf_regs[name]=make_pair(num,width)
     if (elf_machine == EM_X86_64) {
-      DRI ("%rax", 0, DI); DRI ("%eax", 0, SI); DRI ("%ax", 0, HI); 
-      	 DRI ("%al", 0, QI); DRI ("%ah", 0, QIh); 
+      DRI ("%rax", 0, DI); DRI ("%eax", 0, SI); DRI ("%ax", 0, HI);
+      	 DRI ("%al", 0, QI); DRI ("%ah", 0, QIh);
       DRI ("%rdx", 1, DI); DRI ("%edx", 1, SI); DRI ("%dx", 1, HI);
          DRI ("%dl", 1, QI); DRI ("%dh", 1, QIh);
       DRI ("%rcx", 2, DI); DRI ("%ecx", 2, SI); DRI ("%cx", 2, HI);
          DRI ("%cl", 2, QI); DRI ("%ch", 2, QIh);
       DRI ("%rbx", 3, DI); DRI ("%ebx", 3, SI); DRI ("%bx", 3, HI);
-         DRI ("%bl", 3, QI); DRI ("%bh", 3, QIh); 
-      DRI ("%rsi", 4, DI); DRI ("%esi", 4, SI); DRI ("%si", 4, HI); 
+         DRI ("%bl", 3, QI); DRI ("%bh", 3, QIh);
+      DRI ("%rsi", 4, DI); DRI ("%esi", 4, SI); DRI ("%si", 4, HI);
          DRI ("%sil", 4, QI);
       DRI ("%rdi", 5, DI); DRI ("%edi", 5, SI); DRI ("%di", 5, HI);
          DRI ("%dil", 5, QI);
@@ -5510,7 +5516,7 @@ struct sdt_uprobe_var_expanding_visitor: public var_expanding_visitor
          DRI ("%dh", 2, QIh);
       DRI ("%ebx", 3, SI); DRI ("%bx", 3, HI); DRI ("%bl", 3, QI);
          DRI ("%bh", 3, QIh);
-      DRI ("%esp", 4, SI); DRI ("%sp", 4, HI); 
+      DRI ("%esp", 4, SI); DRI ("%sp", 4, HI);
       DRI ("%ebp", 5, SI); DRI ("%bp", 5, HI);
       DRI ("%esi", 6, SI); DRI ("%si", 6, HI); DRI ("%sil", 6, QI);
       DRI ("%edi", 7, SI); DRI ("%di", 7, HI); DRI ("%dil", 7, QI);
@@ -5781,7 +5787,7 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
       //	      	      indirect offset
       // x86	$N	%rR	(%rR)	N(%rR)  O(%bR,%iR,S)
       // power	iN	R	(R)	N(R)
-      // ia64	N	rR	[r16]	
+      // ia64	N	rR	[r16]
       // s390	N	%rR	0(rR)	N(r15)
       // arm	#N	rR	[rR]	[rR, #N]
 
@@ -5854,7 +5860,7 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
 
       if (dwarf_regs.empty())
 	goto not_matched;
-      
+
       // Build regex pieces out of the known dwarf_regs.  We keep two separate
       // lists: ones with the % prefix (and thus unambigiuous even despite PR11821),
       // and ones with no prefix (and thus only usable in unambiguous contexts).
@@ -6109,7 +6115,7 @@ sdt_uprobe_var_expanding_visitor::visit_target_symbol_arg (target_symbol *e)
           if (probe_type == UPROBE3_TYPE)
             session.print_warning (_F("Can't parse SDT_V3 operand '%s' [man error::sdt]", asmarg.c_str()), e->tok);
           else // must be *PROBE2; others don't get asm operands
-            session.print_warning (_F("Downgrading SDT_V2 probe argument to dwarf, can't parse '%s' [man error::sdt]", 
+            session.print_warning (_F("Downgrading SDT_V2 probe argument to dwarf, can't parse '%s' [man error::sdt]",
                                       asmarg.c_str()), e->tok);
         }
       assert (argexpr == 0);
@@ -6316,7 +6322,7 @@ sdt_query::handle_probe_entry()
 
   if (sess.verbose > 3)
     {
-      //TRANSLATORS: Describing what probe type (kprobe or uprobe) the probe 
+      //TRANSLATORS: Describing what probe type (kprobe or uprobe) the probe
       //TRANSLATORS: is matched to.
       clog << _F("matched probe_name %s probe type ", probe_name.c_str());
       switch (probe_type)
@@ -6929,7 +6935,7 @@ dwarf_builder::build(systemtap_session & sess,
             location->components[0]->arg == 0)
             location->components[0]->arg = new literal_string(module_name);
           wordfree (& words);
-        } 
+        }
 
       // PR6456  process("/bin/*")  glob handling
       if (contains_glob_chars (module_name))
@@ -8137,7 +8143,7 @@ uprobe_derived_probe_group::emit_module_inode_decls (systemtap_session& s)
           module_index[key] = module_index_ctr++;
           s.op->newline() << "{";
           s.op->line() << " .finder={";
-          s.op->line() << "  .purpose=\"inode-uprobes\",";          
+          s.op->line() << "  .purpose=\"inode-uprobes\",";
           if (p->pid != 0)
             s.op->line() << " .pid=" << p->pid << ",";
 
@@ -9660,7 +9666,7 @@ tracepoint_derived_probe::tracepoint_derived_probe (systemtap_session& s,
 
   // determine which header defined this tracepoint
   string decl_file = dwarf_decl_file(&func_die);
-  header = decl_file; 
+  header = decl_file;
 
 #if 0 /* This convention is not enforced. */
   size_t header_pos = decl_file.rfind("trace/");
