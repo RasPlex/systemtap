@@ -394,6 +394,7 @@ probe syscall.clock_gettime.return = kernel.function("sys_clock_gettime").return
 #
 probe syscall.clock_nanosleep = kernel.function("sys_clock_nanosleep").call
 {
+	@__syscall_gate(%{ __NR_clock_nanosleep %})
 	name = "clock_nanosleep"
 	flags = $flags
 	if ($flags == 1)
@@ -405,6 +406,7 @@ probe syscall.clock_nanosleep = kernel.function("sys_clock_nanosleep").call
 }
 probe syscall.clock_nanosleep.return = kernel.function("sys_clock_nanosleep").return
 {
+	@__syscall_gate(%{ __NR_clock_nanosleep %})
 	name = "clock_nanosleep"
 	retstr = return_str(1, $return)
 }
@@ -417,7 +419,7 @@ probe syscall.clock_nanosleep.return = kernel.function("sys_clock_nanosleep").re
 probe syscall.compat_clock_nanosleep = kernel.function("compat_clock_nanosleep").call ?,
                                        kernel.function("compat_sys_clock_nanosleep").call ?
 {
-	name = "compat_clock_nanosleep"
+	name = "clock_nanosleep"
 	flags = $flags
 	if ($flags == 1)
 		flag_str = "TIMER_ABSTIME"
@@ -429,7 +431,7 @@ probe syscall.compat_clock_nanosleep = kernel.function("compat_clock_nanosleep")
 probe syscall.compat_clock_nanosleep.return = kernel.function("compat_clock_nanosleep").return ?,
                                               kernel.function("compat_sys_clock_nanosleep").return ?
 {
-	name = "compat_clock_nanosleep"
+	name = "clock_nanosleep"
 	retstr = return_str(1, $return)
 }
 
@@ -437,17 +439,44 @@ probe syscall.compat_clock_nanosleep.return = kernel.function("compat_clock_nano
 # long sys_clock_settime(clockid_t which_clock,
 #                   const struct timespec __user *tp)
 #
-probe syscall.clock_settime = kernel.function("sys_clock_settime").call
+# long compat_sys_clock_settime(clockid_t which_clock,
+#		struct compat_timespec __user *tp)
+probe syscall.clock_settime = __syscall.clock_settime,
+	__syscall.compat_clock_settime ?
 {
 	name = "clock_settime"
+}
+probe __syscall.clock_settime = kernel.function("sys_clock_settime").call
+{
+	@__syscall_gate(%{ __NR_clock_settime %})
 	clk_id = $which_clock
 	clk_id_str = _get_wc_str($which_clock)
 	tp_uaddr = $tp
 	argstr = sprintf("%s, %s", clk_id_str, _struct_timespec_u($tp, 1))
 }
-probe syscall.clock_settime.return = kernel.function("sys_clock_settime").return
+probe __syscall.compat_clock_settime =
+	kernel.function("compat_sys_clock_settime").call ?
+{
+	clk_id = $which_clock
+	clk_id_str = _get_wc_str($which_clock)
+	tp_uaddr = $tp
+	argstr = sprintf("%s, %s", clk_id_str,
+			 _struct_compat_timespec_u($tp, 1))
+}
+probe syscall.clock_settime.return = __syscall.clock_settime.return,
+	__syscall.compat_clock_settime.return ?
 {
 	name = "clock_settime"
+}
+probe __syscall.clock_settime.return =
+	kernel.function("sys_clock_settime").return
+{
+	@__syscall_gate(%{ __NR_clock_settime %})
+	retstr = return_str(1, $return)
+}
+probe __syscall.compat_clock_settime.return =
+	kernel.function("compat_sys_clock_settime").return ?
+{
 	retstr = return_str(1, $return)
 }
 

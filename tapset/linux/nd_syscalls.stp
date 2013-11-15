@@ -479,8 +479,9 @@ probe nd_syscall.clock_gettime.return = kprobe.function("sys_clock_gettime").ret
 #                     const struct timespec __user *rqtp,
 #                     struct timespec __user *rmtp)
 #
-probe nd_syscall.clock_nanosleep = kprobe.function("sys_clock_nanosleep") ?
+probe nd_syscall.clock_nanosleep = kprobe.function("sys_clock_nanosleep").call
 {
+	@__syscall_gate(%{ __NR_clock_nanosleep %})
 	name = "clock_nanosleep"
 	// if ($flags == 1)
 	//	flag_str = "TIMER_ABSTIME"
@@ -499,6 +500,7 @@ probe nd_syscall.clock_nanosleep = kprobe.function("sys_clock_nanosleep") ?
 }
 probe nd_syscall.clock_nanosleep.return = kprobe.function("sys_clock_nanosleep").return ?
 {
+	@__syscall_gate(%{ __NR_clock_nanosleep %})
 	name = "clock_nanosleep"
 	retstr = returnstr(1)
 }
@@ -508,10 +510,10 @@ probe nd_syscall.clock_nanosleep.return = kprobe.function("sys_clock_nanosleep")
 #			struct compat_timespec __user *rqtp,
 #			struct compat_timespec __user *rmtp)
 #
-probe nd_syscall.compat_clock_nanosleep = kprobe.function("compat_clock_nanosleep") ?,
-                                          kprobe.function("compat_sys_clock_nanosleep") ?
+probe nd_syscall.compat_clock_nanosleep = kprobe.function("compat_clock_nanosleep").call ?,
+                                          kprobe.function("compat_sys_clock_nanosleep").call ?
 {
-	name = "compat_clock_nanosleep"
+	name = "clock_nanosleep"
 	// if ($flags == 1)
 	//	flag_str = "TIMER_ABSTIME"
 	// else
@@ -531,17 +533,24 @@ probe nd_syscall.compat_clock_nanosleep = kprobe.function("compat_clock_nanoslee
 probe nd_syscall.compat_clock_nanosleep.return = kprobe.function("compat_clock_nanosleep").return ?,
                                                  kprobe.function("compat_sys_clock_nanosleep").return ?
 {
-	name = "compat_clock_nanosleep"
+	name = "clock_nanosleep"
 	retstr = returnstr(1)
 }
 
 # clock_settime ______________________________________________
 # long sys_clock_settime(clockid_t which_clock,
 #                   const struct timespec __user *tp)
+# long compat_sys_clock_settime(clockid_t which_clock,
+#		struct compat_timespec __user *tp)
 #
-probe nd_syscall.clock_settime = kprobe.function("sys_clock_settime") ?
+probe nd_syscall.clock_settime = __nd_syscall.clock_settime,
+	__nd_syscall.compat_clock_settime ?
 {
 	name = "clock_settime"
+}
+probe __nd_syscall.clock_settime = kprobe.function("sys_clock_settime").call
+{
+	@__syscall_gate(%{ __NR_clock_settime %})
 	// clk_id = $which_clock
 	// clk_id_str = _get_wc_str($which_clock)
 	// tp_uaddr = $tp
@@ -552,9 +561,35 @@ probe nd_syscall.clock_settime = kprobe.function("sys_clock_settime") ?
 	tp_uaddr = pointer_arg(2)
 	argstr = sprintf("%s, %s", clk_id_str, _struct_timespec_u(tp_uaddr, 1))
 }
-probe nd_syscall.clock_settime.return = kprobe.function("sys_clock_settime").return ?
+probe __nd_syscall.compat_clock_settime =
+	kprobe.function("compat_sys_clock_settime").call ?
 {
-	name = "clock_settime"
+	// clk_id = $which_clock
+	// clk_id_str = _get_wc_str($which_clock)
+	// tp_uaddr = $tp
+	// argstr = sprintf("%s, %s", clk_id_str,
+	//		 _struct_compat_timespec_u($tp, 1))
+	asmlinkage()
+	clk_id = int_arg(1)
+	clk_id_str = _get_wc_str(clk_id)
+	tp_uaddr = pointer_arg(2)
+	argstr = sprintf("%s, %s", clk_id_str,
+			 _struct_compat_timespec_u(tp_uaddr, 1))
+}
+probe nd_syscall.clock_settime.return = __nd_syscall.clock_settime.return,
+	__nd_syscall.compat_clock_settime.return ?
+{
+ 	name = "clock_settime"
+}
+probe __nd_syscall.clock_settime.return =
+	kprobe.function("sys_clock_settime").return
+{
+	@__syscall_gate(%{ __NR_clock_settime %})
+	retstr = return_str(1, $return)
+}
+probe __nd_syscall.compat_clock_settime.return =
+	kprobe.function("compat_sys_clock_settime").return ?
+{
 	retstr = returnstr(1)
 }
 

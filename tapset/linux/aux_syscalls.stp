@@ -1,3 +1,20 @@
+
+%{
+// Be sure we have the __NR_* defines.
+#include <asm/unistd.h>
+%}
+
+function _stp_syscall_nr:long ()
+%{ /* pure */
+	struct pt_regs *regs = _stp_current_pt_regs();
+	if (!regs) {
+		CONTEXT->last_error = ("Cannot access syscall number"
+				       " (no registers available)");
+		return;
+	}
+	STAP_RETVALUE = syscall_get_nr(current, regs);
+%}
+
 %{
 #ifdef CONFIG_COMPAT
 #include <linux/compat.h>

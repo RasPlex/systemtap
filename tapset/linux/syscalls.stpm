@@ -1,0 +1,21 @@
+// syscalls tapset macros
+// Copyright (C) 2013 Red Hat Inc.
+//
+// This file is part of systemtap, and is free software.  You can
+// redistribute it and/or modify it under the terms of the GNU General
+// Public License (GPL); either version 2, or (at your option) any
+// later version.
+
+
+@define __syscall_gate(syscall_nr)
+%(
+    %( CONFIG_COMPAT == "y" %?
+	# On some platforms (like s390x and ppc64), the 32-bit
+	# syscalls use the same syscall number as the 64-bit
+	# syscall. So, we have to check to see if this is a
+	# 32-on-64-bit user task.
+	if (%{ _stp_is_compat_task() %}) next
+    %)
+
+	if (_stp_syscall_nr() != @syscall_nr) next
+%)
