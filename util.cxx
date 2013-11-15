@@ -1120,10 +1120,16 @@ levenshtein(const string& a, const string& b)
       if (a[i-1] == b[j-1]) // match
         d(i,j) = d(i-1, j-1);
       else // penalties open for adjustments
-        d(i,j) = min(min(
-            d(i-1,j-1) + 1,  // substitution
-            d(i-1,j)   + 1), // deletion
-            d(i,j-1)   + 1); // insertion
+        {
+          unsigned subpen = 2; // substitution penalty
+          // check if they are upper/lowercase related
+          if (tolower(a[i-1]) == tolower(b[j-1]))
+            subpen = 1; // half penalty
+          d(i,j) = min(min(
+              d(i-1,j-1) + subpen,  // substitution
+              d(i-1,j)   + 2), // deletion
+              d(i,j-1)   + 2); // insertion
+        }
     }
   }
 
