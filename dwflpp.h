@@ -95,8 +95,7 @@ module_info
   info_status dwarf_status;     // module has dwarf info?
   info_status symtab_status;    // symbol table cached?
 
-  // set of all symbols in module (includes inlines)
-  std::set<std::string> sym_seen;
+  std::set<std::string> inlined_funcs;
   std::set<std::string> plt_funcs;
 
   void get_symtab(base_query *q);

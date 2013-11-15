@@ -6853,10 +6853,26 @@ suggest_dwarf_functions(systemtap_session& sess,
   for (set<string>::iterator itmod = modules.begin();
       itmod != modules.end(); ++itmod)
     {
+      module_info *module;
+
+      // retrieve module_info from cache
       map<string, module_info*>::const_iterator itcache;
       if ((itcache = cache.find(*itmod)) != cache.end())
-        funcs.insert(itcache->second->sym_seen.begin(),
-                     itcache->second->sym_seen.end());
+        module = itcache->second;
+      else // module not found
+        continue;
+
+      // add inlines
+      funcs.insert(module->inlined_funcs.begin(),
+                   module->inlined_funcs.end());
+
+      // add all function symbols in cache
+      if (module->symtab_status != info_present || module->sym_table == NULL)
+        continue;
+      map<string, func_info*>& modfuncs = module->sym_table->map_by_name;
+      for (map<string, func_info*>::const_iterator itfuncs = modfuncs.begin();
+           itfuncs != modfuncs.end(); ++itfuncs)
+        funcs.insert(itfuncs->first);
     }
 
   if (sess.verbose > 2)
@@ -7599,11 +7615,12 @@ module_info::update_symtab(cu_function_cache_t *funcs)
   for (cu_function_cache_t::iterator func = funcs->begin();
        func != funcs->end(); func++)
     {
-      sym_seen.insert(func->first);
-
       // optimization: inlines will never be in the symbol table
       if (dwarf_func_inline(&func->second) != 0)
-        continue;
+        {
+          inlined_funcs.insert(func->first);
+          continue;
+        }
 
       // XXX We may want to make additional efforts to match mangled elf names
       // to dwarf too.  MIPS_linkage_name can help, but that's sometimes
