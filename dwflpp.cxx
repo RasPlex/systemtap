@@ -1558,7 +1558,8 @@ dwflpp::iterate_over_srcfile_lines (char const * srcfile,
       Dwarf_Line *line;
       int line_number;
 
-      die_entrypc(this->function, &addr);
+      if (!die_entrypc(this->function, &addr))
+        return;
 
       if (addr != 0)
         {
@@ -1970,7 +1971,8 @@ bool
 dwflpp::function_entrypc (Dwarf_Addr * addr)
 {
   assert (function);
-  return (dwarf_entrypc (function, addr) == 0);
+  // PR10574: reject 0, which tends to be eliminated COMDAT
+  return (dwarf_entrypc (function, addr) == 0 && *addr != 0);
 }
 
 
@@ -3802,9 +3804,8 @@ dwflpp::pr15123_retry_addr (Dwarf_Addr pc, Dwarf_Die* die)
 
   Dwarf_Die outer_function_die = scopes[0];
   Dwarf_Addr entrypc;
-  die_entrypc(& outer_function_die, &entrypc);
-  if (entrypc != pc) // (will fail on retry, so we won't loop more than once)
-    return 0;
+  if (!die_entrypc(& outer_function_die, &entrypc) || entrypc != pc)
+    return 0; // (will fail on retry, so we won't loop more than once)
 
   if (sess.architecture == "i386" ||
       sess.architecture == "x86_64") {

@@ -1445,7 +1445,8 @@ query_addr(Dwarf_Addr addr, dwarf_query *q)
   // and possibly perform prologue searching
   if (q->has_function_num)
     {
-      dw.die_entrypc(fnscope, &addr);
+      if (!dw.die_entrypc(fnscope, &addr))
+        return;
       if (dwarf_tag(fnscope) == DW_TAG_subprogram &&
           (q->sess.prologue_searching || q->has_process)) // PR 6871
         {

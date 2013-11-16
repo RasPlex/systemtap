@@ -1,0 +1,7 @@
+#! /bin/sh
+# PR10574
+
+stap $@ -p2 -e 'probe process("stap").function("*") { next }' \
+ | awk '/pc=.*0x0/ { zero += 1; print; next }
+        /pc=/ { nonzero += 1; next }
+        END { exit !(zero == 0 && nonzero > 0) }'

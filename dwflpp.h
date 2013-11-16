@@ -271,8 +271,8 @@ struct dwflpp
 
   void resolve_prologue_endings (func_info_map_t & funcs);
 
-  bool function_entrypc (Dwarf_Addr * addr);
-  bool die_entrypc (Dwarf_Die * die, Dwarf_Addr * addr);
+  bool function_entrypc (Dwarf_Addr * addr) __attribute__((warn_unused_result));
+  bool die_entrypc (Dwarf_Die * die, Dwarf_Addr * addr) __attribute__((warn_unused_result));
 
   void function_die (Dwarf_Die *d);
   void function_file (char const ** c);
