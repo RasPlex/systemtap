@@ -1982,9 +1982,17 @@ probe nd_syscall.send.return = kprobe.function("sys_send").return ?
 #		  int in_fd,
 #		  off_t __user *offset,
 #		  size_t count)
+# SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd, loff_t __user *, offset,
+#		 size_t, count)
+# COMPAT_SYSCALL_DEFINE4(sendfile, int, out_fd, int, in_fd,
+#		compat_off_t __user *, offset, compat_size_t, count)
+# COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+#		compat_loff_t __user *, offset, compat_size_t, count)
 #
 probe nd_syscall.sendfile = kprobe.function("sys_sendfile") ?,
-                            kprobe.function("sys_sendfile64") ?
+                            kprobe.function("sys_sendfile64") ?,
+			    kprobe.function("compat_sys_sendfile").call ?,
+			    kprobe.function("compat_sys_sendfile64").call ?
 {
 	name = "sendfile"
 	// out_fd = $out_fd
@@ -2001,8 +2009,11 @@ probe nd_syscall.sendfile = kprobe.function("sys_sendfile") ?,
 	argstr = sprintf("%d, %d, %p, %d", out_fd, in_fd, offset_uaddr,
 				count)
 }
-probe nd_syscall.sendfile.return = kprobe.function("sys_sendfile").return ?,
-                                   kprobe.function("sys_sendfile64").return ?
+probe nd_syscall.sendfile.return =
+	kprobe.function("sys_sendfile").return ?,
+	kprobe.function("sys_sendfile64").return ?,
+	kprobe.function("compat_sys_sendfile").return ?,
+	kprobe.function("compat_sys_sendfile64").return ?
 {
 	name = "sendfile"
 	retstr = returnstr(1)

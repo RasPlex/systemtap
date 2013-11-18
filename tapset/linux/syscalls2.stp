@@ -1673,9 +1673,17 @@ probe syscall.send.return = kernel.function("sys_send").return ?
 #		  int in_fd,
 #		  off_t __user *offset,
 #		  size_t count)
+# SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd, loff_t __user *, offset,
+#		 size_t, count)
+# COMPAT_SYSCALL_DEFINE4(sendfile, int, out_fd, int, in_fd,
+#		compat_off_t __user *, offset, compat_size_t, count)
+# COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
+#		compat_loff_t __user *, offset, compat_size_t, count)
 #
 probe syscall.sendfile = kernel.function("sys_sendfile").call ?,
-                         kernel.function("sys_sendfile64").call ?
+                         kernel.function("sys_sendfile64").call ?,
+			 kernel.function("compat_sys_sendfile").call ?,
+			 kernel.function("compat_sys_sendfile64").call ?
 {
 	name = "sendfile"
 	out_fd = $out_fd
@@ -1685,8 +1693,11 @@ probe syscall.sendfile = kernel.function("sys_sendfile").call ?,
 	argstr = sprintf("%d, %d, %p, %d", $out_fd, $in_fd, $offset,
 		$count)
 }
-probe syscall.sendfile.return = kernel.function("sys_sendfile").return ?,
-                                kernel.function("sys_sendfile64").return ?
+probe syscall.sendfile.return =
+	kernel.function("sys_sendfile").return ?,
+	kernel.function("sys_sendfile64").return ?,
+	kernel.function("compat_sys_sendfile").return ?,
+	kernel.function("compat_sys_sendfile64").return ?
 {
 	name = "sendfile"
 	retstr = return_str(1, $return)
