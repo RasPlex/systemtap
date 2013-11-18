@@ -20,9 +20,6 @@ int main()
 	// pages. x86_64/i686 has 4k pages. When we specify an offset
 	// to mmap(), it must be a multiple of the page size, so we
 	// use the biggest.
-	//
-	// Note that on x86_64/i686, mmap() MAP_PRIVATE calls can fail
-	// when attempting to map 64k, unless the caller is root.
 	lseek(fd, 65536, SEEK_SET);
 	write(fd, "abcdef", 6);
 	close(fd);
@@ -35,17 +32,17 @@ int main()
 	ret = fstat(fd, &fs);
 	//staptest// fstat (NNNN, XXXX) = 0
 
-	r = mmap(NULL, fs.st_size, PROT_READ, MAP_SHARED, fd, 0);
-	//staptest// mmap[2]* (XXXX, 65542, PROT_READ, MAP_SHARED, NNNN, XXXX) = XXXX
+	r = mmap(NULL, 4096, PROT_READ, MAP_SHARED, fd, 0);
+	//staptest// mmap[2]* (XXXX, 4096, PROT_READ, MAP_SHARED, NNNN, 0) = XXXX
 
-	mlock(r, fs.st_size);
-	//staptest// mlock (XXXX, 65542) = 0
+	mlock(r, 4096);
+	//staptest// mlock (XXXX, 4096) = 0
 
-	msync(r, fs.st_size, MS_SYNC);	
-	//staptest// msync (XXXX, 65542, MS_SYNC) = 0
+	msync(r, 4096, MS_SYNC);	
+	//staptest// msync (XXXX, 4096, MS_SYNC) = 0
 
-	munlock(r, fs.st_size);
-	//staptest// munlock (XXXX, 65542) = 0
+	munlock(r, 4096);
+	//staptest// munlock (XXXX, 4096) = 0
 
 	mlockall(MCL_CURRENT);
 	//staptest// mlockall (MCL_CURRENT) = 
@@ -53,8 +50,8 @@ int main()
 	munlockall();
 	//staptest// munlockall () = 0
 
-	munmap(r, fs.st_size);
-	//staptest// munmap (XXXX, 65542) = 0
+	munmap(r, 4096);
+	//staptest// munmap (XXXX, 4096) = 0
 
 	// Ensure the 6th argument is handled correctly..
 	r = mmap(NULL, 6, PROT_READ, MAP_PRIVATE, fd, 65536);
