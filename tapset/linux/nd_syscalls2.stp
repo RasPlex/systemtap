@@ -3950,10 +3950,12 @@ probe nd_syscall.truncate = __nd_syscall.truncate?, __nd_syscall.truncate64?
 }
 probe __nd_syscall.truncate = kprobe.function("sys_truncate")
 {
+	asmlinkage()
 	length = ulong_arg(2)
 }
 probe __nd_syscall.truncate64 = kprobe.function("sys_truncate64")
 {
+	asmlinkage()
 	length = longlong_arg(2)
 }
 probe nd_syscall.truncate.return = kprobe.function("sys_truncate").return ?,
