@@ -1742,7 +1742,8 @@ static void _stp_sigset_str(sigset_t *mask, char *ptr, int len)
 	const _stp_val_array * const array = _stp_signal_list;
 	int i = 0, flag = 0;
 	while (array[i].name) {
-		if (array[i].val && sigismember(mask, array[i].val)) {
+		if (array[i].val > 0 && array[i].val <= _NSIG
+		    && sigismember(mask, array[i].val)) {
 			if (flag)
 				strlcat(ptr, "|", len);
 			strlcat(ptr, array[i].name, len);
