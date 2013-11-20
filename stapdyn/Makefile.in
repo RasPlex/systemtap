@@ -377,10 +377,8 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -Wall -Werror -Wunused -W -Wformat=2 \
-	-Wno-format-nonliteral @PIECFLAGS@
-AM_CXXFLAGS = -Wall -Werror -Wunused -W -Wformat=2 \
-	-Wno-format-nonliteral @PIECXXFLAGS@
+AM_CFLAGS = -Wall -Werror -Wunused -W -Wformat=2 @PIECFLAGS@
+AM_CXXFLAGS = -Wall -Werror -Wunused -W -Wformat=2 @PIECXXFLAGS@
 AM_CPPFLAGS = -D_GNU_SOURCE -I$(srcdir)/../includes \
 	-I$(builddir)/../includes/sys -DBINDIR='"$(bindir)"' \
 	-DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' \

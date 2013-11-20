@@ -16,6 +16,7 @@
 
 # Makefile.am --- automake input file for systemtap runtime tools
 
+
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -106,6 +107,17 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES = run-staprun
 CONFIG_CLEAN_VPATH_FILES =
+LIBRARIES = $(noinst_LIBRARIES)
+AR = ar
+ARFLAGS = cru
+AM_V_AR = $(am__v_AR_@AM_V@)
+am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
+am__v_AR_0 = @echo "  AR      " $@;
+am__v_AR_1 = 
+libstrfloctime_a_AR = $(AR) $(ARFLAGS)
+libstrfloctime_a_LIBADD =
+am_libstrfloctime_a_OBJECTS = libstrfloctime_a-strfloctime.$(OBJEXT)
+libstrfloctime_a_OBJECTS = $(am_libstrfloctime_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)" \
 	"$(DESTDIR)$(man8dir)"
 PROGRAMS = $(bin_PROGRAMS) $(pkglibexec_PROGRAMS)
@@ -118,7 +130,7 @@ am_stapio_OBJECTS = stapio.$(OBJEXT) mainloop.$(OBJEXT) \
 	common.$(OBJEXT) ctl.$(OBJEXT) relay.$(OBJEXT) \
 	relay_old.$(OBJEXT)
 stapio_OBJECTS = $(am_stapio_OBJECTS)
-stapio_DEPENDENCIES =
+stapio_DEPENDENCIES = libstrfloctime.a
 @HAVE_NSS_TRUE@am__objects_1 = staprun-modverify.$(OBJEXT) \
 @HAVE_NSS_TRUE@	staprun-nsscommon.$(OBJEXT)
 am_staprun_OBJECTS = staprun-staprun.$(OBJEXT) \
@@ -128,7 +140,8 @@ am_staprun_OBJECTS = staprun-staprun.$(OBJEXT) \
 staprun_OBJECTS = $(am_staprun_OBJECTS)
 am__DEPENDENCIES_1 =
 @HAVE_NSS_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-staprun_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+staprun_DEPENDENCIES = libstrfloctime.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 staprun_LINK = $(CXXLD) $(staprun_CXXFLAGS) $(CXXFLAGS) \
 	$(staprun_LDFLAGS) $(LDFLAGS) -o $@
 am_stapsh_OBJECTS = stapsh-stapsh.$(OBJEXT)
@@ -181,8 +194,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(stap_merge_SOURCES) $(stapio_SOURCES) $(staprun_SOURCES) \
-	$(stapsh_SOURCES)
+SOURCES = $(libstrfloctime_a_SOURCES) $(stap_merge_SOURCES) \
+	$(stapio_SOURCES) $(staprun_SOURCES) $(stapsh_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -403,24 +416,29 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -Wall -Werror -Wunused -W -Wformat=2 \
-	-Wno-format-nonliteral @PIECFLAGS@
-AM_CXXFLAGS = -Wall -Werror -Wunused -W -Wformat=2 \
-	-Wno-format-nonliteral @PIECXXFLAGS@
+AM_CFLAGS = -Wall -Werror -Wunused -W -Wformat=2 @PIECFLAGS@
+AM_CXXFLAGS = -Wall -Werror -Wunused -W -Wformat=2 @PIECXXFLAGS@
 AM_CPPFLAGS = -D_GNU_SOURCE -I$(srcdir)/../includes \
 	-I$(builddir)/../includes/sys -DBINDIR='"$(bindir)"' \
 	-DSYSCONFDIR='"$(sysconfdir)"' -DPKGDATADIR='"${pkgdatadir}"' \
 	-DPKGLIBDIR='"$(pkglibexecdir)"' -DLOCALEDIR='"$(localedir)"'
 AM_LDFLAGS = @PIELDFLAGS@
+
+# Tighten -Wno-format-nonliteral to just where it's needed.
+# See the automake manual secton: "Per-Object Flags Emulation"
+#   https://www.gnu.org/software/automake/manual/html_node/Per_002dObject-Flags.html
+noinst_LIBRARIES = libstrfloctime.a
+libstrfloctime_a_SOURCES = strfloctime.c
+libstrfloctime_a_CFLAGS = $(AM_CFLAGS) -Wno-format-nonliteral
 staprun_SOURCES = staprun.c staprun_funcs.c ctl.c common.c \
 	../privilege.cxx ../util.cxx $(am__append_3)
 staprun_CFLAGS = $(AM_CFLAGS) -DSINGLE_THREADED $(am__append_4)
 staprun_CXXFLAGS = $(AM_CXXFLAGS) -DSINGLE_THREADED $(am__append_5)
 staprun_CPPFLAGS = $(AM_CPPFLAGS) $(am__append_1)
-staprun_LDADD = $(staprun_LIBS) $(am__append_6)
+staprun_LDADD = libstrfloctime.a $(staprun_LIBS) $(am__append_6)
 staprun_LDFLAGS = $(AM_LDFLAGS) $(am__append_2)
 stapio_SOURCES = stapio.c mainloop.c common.c ctl.c relay.c relay_old.c
-stapio_LDADD = -lpthread
+stapio_LDADD = libstrfloctime.a -lpthread
 man_MANS = staprun.8
 stap_merge_SOURCES = stap_merge.c
 stap_merge_CFLAGS = $(AM_CFLAGS)
@@ -471,6 +489,14 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 run-staprun: $(top_builddir)/config.status $(srcdir)/run-staprun.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+
+libstrfloctime.a: $(libstrfloctime_a_OBJECTS) $(libstrfloctime_a_DEPENDENCIES) $(EXTRA_libstrfloctime_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libstrfloctime.a
+	$(AM_V_AR)$(libstrfloctime_a_AR) libstrfloctime.a $(libstrfloctime_a_OBJECTS) $(libstrfloctime_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libstrfloctime.a
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -580,6 +606,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libstrfloctime_a-strfloctime.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mainloop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/relay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/relay_old.Po@am__quote@
@@ -608,6 +635,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+libstrfloctime_a-strfloctime.o: strfloctime.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libstrfloctime_a_CFLAGS) $(CFLAGS) -MT libstrfloctime_a-strfloctime.o -MD -MP -MF $(DEPDIR)/libstrfloctime_a-strfloctime.Tpo -c -o libstrfloctime_a-strfloctime.o `test -f 'strfloctime.c' || echo '$(srcdir)/'`strfloctime.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libstrfloctime_a-strfloctime.Tpo $(DEPDIR)/libstrfloctime_a-strfloctime.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='strfloctime.c' object='libstrfloctime_a-strfloctime.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libstrfloctime_a_CFLAGS) $(CFLAGS) -c -o libstrfloctime_a-strfloctime.o `test -f 'strfloctime.c' || echo '$(srcdir)/'`strfloctime.c
+
+libstrfloctime_a-strfloctime.obj: strfloctime.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libstrfloctime_a_CFLAGS) $(CFLAGS) -MT libstrfloctime_a-strfloctime.obj -MD -MP -MF $(DEPDIR)/libstrfloctime_a-strfloctime.Tpo -c -o libstrfloctime_a-strfloctime.obj `if test -f 'strfloctime.c'; then $(CYGPATH_W) 'strfloctime.c'; else $(CYGPATH_W) '$(srcdir)/strfloctime.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libstrfloctime_a-strfloctime.Tpo $(DEPDIR)/libstrfloctime_a-strfloctime.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='strfloctime.c' object='libstrfloctime_a-strfloctime.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libstrfloctime_a_CFLAGS) $(CFLAGS) -c -o libstrfloctime_a-strfloctime.obj `if test -f 'strfloctime.c'; then $(CYGPATH_W) 'strfloctime.c'; else $(CYGPATH_W) '$(srcdir)/strfloctime.c'; fi`
 
 stap_merge-stap_merge.o: stap_merge.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stap_merge_CFLAGS) $(CFLAGS) -MT stap_merge-stap_merge.o -MD -MP -MF $(DEPDIR)/stap_merge-stap_merge.Tpo -c -o stap_merge-stap_merge.o `test -f 'stap_merge.c' || echo '$(srcdir)/'`stap_merge.c
@@ -860,7 +901,7 @@ distclean-tags:
 check-am: all-am
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
-all-am: Makefile $(PROGRAMS) $(MANS)
+all-am: Makefile $(LIBRARIES) $(PROGRAMS) $(MANS)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(pkglibexecdir)" "$(DESTDIR)$(man8dir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -900,8 +941,8 @@ maintainer-clean-generic:
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-pkglibexecPROGRAMS \
-	mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
+	clean-pkglibexecPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -975,20 +1016,20 @@ uninstall-man: uninstall-man8
 .MAKE: all check install install-am install-exec-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-pkglibexecPROGRAMS \
-	cscopelist-am ctags ctags-am distclean distclean-compile \
-	distclean-generic distclean-tags dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-exec-hook install-html install-html-am \
-	install-info install-info-am install-man install-man8 \
-	install-pdf install-pdf-am install-pkglibexecPROGRAMS \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-man \
-	uninstall-man8 uninstall-pkglibexecPROGRAMS
+	clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
+	clean-pkglibexecPROGRAMS cscopelist-am ctags ctags-am \
+	distclean distclean-compile distclean-generic distclean-tags \
+	dvi dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-exec-hook \
+	install-html install-html-am install-info install-info-am \
+	install-man install-man8 install-pdf install-pdf-am \
+	install-pkglibexecPROGRAMS install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-man uninstall-man8 uninstall-pkglibexecPROGRAMS
 
 git_version.stamp ../git_version.h:
 	$(MAKE) -C .. $(notdir $@)

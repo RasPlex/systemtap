@@ -66,22 +66,6 @@ static char *get_abspath(char *path)
 	return path_buf;
 }
 
-int stap_strfloctime(char *buf, size_t max, const char *fmt, time_t t)
-{
-	struct tm tm;
-	size_t ret;
-	if (buf == NULL || fmt == NULL || max <= 1)
-		return -EINVAL;
-	localtime_r(&t, &tm);
-        /* NB: this following invocation is the reason for staprun's being built
-           with -Wno-format-nonliteral.  strftime parsing does not have security
-           implications AFAIK, but gcc still wants to check them.  */
-	ret = strftime(buf, max, fmt, &tm);
-	if (ret == 0)
-		return -EINVAL;
-	return (int)ret;
-}
-
 int make_outfile_name(char *buf, int max, int fnum, int cpu, time_t t, int bulk)
 {
 	int len;

@@ -376,7 +376,7 @@ JAR = jar
 BUILT_SOURCES = 
 CLEANFILES = $(am__append_4)
 
-#AM_CFLAGS = -Wall -Werror -W -Wformat=2 -Wno-format-nonliteral -g 
+#AM_CFLAGS = -Wall -Werror -W -Wformat=2 -g
 AM_CFLAGS = -g -I$(builddir)/../includes/sys -I$(srcdir)/../includes \
 	-I$(srcdir)/java -I$(JAVADIR)/include/linux \
 	-I$(JAVADIR)/include -fPIC -shared
