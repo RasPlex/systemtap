@@ -105,8 +105,8 @@ private:
 
     macrodecl* curr_macro;
 
-    pp1_activation (const token tok, macrodecl* curr_macro)
-      : tok(new token(tok)), cursor(0), curr_macro(curr_macro) { }
+    pp1_activation (const token* tok, macrodecl* curr_macro)
+      : tok(tok), cursor(0), curr_macro(curr_macro) { }
     ~pp1_activation ();
   };
 
@@ -538,8 +538,8 @@ parser::scan_pp1 ()
           else // this is an ordinary @operator
             return t;
 
-          // handle macro invocation
-          pp1_activation *new_act = new pp1_activation(*t, decl);
+          // handle macro invocation, taking ownership of t
+          pp1_activation *new_act = new pp1_activation(t, decl);
           unsigned num_params = decl->formal_args.size();
 
           // (1a) restore parameter invocation closure
