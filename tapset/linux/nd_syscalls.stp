@@ -585,7 +585,7 @@ probe __nd_syscall.clock_settime.return =
 	kprobe.function("sys_clock_settime").return
 {
 	@__syscall_gate(%{ __NR_clock_settime %})
-	retstr = return_str(1, $return)
+	retstr = returnstr(1)
 }
 probe __nd_syscall.compat_clock_settime.return =
 	kprobe.function("compat_sys_clock_settime").return ?
