@@ -2119,6 +2119,7 @@ c_unparser::emit_function (functiondecl* v)
       o->newline() << retvalue.init();
     }
 
+  o->newline() << "#define STAP_ERROR(...) do { snprintf(CONTEXT->error_buffer, MAXSTRINGLEN, __VA_ARGS__); CONTEXT->last_error = CONTEXT->error_buffer; goto out; } while (0)";
   o->newline() << "#define return goto out"; // redirect embedded-C return
   v->body->visit (this);
   o->newline() << "#undef return";
@@ -2143,6 +2144,7 @@ c_unparser::emit_function (functiondecl* v)
     o->newline() << c_arg_undef(v->locals[i]->name); // #undef STAP_ARG_foo
   }
   o->newline() << "#undef STAP_RETVALUE";
+  o->newline() << "#undef STAP_ERROR";
   o->newline(-1) << "}\n";
 }
 
