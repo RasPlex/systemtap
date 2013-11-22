@@ -3146,22 +3146,46 @@ probe syscall.timer_gettime.return = kernel.function("sys_timer_gettime").return
 #			 int flags,
 #			 const struct itimerspec __user *new_setting,
 #			 struct itimerspec __user *old_setting)
+# long compat_sys_timer_settime(timer_t timer_id, int flags,
+#			  struct compat_itimerspec __user *new,
+#			  struct compat_itimerspec __user *old)
 #
-probe syscall.timer_settime = kernel.function("sys_timer_settime").call
+probe syscall.timer_settime = __syscall.timer_settime,
+			      __syscall.compat_timer_settime ?
 {
 	name = "timer_settime"
+}
+probe __syscall.timer_settime = kernel.function("sys_timer_settime").call
+{
+	@__syscall_gate(%{ __NR_timer_settime %})
 	timerid = $timer_id
 	flags = $flags
 	value_uaddr  = $new_setting
 	ovalue_uaddr = $old_setting
 	argstr = sprintf("%d, %d, %s, %p", $timer_id, $flags,
-		_struct_itimerspec_u($new_setting),
-		$old_setting)
+			 _struct_itimerspec_u($new_setting), $old_setting)
 }
-probe syscall.timer_settime.return = kernel.function("sys_timer_settime").return
+probe __syscall.compat_timer_settime =
+	kernel.function("compat_sys_timer_settime").call ?
+{
+	timerid = $timer_id
+	flags = $flags
+	value_uaddr  = $new
+	ovalue_uaddr = $old
+	argstr = sprintf("%d, %d, %s, %p", $timer_id, $flags,
+			 _struct_compat_itimerspec_u($new), $old)
+}
+probe syscall.timer_settime.return =
+	__syscall.timer_settime.return,
+	kernel.function("compat_sys_timer_settime").return ?
 {
 	name = "timer_settime"
 	retstr = return_str(1, $return)
+}
+probe __syscall.timer_settime.return =
+	kernel.function("sys_timer_settime").return
+{
+	@__syscall_gate(%{ __NR_timer_settime %})
 }
 
 # timerfd ______________________________________________

@@ -260,6 +260,26 @@ function _struct_itimerspec_u:string(uaddr:long)
 	}	
 %}
 
+function _struct_compat_itimerspec_u:string(uaddr:long)
+%{ /* pure */
+	struct compat_itimerspec its;
+	char *ptr = (char *)(unsigned long)STAP_ARG_uaddr;
+	
+	if (ptr == NULL)
+		strlcpy (STAP_RETVALUE, "NULL", MAXSTRINGLEN);
+	else {
+		if (_stp_copy_from_user((char *)&its, ptr, sizeof(its)))
+			strlcpy (STAP_RETVALUE, "UNKNOWN", MAXSTRINGLEN);
+		else
+			snprintf(STAP_RETVALUE, MAXSTRINGLEN,
+				 "[%d.%06d,%d.%06d]",
+				 (int)its.it_interval.tv_sec,
+				 (int)its.it_interval.tv_nsec,
+				 (int)its.it_value.tv_sec,
+				 (int)its.it_value.tv_nsec);
+	}	
+%}
+
 function _struct_itimerval_u:string(uaddr:long)
 %{ /* pure */
 	struct itimerval itv;
