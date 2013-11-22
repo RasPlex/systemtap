@@ -19,3 +19,18 @@
 
 	if (_stp_syscall_nr() != @syscall_nr) next
 %)
+
+@define __syscall_compat_gate(syscall_nr, compat_syscall_nr)
+%(
+    %( CONFIG_COMPAT == "y" %?
+	__nr = _stp_syscall_nr()
+	if (%{ _stp_is_compat_task() %}) {
+		if (__nr != @compat_syscall_nr)
+			next
+	}
+	else if (__nr != @syscall_nr)
+		next
+    %:
+	if (_stp_syscall_nr() != @syscall_nr) next
+    %)
+%)

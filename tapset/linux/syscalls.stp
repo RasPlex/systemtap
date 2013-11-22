@@ -857,6 +857,8 @@ probe syscall.exit_group = kernel.function("sys_exit_group").call
 # long sys_faccessat(int dfd, const char __user *filename, int mode)
 probe syscall.faccessat = kernel.function("sys_faccessat").call ?
 {
+	@__syscall_compat_gate(%{ __NR_faccessat %},
+			       %{ __NR_compat_faccessat %})
 	name = "faccessat"
 	dirfd = $dfd
 	dirfd_str = _dfd_str($dfd)
@@ -867,6 +869,8 @@ probe syscall.faccessat = kernel.function("sys_faccessat").call ?
 }
 probe syscall.faccessat.return = kernel.function("sys_faccessat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_faccessat %},
+			       %{ __NR_compat_faccessat %})
 	name = "faccessat"
 	retstr = return_str(1, $return)
 }

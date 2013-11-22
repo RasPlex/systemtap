@@ -2,6 +2,7 @@
 %{
 // Be sure we have the __NR_* defines.
 #include <asm/unistd.h>
+#include "linux/compat_unistd.h"
 %}
 
 function _stp_syscall_nr:long ()

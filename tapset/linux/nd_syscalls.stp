@@ -1129,6 +1129,8 @@ probe nd_syscall.exit_group = kprobe.function("sys_exit_group").call ?
 # long sys_faccessat(int dfd, const char __user *filename, int mode)
 probe nd_syscall.faccessat = kprobe.function("sys_faccessat") ?
 {
+	@__syscall_compat_gate(%{ __NR_faccessat %},
+			       %{ __NR_compat_faccessat %})
 	name = "faccessat"
 	// dirfd = $dfd
 	// dirfd_str = _dfd_str($dfd)
@@ -1146,6 +1148,8 @@ probe nd_syscall.faccessat = kprobe.function("sys_faccessat") ?
 }
 probe nd_syscall.faccessat.return = kprobe.function("sys_faccessat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_faccessat %},
+			       %{ __NR_compat_faccessat %})
 	name = "faccessat"
 	retstr = returnstr(1)
 }
