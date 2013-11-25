@@ -47,7 +47,7 @@ int main()
 
 #if GLIBC_SUPPORT
   fchownat(AT_FDCWD, "foobar", 5002, -1, 0);
-  //staptest// fchownat (AT_FDCWD, "foobar", 5002, -1, XXXX) =
+  //staptest// fchownat (AT_FDCWD, "foobar", 5002, -1, 0x0) =
 #endif
 
   fchown(fd, -1, 5003);
