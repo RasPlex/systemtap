@@ -18,8 +18,16 @@
 #ifndef __NR_ia32_faccessat
 #define __NR_ia32_faccessat 307
 #endif
+#ifndef __NR_ia32_fchmodat
+#define __NR_ia32_fchmodat 306
+#endif
+#ifndef __NR_ia32_fchownat
+#define __NR_ia32_fchownat 298
+#endif
 
 #define __NR_compat_faccessat		__NR_ia32_faccessat
+#define __NR_compat_fchmodat		__NR_ia32_fchmodat
+#define __NR_compat_fchownat		__NR_ia32_fchownat
 
 #endif	/* __x86_64__ */
 
@@ -29,6 +37,8 @@
 // as the 64-bit syscalls.
 
 #define __NR_compat_faccessat		__NR_faccessat
+#define __NR_compat_fchmodat		__NR_fchmodat
+#define __NR_compat_fchownat		__NR_fchownat
 
 #endif	/* __powerpc64__ || __s390x__ */
 

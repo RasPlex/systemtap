@@ -946,6 +946,8 @@ probe syscall.fchmod.return = kernel.function("sys_fchmod").return
 #	mode_t mode)
 probe syscall.fchmodat = kernel.function("sys_fchmodat").call ?
 {
+	@__syscall_compat_gate(%{ __NR_fchmodat %},
+			       %{ __NR_compat_fchmodat %})
 	name = "fchmodat"
 	dirfd = $dfd
 	dirfd_str = _dfd_str($dfd)
@@ -955,6 +957,8 @@ probe syscall.fchmodat = kernel.function("sys_fchmodat").call ?
 }
 probe syscall.fchmodat.return = kernel.function("sys_fchmodat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_fchmodat %},
+			       %{ __NR_compat_fchmodat %})
 	name = "fchmodat"
 	retstr = return_str(1, $return)
 }
@@ -997,6 +1001,8 @@ probe syscall.fchown16.return = kernel.function("sys_fchown16").return ?
 #	uid_t user, gid_t group, int flag)
 probe syscall.fchownat = kernel.function("sys_fchownat").call ?
 {
+	@__syscall_compat_gate(%{ __NR_fchownat %},
+			       %{ __NR_compat_fchownat %})
 	name = "fchownat"
 	dirfd = $dfd
 	dirfd_str = _dfd_str($dfd)
@@ -1010,6 +1016,8 @@ probe syscall.fchownat = kernel.function("sys_fchownat").call ?
 }
 probe syscall.fchownat.return = kernel.function("sys_fchownat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_fchownat %},
+			       %{ __NR_compat_fchownat %})
 	name = "fchownat"
 	retstr = return_str(1, $return)
 }
