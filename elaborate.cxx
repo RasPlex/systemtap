@@ -5442,7 +5442,7 @@ typeresolution_info::mismatch (const token *tok, exp_type type,
       stringstream chain_msg;
       chain_msg << _("type");
       if (index >= 0)
-        chain_msg << _F(" of index %d ", index);
+        chain_msg << _F(" of index %d", index);
       chain_msg << _F(" was first inferred here (%s)",
                       lex_cast(decl->type).c_str());
       err.chain = new SEMANTIC_ERROR(chain_msg.str(), original->tok);
