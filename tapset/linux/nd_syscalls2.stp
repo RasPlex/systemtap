@@ -877,6 +877,8 @@ probe nd_syscall.readlink.return = kprobe.function("sys_readlink").return ?
 #
 probe nd_syscall.readlinkat = kprobe.function("sys_readlinkat") ?
 {
+	@__syscall_compat_gate(%{ __NR_readlinkat %},
+			       %{ __NR_compat_readlinkat %})
 	name = "readlinkat"
 	//dfd = $dfd
 	// path = user_string($path)
@@ -894,6 +896,8 @@ probe nd_syscall.readlinkat = kprobe.function("sys_readlinkat") ?
 }
 probe nd_syscall.readlinkat.return = kprobe.function("sys_readlinkat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_readlinkat %},
+			       %{ __NR_compat_readlinkat %})
 	name = "readlinkat"
 	retstr = returnstr(1)
 }
@@ -3547,6 +3551,8 @@ probe nd_syscall.symlink.return = kprobe.function("sys_symlink").return ?
 #	const char __user *newname)
 probe nd_syscall.symlinkat = kprobe.function("sys_symlinkat") ?
 {
+	@__syscall_compat_gate(%{ __NR_symlinkat %},
+			       %{ __NR_compat_symlinkat %})
 	name = "symlinkat"
 //	oldname = $oldname
 //	oldname_str = user_string($oldname)
@@ -3568,6 +3574,8 @@ probe nd_syscall.symlinkat = kprobe.function("sys_symlinkat") ?
 }
 probe nd_syscall.symlinkat.return = kprobe.function("sys_symlinkat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_symlinkat %},
+			       %{ __NR_compat_symlinkat %})
 	name = "symlinkat"
 	retstr = returnstr(1)
 }

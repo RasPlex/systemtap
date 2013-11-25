@@ -2401,6 +2401,7 @@ probe syscall.link.return = kernel.function("sys_link").return
 #	int newdfd, const char __user *newname, int flags)
 probe syscall.linkat = kernel.function("sys_linkat").call ?
 {
+	@__syscall_compat_gate(%{ __NR_linkat %}, %{ __NR_compat_linkat %})
 	name = "linkat"
 	olddirfd = $olddfd
 	olddirfd_str = _dfd_str($olddfd)
@@ -2417,6 +2418,7 @@ probe syscall.linkat = kernel.function("sys_linkat").call ?
 }
 probe syscall.linkat.return = kernel.function("sys_linkat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_linkat %}, %{ __NR_compat_linkat %})
 	name = "linkat"
 	retstr = return_str(1, $return)
 }

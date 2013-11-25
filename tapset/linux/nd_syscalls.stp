@@ -3053,6 +3053,7 @@ probe nd_syscall.link.return = kprobe.function("sys_link").return ?
 #	int newdfd, const char __user *newname, int flags)
 probe nd_syscall.linkat = kprobe.function("sys_linkat") ?
 {
+	@__syscall_compat_gate(%{ __NR_linkat %}, %{ __NR_compat_linkat %})
 	name = "linkat"
 	// olddirfd = $olddfd
 	// olddirfd_str = _dfd_str($olddfd)
@@ -3082,6 +3083,7 @@ probe nd_syscall.linkat = kprobe.function("sys_linkat") ?
 }
 probe nd_syscall.linkat.return = kprobe.function("sys_linkat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_linkat %}, %{ __NR_compat_linkat %})
 	name = "linkat"
 	retstr = returnstr(1)
 }

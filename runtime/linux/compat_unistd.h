@@ -24,10 +24,22 @@
 #ifndef __NR_ia32_fchownat
 #define __NR_ia32_fchownat 298
 #endif
+#ifndef __NR_ia32_linkat
+#define __NR_ia32_linkat 303
+#endif
+#ifndef __NR_ia32_readlinkat
+#define __NR_ia32_readlinkat 305
+#endif
+#ifndef __NR_ia32_symlinkat
+#define __NR_ia32_symlinkat 304
+#endif
 
 #define __NR_compat_faccessat		__NR_ia32_faccessat
 #define __NR_compat_fchmodat		__NR_ia32_fchmodat
 #define __NR_compat_fchownat		__NR_ia32_fchownat
+#define __NR_compat_linkat		__NR_ia32_linkat
+#define __NR_compat_readlinkat		__NR_ia32_readlinkat
+#define __NR_compat_symlinkat		__NR_ia32_symlinkat
 
 #endif	/* __x86_64__ */
 
@@ -39,6 +51,9 @@
 #define __NR_compat_faccessat		__NR_faccessat
 #define __NR_compat_fchmodat		__NR_fchmodat
 #define __NR_compat_fchownat		__NR_fchownat
+#define __NR_compat_linkat		__NR_linkat
+#define __NR_compat_readlinkat		__NR_readlinkat
+#define __NR_compat_symlinkat		__NR_symlinkat
 
 #endif	/* __powerpc64__ || __s390x__ */
 

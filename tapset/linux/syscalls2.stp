@@ -755,6 +755,8 @@ probe syscall.readlink.return = kernel.function("sys_readlink").return
 #
 probe syscall.readlinkat = kernel.function("sys_readlinkat").call ?
 {
+	@__syscall_compat_gate(%{ __NR_readlinkat %},
+			       %{ __NR_compat_readlinkat %})
 	name = "readlinkat"
 	dfd = $dfd
 	buf_uaddr = $buf
@@ -767,6 +769,8 @@ probe syscall.readlinkat = kernel.function("sys_readlinkat").call ?
 
 probe syscall.readlinkat.return = kernel.function("sys_readlinkat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_readlinkat %},
+			       %{ __NR_compat_readlinkat %})
 	name = "readlinkat"
 	retstr = return_str(1, $return)
 }
@@ -2898,6 +2902,8 @@ probe syscall.symlink.return = kernel.function("sys_symlink").return
 #	const char __user *newname)
 probe syscall.symlinkat = kernel.function("sys_symlinkat").call ?
 {
+	@__syscall_compat_gate(%{ __NR_symlinkat %},
+			       %{ __NR_compat_symlinkat %})
 	name = "symlinkat"
 	oldname = $oldname
 	oldname_str = user_string_quoted($oldname)
@@ -2910,6 +2916,8 @@ probe syscall.symlinkat = kernel.function("sys_symlinkat").call ?
 }
 probe syscall.symlinkat.return = kernel.function("sys_symlinkat").return ?
 {
+	@__syscall_compat_gate(%{ __NR_symlinkat %},
+			       %{ __NR_compat_symlinkat %})
 	name = "symlinkat"
 	retstr = return_str(1, $return)
 }
