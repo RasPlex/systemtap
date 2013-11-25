@@ -553,62 +553,40 @@ probe syscall.dup.return = kernel.function("sys_dup").return
 	retstr = return_str(1, $return)
 }
 
-# Notice there are two syscall.dup2 probe aliases. This is
-# intentional, to handle dup2/dup3 properly (and all their corner
-# cases).  See commit 816395 for details (and a testcase).
-#
 # dup2 _______________________________________________________
 # long sys_dup2(unsigned int oldfd, unsigned int newfd)
-# Only handles corner case, others handled by dup3.
 probe syscall.dup2 = kernel.function("sys_dup2").call
 {
-	if ($oldfd != $newfd) next;
-
 	name = "dup2"
 	oldfd = $oldfd
 	newfd = $newfd
+	# The dup2 syscall doesn't have a 'flags' argument. But, the
+	# syscall.dup2 and syscall.dup3 probes used to be combined, so
+	# both probes need a 'flags' variable.
 	flags = 0
 	argstr = sprintf("%d, %d", $oldfd, $newfd)
 }
 probe syscall.dup2.return = kernel.function("sys_dup2").return
 {
-	if ($oldfd != $newfd) next;
-
 	name = "dup2"
 	retstr = return_str(1, $return)
 }
 
-# dup3 (handles both dup2 and dup3 except for corner case)___________
-# long sys_dup2(unsigned int oldfd, unsigned int newfd)
+# dup3 _______________________________________________________
 # SYSCALL_DEFINE3(dup3, unsigned int, oldfd, unsigned int, newfd, int, flags)
-probe syscall.dup2 = kernel.function("sys_dup3").call !,
-                     kernel.function("sys_dup2").call
+probe syscall.dup3 = kernel.function("sys_dup3").call ?
 {
+	@__syscall_compat_gate(%{ __NR_dup3 %}, %{ __NR_compat_dup3 %})
+	name = "dup3";
 	oldfd = $oldfd
 	newfd = $newfd
-	flags = @choose_defined($flags, 0);
-
-	# Corner case handled by dup2
-	if ($oldfd == $newfd && flags == 0) next
-
-	if (flags == 0) {
-		name = "dup2";
-		argstr = sprintf("%d, %d", $oldfd, $newfd);
-	} else {
-		name = "dup3";
-		argstr = sprintf("%d, %d, %s", $oldfd, $newfd,
-				 _dup3_flag_str(flags));
-	}
+	flags = $flags
+	argstr = sprintf("%d, %d, %s", $oldfd, $newfd, _dup3_flag_str(flags));
 }
-probe syscall.dup2.return = kernel.function("sys_dup3").return !,
-                            kernel.function("sys_dup2").return
+probe syscall.dup3.return = kernel.function("sys_dup3").return ?
 {
-	flags = @choose_defined($flags, 0);
-
-	# Corner case handled by dup2
-	if ($oldfd == $newfd && flags == 0) next
-
-	name = flags == 0 ? "dup2" : "dup3";
+	@__syscall_compat_gate(%{ __NR_dup3 %}, %{ __NR_compat_dup3 %})
+	name = "dup3"
 	retstr = return_str(1, $return)
 }
 

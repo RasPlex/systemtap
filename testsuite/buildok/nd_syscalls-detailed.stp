@@ -231,12 +231,12 @@ probe nd_syscall.dup.return
 	printf("%s, %s\n", name, retstr)
 }
 
-probe nd_syscall.dup2
+probe nd_syscall.dup2, nd_syscall.dup3 ?
 {
 	printf("%s, %s\n", name, argstr)
 	printf("%d, %d, %d\n", oldfd, newfd, flags)
 }
-probe nd_syscall.dup2.return
+probe nd_syscall.dup2.return, nd_syscall.dup3.return ?
 {
 	printf("%s, %s\n", name, retstr)
 }
