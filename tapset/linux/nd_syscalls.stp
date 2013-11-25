@@ -34,35 +34,40 @@
 # accept _____________________________________________________
 # long sys_accept(int fd, struct sockaddr __user *upeer_sockaddr,
 #                 int __user *upeer_addrlen)
-%( kernel_v >= "2.6.28" %?
-probe nd_syscall.accept = kprobe.function("sys_accept4") ?
-%:
-probe nd_syscall.accept = kprobe.function("sys_accept") ?
-%)
+# SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
+#		int __user *, upeer_addrlen, int, flags)
+probe nd_syscall.accept = __nd_syscall.accept4 ?, __nd_syscall.accept ?
 {
 	name = "accept"
 	// sockfd = $fd
 	// addr_uaddr = $upeer_sockaddr
 	// addrlen_uaddr = $upeer_addrlen
-	// argstr = sprintf("%d, %p, %p", $fd, $upeer_sockaddr, $upeer_addrlen)
+	// argstr = sprintf("%d, %p, %p, %s", $fd, $upeer_sockaddr,
+	//	$upeer_addrlen, flags_str)
 	asmlinkage()
 	sockfd = int_arg(1)
 	addr_uaddr = pointer_arg(2)
 	addrlen_uaddr = pointer_arg(3)
-	flags = 0
 # 'flag_str should have been 'flags_str'.  Deprecate the old name.
 %(systemtap_v <= "1.4" %?
-	flag_str = "0"
+	flag_str = flags_str
 %)
-	flags_str = "0"
 	argstr = sprintf("%d, %p, %p, %s", sockfd, addr_uaddr, addrlen_uaddr,
 			 flags_str)
 }
-%( kernel_v >= "2.6.28" %?
-probe nd_syscall.accept.return = kprobe.function("sys_accept4").return ?
-%:
-probe nd_syscall.accept.return = kprobe.function("sys_accept").return ?
-%)
+probe __nd_syscall.accept4 = kprobe.function("sys_accept4").call ?
+{
+	asmlinkage()
+	flags = int_arg(4)
+	flags_str = _sock_flags_str(flags)
+}
+probe __nd_syscall.accept = kprobe.function("sys_accept").call ?
+{
+	flags = 0
+	flags_str = "0"
+}
+probe nd_syscall.accept.return = kprobe.function("sys_accept4").return ?,
+				 kprobe.function("sys_accept").return ?
 {
 	name = "accept"
 	retstr = returnstr(1)
