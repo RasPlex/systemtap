@@ -50,16 +50,30 @@ static inline __must_check long __copy_to_user(void *to, const void *from,
 static long
 _stp_strncpy_from_user(char *dst, const char *src, long count)
 {
-	long i;
 	if (count <= 0)
 		return -EINVAL;
-	for (i = 0; i < count; ++i) {
-		if (__copy_from_user(dst, src++, 1))
+
+	/* Reads are batched on aligned 4k boundaries, approximately
+	 * page size, to reduce the number of pread syscalls.  It will
+	 * likely read past the terminating '\0', but shouldn't fault.
+	 * NB: We shouldn't try to read the entire 'count' at once, in
+	 * case some small string is already near the end of its page.
+	 */
+	long i = 0;
+	while (i < count) {
+		long n = 0x1000 - ((long)(src + i) & 0xFFF);
+		n = min(n, count - i);
+		if (__copy_from_user(dst + i, src + i, n))
 			return -EFAULT;
-		if (*dst++ == 0)
-			return i;
+
+		char *dst0 = memchr(dst + i, 0, n);
+		if (dst0 != NULL)
+			return (dst0 - dst);
+
+		i += n;
 	}
-	*(dst - 1) = 0;
+
+	dst[i - 1] = 0;
 	return i - 1;
 }
 
