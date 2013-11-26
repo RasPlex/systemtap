@@ -325,15 +325,16 @@ probe nd_syscall.personality.return = kprobe.function("sys_personality").return 
 # FIXME: When ia64 kprobe support is added (PR6971 - nd_syscalls.stp
 # tapset broken on ia64), sys_ia64_pipe probing will need to be done
 # here.
-probe nd_syscall.pipe = __nd_syscall.pipe2 !, __nd_syscall.pipe
+probe nd_syscall.pipe = __nd_syscall.pipe2 ?, __nd_syscall.pipe
 {
 }
 probe __nd_syscall.pipe2 = kprobe.function("sys_pipe2")
 {
+	@__syscall_compat_gate(%{ __NR_pipe2 %}, %{ __NR_compat_pipe2 %})
 	%( arch != "powerpc" %? asmlinkage() %)
+	name = "pipe2";
 	flags = int_arg(2)
 	flag_str = _sys_pipe2_flag_str(flags);
-	name = flags == 0 ? "pipe" : "pipe2";
 	fildes_uaddr = pointer_arg(1)
 	if (fildes_uaddr == 0) {
 		pipe0 = 0;
@@ -342,11 +343,7 @@ probe __nd_syscall.pipe2 = kprobe.function("sys_pipe2")
 	} else {
 		pipe0 = _fildes_index_u(fildes_uaddr, 0)
 		pipe1 = _fildes_index_u(fildes_uaddr, 1)
-		if (flags == 0)
-			argstr = sprintf("[%d, %d]", pipe0, pipe1);
-		else
-			argstr = sprintf("[%d, %d], %s", pipe0, pipe1,
-					flag_str);
+		argstr = sprintf("[%d, %d], %s", pipe0, pipe1, flag_str);
 	}
 }
 probe __nd_syscall.pipe = kprobe.function("sys_pipe")
@@ -366,16 +363,14 @@ probe __nd_syscall.pipe = kprobe.function("sys_pipe")
 		argstr = sprintf("[%d, %d]", pipe0, pipe1);
 	}
 }
-probe nd_syscall.pipe.return = __nd_syscall.pipe2.return !,
+probe nd_syscall.pipe.return = __nd_syscall.pipe2.return ?,
                                __nd_syscall.pipe.return
 {
 }
 probe __nd_syscall.pipe2.return = kprobe.function("sys_pipe2").return
 {
-	flags = @entry(%( arch != "powerpc" %? __asmlinkage_int_arg(2)
-					    %: int_arg(2) %))
-	name = (flags == 0) ? "pipe" : "pipe2";
-
+	@__syscall_compat_gate(%{ __NR_pipe2 %}, %{ __NR_compat_pipe2 %})
+	name = "pipe2";
 	fildes_uaddr = @entry(pointer_arg(1))
 	if (fildes_uaddr == 0) {
 		pipe0 = 0;
@@ -388,9 +383,7 @@ probe __nd_syscall.pipe2.return = kprobe.function("sys_pipe2").return
 }
 probe __nd_syscall.pipe.return = kprobe.function("sys_pipe").return
 {
-	flags = 0
 	name = "pipe"
-
 	fildes_uaddr = @entry(%( arch != "powerpc" %? __asmlinkage_int_arg(1)
 					    %: int_arg(1) %))
 	if (fildes_uaddr == 0) {

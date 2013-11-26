@@ -673,10 +673,14 @@ function _sys_pipe2_flag_str:string (f:long)
   if (flags & O_CLOEXEC)
     strlcat(str, "O_CLOEXEC|", MAXSTRINGLEN);
 #endif
+  if (flags == 0) {
+    strlcpy(str, "0", MAXSTRINGLEN);
+    return;
+  }
 
   len = strlen(str);
   if (len)
-    str[strlen(str)-1] = 0;
+    str[strlen(str)-1] = '\0';
 %}
 
 /* `man 2 open` for more information */

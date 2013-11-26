@@ -33,6 +33,9 @@
 #ifndef __NR_ia32_linkat
 #define __NR_ia32_linkat 303
 #endif
+#ifndef __NR_ia32_pipe2
+#define __NR_ia32_pipe2 331
+#endif
 #ifndef __NR_ia32_readlinkat
 #define __NR_ia32_readlinkat 305
 #endif
@@ -46,6 +49,7 @@
 #define __NR_compat_fchownat		__NR_ia32_fchownat
 #define __NR_compat_inotify_init1	__NR_ia32_inotify_init1
 #define __NR_compat_linkat		__NR_ia32_linkat
+#define __NR_compat_pipe2		__NR_ia32_pipe2
 #define __NR_compat_readlinkat		__NR_ia32_readlinkat
 #define __NR_compat_symlinkat		__NR_ia32_symlinkat
 
@@ -62,6 +66,7 @@
 #define __NR_compat_fchownat		__NR_fchownat
 #define __NR_compat_inotify_init1	__NR_inotify_init1
 #define __NR_compat_linkat		__NR_linkat
+#define __NR_compat_pipe2		__NR_pipe2
 #define __NR_compat_readlinkat		__NR_readlinkat
 #define __NR_compat_symlinkat		__NR_symlinkat
 
