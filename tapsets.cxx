@@ -123,7 +123,7 @@ common_probe_entryfn_prologue (systemtap_session& s,
   else
     {
     s.op->newline() << "struct timespec timespec_atstart;";
-    s.op->newline() << "(void)clock_gettime(CLOCK_MONOTONIC_RAW, &timespec_atstart);";
+    s.op->newline() << "(void)clock_gettime(CLOCK_MONOTONIC, &timespec_atstart);";
     }
   s.op->newline() << "#endif";
 
@@ -262,7 +262,7 @@ common_probe_entryfn_epilogue (systemtap_session& s,
     {
       s.op->newline() << "struct timespec timespec_atend, timespec_elapsed;";
       s.op->newline() << "long cycles_elapsed;";
-      s.op->newline() << "(void)clock_gettime(CLOCK_MONOTONIC_RAW, &timespec_atend);";
+      s.op->newline() << "(void)clock_gettime(CLOCK_MONOTONIC, &timespec_atend);";
       s.op->newline() << "_stp_timespec_sub(&timespec_atend, &timespec_atstart, &timespec_elapsed);";
       // 'cycles_elapsed' is really elapsed nanoseconds
       s.op->newline() << "cycles_elapsed = (timespec_elapsed.tv_sec * NSEC_PER_SEC) + timespec_elapsed.tv_nsec;";
