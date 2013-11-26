@@ -42,9 +42,10 @@ function get_loadavg_index:long (indx:long) %{ /* pure */
 %}
 
 /**
- * sfunction sprint_loadavg - Get the load average
+ * sfunction sprint_loadavg - Report a pretty-printed load average
  *
- * Description: Returns the complete load average.
+ * Description: Returns the a string with three decimal numbers
+ * in the usual format for 1-, 5- and 15-minute load averages.
  */
 function sprint_loadavg:string () %{ /* pure */
 	int a, b, c;
