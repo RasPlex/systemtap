@@ -71,17 +71,25 @@ function show_contention(mutex, stack, type)
   }
 }
 
+// we use @defined($muex) and @defined($rwlock) here because
+// on 64 bit systems, the wildcard search takes us through
+// both 64 bit and 32 bit libc (which doesn't have debuginfo),
+// this means the probe point resolved from the 32 bit library
+// has no context info
 probe process("/lib*/libc.so*").function("pthread_mutex_init")
 {
-  process_mutex_init($mutex, probefunc())
+  if(@defined($mutex))
+    process_mutex_init($mutex, probefunc())
 }
 probe process("/lib*/libpthread.so*").function("__pthread_mutex_init")
 {
-  process_mutex_init($mutex, probefunc())
+  if(@defined($mutex))
+    process_mutex_init($mutex, probefunc())
 }
 probe process("/lib*/libpthread.so*").function("__pthread_rwlock_init")
 {
-  process_mutex_init($rwlock, probefunc())
+  if(@defined($rwlock))
+    process_mutex_init($rwlock, probefunc())
 }
 
 probe syscall.futex.return

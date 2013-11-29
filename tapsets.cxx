@@ -989,6 +989,40 @@ dwarf_query::query_module_dwarf()
 static void query_func_info (Dwarf_Addr entrypc, func_info & fi,
 							dwarf_query * q);
 
+static void
+query_symtab_func_info (func_info & fi, dwarf_query * q)
+{
+  assert(null_die(&fi.die));
+
+  Dwarf_Addr addr = fi.addr;
+
+  // Now compensate for the dw bias because the addresses come
+  // from dwfl_module_symtab, so fi->addr is NOT a normal dw address.
+  q->dw.get_module_dwarf(false, false);
+  addr -= q->dw.module_bias;
+
+  // If there are already probes in this module, lets not duplicate.
+  // This can come from other weak symbols/aliases or existing
+  // matches from Dwarf DIE functions.
+  if (q->alias_dupes.size() > 0)
+    {
+      for (set<Dwarf_Addr>::iterator it=q->alias_dupes.begin(); it!=q->alias_dupes.end(); ++it)
+	{
+	  // If we've already got a probe at that pc, skip it
+	  if (*it == addr)
+	    return;
+	  if (*it != addr && ++it==q->alias_dupes.end())
+	    {
+	      // Build a probe at this point
+	      query_func_info(addr, fi, q);
+	      return;
+	    }
+	}
+    }
+  else
+    query_func_info(addr,fi,q);
+}
+
 void
 dwarf_query::query_module_symtab()
 {
@@ -1014,15 +1048,6 @@ dwarf_query::query_module_symtab()
       assert(spec_type == function_alone);
       if (dw.name_has_wildcard(function_str_val))
         {
-          // Until we augment the blacklist sufficently...
-	  if ((function_str_val.find_first_not_of("*?") == string::npos) && !dw.has_gnu_debugdata())
-            {
-              // e.g., kernel.function("*")
-              cerr << _F("Error: Pattern '%s' matches every single "
-                         "instruction address in the symbol table,\n"
-                         "some of which aren't even functions.\n", function_str_val.c_str()) << endl;
-              return;
-            }
           symbol_table::iterator_t iter;
           for (iter = sym_table->map_by_addr.begin();
                iter != sym_table->map_by_addr.end();
@@ -1032,41 +1057,15 @@ dwarf_query::query_module_symtab()
               if (!null_die(&fi->die))
                 continue;       // already handled in query_module_dwarf()
               if (dw.function_name_matches_pattern(fi->name, function_str_val))
-                query_func_info(fi->addr, *fi, this);
+                query_symtab_func_info(*fi, this);
             }
         }
       else
         {
           fi = sym_table->lookup_symbol(function_str_val);
           if (fi && !fi->descriptor && null_die(&fi->die))
-            query_func_info(fi->addr, *fi, this);
+	     query_symtab_func_info(*fi, this);
         }
-    }
-  else
-    {
-      assert(has_function_num || has_statement_num);
-      // Find the "function" in which the indicated address resides.
-      Dwarf_Addr addr =
-      		(has_function_num ? function_num_val : statement_num_val);
-      fi = sym_table->get_func_containing_address(addr);
-
-      if (!fi)
-        {
-          sess.print_warning(_F("address %#" PRIx64 " out of range for module %s",
-                  addr, dw.module_name.c_str()));
-          return;
-        }
-      if (!null_die(&fi->die))
-        {
-          // addr looks like it's in the compilation unit containing
-          // the indicated function, but query_module_dwarf() didn't
-          // match addr to any compilation unit, so addr must be
-          // above that cu's address range.
-          sess.print_warning(_F("address %#" PRIx64 " maps to no known compilation unit in module %s",
-                       addr, dw.module_name.c_str()));
-          return;
-        }
-      query_func_info(fi->addr, *fi, this);
     }
 }
 
@@ -1092,10 +1091,11 @@ dwarf_query::handle_query_module()
   if (dw.mod_info->dwarf_status == info_present)
     query_module_dwarf();
 
-  // Consult the symbol table if we haven't found all we're looking for.
-  // asm functions can show up in the symbol table but not in dwarf,
-  // or if we want to check the .gnu_debugdata section
-  if ((sess.consult_symtab || dw.has_gnu_debugdata()) && !query_done)
+  // Consult the symbol table, asm and weak functions can show up
+  // in the symbol table but not in dwarf and minidebuginfo is
+  // located in the gnu_debugdata section, alias_dupes checking
+  // is done before adding any probe points
+  if (!query_done && !pending_interrupts)
     query_module_symtab();
 }
 
@@ -1252,7 +1252,7 @@ dwarf_query::add_probe_point(const string& dw_funcname,
 
   // If we originally used the linkage name, then let's call it that way
   const char* linkage_name;
-  if (scope_die && startswith (this->function, "_Z")
+  if (!null_die(scope_die) && startswith (this->function, "_Z")
       && (linkage_name = dwarf_linkage_name (scope_die)))
     funcname = linkage_name;
 
@@ -1954,8 +1954,14 @@ dwarf_query::query_module_functions ()
       inline_dupes.clear();
 
       // Run the query again on the individual CUs
-      for (vector<Dwarf_Die>::iterator i = cus.begin(); i != cus.end(); ++i)
-        query_cu(&*i, this);
+      for (vector<Dwarf_Die>::iterator i = cus.begin(); i != cus.end(); ++i){
+        rc = query_cu(&*i, this);
+	if (rc != DWARF_CB_OK)
+	  {
+	    query_done = true;
+	    return;
+	  }
+      }
     }
   catch (const semantic_error& e)
     {

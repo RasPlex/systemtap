@@ -81,3 +81,7 @@ test_list copy_flags-inline {kernel.function("copy_flags@kernel/fork.c").inline}
 # PR15587: make sure we have line numbers on statements of an inline function
 test_list copy_flags-statement {kernel.statement("copy_flags@kernel/fork.c:*")} \
     {kernel.statement."copy_flags@kernel/fork.c:\d+".\r\n}
+
+# PR10208: ensure we can probe weak symbols
+test_uprobes_list function-weak {process("/lib*/libc.so.*").function("chmod")} \
+    {process.*.function."chmod".\r\n}
