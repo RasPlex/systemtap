@@ -282,10 +282,6 @@ public:
   std::string stapconf_path;    // path to the cached stapconf
   stap_hash *base_hash;         // hash common to all caching
 
-  // dwarfless operation
-  bool consult_symtab;
-  std::string kernel_symtab_path;
-
   // Skip bad $ vars
   bool skip_badvars;
 

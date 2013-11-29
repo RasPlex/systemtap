@@ -1078,7 +1078,7 @@ dwarf_query::handle_query_module()
       return;
     }
 
-  bool report = dbinfo_reqt == dbr_need_dwarf || !sess.consult_symtab;
+  bool report = dbinfo_reqt == dbr_need_dwarf;
   dw.get_module_dwarf(false, report);
 
   // prebuild the symbol table to resolve aliases

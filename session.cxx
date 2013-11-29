@@ -146,7 +146,6 @@ systemtap_session::systemtap_session ():
   need_unwind = false;
   need_symbols = false;
   uprobes_path = "";
-  consult_symtab = false;
   load_only = false;
   skip_badvars = false;
   privilege = pr_stapdev;
@@ -327,7 +326,6 @@ systemtap_session::systemtap_session (const systemtap_session& other,
   need_unwind = false;
   need_symbols = false;
   uprobes_path = "";
-  consult_symtab = other.consult_symtab;
   load_only = other.load_only;
   skip_badvars = other.skip_badvars;
   privilege = other.privilege;
