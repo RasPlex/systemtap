@@ -108,6 +108,7 @@ run "find /debugfs /proc /sys /dev /sys/kernel/debug -path '*kprobe*' -o -path '
 run "lsmod"
 run "avahi-browse -r -t _stap._tcp"
 run "ifconfig -a"
+run "ps awux | grep stap"
 for file in /boot/vmlinuz-`uname -r` /usr/lib/debug/lib/modules/`uname -r`/vmlinux /lib/modules/`uname -r`/build/vmlinux
 do
     if [ -f $file ]; then
