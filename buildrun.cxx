@@ -27,6 +27,7 @@ extern "C" {
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/resource.h>
 }
 
 
@@ -60,7 +61,14 @@ run_make_cmd(systemtap_session& s, vector<string>& make_cmd,
 
   // Exploit SMP parallelism, if available.
   long smp = sysconf(_SC_NPROCESSORS_ONLN);
-  if (smp >= 1)
+  if (smp <= 0) smp = 1;
+  // PR16276: but only if we're not running severely nproc-rlimited
+  struct rlimit rlim;
+  int rlimit_rc = getrlimit(RLIMIT_NPROC, &rlim);
+  const int severely_limited = smp*30; // WAG at number of gcc+make etc. nested processes
+  bool nproc_limited = (rlimit_rc == 0 && (rlim.rlim_max <= severely_limited || 
+                                           rlim.rlim_cur <= severely_limited));
+  if (smp >= 1 && !nproc_limited)
     make_cmd.push_back("-j" + lex_cast(smp+1));
 
   if (strverscmp (s.kernel_base_release.c_str(), "2.6.29") < 0)

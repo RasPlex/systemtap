@@ -578,7 +578,11 @@ test -e ~stap-server && chmod 750 ~stap-server
 if [ ! -f ~stap-server/.systemtap/rc ]; then
   mkdir -p ~stap-server/.systemtap
   chown stap-server:stap-server ~stap-server/.systemtap
-  echo "--rlimit-as=614400000 --rlimit-cpu=60 --rlimit-nproc=20 --rlimit-stack=1024000 --rlimit-fsize=51200000" > ~stap-server/.systemtap/rc
+  # PR16276: guess at a reasonable number for a default --rlimit-nproc 
+  numcpu=`/usr/bin/getconf _NPROCESSORS_ONLN`
+  if [ -z "$numcpu" -o "$numcpu" -lt 1 ]; then numcpu=1; fi
+  nproc=`expr $numcpu \* 30`
+  echo "--rlimit-as=614400000 --rlimit-cpu=60 --rlimit-nproc=$nproc --rlimit-stack=1024000 --rlimit-fsize=51200000" > ~stap-server/.systemtap/rc
   chown stap-server:stap-server ~stap-server/.systemtap/rc
 fi
 
