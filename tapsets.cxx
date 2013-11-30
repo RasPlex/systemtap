@@ -10479,8 +10479,8 @@ tracepoint_builder::build(systemtap_session& s,
       while ((pos = sugs.find("stapprobe_")) != string::npos)
         sugs.erase(pos, string("stapprobe_").size());
       if (!sugs.empty())
-        throw SEMANTIC_ERROR (_NF("no match (similar function: %s)",
-                                  "no match (similar functions: %s)",
+        throw SEMANTIC_ERROR (_NF("no match (similar tracepoint: %s)",
+                                  "no match (similar tracepoints: %s)",
                                   sugs.find(',') == string::npos,
                                   sugs.c_str()));
     }
