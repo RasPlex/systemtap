@@ -65,7 +65,7 @@ run_make_cmd(systemtap_session& s, vector<string>& make_cmd,
   // PR16276: but only if we're not running severely nproc-rlimited
   struct rlimit rlim;
   int rlimit_rc = getrlimit(RLIMIT_NPROC, &rlim);
-  const int severely_limited = smp*30; // WAG at number of gcc+make etc. nested processes
+  const unsigned int severely_limited = smp*30; // WAG at number of gcc+make etc. nested processes
   bool nproc_limited = (rlimit_rc == 0 && (rlim.rlim_max <= severely_limited || 
                                            rlim.rlim_cur <= severely_limited));
   if (smp >= 1 && !nproc_limited)
