@@ -647,7 +647,11 @@ process_command(void)
   // stap commands are short and always end in \n. Even if we do block it's not
   // so bad a thing.
   if (fgets(command, sizeof(command), stapsh_in) == NULL)
-    return;
+    {
+      if (feof(stapsh_in)) // no more stap commands coming
+        pfds[PFD_STAP_OUT].events = 0;
+      return;
+    }
 
   dbug(1, "command: %s", command);
   const char* arg = strtok(command, STAPSH_TOK_DELIM) ?: "(null)";
@@ -674,10 +678,10 @@ process_command(void)
 }
 
 static void
-prefix_staprun(int fdin, FILE *out, const char *stream)
+prefix_staprun(int i, FILE *out, const char *stream)
 {
   char buf[4096];
-  ssize_t n = read(fdin, buf, sizeof buf);
+  ssize_t n = read(pfds[i].fd, buf, sizeof buf);
   if (n > 0)
     {
       // actually check if we need to prefix data (we could also be piping for
@@ -688,6 +692,8 @@ prefix_staprun(int fdin, FILE *out, const char *stream)
         dbug(2, "failed fwrite\n"); // appease older gccs (don't ignore fwrite rc)
       fflush(out);
     }
+  else if (n == 0) // eof
+    pfds[i].events = 0;
 }
 
 int
@@ -760,9 +766,10 @@ main(int argc, char* const argv[])
       sleep(2); // Once we support only platforms with guaranteed SIGIO support,
                 // we could replace this with a pause().
 
-  for (;;)
+  // keep polling as long as we're listening for stap commands
+  while (pfds[PFD_STAP_OUT].events)
     {
-      if (poll(pfds, staprun_pid > 0 ? 3 : 1, -1) < 0)
+      if (poll(pfds, 3, -1) < 0)
         {
           if (errno == EINTR)
             continue; // go back to poll()
@@ -774,9 +781,9 @@ main(int argc, char* const argv[])
       if (pfds[PFD_STAP_OUT].revents & POLLIN)
         process_command();
       if (pfds[PFD_STAPRUN_OUT].revents & POLLIN)
-        prefix_staprun(pfds[PFD_STAPRUN_OUT].fd, stapsh_out, "stdout");
+        prefix_staprun(PFD_STAPRUN_OUT, stapsh_out, "stdout");
       if (pfds[PFD_STAPRUN_ERR].revents & POLLIN)
-        prefix_staprun(pfds[PFD_STAPRUN_ERR].fd, stapsh_err, "stderr");
+        prefix_staprun(PFD_STAPRUN_ERR, stapsh_err, "stderr");
     }
 
   cleanup(0);
