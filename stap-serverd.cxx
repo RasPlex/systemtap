@@ -1382,7 +1382,7 @@ spawn_and_wait (const vector<string> &argv, int *spawnrc,
     }
 
   *spawnrc = stap_waitpid (0, pid);
-  if (*spawnrc == -1)
+  if (*spawnrc == -1) // something wrong with waitpid() call itself
     {
       server_error (_("Error in waitpid"));
       return PR_FAILURE;

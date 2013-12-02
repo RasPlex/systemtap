@@ -624,7 +624,8 @@ class spawned_pids_t {
 };
 static spawned_pids_t spawned_pids;
 
-
+/* Returns exit code of pid if terminated nicely, or 128+signal if terminated
+ * not nicely, or -1 if waitpid() failed. So if ret >= 0, it's the rc/signal */
 int
 stap_waitpid(int verbose, pid_t pid)
 {
