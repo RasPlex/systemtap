@@ -1003,24 +1003,10 @@ query_symtab_func_info (func_info & fi, dwarf_query * q)
 
   // If there are already probes in this module, lets not duplicate.
   // This can come from other weak symbols/aliases or existing
-  // matches from Dwarf DIE functions.
-  if (q->alias_dupes.size() > 0)
-    {
-      for (set<Dwarf_Addr>::iterator it=q->alias_dupes.begin(); it!=q->alias_dupes.end(); ++it)
-	{
-	  // If we've already got a probe at that pc, skip it
-	  if (*it == addr)
-	    return;
-	  if (*it != addr && ++it==q->alias_dupes.end())
-	    {
-	      // Build a probe at this point
-	      query_func_info(addr, fi, q);
-	      return;
-	    }
-	}
-    }
-  else
-    query_func_info(addr,fi,q);
+  // matches from Dwarf DIE functions.  Try to add this addr to the
+  // collection, and only continue if it was new.
+  if (q->alias_dupes.insert(addr).second)
+    query_func_info(addr, fi, q);
 }
 
 void
