@@ -829,7 +829,7 @@ compile_server_client::passes_0_4 ()
            << TIMESPRINT
            << endl;
     }
-  if (rc)
+  if (rc && !s.listing_mode)
     {
       clog << _("Passes: via server failed.  Try again with another '-v' option.") << endl;
     }
