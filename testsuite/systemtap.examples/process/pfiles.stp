@@ -77,6 +77,10 @@
 #include <net/sock.h>
 #include <linux/un.h>
 #include <linux/tcp.h>
+#ifdef CONFIG_USER_NS
+#include <linux/user_namespace.h>
+#include <linux/uidgid.h>
+#endif
 %}
 
 function task_valid_file_handle:long (task:long, fd:long) %{ /* pure */
@@ -199,6 +203,9 @@ function task_file_handle_uid:long (task:long, fd:long) %{ /* pure */
 	struct task_struct *p = (struct task_struct *)((long)STAP_ARG_task);
 	struct files_struct *files;
 	struct file *filp;
+#ifdef CONFIG_USER_NS
+	struct user_namespace *ns = NULL;
+#endif
 
 	rcu_read_lock();
 	if ((files = kread(&p->files)) &&
@@ -207,7 +214,25 @@ function task_file_handle_uid:long (task:long, fd:long) %{ /* pure */
 		/* git commit d76b0d9b */
 		const struct cred *cred;
 		if ((cred = kread(&filp->f_cred))) {
+#ifdef CONFIG_USER_NS
+			ns = get_user_ns(task_cred_xxx(p, user_ns));
+			if (ns) {
+				// We call kderef_buffer() here to
+				// ensure the memory at the kuid_t
+				// location is valid to read. We can't
+				// use kderef()/kread(), since they
+				// only handle data with a size of 1,
+				// 2, 4, or 8 bytes.
+				kderef_buffer(NULL,  &cred->fsuid,
+					      sizeof(kuid_t));
+				STAP_RETVALUE = from_kuid(ns, cred->fsuid);
+			}
+			else
+				STAP_RETVALUE = -1;
+
+#else	/* ! CONFIG_USER_NS */
 			STAP_RETVALUE = kread(&cred->fsuid);
+#endif	/* ! CONFIG_USER_NS */
 		}
 #else
 		STAP_RETVALUE = kread(&filp->f_uid);
@@ -215,6 +240,10 @@ function task_file_handle_uid:long (task:long, fd:long) %{ /* pure */
 	}
 
 	CATCH_DEREF_FAULT();
+#ifdef CONFIG_USER_NS
+	if (ns)
+		put_user_ns(ns);
+#endif
 	rcu_read_unlock();
 %}
 
@@ -222,6 +251,9 @@ function task_file_handle_gid:long (task:long, fd:long) %{ /* pure */
 	struct task_struct *p = (struct task_struct *)((long)STAP_ARG_task);
 	struct files_struct *files;
 	struct file *filp;
+#ifdef CONFIG_USER_NS
+	struct user_namespace *ns = NULL;
+#endif
 
 	rcu_read_lock();
 	if ((files = kread(&p->files)) &&
@@ -230,7 +262,25 @@ function task_file_handle_gid:long (task:long, fd:long) %{ /* pure */
 		/* git commit d76b0d9b */
 		const struct cred *cred;
 		if ((cred = kread(&filp->f_cred))) {
+#ifdef CONFIG_USER_NS
+			ns = get_user_ns(task_cred_xxx(p, user_ns));
+			if (ns) {
+				// We call kderef_buffer() here to
+				// ensure the memory at the kgid_t
+				// location is valid to read. We can't
+				// use kderef()/kread(), since they
+				// only handle data with a size of 1,
+				// 2, 4, or 8 bytes.
+				kderef_buffer(NULL,  &cred->fsgid,
+					      sizeof(kgid_t));
+				STAP_RETVALUE = from_kgid(ns, cred->fsgid);
+			}
+			else
+				STAP_RETVALUE = -1;
+
+#else	/* ! CONFIG_USER_NS */
 			STAP_RETVALUE = kread(&cred->fsgid);
+#endif	/* ! CONFIG_USER_NS */
 		}
 #else
 		STAP_RETVALUE = kread(&filp->f_gid);
@@ -238,6 +288,10 @@ function task_file_handle_gid:long (task:long, fd:long) %{ /* pure */
 	}
 
 	CATCH_DEREF_FAULT();
+#ifdef CONFIG_USER_NS
+	if (ns)
+		put_user_ns(ns);
+#endif
 	rcu_read_unlock();
 %}
 
