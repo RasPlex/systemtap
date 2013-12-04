@@ -596,6 +596,9 @@ if test $build_elfutils = yes -a $enable_translator = yes; then
 				--includedir="${here}/include-elfutils" \
 				--libdir="${here}/lib-elfutils" \
 				--exec-prefix="$exec_prefix" \
+				--host="$host" \
+				--target="$target" \
+				--build="$build" \
 				--prefix="$prefix" \
 				--enable-dwz \
 				${need_maintainer_option} \
