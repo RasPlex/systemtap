@@ -591,16 +591,11 @@ if test $build_elfutils = yes -a $enable_translator = yes; then
   else
 	need_maintainer_option="--enable-maintainer-mode"
   fi
-  set -x
-  env
   (mkdir -p build-elfutils && cd build-elfutils &&
    bash ${elfutils_srcdir}/configure --enable-libebl-subdir=${PACKAGE_NAME} \
 				--includedir="${here}/include-elfutils" \
 				--libdir="${here}/lib-elfutils" \
 				--exec-prefix="$exec_prefix" \
-				--host="$host" \
-				--target="$target" \
-				--build="$build" \
 				--prefix="$prefix" \
 				--enable-dwz \
 				${need_maintainer_option} \
