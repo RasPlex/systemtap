@@ -487,8 +487,6 @@ elfutils_abs_srcdir = @elfutils_abs_srcdir@
 exec_prefix = @exec_prefix@
 have_dvips = @have_dvips@
 have_fop = @have_fop@
-have_jar = @have_jar@
-have_javac = @have_javac@
 have_latex = @have_latex@
 have_latex2html = @have_latex2html@
 have_ps2pdf = @have_ps2pdf@
@@ -650,7 +648,7 @@ LDADD =
 EXAMPLE_SOURCE_DIR = $(srcdir)/testsuite/systemtap.examples
 EXAMPLE_META_FILES = $(EXAMPLE_SOURCE_DIR)/*/*.meta
 TEST_COV_DIR = coverage
-SUBDIRS = . java stapdyn staprun doc man po
+SUBDIRS = . stapdyn staprun doc man po
 # NB: the gcov target above uses this to enumarate linked binaries' build directories
 DIST_SUBDIRS = testsuite $(SUBDIRS)
 EXTRA_DIST = m4/ChangeLog

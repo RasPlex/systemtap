@@ -626,30 +626,6 @@ AS_IF([test "x$with_selinux" != "xno"], [
 
 AM_CONDITIONAL([HAVE_SELINUX], [test "${have_selinux}" = "yes"])
 
-dnl Handle java+byteman support
-AC_CHECK_PROG(have_javac, javac, yes, no)
-AC_CHECK_PROG(have_jar, jar, yes, no)
-if test "$have_javac" != no -a "$have_jar" != no; then
-echo java found, will try to configure Byteman support
-
-AC_ARG_WITH([java],
-  [AS_HELP_STRING([--with-java=DIRECTORY],
-     [Specify JDK directory to compile libHelperSDT.so against (default is /usr/lib/jvm/java)])],
-  [],
-  [with_java=/usr/lib/jvm/java])
-AC_CHECK_FILE([$with_java],[],[with_java=no])
-AC_SUBST(JAVADIR, "${with_java}") # always needed to compile
-
-if test "$with_java" != "no"; then
-AC_DEFINE_UNQUOTED(HAVE_JAVA, "1", [Flag indicating that libHelperSDT.so is available (can be found in PKGLIBDIR)])
-fi
-
-AM_CONDITIONAL([HAVE_JAVA], [test "$with_java" != "no"])
-
-else
-AC_MSG_WARN([will not run per-method java probing, missing byteman or java requirements])
-AM_CONDITIONAL([HAVE_JAVA],false)
-fi # java+byteman support
 
 AC_SUBST(ENABLE_NLS, "$USE_NLS")
 AC_SUBST(localedir, "$localedir")
@@ -688,8 +664,6 @@ if test $enable_translator == "yes"; then
 fi
 AC_CONFIG_FILES([dtrace], [chmod +x dtrace])
 AC_CONFIG_FILES(stapdyn/Makefile)
-AC_CONFIG_FILES(java/Makefile)
-AC_CONFIG_FILES([java/stapbm], [chmod +x java/stapbm])
 AC_CONFIG_FILES(staprun/Makefile)
 AC_CONFIG_FILES([staprun/run-staprun], [chmod +x staprun/run-staprun])
 AC_CONFIG_FILES([staprun/guest/stapshd], [chmod +x staprun/guest/stapshd])
